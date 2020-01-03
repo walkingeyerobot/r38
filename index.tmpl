@@ -1,0 +1,27 @@
+<!doctype html>
+<html>
+<head>
+  <title>not for ulb nope</title>
+  <link rel="icon" href="data:;base64,=">
+</head>
+<body>
+  <div>
+    <div>drafts</div>
+    <ul>
+      {{ range .Drafts }}
+      <li>
+	{{ if .Joined }}
+	  <span><a href="/draft/{{ .Id }}">{{ .Name }}</a></span>
+	{{ else }}
+	  <span>{{ .Name }}</span>
+	{{ end }}  
+	<span>{{ .Seats }} seats available</span>
+	{{ if not .Joined and .Seats gt 0 }}
+	  <span><a href="/join/{{ .Id }}">Join!</a></span>
+	{{ end }}
+      </li>
+      {{ end }}
+    </ul>
+  </div>
+</body>
+</html>

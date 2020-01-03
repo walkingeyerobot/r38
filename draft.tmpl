@@ -1,0 +1,43 @@
+<!doctype html>
+<html>
+<head>
+  <title>not for ulb nope</title>
+  <link rel="icon" href="data:;base64,=">
+</head>
+<body>
+  <div>draft id: {{ .DraftId }}</div>
+  <div>
+    {{ if not .Pack }}
+      <div>no packs available</div>
+    {{ else }}
+      <div>current pack</div>
+	{{ range .Pack }}
+          <div class="card">
+	    <a href="/pick/{{ .Id }}">
+              <img src="http://api.scryfall.com/cards/{{ .Edition }}/{{ .Number }}?format=image&version=small" />
+	    </a>
+	    <span>{{ .Name }}</span>
+	    {{ if .Tags }}
+	      <span>({{ .Tags }})</span>
+	    {{ end }}
+	  </div>
+	{{ end }}
+    {{ end }}
+    <hr/>
+    {{ if not .Picks }}
+      <div>no picks yet</div>
+    {{ else }}
+      <div>previous picks</div>
+      {{ range .Picks }}
+        <div class="card">
+	  <img src="http://api.scryfall.com/cards/{{ .Edition }}/{{ .Number }}?format=image&version=small" />
+	  <span>{{ .Name }}</span>
+	  {{ if .Tags }}
+	    <span>({{ .Tags }})</span>
+	  {{ end }}
+	</div>
+      {{ end }}
+    {{ end }}
+  </div>
+</body>
+</html>
