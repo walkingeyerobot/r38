@@ -1,0 +1,4 @@
+draft.db
+*.csv
+pkg/
+src/
