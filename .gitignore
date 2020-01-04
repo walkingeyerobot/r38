@@ -2,3 +2,4 @@ draft.db
 *.csv
 pkg/
 src/
+run.sh
