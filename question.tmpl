@@ -1,0 +1,17 @@
+<!doctype html>
+<html>
+<head>
+  <title>not for ulb nope</title>
+  <link rel="icon" href="data:;base64,=">
+</head>
+<body>
+  <div>draft id: {{ .DraftId }}</div>
+  <div>
+    {{ .Message }}
+    {{ $questionid := .QuestionId }}
+    {{ range .Answers }}
+      <a href="/answer/{{ $questionid }}/{{ . }}">{{ . }}</a>
+    {{ end }}
+  </div>
+</body>
+</html>
