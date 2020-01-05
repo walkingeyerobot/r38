@@ -78,9 +78,9 @@ type Card struct {
 
 type QuestionPageData struct {
 	QuestionId int64
-	DraftId int64
-	Message string
-	Answers []string
+	DraftId    int64
+	Message    string
+	Answers    []string
 }
 
 func main() {
@@ -175,7 +175,7 @@ func ServeAnswer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	answers := strings.Split(rawAnswers, ",")
-	newAnswers := [len(answers)]string
+	var newAnswers [len(answers)]string
 	j := 0
 
 	for i, v := range answers {
@@ -197,7 +197,7 @@ func ServeAnswer(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	
+
 	query = `insert into revealed (draft, message) VALUES (?, "? answered '?' to the question '?'")`
 	_, err = database.Exec(query, draftId, email, answer, message)
 	if err != nil {
@@ -226,7 +226,7 @@ func ServeAnswer(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			newPosition := position - 1
-			if (newPosition == -1) {
+			if newPosition == -1 {
 				newPosition = 7
 			}
 
@@ -306,7 +306,7 @@ func ServeDraft(w http.ResponseWriter, r *http.Request) {
 		answers := strings.Split(rawAnswers, ",")
 		data := QuestionPageData{DraftId: draftId, QuestionId: questionId, Message: message, Answers: answers}
 		t := template.Must(template.ParseFiles("question.tmpl"))
-		
+
 		t.Execute(w, data)
 		return
 	} else if err != nil && err != sql.ErrNoRows {
