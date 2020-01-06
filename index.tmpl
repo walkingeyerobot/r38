@@ -15,8 +15,8 @@
 	{{ else }}
 	  <span>{{ .Name }}</span>
 	{{ end }}  
-	<span>{{ .Seats }} seats available</span>
-	{{ if not .Joined and .Seats gt 0 }}
+	<span>{{ .Seats }} seats available.</span>
+	{{ if .Joinable }}
 	  <span><a href="/join/{{ .Id }}">Join!</a></span>
 	{{ end }}
       </li>

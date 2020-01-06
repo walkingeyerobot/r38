@@ -11,5 +11,5 @@ CREATE TABLE packs( id integer primary key autoincrement, seat number, modified 
 CREATE TABLE cards( id integer primary key autoincrement, pack number, edition text, number text, tags text, name text , faceup number default false);
 CREATE TABLE drafts( id integer primary key autoincrement, name text, round number default 1);
 CREATE TABLE revealed( id integer primary key autoincrement, draft number, message text);
-CREATE TABLE questions( id integer primary key autoincrement, draft number, user number, message text, answers text , answered number default false);
+CREATE TABLE questions( id integer primary key autoincrement, seat number, message text, answers text , answered number default false);
 ```

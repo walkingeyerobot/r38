@@ -11,17 +11,17 @@
       <div>no packs available</div>
     {{ else }}
       <div>current pack</div>
-	{{ range .Pack }}
+        {{ range .Pack }}
           <div class="card">
-	    <a href="/pick/{{ .Id }}">
+            <a href="/pick/{{ .Id }}">
               <img src="http://api.scryfall.com/cards/{{ .Edition }}/{{ .Number }}?format=image&version=small" />
-	    </a>
-	    <span>{{ .Name }}</span>
-	    {{ if .Tags }}
-	      <span>({{ .Tags }})</span>
-	    {{ end }}
-	  </div>
-	{{ end }}
+            </a>
+            <span>{{ .Name }}</span>
+            {{ if .Tags }}
+              <span>({{ .Tags }})</span>
+            {{ end }}
+          </div>
+        {{ end }}
     {{ end }}
     <hr/>
     {{ if not .Picks }}
@@ -30,12 +30,26 @@
       <div>previous picks</div>
       {{ range .Picks }}
         <div class="card">
-	  <img src="http://api.scryfall.com/cards/{{ .Edition }}/{{ .Number }}?format=image&version=small" />
-	  <span>{{ .Name }}</span>
-	  {{ if .Tags }}
-	    <span>({{ .Tags }})</span>
-	  {{ end }}
-	</div>
+          <img src="http://api.scryfall.com/cards/{{ .Edition }}/{{ .Number }}?format=image&version=small" />
+          <span>{{ .Name }}</span>
+          {{ if .Tags }}
+            <span>({{ .Tags }})</span>
+          {{ end }}
+        </div>
+      {{ end }}
+    {{ end }}
+    <hr/>
+    <div>Powers</div>
+    {{ if not .Powers}}
+      <div>no powers available</div>
+    {{ else }}
+      {{ range .Powers }}
+        <div class="card">
+          <a href="/power/{{ .Id }}">
+            <img src="http://api.scryfall.com/cards/{{ .Edition }}/{{ .Number }}?format=image&version=small" />
+          </a>
+          <span>{{ .Name }}</span>
+        </div>
       {{ end }}
     {{ end }}
   </div>
