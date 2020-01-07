@@ -99,7 +99,7 @@ func main() {
 		return
 	}
 
-	MakeDraft("test draft two")
+	// MakeDraft("test draft two")
 
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":12264"),
@@ -255,6 +255,12 @@ func ServeLibrarian(w http.ResponseWriter, r *http.Request) {
 	query = `update cards set pack=? where id=?`
 	log.Printf("%s\t%d,%d", query, packId1, librarianId)
 	_, err = database.Exec(query, packId1, librarianId)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	err = doNotificationsAndCleanup()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -610,6 +616,13 @@ func ServePick(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	//-----------------------------------------------------------------
+
+	err = doNotificationsAndCleanup()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	http.Redirect(w, r, fmt.Sprintf("/draft/%d", draftId), http.StatusTemporaryRedirect)
 }
 
@@ -848,17 +861,6 @@ func getPackPicksAndPowers(draftId int64, userId int64) ([]Card, []Card, []Card,
 	return myPack, myPicks, powers2, nil
 }
 
-type PickInfo struct {
-	pickId int64
-	newPositionId int64
-	oldPackId int64
-	email string
-	position int64
-	cardName string
-	userId int64
-	cardId int64
-}
-
 func doPick(userId int64, cardId int64, pass bool) (int64, int64, error) {
 	query := `select drafts.id, seats.round, seats.position, cards.name from drafts join seats join packs join cards where drafts.id=seats.draft and seats.id=packs.seat and packs.id=cards.pack and cards.id=? and packs.round <> 0`
 
@@ -1045,5 +1047,16 @@ func doPick(userId int64, cardId int64, pass bool) (int64, int64, error) {
 			return draftId, oldPackId, err
 		}
 	}
+
 	return draftId, oldPackId, nil
+}
+
+func doNotificationsAndCleanup() (error) {
+	query := `delete from packs where modified = 150 and round <> 0`
+	log.Printf("%s", query)
+	_, err := database.Exec(query)
+	if err != nil {
+		return err
+	}
+	return nil
 }
