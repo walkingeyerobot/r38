@@ -144,14 +144,16 @@ func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		session, err := store.Get(r, "session-name")
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			fmt.Fprintf(w, `<html><body><a href="/auth/google/login">login</a></body></html>`)
 			return
 		}
 		if session.Values["userid"] != nil {
 			log.Printf("%s %s", session.Values["userid"], r.URL.Path)
 			next.ServeHTTP(w, r)
+			return
 		} else {
 			fmt.Fprintf(w, `<html><body><a href="/auth/google/login">login</a></body></html>`)
+			return
 		}
 	})
 }
