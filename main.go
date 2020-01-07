@@ -99,7 +99,7 @@ func main() {
 		return
 	}
 
-	// MakeDraft("test draft two")
+	MakeDraft("test draft two")
 
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":12264"),
@@ -792,7 +792,7 @@ func getUserDataFromGoogle(code string) ([]byte, error) {
 }
 
 func getPackPicksAndPowers(draftId int64, userId int64) ([]Card, []Card, []Card, error) {
-	query := `select packs.round, cards.id, cards.name, cards.tags, cards.number, cards.edition, cards.faceup from drafts join seats join packs join cards where drafts.id=? and drafts.id=seats.draft and seats.id=packs.seat and packs.id=cards.pack and seats.user=? and (packs.round=0 or (packs.round=drafts.round and packs.modified in (select min(packs.modified) from packs join seats join drafts where seats.draft=? and seats.user=? and seats.id=packs.seat and drafts.id=seats.draft and packs.round=drafts.round)))`
+	query := `select packs.round, cards.id, cards.name, cards.tags, cards.number, cards.edition, cards.faceup from drafts join seats join packs join cards where drafts.id=? and drafts.id=seats.draft and seats.id=packs.seat and packs.id=cards.pack and seats.user=? and (packs.round=0 or (packs.round=seats.round and packs.modified in (select min(packs.modified) from packs join seats join drafts where seats.draft=? and seats.user=? and seats.id=packs.seat and drafts.id=seats.draft and packs.round=seats.round)))`
 
 	rows, err := database.Query(query, draftId, userId, draftId, userId)
 	if err == sql.ErrNoRows {
@@ -860,7 +860,7 @@ type PickInfo struct {
 }
 
 func doPick(userId int64, cardId int64, pass bool) (int64, int64, error) {
-	query := `select drafts.id, drafts.round, seats.position, cards.name from drafts join seats join packs join cards where drafts.id=seats.draft and seats.id=packs.seat and packs.id=cards.pack and cards.id=? and packs.round <> 0`
+	query := `select drafts.id, seats.round, seats.position, cards.name from drafts join seats join packs join cards where drafts.id=seats.draft and seats.id=packs.seat and packs.id=cards.pack and cards.id=? and packs.round <> 0`
 
 	row := database.QueryRow(query, cardId)
 	var draftId int64
@@ -872,11 +872,12 @@ func doPick(userId int64, cardId int64, pass bool) (int64, int64, error) {
 		return -1, -1, err
 	}
 
-	query = `select packs.id from drafts join seats join packs join cards where cards.id=? and drafts.id=? and drafts.id=seats.draft and seats.id=packs.seat and packs.id=cards.pack and seats.user=? and (packs.round=0 or (packs.round=drafts.round and packs.modified in (select min(packs.modified) from packs join seats join drafts where seats.draft=? and seats.user=? and seats.id=packs.seat and drafts.id=seats.draft and packs.round=drafts.round)))`
+	query = `select packs.id, packs.modified from drafts join seats join packs join cards where cards.id=? and drafts.id=? and drafts.id=seats.draft and seats.id=packs.seat and packs.id=cards.pack and seats.user=? and (packs.round=0 or (packs.round=seats.round and packs.modified in (select min(packs.modified) from packs join seats join drafts where seats.draft=? and seats.user=? and seats.id=packs.seat and drafts.id=seats.draft and packs.round=seats.round)))`
 
 	row = database.QueryRow(query, cardId, draftId, userId, draftId, userId)
 	var oldPackId int64
-	err = row.Scan(&oldPackId)
+	var modified int64
+	err = row.Scan(&oldPackId, &modified)
 	if err != nil {
 		return draftId, -1, err
 	}
@@ -914,19 +915,31 @@ func doPick(userId int64, cardId int64, pass bool) (int64, int64, error) {
 	}
 
 	if pass {
-		query = `begin transaction;update cards set pack=? where id=?;update packs set seat=?, modified=modified+1 where id=?;commit`
+		query = `begin transaction;update cards set pack=? where id=?;update packs set seat=?, modified=modified+10 where id=?;commit`
 		log.Printf("%s\t%d,%s,%d,%d", query, pickId, cardId, newPositionId, oldPackId)
 
 		_, err = database.Exec(query, pickId, cardId, newPositionId, oldPackId)
+		if err != nil {
+			return draftId, oldPackId, err
+		}
+
+		if modified == 150 {
+			query = `update seats set round=round+1 where draft=? and user=?`
+			log.Printf("%s\t%d,%d", query, draftId, userId)
+
+			_, err = database.Exec(query, draftId, userId)
+			if err != nil {
+				return draftId, oldPackId, err
+			}
+		}
 	} else {
 		query = `update cards set pack=? where id=?`
 		log.Printf("%s\t%d,%s,%d,%d", query, pickId, cardId)
 
 		_, err = database.Exec(query, pickId, cardId)
-	}
-
-	if err != nil {
-		return draftId, oldPackId, err
+		if err != nil {
+			return draftId, oldPackId, err
+		}
 	}
 
 	query = `select cards.id from cards join packs join seats where cards.faceup=true and cards.name="Aether Searcher" and cards.pack=packs.id and packs.seat=seats.id and seats.user=?`
@@ -979,9 +992,9 @@ func doPick(userId int64, cardId int64, pass bool) (int64, int64, error) {
 			return draftId, oldPackId, err
 		}
 
-		query = `update packs set seat = ?, round = ?, modified = 0 where id = ?`
-		log.Printf("%s\t%d,%d,%d", query, seatId, round, extraPackId)
-		_, err = database.Exec(query, seatId, round, extraPackId)
+		query = `update packs set seat = ?, round = ?, modified = ? where id = ?`
+		log.Printf("%s\t%d,%d,%d,%d", query, seatId, round, modified + 5, extraPackId)
+		_, err = database.Exec(query, seatId, round, modified + 5, extraPackId)
 		if err != nil {
 			return draftId, oldPackId, err
 		}
@@ -1025,7 +1038,6 @@ func doPick(userId int64, cardId int64, pass bool) (int64, int64, error) {
 			return draftId, oldPackId, err
 		}
 	case "Cogwork Librarian":
-		// TODO: update the card to be faceup in the database
 		query = `update cards set faceup=true where id=?`
 		log.Printf("%s\t%d", query, cardId)
 		_, err = database.Exec(query, cardId)
