@@ -967,23 +967,6 @@ func doPick(userId int64, cardId int64, pass bool) (int64, int64, error) {
 		}
 	}
 
-	query = `select count(1) from cards join packs join seats where seats.draft=? and seats.id=packs.seat and cards.pack=packs.id and packs.round=?`
-
-	row = database.QueryRow(query, draftId, round)
-	var picksLeft int64
-	err = row.Scan(&picksLeft)
-	if err != nil {
-		return draftId, oldPackId, err
-	}
-	if picksLeft == 0 {
-		query = `update drafts set round=round+1 where id=?`
-		log.Printf("%s\t%d", query, draftId)
-		_, err = database.Exec(query, draftId)
-		if err != nil {
-			return draftId, oldPackId, err
-		}
-	}
-
 	switch cardName {
 	case "Lore Seeker":
 		query = `select packs.id from packs join seats where packs.seat=seats.id and seats.draft=? and seats.position is null`
