@@ -926,7 +926,7 @@ func doPick(userId int64, cardId int64, pass bool) (int64, int64, error) {
 
 	if pass {
 		query = `begin transaction;update cards set pack=? where id=?;update packs set seat=?, modified=modified+10 where id=?;commit`
-		log.Printf("%s\t%d,%s,%d,%d", query, pickId, cardId, newPositionId, oldPackId)
+		log.Printf("%s\t%d,%d,%d,%d", query, pickId, cardId, newPositionId, oldPackId)
 
 		_, err = database.Exec(query, pickId, cardId, newPositionId, oldPackId)
 		if err != nil {
@@ -1085,7 +1085,9 @@ func NotifyByDraftAndPosition(draftId int64, position int64) error {
 	var slack string
 	var discord string
 	err := row.Scan(&slack, &discord)
-	if err != nil {
+	if err == sql.ErrNoRows {
+		return nil
+	} else if err != nil {
 		return err
 	}
 
