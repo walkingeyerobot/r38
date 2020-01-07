@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"crypto/rand"
 	"database/sql"
@@ -9,6 +10,7 @@ import (
 	"encoding/binary"
 	"encoding/csv"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/gorilla/sessions"
 	_ "github.com/mattn/go-sqlite3"
@@ -21,10 +23,9 @@ import (
 	"net/http"
 	"os"
 	"regexp"
-	"time"
-	"strings"
 	"strconv"
-	"errors"
+	"strings"
+	"time"
 )
 
 var secret_key_no_one_will_ever_guess = []byte(os.Getenv("SESSION_SECRET"))
@@ -54,10 +55,10 @@ func (s cryptoSource) Uint64() (v uint64) {
 }
 
 type Draft struct {
-	Name   string
-	Id     int64
-	Seats  int64
-	Joined bool
+	Name     string
+	Id       int64
+	Seats    int64
+	Joined   bool
 	Joinable bool
 }
 
@@ -70,7 +71,9 @@ type DraftPageData struct {
 	DraftName string
 	Picks     []Card
 	Pack      []Card
-	Powers []Card
+	Powers    []Card
+	Position  int64
+	Revealed  []string
 }
 
 type Card struct {
@@ -145,12 +148,8 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 		if session.Values["userid"] != nil {
-			if session.Values["userid"] == "1" {
-				log.Printf("%s %s", session.Values["userid"], r.URL.Path)
-				next.ServeHTTP(w, r)
-			} else {
-				fmt.Fprintf(w, `go away I'm testing things %s`, session.Values["userid"])
-			}
+			log.Printf("%s %s", session.Values["userid"], r.URL.Path)
+			next.ServeHTTP(w, r)
 		} else {
 			fmt.Fprintf(w, `<html><body><a href="/auth/google/login">login</a></body></html>`)
 		}
@@ -183,7 +182,7 @@ func ServeLibrarian(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	
+
 	cardId2Int, err := strconv.Atoi(parseResult[2])
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -243,7 +242,7 @@ func ServeLibrarian(w http.ResponseWriter, r *http.Request) {
 	}
 
 	query = `select cards.id from cards join packs join seats where cards.pack=packs.id and packs.seat=seats.id and seats.draft=? and cards.name="Cogwork Librarian" and seats.user=?`
-	
+
 	row := database.QueryRow(query, draftId1, userId)
 	var librarianId int64
 	err = row.Scan(&librarianId)
@@ -255,12 +254,6 @@ func ServeLibrarian(w http.ResponseWriter, r *http.Request) {
 	query = `update cards set pack=? where id=?`
 	log.Printf("%s\t%d,%d", query, packId1, librarianId)
 	_, err = database.Exec(query, packId1, librarianId)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	err = doNotificationsAndCleanup()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -295,7 +288,7 @@ func ServePower(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	
+
 	cardId := int64(cardIdInt)
 
 	query := `select cards.name, seats.draft from cards join packs join seats where cards.pack=packs.id and packs.seat=seats.id and seats.user=? and cards.id=? and cards.faceup=true and cards.name<>"Aether Searcher"`
@@ -325,7 +318,7 @@ func ServePower(w http.ResponseWriter, r *http.Request) {
 			http.Redirect(w, r, fmt.Sprintf("/draft/%d", draftId), http.StatusTemporaryRedirect)
 			return
 		}
-		
+
 		t := template.Must(template.ParseFiles("librarian.tmpl"))
 
 		data := DraftPageData{Pack: myPack, Picks: myPicks, DraftId: draftId}
@@ -354,14 +347,15 @@ func ServeAnswer(w http.ResponseWriter, r *http.Request) {
 	questionId := parseResult[1]
 	answer := parseResult[2]
 
-	query := `select questions.message, questions.answers, questions.seat, seats.draft from questions join seats where questions.id=? and questions.seat=seats.id`
+	query := `select questions.message, questions.answers, questions.seat, seats.draft, seats.position from questions join seats where questions.id=? and questions.seat=seats.id`
 
 	row := database.QueryRow(query, questionId)
 	var message string
 	var rawAnswers string
 	var seatId int64
 	var draftId int64
-	err = row.Scan(&message, &rawAnswers, &seatId, &draftId)
+	var position int64
+	err = row.Scan(&message, &rawAnswers, &seatId, &draftId, &position)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -379,18 +373,9 @@ func ServeAnswer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	query = `select email from users where id=?`
-	row = database.QueryRow(query, userId)
-	var email string
-	err = row.Scan(&email)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	query = `insert into revealed (draft, message) VALUES (?, ? || " answered '" || ? || "' to the question '" || ? || "'")`
-	log.Printf("%s\t%d,%s,%s,%s", query, draftId, email, answer, message)
-	_, err = database.Exec(query, draftId, email, answer, message)
+	query = `insert into revealed (draft, message) VALUES (?, "Seat " || ? || " answered '" || ? || "' to the question '" || ? || "'")`
+	log.Printf("%s\t%d,%d,%s,%s", query, draftId, position, answer, message)
+	_, err = database.Exec(query, draftId, position, answer, message)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -531,9 +516,37 @@ func ServeDraft(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	query = `select seats.position, drafts.name from seats join drafts where seats.draft=? and seats.user=? and seats.draft=drafts.id`
+	row = database.QueryRow(query, draftId, userId)
+	var position int64
+	var draftName string
+	err = row.Scan(&position, &draftName)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	query = `select message from revealed where draft=?`
+	rows, err := database.Query(query, draftId)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+	var revealed []string
+	for rows.Next() {
+		var msg string
+		err = rows.Scan(&msg)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		revealed = append(revealed, msg)
+	}
+
 	t := template.Must(template.ParseFiles("draft.tmpl"))
 
-	data := DraftPageData{Picks: myPicks, Pack: myPack, DraftId: draftId, DraftName: "todo: pass draft name", Powers: powers2}
+	data := DraftPageData{Picks: myPicks, Pack: myPack, DraftId: draftId, DraftName: draftName, Powers: powers2, Position: position, Revealed: revealed}
 	t.Execute(w, data)
 }
 
@@ -616,12 +629,6 @@ func ServePick(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	//-----------------------------------------------------------------
-
-	err = doNotificationsAndCleanup()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
 
 	http.Redirect(w, r, fmt.Sprintf("/draft/%d", draftId), http.StatusTemporaryRedirect)
 }
@@ -884,13 +891,12 @@ func doPick(userId int64, cardId int64, pass bool) (int64, int64, error) {
 		return draftId, -1, err
 	}
 
-	query = `select packs.id, seats.id, users.email from packs join seats join users where seats.user=? and seats.id=packs.seat and packs.round=0 and seats.draft=? and users.id=seats.user`
+	query = `select packs.id, seats.id from packs join seats join users where seats.user=? and seats.id=packs.seat and packs.round=0 and seats.draft=? and users.id=seats.user`
 
 	row = database.QueryRow(query, userId, draftId)
 	var pickId int64
 	var seatId int64
-	var email string
-	err = row.Scan(&pickId, &seatId, &email)
+	err = row.Scan(&pickId, &seatId)
 	if err != nil {
 		return draftId, oldPackId, err
 	}
@@ -898,7 +904,7 @@ func doPick(userId int64, cardId int64, pass bool) (int64, int64, error) {
 	query = `select id from seats where draft=? and position=?`
 
 	var newPosition int64
-	if round % 2 == 0 {
+	if round%2 == 0 {
 		newPosition = position - 1
 		if newPosition == -1 {
 			newPosition = 7
@@ -925,13 +931,31 @@ func doPick(userId int64, cardId int64, pass bool) (int64, int64, error) {
 			return draftId, oldPackId, err
 		}
 
-		if modified == 150 {
+		if modified+10 == 150 {
 			query = `update seats set round=round+1 where draft=? and user=?`
 			log.Printf("%s\t%d,%d", query, draftId, userId)
 
 			_, err = database.Exec(query, draftId, userId)
 			if err != nil {
 				return draftId, oldPackId, err
+			}
+
+			err = CleanupEmptyPacks()
+			if err != nil {
+				return draftId, oldPackId, err
+			}
+
+		} else {
+			nextPack, _, _, err := getPackPicksAndPowers(draftId, userId)
+			if err != nil {
+				return draftId, oldPackId, err
+			}
+
+			if len(nextPack) <= 1 {
+				err = NotifyByDraftAndPosition(draftId, newPositionId)
+				if err != nil {
+					return draftId, oldPackId, err
+				}
 			}
 		}
 	} else {
@@ -952,9 +976,9 @@ func doPick(userId int64, cardId int64, pass bool) (int64, int64, error) {
 	if err != nil && err != sql.ErrNoRows {
 		return draftId, oldPackId, err
 	} else if err == nil {
-		query = `INSERT INTO revealed (draft, message) VALUES (?, "Player " || ? || " at seat " || ? || " revealed " || ? || " to Aether Searcher")`
-		log.Printf("%s\t%d,%s,%d,%s", query, draftId, email, position, cardName)
-		_, err = database.Exec(query, draftId, email, position, cardName)
+		query = `INSERT INTO revealed (draft, message) VALUES (?, "Seat " || ? || " revealed " || ? || " to Aether Searcher")`
+		log.Printf("%s\t%d,%d,%s", query, draftId, position, cardName)
+		_, err = database.Exec(query, draftId, position, cardName)
 		if err != nil {
 			return draftId, oldPackId, err
 		}
@@ -978,15 +1002,15 @@ func doPick(userId int64, cardId int64, pass bool) (int64, int64, error) {
 		}
 
 		query = `update packs set seat = ?, round = ?, modified = ? where id = ?`
-		log.Printf("%s\t%d,%d,%d,%d", query, seatId, round, modified + 5, extraPackId)
-		_, err = database.Exec(query, seatId, round, modified + 5, extraPackId)
+		log.Printf("%s\t%d,%d,%d,%d", query, seatId, round, modified+5, extraPackId)
+		_, err = database.Exec(query, seatId, round, modified+5, extraPackId)
 		if err != nil {
 			return draftId, oldPackId, err
 		}
 
-		query = `INSERT INTO revealed (draft, message) VALUES (?, "Player " || ? || " at seat " || ? || " revealed Lore Seeker.")`
-		log.Printf("%s\t%d,%s,%d", query, draftId, email, position)
-		_, err = database.Exec(query, draftId, email, position)
+		query = `INSERT INTO revealed (draft, message) VALUES (?, "Seat " || ? || " revealed Lore Seeker.")`
+		log.Printf("%s\t%d,%d", query, draftId, position)
+		_, err = database.Exec(query, draftId, position)
 		if err != nil {
 			return draftId, oldPackId, err
 		}
@@ -998,16 +1022,16 @@ func doPick(userId int64, cardId int64, pass bool) (int64, int64, error) {
 			return draftId, oldPackId, err
 		}
 
-		query = `INSERT INTO revealed (draft, message) VALUES (?, "Player " || ? || " at seat " || ? || " revealed Aether Searcher.")`
-		log.Printf("%s\t%d,%s,%d", query, draftId, email, position)
-		_, err = database.Exec(query, draftId, email, position)
+		query = `INSERT INTO revealed (draft, message) VALUES (?, "Seat " || ? || " revealed Aether Searcher.")`
+		log.Printf("%s\t%d,%d", query, draftId, position)
+		_, err = database.Exec(query, draftId, position)
 		if err != nil {
 			return draftId, oldPackId, err
 		}
 	case "Regicide":
-		query = `INSERT INTO revealed (draft, message) VALUES (?, "Player " || ? || " at seat " || ? || " revealed Regicide.")`
-		log.Printf("%s\t%d,%s,%d", query, draftId, email, position)
-		_, err = database.Exec(query, draftId, email, position)
+		query = `INSERT INTO revealed (draft, message) VALUES (?, "Seat " || ? || " revealed Regicide.")`
+		log.Printf("%s\t%d,%d", query, draftId, position)
+		_, err = database.Exec(query, draftId, position)
 		if err != nil {
 			return draftId, oldPackId, err
 		}
@@ -1029,17 +1053,54 @@ func doPick(userId int64, cardId int64, pass bool) (int64, int64, error) {
 		if err != nil {
 			return draftId, oldPackId, err
 		}
+
+		query = `INSERT INTO revealed (draft, message) VALUES (?, "Seat " || ? || " revealed Cogwork Librarian.")`
+		log.Printf("%s\t%d,%d", query, draftId, position)
+		_, err = database.Exec(query, draftId, position)
+		if err != nil {
+			return draftId, oldPackId, err
+		}
 	}
 
 	return draftId, oldPackId, nil
 }
 
-func doNotificationsAndCleanup() (error) {
+func CleanupEmptyPacks() error {
 	query := `delete from packs where modified = 150 and round <> 0`
 	log.Printf("%s", query)
 	_, err := database.Exec(query)
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func NotifyByDraftAndPosition(draftId int64, position int64) error {
+	query := `select users.slack,users.discord from users join seats where users.id=seats.user and seats.draft=? and seats.position=?`
+
+	row := database.QueryRow(query, draftId, position)
+	var slack string
+	var discord string
+	err := row.Scan(&slack, &discord)
+	if err != nil {
+		return err
+	}
+
+	if slack != "" {
+		var jsonStr = []byte(fmt.Sprintf(`{"text": "%s you have new picks <http://draft.thefoley.net/draft/%d>"`, slack, draftId))
+		req, err := http.NewRequest("POST", os.Getenv("SLACK_WEBHOOK_URL"), bytes.NewBuffer(jsonStr))
+		if err != nil {
+			return err
+		}
+		req.Header.Set("Content-Type", "application/json")
+
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		if err != nil {
+			return err
+		}
+		defer resp.Body.Close()
 	}
 	return nil
 }

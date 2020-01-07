@@ -5,7 +5,8 @@
   <link rel="icon" href="data:;base64,=">
 </head>
 <body>
-  <div>draft id: {{ .DraftId }}</div>
+  <div>{{ .DraftName }}</div>
+  <div>Seat {{ .Position }}</div>
   <div>
     {{ if not .Pack }}
       <div>no packs available</div>
@@ -51,6 +52,11 @@
           <span>{{ .Name }}</span>
         </div>
       {{ end }}
+    {{ end }}
+    <hr/>
+    <div>Public Messages</div>
+    {{ range .Revealed }}
+      <span>{{ . }}</span>
     {{ end }}
   </div>
 </body>
