@@ -13,7 +13,7 @@
       <div>current pack</div>
         {{ range .Pack }}
           <div class="card pick">
-            <img data-cardid="{{ .Id }}" src="http://api.scryfall.com/cards/{{ .Edition }}/{{ .Number }}?format=image&version=small" />
+            <img data-cardid="{{ .Id }}" src="http://api.scryfall.com/cards/{{ .Edition }}/{{ .Number }}?format=image&version=normal" height=300 />
             <span>{{ .Name }}</span>
             {{ if .Tags }}
               <span>({{ .Tags }})</span>
@@ -28,7 +28,7 @@
       <div>previous picks</div>
       {{ range .Picks }}
         <div class="card">
-          <img src="http://api.scryfall.com/cards/{{ .Edition }}/{{ .Number }}?format=image&version=small" />
+          <img src="http://api.scryfall.com/cards/{{ .Edition }}/{{ .Number }}?format=image&version=normal" height=300 />
           <span>{{ .Name }}</span>
           {{ if .Tags }}
             <span>({{ .Tags }})</span>
