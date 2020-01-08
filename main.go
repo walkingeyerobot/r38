@@ -954,7 +954,7 @@ func doPick(userId int64, cardId int64, pass bool) (int64, int64, error) {
 			}
 
 			if len(nextPack) <= 1 {
-				err = NotifyByDraftAndPosition(draftId, newPositionId)
+				err = NotifyByDraftAndPosition(draftId, newPosition)
 				if err != nil {
 					return draftId, oldPackId, err
 				}
@@ -1079,11 +1079,13 @@ func CleanupEmptyPacks() error {
 }
 
 func NotifyByDraftAndPosition(draftId int64, position int64) error {
+	log.Printf("Attempting to notify %d %d", draftId, position)
+
 	query := `select users.slack,users.discord from users join seats where users.id=seats.user and seats.draft=? and seats.position=?`
 
 	row := database.QueryRow(query, draftId, position)
-	var slack string
-	var discord string
+	slack := ""
+	discord := ""
 	err := row.Scan(&slack, &discord)
 	if err == sql.ErrNoRows {
 		return nil
@@ -1092,7 +1094,7 @@ func NotifyByDraftAndPosition(draftId int64, position int64) error {
 	}
 
 	if slack != "" {
-		var jsonStr = []byte(fmt.Sprintf(`{"text": "%s you have new picks <http://draft.thefoley.net/draft/%d>"`, slack, draftId))
+		var jsonStr = []byte(fmt.Sprintf(`{"text": "%s you have new picks <http://draft.thefoley.net/draft/%d>"}`, slack, draftId))
 		req, err := http.NewRequest("POST", os.Getenv("SLACK_WEBHOOK_URL"), bytes.NewBuffer(jsonStr))
 		if err != nil {
 			return err
@@ -1105,6 +1107,10 @@ func NotifyByDraftAndPosition(draftId int64, position int64) error {
 			return err
 		}
 		defer resp.Body.Close()
+
+		if resp.StatusCode >= 400 {
+			return fmt.Errorf("Error sending msg. Status: %v", resp.Status)
+		}
 	}
 	return nil
 }
