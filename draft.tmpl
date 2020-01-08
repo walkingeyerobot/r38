@@ -55,9 +55,11 @@
     {{ end }}
     <hr/>
     <div>Public Messages</div>
-    {{ range .Revealed }}
-      <span>{{ . }}</span>
-    {{ end }}
+    <ul>
+      {{ range .Revealed }}
+        <li>{{ . }}</li>
+      {{ end }}
+    </ul>
   </div>
 </body>
 </html>
