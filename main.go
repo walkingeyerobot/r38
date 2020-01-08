@@ -765,7 +765,7 @@ func oauthGoogleCallback(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	statement, _ := database.Prepare("INSERT INTO users (google_id, email, picture) VALUES (?, ?, ?)")
+	statement, _ := database.Prepare(`INSERT INTO users (google_id, email, picture, slack, discord) VALUES (?, ?, ?, "", "")`)
 	statement.Exec(p.Id, p.Email, p.Picture)
 	row := database.QueryRow(`SELECT id FROM users WHERE google_id = ?`, p.Id)
 	var rowid string
@@ -933,7 +933,15 @@ func doPick(userId int64, cardId int64, pass bool) (int64, int64, error) {
 			return draftId, oldPackId, err
 		}
 
-		if modified+10 == 150 {
+		query = `select count(cards.id) from packs left join cards on packs.id=cards.pack where packs.id=? group by packs.id`
+		row = database.QueryRow(query, oldPackId)
+		var oldPackCount int64
+		err = row.Scan(&oldPackCount)
+		if err != nil {
+			return draftId, oldPackId, err
+		}
+
+		if oldPackCount == 0 {
 			query = `update seats set round=round+1 where draft=? and user=?`
 			log.Printf("%s\t%d,%d", query, draftId, userId)
 
@@ -954,7 +962,7 @@ func doPick(userId int64, cardId int64, pass bool) (int64, int64, error) {
 			}
 
 			if len(nextPack) <= 1 {
-				err = NotifyByDraftAndPosition(draftId, newPosition)
+				err = NotifyByDraftAndPosition(draftId, newPosition, userId)
 				if err != nil {
 					return draftId, oldPackId, err
 				}
@@ -1068,7 +1076,7 @@ func doPick(userId int64, cardId int64, pass bool) (int64, int64, error) {
 }
 
 func CleanupEmptyPacks() error {
-	query := `delete from packs where modified = 150 and round <> 0`
+	query := `delete from packs where id in (select packs.id from packs left join cards on packs.id=cards.pack group by packs.id having count(cards.id)=0)`
 	log.Printf("%s", query)
 	_, err := database.Exec(query)
 	if err != nil {
@@ -1078,12 +1086,12 @@ func CleanupEmptyPacks() error {
 	return nil
 }
 
-func NotifyByDraftAndPosition(draftId int64, position int64) error {
+func NotifyByDraftAndPosition(draftId int64, position int64, fromUserId int64) error {
 	log.Printf("Attempting to notify %d %d", draftId, position)
 
-	query := `select users.slack,users.discord from users join seats where users.id=seats.user and seats.draft=? and seats.position=?`
+	query := `select users.slack,users.discord from users join seats a join seats b where users.id=a.user and a.draft=? and a.position=? and b.draft=a.draft and b.user=? and a.round=b.round`
 
-	row := database.QueryRow(query, draftId, position)
+	row := database.QueryRow(query, draftId, position, fromUserId)
 	slack := ""
 	discord := ""
 	err := row.Scan(&slack, &discord)
