@@ -37,9 +37,9 @@
       {{ range .Picks }}
         <div class="card">
           <img src="http://api.scryfall.com/cards/{{ .Edition }}/{{ .Number }}?format=image&version=normal" height=300 />
-          <span>{{ .Name }}</span>
+          <div>{{ .Name }}</div>
           {{ if .Tags }}
-            <span>({{ .Tags }})</span>
+            <div>({{ .Tags }})</div>
           {{ end }}
         </div>
       {{ end }}
