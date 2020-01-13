@@ -3,6 +3,11 @@
 <head>
   <title>not for ulb nope</title>
   <link rel="icon" href="data:;base64,=">
+  <style>
+    .card {
+      display: inline-block;
+    }
+  </style>
 </head>
 <body>
   <div>{{ .DraftName }}</div>
@@ -17,9 +22,9 @@
             <a href="/pick/{{ .Id }}">
               <img src="http://api.scryfall.com/cards/{{ .Edition }}/{{ .Number }}?format=image&version=normal" height=300 />
             </a>
-            <span>{{ .Name }}</span>
+            <div>{{ .Name }}</div>
             {{ if .Tags }}
-              <span>({{ .Tags }})</span>
+              <div>({{ .Tags }})</div>
             {{ end }}
           </div>
         {{ end }}
@@ -49,7 +54,7 @@
           <a href="/power/{{ .Id }}">
             <img src="http://api.scryfall.com/cards/{{ .Edition }}/{{ .Number }}?format=image&version=normal" height=300 />
           </a>
-          <span>{{ .Name }}</span>
+          <div>{{ .Name }}</div>
         </div>
       {{ end }}
     {{ end }}
