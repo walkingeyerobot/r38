@@ -102,7 +102,7 @@ func main() {
 		return
 	}
 
-	// MakeDraft("test draft two")
+	// MakeDraft("test draft five")
 
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":12264"),
@@ -1080,7 +1080,7 @@ func doPick(userId int64, cardId int64, pass bool) (int64, int64, error) {
 }
 
 func CleanupEmptyPacks() error {
-	query := `delete from packs where id in (select packs.id from packs left join cards on packs.id=cards.pack group by packs.id having count(cards.id)=0)`
+	query := `delete from packs where id in (select packs.id from packs left join cards on packs.id=cards.pack where packs.round<>0 group by packs.id having count(cards.id)=0)`
 	log.Printf("%s", query)
 	_, err := database.Exec(query)
 	if err != nil {
