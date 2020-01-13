@@ -933,36 +933,40 @@ func doPick(userId int64, cardId int64, pass bool) (int64, int64, error) {
 			return draftId, oldPackId, err
 		}
 
-		query = `select count(cards.id) from packs left join cards on packs.id=cards.pack where packs.id=? group by packs.id`
-		row = database.QueryRow(query, oldPackId)
-		var oldPackCount int64
-		err = row.Scan(&oldPackCount)
+		err = CleanupEmptyPacks()
 		if err != nil {
 			return draftId, oldPackId, err
 		}
 
-		if oldPackCount == 0 {
-			query = `update seats set round=round+1 where draft=? and user=?`
-			log.Printf("%s\t%d,%d", query, draftId, userId)
+		query = `select count(1) from packs join seats where packs.seat=seats.id and packs.round=?`
+		row = database.QueryRow(query, round)
+		var packsLeftInRound int64
+		err = row.Scan(&packsLeftInRound)
+		if err != nil {
+			return draftId, oldPackId, err
+		}
 
-			_, err = database.Exec(query, draftId, userId)
+		if packsLeftInRound == 0 {
+			query = `update seats set round=round+1 where draft=?`
+			log.Printf("%s\t%d", query, draftId)
+
+			_, err = database.Exec(query, draftId)
 			if err != nil {
 				return draftId, oldPackId, err
 			}
 
-			err = CleanupEmptyPacks()
-			if err != nil {
-				return draftId, oldPackId, err
-			}
-
+			// TODO: ping all users. maybe.
 		} else {
-			nextPack, _, _, err := getPackPicksAndPowers(draftId, userId)
+			query = `select count(1) from packs join seats where packs.seat=seats.id and seats.user=? and packs.round=?`
+			row = database.QueryRow(query, userId, round)
+			var packsLeftInSeat int64
+			err = row.Scan(&packsLeftInSeat)
 			if err != nil {
 				return draftId, oldPackId, err
 			}
 
-			if len(nextPack) <= 1 {
-				err = NotifyByDraftAndPosition(draftId, newPosition, userId)
+			if packsLeftInSeat == 0 {
+				err = NotifyByDraftAndPosition(draftId, newPosition)
 				if err != nil {
 					return draftId, oldPackId, err
 				}
@@ -1086,12 +1090,12 @@ func CleanupEmptyPacks() error {
 	return nil
 }
 
-func NotifyByDraftAndPosition(draftId int64, position int64, fromUserId int64) error {
+func NotifyByDraftAndPosition(draftId int64, position int64) error {
 	log.Printf("Attempting to notify %d %d", draftId, position)
 
-	query := `select users.slack,users.discord from users join seats a join seats b where users.id=a.user and a.draft=? and a.position=? and b.draft=a.draft and b.user=? and a.round=b.round`
+	query := `select users.slack,users.discord from users join seats where users.id=seats.user and seats.draft=? and seats.position=?`
 
-	row := database.QueryRow(query, draftId, position, fromUserId)
+	row := database.QueryRow(query, draftId, position)
 	slack := ""
 	discord := ""
 	err := row.Scan(&slack, &discord)
