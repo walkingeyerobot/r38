@@ -14,6 +14,15 @@
 <body>
   <div>{{ .DraftName }}</div>
   <div>Seat {{ .Position }}</div>
+  <hr/>
+  <div>Public Messages</div>
+    <ul>
+      {{ range .Revealed }}
+        <li>{{ . }}</li>
+      {{ end }}
+    </ul>
+  </div>
+  <hr/>
   <div>
     {{ if not .Pack }}
       <div>no packs available</div>
@@ -60,13 +69,5 @@
         </div>
       {{ end }}
     {{ end }}
-    <hr/>
-    <div>Public Messages</div>
-    <ul>
-      {{ range .Revealed }}
-        <li>{{ . }}</li>
-      {{ end }}
-    </ul>
-  </div>
 </body>
 </html>
