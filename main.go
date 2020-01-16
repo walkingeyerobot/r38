@@ -122,6 +122,9 @@ func NewHandler() http.Handler {
 
 	mux.HandleFunc("/auth/google/login", oauthGoogleLogin)
 	mux.HandleFunc("/auth/google/callback", oauthGoogleCallback)
+
+	viewHandler := http.HandlerFunc(ServeView)
+	mux.Handle("/view/", AuthMiddleware(viewHandler))
 	librarianHandler := http.HandlerFunc(ServeLibrarian)
 	mux.Handle("/librarian/", AuthMiddleware(librarianHandler))
 	powerHandler := http.HandlerFunc(ServePower)
@@ -564,6 +567,7 @@ func ServeDraft(w http.ResponseWriter, r *http.Request) {
 	}
 	userId := int64(userIdInt)
 
+
 	re := regexp.MustCompile(`/draft/(\d+)`)
 	parseResult := re.FindStringSubmatch(r.URL.Path)
 
@@ -579,13 +583,62 @@ func ServeDraft(w http.ResponseWriter, r *http.Request) {
 	}
 	draftId := int64(draftIdInt)
 
+	doServeDraft(w, r, userId, draftId)
+}
+
+func ServeView(w http.ResponseWriter, r *http.Request) {
+	session, err := store.Get(r, "session-name")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	userIdInt, err := strconv.Atoi(session.Values["userid"].(string))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	userId := int64(userIdInt)
+
+	if userId != 1 && userId != 5 && userId != 10 {
+		http.Error(w, "lol no", http.StatusInternalServerError)
+		return
+	}
+
+	re := regexp.MustCompile(`/view/(\d+)`)
+	parseResult := re.FindStringSubmatch(r.URL.Path)
+
+	if parseResult == nil {
+		http.Error(w, "bad url", http.StatusInternalServerError)
+		return
+	}
+
+	positionInt, err := strconv.Atoi(parseResult[1])
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	position := int64(positionInt)
+
+	query := `select user from seats where position=? and draft=1`
+	row := database.QueryRow(query, position)
+	var user2Id int64
+	err = row.Scan(&user2Id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	doServeDraft(w, r, user2Id, 1)
+}
+
+func doServeDraft(w http.ResponseWriter, r *http.Request, userId int64, draftId int64) {
 	query := `select questions.id,questions.message,questions.answers from questions join seats where questions.seat=seats.id and seats.draft=? and seats.user=? and answered=false`
 	row := database.QueryRow(query, draftId, userId)
 
 	var questionId int64
 	var message string
 	var rawAnswers string
-	err = row.Scan(&questionId, &message, &rawAnswers)
+	err := row.Scan(&questionId, &message, &rawAnswers)
 	if err == nil {
 		answers := strings.Split(rawAnswers, ",")
 		data := QuestionPageData{DraftId: draftId, QuestionId: questionId, Message: message, Answers: answers}
