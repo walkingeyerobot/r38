@@ -13,6 +13,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gorilla/sessions"
+	"github.com/jung-kurt/gofpdf"
 	_ "github.com/mattn/go-sqlite3"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
@@ -130,6 +131,8 @@ func NewHandler() http.Handler {
 	mux.Handle("/power/", AuthMiddleware(powerHandler))
 	draftHandler := http.HandlerFunc(ServeDraft)
 	mux.Handle("/draft/", AuthMiddleware(draftHandler))
+	pdfHandler := http.HandlerFunc(ServePdf)
+	mux.Handle("/pdf/", AuthMiddleware(pdfHandler))
 	pickHandler := http.HandlerFunc(ServePick)
 	mux.Handle("/pick/", AuthMiddleware(pickHandler))
 	joinHandler := http.HandlerFunc(ServeJoin)
@@ -465,6 +468,90 @@ func ServeIndex(w http.ResponseWriter, r *http.Request) {
 
 	data := IndexPageData{Drafts: Drafts}
 	t.Execute(w, data)
+}
+
+func ServePdf(w http.ResponseWriter, r *http.Request) {
+	session, err := store.Get(r, "session-name")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	userIdInt, err := strconv.Atoi(session.Values["userid"].(string))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	userId := int64(userIdInt)
+
+	re := regexp.MustCompile(`/pdf/(\d+)`)
+	parseResult := re.FindStringSubmatch(r.URL.Path)
+
+	if parseResult == nil {
+		http.Error(w, "bad url", http.StatusInternalServerError)
+		return
+	}
+
+	draftIdInt, err := strconv.Atoi(parseResult[1])
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	draftId := int64(draftIdInt)
+
+	_, myPicks, _, err := getPackPicksAndPowers(draftId, userId)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/pdf")
+
+	pdf := gofpdf.New("P", "in", "Letter", "")
+	pdf.AddPage()
+	cardsOnLine := 0
+	linesOnPage := 0
+	options := gofpdf.ImageOptions{
+		ImageType:             "JPG",
+		ReadDpi:               false,
+		AllowNegativePosition: false,
+	}
+
+	for idx, pick := range myPicks {
+		imgResp, err := http.Get(
+			fmt.Sprintf("http://api.scryfall.com/cards/%s/%s?format=image&version=normal",
+				pick.Edition, pick.Number))
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		pdf.RegisterImageOptionsReader(strconv.Itoa(idx), options, imgResp.Body)
+		pdf.ImageOptions(strconv.Itoa(idx),
+			0.25+float64(cardsOnLine)*2.4,
+			0.25+float64(linesOnPage)*3.35,
+			2.4, 0, false, options, 0, "")
+		cardsOnLine++
+		if cardsOnLine == 3 {
+			cardsOnLine = 0
+			linesOnPage++
+			if linesOnPage == 3 {
+				linesOnPage = 0
+				pdf.AddPage()
+			}
+		}
+
+		err = imgResp.Body.Close()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
+
+	err = pdf.Output(w)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func ServeDraft(w http.ResponseWriter, r *http.Request) {
