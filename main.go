@@ -78,11 +78,11 @@ type DraftPageData struct {
 }
 
 type Card struct {
-	Id      int64
-	Name    string
-	Tags    string
-	Number  string
-	Edition string
+	Id      int64 `json:"-"`
+	Name    string `json:"name"`
+	Tags    string `json:"tags"`
+	Number  string `json:"number"`
+	Edition string `json:"edition"`
 }
 
 type QuestionPageData struct {
@@ -90,6 +90,22 @@ type QuestionPageData struct {
 	DraftId    int64
 	Message    string
 	Answers    []string
+}
+
+type Seat struct {
+	Packs []Pack `json:"packs"`
+	Position int64 `json:"position"`
+}
+
+type Pack struct {
+	Cards []Card `json:"cards"`
+	Round int64 `json:"round"`
+	Id int64 `json:"-"`
+}
+
+type DraftJson struct {
+	Seats []Seat `json:"seats"`
+	Name string `json:"name"`
 }
 
 func main() {
@@ -103,7 +119,16 @@ func main() {
 		return
 	}
 
-	// MakeDraft("test draft five")
+	// MakeDraft("test draft six")
+
+	s, err := GetJson(int64(2))
+	if err != nil {
+		log.Printf("error: %s", err.Error())
+		return
+	} else {
+		log.Printf("good!\n%s", s)
+		return
+	}
 
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":12264"),
@@ -763,13 +788,11 @@ func ServePick(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cardId := int64(cardIdInt)
-	//-----------------------------------------------------------------
 	draftId, _, err := doPick(userId, cardId, true)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	//-----------------------------------------------------------------
 
 	http.Redirect(w, r, fmt.Sprintf("/draft/%d", draftId), http.StatusTemporaryRedirect)
 }
@@ -813,11 +836,11 @@ func MakeDraft(name string) {
 		return
 	}
 
-	query = `INSERT INTO packs (seat, modified, round) VALUES (?, 0, ?)`
+	query = `INSERT INTO packs (seat, original_seat, modified, round) VALUES (?, ?, 0, ?)`
 	var packIds [25]int64
 	for i := 0; i < 8; i++ {
 		for j := 0; j < 4; j++ {
-			res, err = database.Exec(query, seatIds[i], j)
+			res, err = database.Exec(query, seatIds[i], seatIds[i], j)
 			if err != nil {
 				// error
 				return
@@ -832,7 +855,7 @@ func MakeDraft(name string) {
 		}
 	}
 
-	res, err = database.Exec(`INSERT INTO packs (seat, modified, round) VALUES (?, 0, NULL)`, seatIds[8])
+	res, err = database.Exec(`INSERT INTO packs (seat, original_seat, modified, round) VALUES (?, ?, 0, NULL)`, seatIds[8], seatIds[8])
 	if err != nil {
 		// error
 		return
@@ -843,7 +866,7 @@ func MakeDraft(name string) {
 		return
 	}
 
-	query = `INSERT INTO cards (pack, edition, number, tags, name) VALUES (?, ?, ?, ?, ?)`
+	query = `INSERT INTO cards (pack, original_pack, edition, number, tags, name) VALUES (?, ?, ?, ?, ?, ?)`
 	file, err := os.Open("cube.csv")
 	if err != nil {
 		// error
@@ -862,7 +885,8 @@ func MakeDraft(name string) {
 	for i := 539; i > 164; i-- {
 		j := rnd.Intn(i)
 		lines[i], lines[j] = lines[j], lines[i]
-		database.Exec(query, packIds[(539-i)/15], lines[i][4], lines[i][5], lines[i][7], lines[i][0])
+		packId := packIds[(539-i)/15]
+		database.Exec(query, packId, packId, lines[i][4], lines[i][5], lines[i][7], lines[i][0])
 	}
 	fmt.Printf("done generating new draft\n")
 }
@@ -1093,8 +1117,6 @@ func doPick(userId int64, cardId int64, pass bool) (int64, int64, error) {
 			if err != nil {
 				return draftId, oldPackId, err
 			}
-
-			// TODO: ping all users. maybe.
 		} else {
 			query = `select count(1) from packs join seats where packs.seat=seats.id and seats.user=? and packs.round=?`
 			row = database.QueryRow(query, userId, round)
@@ -1264,4 +1286,64 @@ func NotifyByDraftAndPosition(draftId int64, position int64) error {
 		}
 	}
 	return nil
+}
+
+func GetJson(draftId int64) (string, error) {
+	query := `select drafts.name, seats.position, packs.id, packs.round, cards.name, cards.edition, cards.number, cards.tags from drafts join seats join packs join cards where drafts.id=seats.draft and seats.id=packs.original_seat and packs.id=cards.original_pack and drafts.id=?`
+
+	rows, err := database.Query(query, draftId)
+	if err != nil {
+		return "", err
+	}
+	defer rows.Close()
+	var draft DraftJson
+	var i int64
+	for i = 0; i < 8; i++ {
+		pool := Pack{Cards: []Card{}, Round: 0}
+		draft.Seats = append(draft.Seats, Seat{Position: i, Packs: []Pack{pool}})
+	}
+	for rows.Next() {
+		var nullablePosition sql.NullInt64
+		var packId int64
+		var nullableRound sql.NullInt64
+		var card Card
+		err = rows.Scan(&draft.Name, &nullablePosition, &packId, &nullableRound, &card.Name, &card.Edition, &card.Number, &card.Tags)
+		if err != nil {
+			return "", err
+		}
+		if !nullablePosition.Valid || !nullableRound.Valid {
+			log.Printf("skipping null card")
+			continue
+		}
+		position := nullablePosition.Int64
+		packRound := nullableRound.Int64
+
+		for si, s := range draft.Seats {
+			if s.Position == position {
+				foundPack := false
+				for pi, p := range s.Packs {
+					if p.Id == packId {
+						p.Cards = append(p.Cards, card)
+						draft.Seats[si] = s
+						draft.Seats[si].Packs[pi] = p
+						foundPack = true
+						break
+					}
+				}
+				if foundPack {
+					break
+				} else {
+					s.Packs = append(s.Packs, Pack{Id: packId, Round: packRound, Cards: []Card{card}})
+					draft.Seats[si] = s
+				}
+			}
+		}
+	}
+
+	b, err := json.Marshal(draft)
+	if err != nil {
+		return "", err
+	}
+	
+	return string(b), nil
 }
