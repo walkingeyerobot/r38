@@ -110,6 +110,10 @@ type DraftEvent struct {
 	Card2         string   `json:"card2"`
 }
 
+type ReplayPageData struct {
+	Json string
+}
+
 func main() {
 	var err error
 	database, err = sql.Open("sqlite3", "draft.db")
@@ -150,6 +154,8 @@ func NewHandler() http.Handler {
 	mux.HandleFunc("/auth/google/login", oauthGoogleLogin)
 	mux.HandleFunc("/auth/google/callback", oauthGoogleCallback)
 
+	replayHandler := http.HandlerFunc(ServeReplay)
+	mux.Handle("/replay/", AuthMiddleware(replayHandler))
 	viewHandler := http.HandlerFunc(ServeView)
 	mux.Handle("/view/", AuthMiddleware(viewHandler))
 	librarianHandler := http.HandlerFunc(ServeLibrarian)
@@ -188,6 +194,44 @@ func AuthMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+func ServeReplay(w http.ResponseWriter, r *http.Request) {
+	session, err := store.Get(r, "session-name")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	userIdInt, err := strconv.Atoi(session.Values["userid"].(string))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	userId := int64(userIdInt)
+	log.Printf("%d replay", userId)
+
+	re := regexp.MustCompile(`/replay/(\d+)`)
+	parseResult := re.FindStringSubmatch(r.URL.Path)
+
+	if parseResult == nil {
+		http.Error(w, "bad url", http.StatusInternalServerError)
+		return
+	}
+
+	draftIdInt, err := strconv.Atoi(parseResult[1])
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	draftId := int64(draftIdInt)
+
+	json, err := GetJson(draftId)
+
+	t := template.Must(template.ParseFiles("replay.tmpl"))
+
+	data := ReplayPageData{Json: json}
+
+	t.Execute(w, data)
+}
 func ServeLibrarian(w http.ResponseWriter, r *http.Request) {
 	session, err := store.Get(r, "session-name")
 	if err != nil {
