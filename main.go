@@ -127,15 +127,6 @@ func main() {
 
 	// MakeDraft("test draft six")
 
-	s, err := GetJson(int64(2))
-	if err != nil {
-		log.Printf("error: %s", err.Error())
-		return
-	} else {
-		log.Printf("good!\n%s", s)
-		//		return
-	}
-
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":12264"),
 		Handler: NewHandler(),
@@ -347,9 +338,7 @@ func ServeLibrarian(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	query = `insert into events (draft, user, announcement, card1, card2) VALUES (?, ?, ?, ?, ?)`
-	log.Printf("%s\t%d,%d,%s,%d,%d", query, draftId1, userId, strings.Join(announcements, "\n"), cardId1, cardId2)
-	_, err = database.Exec(query, draftId1, userId, strings.Join(announcements, "\n"), cardId1, cardId2)
+	err = DoEvent(draftId1, userId, announcements, cardId1, sql.NullInt64{Int64: cardId2})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -737,9 +726,7 @@ func ServePick(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	query := `insert into events (draft, user, announcement, card1, card2) VALUES (?, ?, ?, ?, null)`
-	log.Printf("%s\t%d,%d,%s,%d", query, draftId, userId, strings.Join(announcements, "\n"), cardId)
-	_, err = database.Exec(query, draftId, userId, strings.Join(announcements, "\n"), cardId)
+	err = DoEvent(draftId, userId, announcements, cardId, sql.NullInt64{Valid: false})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -1246,4 +1233,20 @@ func GetJson(draftId int64) (string, error) {
 	}
 
 	return string(b), nil
+}
+
+func DoEvent(draftId int64, userId int64, announcements []string, cardId1 int64, cardId2 sql.NullInt64) error {
+	var query string
+	var err error
+	if cardId2.Valid {
+		query = `insert into events (draft, user, announcement, card1, card2, modified) VALUES (?, ?, ?, ?, ?, ?, (select count(1) from seats join packs join cards where seats.user=? and seats.draft=? and packs.seat=seats.id and cards.pack=packs.id and packs.round=0))`
+		log.Printf("%s\t%d,%d,%s,%d,%d,%d,%d", query, draftId, userId, strings.Join(announcements, "\n"), cardId1, cardId2.Int64, userId, draftId)
+		_, err = database.Exec(query, draftId, userId, strings.Join(announcements, "\n"), cardId1, cardId2.Int64, userId, draftId)
+	} else {
+		query := `insert into events (draft, user, announcement, card1, card2, modified) VALUES (?, ?, ?, ?, null, (select count(1) from seats join packs join cards where seats.user=? and seats.draft=? and packs.seat=seats.id and cards.pack=packs.id and packs.round=0))`
+		log.Printf("%s\t%d,%d,%s,%d,%d,%d", query, draftId, userId, strings.Join(announcements, "\n"), cardId1, userId, draftId)
+		_, err = database.Exec(query, draftId, userId, strings.Join(announcements, "\n"), cardId1, userId, draftId)
+	}
+
+	return err
 }
