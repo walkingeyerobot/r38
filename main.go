@@ -104,10 +104,12 @@ type DraftJson struct {
 }
 
 type DraftEvent struct {
-	Player        int64    `json:"player"`
-	Announcements []string `json:"announcements"`
-	Card1         string   `json:"card1"`
-	Card2         string   `json:"card2"`
+	Player         int64    `json:"player"`
+	Announcements  []string `json:"announcements"`
+	Card1          string   `json:"card1"`
+	Card2          string   `json:"card2"`
+	PlayerModified int64    `json:"playerModified"`
+	DraftModified  int64    `json:"draftModified"`
 }
 
 type ReplayPageData struct {
@@ -1206,7 +1208,7 @@ func GetJson(draftId int64) (string, error) {
 		draft.Seats[position].Packs[packRound].Cards = append(draft.Seats[position].Packs[packRound].Cards, card)
 	}
 
-	query = `select seats.position, events.announcement, cards1.name, cards2.name from events join seats on events.draft=seats.draft and events.user=seats.user left join cards as cards1 on events.card1=cards1.id left join cards as cards2 on events.card2=cards2.id where events.draft=?`
+	query = `select seats.position, events.announcement, cards1.name, cards2.name, events.id, events.modified from events join seats on events.draft=seats.draft and events.user=seats.user left join cards as cards1 on events.card1=cards1.id left join cards as cards2 on events.card2=cards2.id where events.draft=?`
 	rows, err = database.Query(query, draftId)
 	if err != nil && err != sql.ErrNoRows {
 		return "", err
@@ -1216,7 +1218,7 @@ func GetJson(draftId int64) (string, error) {
 		var event DraftEvent
 		var announcements string
 		var card2 sql.NullString
-		err = rows.Scan(&event.Player, &announcements, &event.Card1, &card2)
+		err = rows.Scan(&event.Player, &announcements, &event.Card1, &card2, &event.DraftModified, &event.PlayerModified)
 		if err != nil {
 			return "", err
 		}
