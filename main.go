@@ -487,6 +487,8 @@ func ServePdf(w http.ResponseWriter, r *http.Request) {
 
 	pdf := gofpdf.New("P", "in", "Letter", "")
 	pdf.AddPage()
+	pdf.SetFont("Arial", "B", float64(12))
+	pdf.SetTextColor(255, 255, 0)
 	cardsOnLine := 0
 	linesOnPage := 0
 	options := gofpdf.ImageOptions{
@@ -505,10 +507,13 @@ func ServePdf(w http.ResponseWriter, r *http.Request) {
 		}
 
 		pdf.RegisterImageOptionsReader(strconv.Itoa(idx), options, imgResp.Body)
-		pdf.ImageOptions(strconv.Itoa(idx),
-			0.25+float64(cardsOnLine)*2.4,
-			0.25+float64(linesOnPage)*3.35,
-			2.4, 0, false, options, 0, "")
+		x := 0.25 + float64(cardsOnLine)*2.4
+		y := 0.25 + float64(linesOnPage)*3.35
+		pdf.ImageOptions(strconv.Itoa(idx), x, y, 2.4, 0, false, options, 0, "")
+
+		pdf.SetXY(x, y+3.15)
+		pdf.Cell(0.1, 0.1, pick.Tags)
+
 		cardsOnLine++
 		if cardsOnLine == 3 {
 			cardsOnLine = 0
