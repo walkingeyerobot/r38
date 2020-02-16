@@ -127,7 +127,7 @@ func main() {
 		return
 	}
 
-	// MakeDraft("test draft six")
+	// MakeDraft("test draft v2.0")
 
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":12264"),
@@ -200,6 +200,11 @@ func ServeReplay(w http.ResponseWriter, r *http.Request) {
 	}
 	userId := int64(userIdInt)
 	log.Printf("%d replay", userId)
+
+	if userId != 1 {
+		http.Error(w, "lol no", http.StatusInternalServerError)
+		return
+	}
 
 	re := regexp.MustCompile(`/replay/(\d+)`)
 	parseResult := re.FindStringSubmatch(r.URL.Path)
@@ -340,7 +345,7 @@ func ServeLibrarian(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = DoEvent(draftId1, userId, announcements, cardId1, sql.NullInt64{Int64: cardId2})
+	err = DoEvent(draftId1, userId, announcements, cardId1, sql.NullInt64{Int64: cardId2, Valid: true})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -582,7 +587,7 @@ func ServeView(w http.ResponseWriter, r *http.Request) {
 	}
 	userId := int64(userIdInt)
 
-	if userId != 1 && userId != 5 && userId != 10 {
+	if userId != 1 {
 		http.Error(w, "lol no", http.StatusInternalServerError)
 		return
 	}
@@ -602,7 +607,7 @@ func ServeView(w http.ResponseWriter, r *http.Request) {
 	}
 	position := int64(positionInt)
 
-	query := `select user from seats where position=? and draft=1`
+	query := `select user from seats where position=? and draft=8`
 	row := database.QueryRow(query, position)
 	var user2Id int64
 	err = row.Scan(&user2Id)
@@ -611,7 +616,7 @@ func ServeView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	doServeDraft(w, r, user2Id, 1)
+	doServeDraft(w, r, user2Id, 8)
 }
 
 func doServeDraft(w http.ResponseWriter, r *http.Request, userId int64, draftId int64) {
@@ -831,7 +836,7 @@ func MakeDraft(name string) {
 		j := rnd.Intn(i)
 		lines[i], lines[j] = lines[j], lines[i]
 		packId := packIds[(539-i)/15]
-		database.Exec(query, packId, packId, lines[i][4], lines[i][5], lines[i][7], lines[i][0])
+		database.Exec(query, packId, packId, lines[i][4], lines[i][5], lines[i][10], lines[i][0])
 	}
 	fmt.Printf("done generating new draft\n")
 }
