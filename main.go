@@ -86,13 +86,16 @@ type Card struct {
 }
 
 type Seat struct {
-	Packs    []Pack `json:"packs"`
-	Position int64  `json:"position"`
+	Rounds []Round `json:"rounds"`
+}
+
+type Round struct {
+	Packs []Pack `json:"packs"`
+	Round int64 `json:"round"`
 }
 
 type Pack struct {
 	Cards []Card `json:"cards"`
-	Round int64  `json:"round"`
 	Id    int64  `json:"-"`
 }
 
@@ -1187,9 +1190,9 @@ func GetJson(draftId int64) (string, error) {
 	var i int64
 	var j int64
 	for i = 0; i < 8; i++ {
-		draft.Seats = append(draft.Seats, Seat{Position: i, Packs: []Pack{}})
+		draft.Seats = append(draft.Seats, Seat{Rounds: []Round{}})
 		for j = 0; j < 4; j++ {
-			draft.Seats[i].Packs = append(draft.Seats[i].Packs, Pack{Cards: []Card{}, Round: j})
+			draft.Seats[i].Rounds = append(draft.Seats[i].Rounds, Round{Round: j, Packs: []Pack{Pack{Cards: []Card{}}}})
 		}
 	}
 	for rows.Next() {
@@ -1208,7 +1211,7 @@ func GetJson(draftId int64) (string, error) {
 		position := nullablePosition.Int64
 		packRound := nullableRound.Int64
 
-		draft.Seats[position].Packs[packRound].Cards = append(draft.Seats[position].Packs[packRound].Cards, card)
+		draft.Seats[position].Rounds[packRound].Packs[0].Cards = append(draft.Seats[position].Rounds[packRound].Packs[0].Cards, card)
 	}
 
 	query = `select seats.position, events.announcement, cards1.name, cards2.name, events.id, events.modified from events join seats on events.draft=seats.draft and events.user=seats.user left join cards as cards1 on events.card1=cards1.id left join cards as cards2 on events.card2=cards2.id where events.draft=?`
@@ -1228,7 +1231,11 @@ func GetJson(draftId int64) (string, error) {
 		if card2.Valid {
 			event.Card2 = card2.String
 		}
-		event.Announcements = strings.Split(announcements, "\n")
+		if announcements != "" {
+			event.Announcements = strings.Split(announcements, "\n")
+		} else {
+			event.Announcements = []string{}
+		}
 		draft.Events = append(draft.Events, event)
 	}
 
