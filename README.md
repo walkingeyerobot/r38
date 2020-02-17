@@ -12,4 +12,6 @@ CREATE TABLE cards( id integer primary key autoincrement, pack number, edition t
 CREATE TABLE drafts( id integer primary key autoincrement, name text);
 CREATE TABLE revealed( id integer primary key autoincrement, draft number, message text);
 CREATE TABLE events( id integer primary key autoincrement, draft number, user number, announcement text, card1 number, card2 number, modified number);
+CREATE VIEW v_packs as select packs.*, count(cards.id) as count from packs left join cards on packs.id=cards.pack group by packs.id
+/* v_packs(id,seat,modified,round,original_seat,count) */;
 ```

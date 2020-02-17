@@ -199,7 +199,6 @@ func ServeReplay(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	userId := int64(userIdInt)
-	log.Printf("%d replay", userId)
 
 	if userId != 1 {
 		http.Error(w, "lol no", http.StatusInternalServerError)
@@ -1048,12 +1047,7 @@ func doPick(userId int64, cardId int64, pass bool) (int64, int64, []string, erro
 			return draftId, oldPackId, announcements, err
 		}
 
-		err = CleanupEmptyPacks()
-		if err != nil {
-			return draftId, oldPackId, announcements, err
-		}
-
-		query = `select count(1) from packs join seats where packs.seat=seats.id and packs.round=?`
+		query = `select count(1) from v_packs join seats where v_packs.seat=seats.id and v_packs.round=? and v_packs.count>0`
 		row = database.QueryRow(query, round)
 		var packsLeftInRound int64
 		err = row.Scan(&packsLeftInRound)
@@ -1070,7 +1064,7 @@ func doPick(userId int64, cardId int64, pass bool) (int64, int64, []string, erro
 				return draftId, oldPackId, announcements, err
 			}
 		} else {
-			query = `select count(1) from packs join seats where packs.seat=seats.id and seats.user=? and packs.round=?`
+			query = `select count(1) from v_packs join seats where v_packs.seat=seats.id and seats.user=? and v_packs.round=? and v_packs.count>0`
 			row = database.QueryRow(query, userId, round)
 			var packsLeftInSeat int64
 			err = row.Scan(&packsLeftInSeat)
@@ -1139,10 +1133,6 @@ func doPick(userId int64, cardId int64, pass bool) (int64, int64, []string, erro
 	}
 
 	return draftId, oldPackId, announcements, nil
-}
-
-func CleanupEmptyPacks() error {
-	return nil
 }
 
 func NotifyByDraftAndPosition(draftId int64, position int64) error {
