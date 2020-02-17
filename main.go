@@ -147,6 +147,9 @@ func NewHandler() http.Handler {
 	mux.HandleFunc("/auth/google/login", oauthGoogleLogin)
 	mux.HandleFunc("/auth/google/callback", oauthGoogleCallback)
 
+	fs := http.FileServer(http.Dir("static"))
+	mux.Handle("/static/", AuthMiddleware(http.StripPrefix("/static/", fs)))
+
 	replayHandler := http.HandlerFunc(ServeReplay)
 	mux.Handle("/replay/", AuthMiddleware(replayHandler))
 	viewHandler := http.HandlerFunc(ServeView)
