@@ -91,12 +91,11 @@ type Seat struct {
 
 type Round struct {
 	Packs []Pack `json:"packs"`
-	Round int64 `json:"round"`
+	Round int64  `json:"round"`
 }
 
 type Pack struct {
 	Cards []Card `json:"cards"`
-	Id    int64  `json:"-"`
 }
 
 type DraftJson struct {
@@ -113,6 +112,7 @@ type DraftEvent struct {
 	Card2          string   `json:"card2"`
 	PlayerModified int64    `json:"playerModified"`
 	DraftModified  int64    `json:"draftModified"`
+	Round          int64    `json:"round"`
 }
 
 type ReplayPageData struct {
@@ -303,12 +303,12 @@ func ServeLibrarian(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	draftId1, packId1, announcements1, err := doPick(userId, cardId1, false)
+	draftId1, packId1, announcements1, round1, err := doPick(userId, cardId1, false)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	draftId2, packId2, announcements2, err := doPick(userId, cardId2, true)
+	draftId2, packId2, announcements2, round2, err := doPick(userId, cardId2, true)
 
 	if packId1 != packId2 {
 		http.Error(w, "pack ids somehow don't match.", http.StatusInternalServerError)
@@ -317,6 +317,11 @@ func ServeLibrarian(w http.ResponseWriter, r *http.Request) {
 
 	if draftId1 != draftId2 {
 		http.Error(w, "draft ids somehow don't match.", http.StatusInternalServerError)
+		return
+	}
+
+	if round1 != round2 {
+		http.Error(w, "rounds somehow don't match.", http.StatusInternalServerError)
 		return
 	}
 
@@ -350,7 +355,7 @@ func ServeLibrarian(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = DoEvent(draftId1, userId, announcements, cardId1, sql.NullInt64{Int64: cardId2, Valid: true})
+	err = DoEvent(draftId1, userId, announcements, cardId1, sql.NullInt64{Int64: cardId2, Valid: true}, round1)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -737,13 +742,13 @@ func ServePick(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cardId := int64(cardIdInt)
-	draftId, _, announcements, err := doPick(userId, cardId, true)
+	draftId, _, announcements, round, err := doPick(userId, cardId, true)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	err = DoEvent(draftId, userId, announcements, cardId, sql.NullInt64{Valid: false})
+	err = DoEvent(draftId, userId, announcements, cardId, sql.NullInt64{Valid: false}, round)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -988,7 +993,7 @@ func getPackPicksAndPowers(draftId int64, userId int64) ([]Card, []Card, []Card,
 	return myPack, myPicks, powers2, nil
 }
 
-func doPick(userId int64, cardId int64, pass bool) (int64, int64, []string, error) {
+func doPick(userId int64, cardId int64, pass bool) (int64, int64, []string, int64, error) {
 	announcements := []string{}
 
 	query := `select drafts.id, seats.round, seats.position, cards.name from drafts join seats join packs join cards where drafts.id=seats.draft and seats.id=packs.seat and packs.id=cards.pack and cards.id=? and packs.round <> 0`
@@ -1000,7 +1005,7 @@ func doPick(userId int64, cardId int64, pass bool) (int64, int64, []string, erro
 	var cardName string
 	err := row.Scan(&draftId, &round, &position, &cardName)
 	if err != nil {
-		return -1, -1, announcements, err
+		return -1, -1, announcements, -1, err
 	}
 
 	query = `select packs.id, packs.modified from drafts join seats join packs join cards where cards.id=? and drafts.id=? and drafts.id=seats.draft and seats.id=packs.seat and packs.id=cards.pack and seats.user=? and (packs.round=0 or (packs.round=seats.round and packs.modified in (select min(packs.modified) from packs join seats join drafts where seats.draft=? and seats.user=? and seats.id=packs.seat and drafts.id=seats.draft and packs.round=seats.round)))`
@@ -1010,7 +1015,7 @@ func doPick(userId int64, cardId int64, pass bool) (int64, int64, []string, erro
 	var modified int64
 	err = row.Scan(&oldPackId, &modified)
 	if err != nil {
-		return draftId, -1, announcements, err
+		return draftId, -1, announcements, round, err
 	}
 
 	query = `select packs.id, seats.id from packs join seats join users where seats.user=? and seats.id=packs.seat and packs.round=0 and seats.draft=? and users.id=seats.user`
@@ -1020,7 +1025,7 @@ func doPick(userId int64, cardId int64, pass bool) (int64, int64, []string, erro
 	var seatId int64
 	err = row.Scan(&pickId, &seatId)
 	if err != nil {
-		return draftId, oldPackId, announcements, err
+		return draftId, oldPackId, announcements, round, err
 	}
 
 	query = `select id from seats where draft=? and position=?`
@@ -1041,7 +1046,7 @@ func doPick(userId int64, cardId int64, pass bool) (int64, int64, []string, erro
 	var newPositionId int64
 	err = row.Scan(&newPositionId)
 	if err != nil {
-		return draftId, oldPackId, announcements, err
+		return draftId, oldPackId, announcements, round, err
 	}
 
 	if pass {
@@ -1050,7 +1055,7 @@ func doPick(userId int64, cardId int64, pass bool) (int64, int64, []string, erro
 
 		_, err = database.Exec(query, pickId, cardId, newPositionId, oldPackId)
 		if err != nil {
-			return draftId, oldPackId, announcements, err
+			return draftId, oldPackId, announcements, round, err
 		}
 
 		query = `select count(1) from v_packs join seats where v_packs.seat=seats.id and v_packs.round=? and v_packs.count>0`
@@ -1058,7 +1063,7 @@ func doPick(userId int64, cardId int64, pass bool) (int64, int64, []string, erro
 		var packsLeftInRound int64
 		err = row.Scan(&packsLeftInRound)
 		if err != nil {
-			return draftId, oldPackId, announcements, err
+			return draftId, oldPackId, announcements, round, err
 		}
 
 		if packsLeftInRound == 0 {
@@ -1067,7 +1072,7 @@ func doPick(userId int64, cardId int64, pass bool) (int64, int64, []string, erro
 
 			_, err = database.Exec(query, draftId)
 			if err != nil {
-				return draftId, oldPackId, announcements, err
+				return draftId, oldPackId, announcements, round, err
 			}
 		} else {
 			query = `select count(1) from v_packs join seats where v_packs.seat=seats.id and seats.user=? and v_packs.round=? and v_packs.count>0`
@@ -1075,13 +1080,13 @@ func doPick(userId int64, cardId int64, pass bool) (int64, int64, []string, erro
 			var packsLeftInSeat int64
 			err = row.Scan(&packsLeftInSeat)
 			if err != nil {
-				return draftId, oldPackId, announcements, err
+				return draftId, oldPackId, announcements, round, err
 			}
 
 			if packsLeftInSeat == 0 {
 				err = NotifyByDraftAndPosition(draftId, newPosition)
 				if err != nil {
-					return draftId, oldPackId, announcements, err
+					return draftId, oldPackId, announcements, round, err
 				}
 			}
 		}
@@ -1091,7 +1096,7 @@ func doPick(userId int64, cardId int64, pass bool) (int64, int64, []string, erro
 
 		_, err = database.Exec(query, pickId, cardId)
 		if err != nil {
-			return draftId, oldPackId, announcements, err
+			return draftId, oldPackId, announcements, round, err
 		}
 	}
 
@@ -1102,21 +1107,21 @@ func doPick(userId int64, cardId int64, pass bool) (int64, int64, []string, erro
 		var extraPackId int64
 		err = row.Scan(&extraPackId)
 		if err != nil {
-			return draftId, oldPackId, announcements, err
+			return draftId, oldPackId, announcements, round, err
 		}
 
 		query = `update packs set seat = ?, round = ?, modified = ? where id = ?`
 		log.Printf("%s\t%d,%d,%d,%d", query, seatId, round, modified+5, extraPackId)
 		_, err = database.Exec(query, seatId, round, modified+5, extraPackId)
 		if err != nil {
-			return draftId, oldPackId, announcements, err
+			return draftId, oldPackId, announcements, round, err
 		}
 
 		query = `INSERT INTO revealed (draft, message) VALUES (?, "Seat " || ? || " revealed Lore Seeker.")`
 		log.Printf("%s\t%d,%d", query, draftId, position)
 		_, err = database.Exec(query, draftId, position)
 		if err != nil {
-			return draftId, oldPackId, announcements, err
+			return draftId, oldPackId, announcements, round, err
 		}
 
 		announcements = append(announcements, fmt.Sprintf("Seat %d revealed Lore Seeker", position))
@@ -1125,20 +1130,20 @@ func doPick(userId int64, cardId int64, pass bool) (int64, int64, []string, erro
 		log.Printf("%s\t%d", query, cardId)
 		_, err = database.Exec(query, cardId)
 		if err != nil {
-			return draftId, oldPackId, announcements, err
+			return draftId, oldPackId, announcements, round, err
 		}
 
 		query = `INSERT INTO revealed (draft, message) VALUES (?, "Seat " || ? || " revealed Cogwork Librarian.")`
 		log.Printf("%s\t%d,%d", query, draftId, position)
 		_, err = database.Exec(query, draftId, position)
 		if err != nil {
-			return draftId, oldPackId, announcements, err
+			return draftId, oldPackId, announcements, round, err
 		}
 
 		announcements = append(announcements, fmt.Sprintf("Seat %d revealed Cogwork Librarian", position))
 	}
 
-	return draftId, oldPackId, announcements, nil
+	return draftId, oldPackId, announcements, round, nil
 }
 
 func NotifyByDraftAndPosition(draftId int64, position int64) error {
@@ -1214,7 +1219,7 @@ func GetJson(draftId int64) (string, error) {
 		draft.Seats[position].Rounds[packRound].Packs[0].Cards = append(draft.Seats[position].Rounds[packRound].Packs[0].Cards, card)
 	}
 
-	query = `select seats.position, events.announcement, cards1.name, cards2.name, events.id, events.modified from events join seats on events.draft=seats.draft and events.user=seats.user left join cards as cards1 on events.card1=cards1.id left join cards as cards2 on events.card2=cards2.id where events.draft=?`
+	query = `select seats.position, events.announcement, cards1.name, cards2.name, events.id, events.modified, events.round from events join seats on events.draft=seats.draft and events.user=seats.user left join cards as cards1 on events.card1=cards1.id left join cards as cards2 on events.card2=cards2.id where events.draft=?`
 	rows, err = database.Query(query, draftId)
 	if err != nil && err != sql.ErrNoRows {
 		return "", err
@@ -1224,7 +1229,7 @@ func GetJson(draftId int64) (string, error) {
 		var event DraftEvent
 		var announcements string
 		var card2 sql.NullString
-		err = rows.Scan(&event.Player, &announcements, &event.Card1, &card2, &event.DraftModified, &event.PlayerModified)
+		err = rows.Scan(&event.Player, &announcements, &event.Card1, &card2, &event.DraftModified, &event.PlayerModified, &event.Round)
 		if err != nil {
 			return "", err
 		}
@@ -1247,17 +1252,17 @@ func GetJson(draftId int64) (string, error) {
 	return string(b), nil
 }
 
-func DoEvent(draftId int64, userId int64, announcements []string, cardId1 int64, cardId2 sql.NullInt64) error {
+func DoEvent(draftId int64, userId int64, announcements []string, cardId1 int64, cardId2 sql.NullInt64, round int64) error {
 	var query string
 	var err error
 	if cardId2.Valid {
-		query = `insert into events (draft, user, announcement, card1, card2, modified) VALUES (?, ?, ?, ?, ?, ?, (select count(1) from seats join packs join cards where seats.user=? and seats.draft=? and packs.seat=seats.id and cards.pack=packs.id and packs.round=0))`
-		log.Printf("%s\t%d,%d,%s,%d,%d,%d,%d", query, draftId, userId, strings.Join(announcements, "\n"), cardId1, cardId2.Int64, userId, draftId)
-		_, err = database.Exec(query, draftId, userId, strings.Join(announcements, "\n"), cardId1, cardId2.Int64, userId, draftId)
+		query = `insert into events (round, draft, user, announcement, card1, card2, modified) VALUES (?, ?, ?, ?, ?, ?, ?, (select count(1) from seats join packs join cards where seats.user=? and seats.draft=? and packs.seat=seats.id and cards.pack=packs.id and packs.round=0))`
+		log.Printf("%s\t%d,%d,%d,%s,%d,%d,%d,%d", query, round, draftId, userId, strings.Join(announcements, "\n"), cardId1, cardId2.Int64, userId, draftId)
+		_, err = database.Exec(query, round, draftId, userId, strings.Join(announcements, "\n"), cardId1, cardId2.Int64, userId, draftId)
 	} else {
-		query := `insert into events (draft, user, announcement, card1, card2, modified) VALUES (?, ?, ?, ?, null, (select count(1) from seats join packs join cards where seats.user=? and seats.draft=? and packs.seat=seats.id and cards.pack=packs.id and packs.round=0))`
-		log.Printf("%s\t%d,%d,%s,%d,%d,%d", query, draftId, userId, strings.Join(announcements, "\n"), cardId1, userId, draftId)
-		_, err = database.Exec(query, draftId, userId, strings.Join(announcements, "\n"), cardId1, userId, draftId)
+		query := `insert into events (round, draft, user, announcement, card1, card2, modified) VALUES (?, ?, ?, ?, ?, null, (select count(1) from seats join packs join cards where seats.user=? and seats.draft=? and packs.seat=seats.id and cards.pack=packs.id and packs.round=0))`
+		log.Printf("%s\t%d,%d,%d,%s,%d,%d,%d", query, round, draftId, userId, strings.Join(announcements, "\n"), cardId1, userId, draftId)
+		_, err = database.Exec(query, round, draftId, userId, strings.Join(announcements, "\n"), cardId1, userId, draftId)
 	}
 
 	return err
