@@ -1,5 +1,5 @@
 (function() {
-  const S = 4;
+  const S = 6;
   const packDiv = document.querySelector('#pack');
   const picksDiv = document.querySelector('#picks');
   let R = 1;
@@ -32,95 +32,79 @@
     return Draft;
   }
   let Draft = getDraftObject();
-  window.Draft2 = Draft;
-  function findPackInfo(cardName) {
-    for (var i = 0; i < 8; i++) {
-      var seat = Draft.seats[i];
-      for (var j = 0; j < seat.rounds.length; j++) {
-        var round = seat.rounds[j];
-        for (var k = 0; k < round.packs.length; k++) {
-          var pack = round.packs[k];
-          for (var l = 0; l < pack.cards.length; l++) {
-            var card = pack.cards[l];
-            if (card.name === cardName) {
-              return {
-                seatIndex: i,
-                roundIndex: j,
-                packIndex: k,
-                cardIndex: l,
-                seat: seat,
-                round: round,
-                pack: pack,
-                card: card
-              }
-            }
-          }
-        }
-      }
-    }
-    console.log('bad');
-  }
+  window.Draft = Draft;
   function doNext() {
     var lastEvent = Draft.events[Draft.events.length-1];
-    var modified = lastEvent.playerModified;
     var round = lastEvent.round;
+    var eventCount = 0;
+    var eventz = new Array(8);
+    var reset = [];
     do {
+      lastEvent = Draft.events[Draft.events.length-1];
+      if (eventz[lastEvent.player]) {
+        reset.push(Draft.events.pop());
+        continue;
+      }
+      eventz[lastEvent.player] = lastEvent;      
+      eventCount++;
+
       var nextEvent = Draft.events.pop();
       Draft.pastEvents.push(nextEvent);
-      var packInfo = findPackInfo(nextEvent.card1);
-      packInfo.seat.rounds[0].packs[0].cards.push(packInfo.card);
-      packInfo.pack.cards.splice(packInfo.cardIndex, 1);
-      if (nextEvent.card2) {
-        packInfo = findPackInfo(nextEvent.card2);
-        packInfo.seat.rounds[0].packs[0].cards.push(packInfo.card);
-        packInfo.pack.cards.splice(packInfo.cardIndex, 1);
 
-        var librarianInfo = findPackInfo('Cogwork Librarian');
-        packInfo.pack.cards.push(librarianInfo.pack.cards.splice(librarianInfo.cardIndex, 1)[0]);
+      var pickedCardIndex = Draft.seats[nextEvent.player].rounds[R].packs[0].cards.findIndex(v => v.name === nextEvent.card1);
+      var removedCard = Draft.seats[nextEvent.player].rounds[R].packs[0].cards.splice(pickedCardIndex, 1)[0];
+      Draft.seats[nextEvent.player].rounds[0].packs[0].cards.push(removedCard);
+
+      if (nextEvent.card2) {
+        var pickedCardIndex = Draft.seats[nextEvent.player].rounds[R].packs[0].cards.findIndex(v => v.name === nextEvent.card2);
+        var removedCard = Draft.seats[nextEvent.player].rounds[R].packs[0].cards.splice(pickedCardIndex, 1)[0];
+        Draft.seats[nextEvent.player].rounds[0].packs[0].cards.push(removedCard);
+
+        var librarianIndex = Draft.seats[nextEvent.player].rounds[0].packs[0].cards.findIndex(v => v.name === 'Cogwork Librarian');
+        var removedCard = Draft.seats[nextEvent.player].rounds[0].packs[0].cards.splice(librarianIndex, 1)[0];
+        Draft.seats[nextEvent.player].rounds[R].packs[0].cards.push(removedCard);
       }
+
       var nextSeat;
       if (R % 2 === 0) {
-        nextSeat = packInfo.seatIndex - 1;
+        nextSeat = nextEvent.player - 1;
         if (nextSeat === -1) {
           nextSeat = 7;
         }
       } else {
-        nextSeat = packInfo.seatIndex + 1;
+        nextSeat = nextEvent.player + 1;
         if (nextSeat === 8) {
           nextSeat = 0;
         }
       }
-      Draft.seats[nextSeat].rounds[R].packs.push(packInfo.pack);
-      packInfo.round.packs.splice(packInfo.packIndex, 1);
+
+      var packToPass = Draft.seats[nextEvent.player].rounds[R].packs.splice(0, 1)[0];
+      Draft.seats[nextSeat].rounds[R].packs.push(packToPass);
 
       if (nextEvent.card1 === 'Lore Seeker') {
-        packInfo.round.packs.unshift({
+        Draft.seats[nextEvent.player].rounds[R].packs.unshift({
           cards: Draft.extraPack
         });
+        delete Draft.extraPack;
       }
 
-      var nextRound = true;
-      for (var i = 0; i < 8; i++) {
-        var packs = Draft.seats[i].rounds[R].packs;
-        for (var j = 0; j < packs.length; j++) {
-          if (packs[j].cards.length > 0) {
-            nextRound = false;
-            break;
-          }
-        }
-        if (!nextRound) {
-          break;
-        }
-      }
+    } while (Draft.events.length > 0 && eventCount < 8 && Draft.events[Draft.events.length-1].round === round);
 
-      if (nextRound) {
+    if (reset.length) {
+      Draft.events = Draft.events.concat(reset);
+    }
+
+    if (Draft.events[Draft.events.length-1].round !== R) {
         console.log('moving to next round');
         R++;
-      }
-    } while (Draft.events.length > 0 && Draft.events[Draft.events.length-1].playerModified === modified && Draft.events[Draft.events.length-1].round === round);
+    }
+
+    console.log(eventz);
     displayCurrentState();
   }
   function doPrevious() {
+    var lastEvent = Draft.pastEvents[Draft.pastEvents.length-1];
+    var modified = lastEvent.playerModified;
     var lastEvent = Draft.pastEvents.pop();
     Draft.events.push(lastEvent);
     displayCurrentState();
