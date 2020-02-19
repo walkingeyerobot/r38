@@ -1,5 +1,5 @@
 (function() {
-  const S = 6;
+  let S = 6;
   const packDiv = document.querySelector('#pack');
   const picksDiv = document.querySelector('#picks');
   let R = 1;
@@ -27,6 +27,33 @@
       }
       return 0;
     });
+
+    Draft.groups = [];
+    var eventsIndex = Draft.events.length;
+    var groupIndex = 0;
+    while (--eventsIndex >= 0) {
+      var event = Draft.events[eventsIndex];
+      var inserted = false;
+      if (i === groupIndex && Draft.groups[i].every((v) => v != null)) {
+        groupIndex++;
+      }
+      for (var i = groupIndex; i <= Draft.groups.length; i++) {
+        if (i === Draft.groups.length) {
+          Draft.groups.push([null,null,null,null,null,null,null,null]);
+        }
+        if (!Draft.groups[i][event.player]) {
+          if (Draft.groups[i].every((v) => v == null || v.round === event.round)) {
+            Draft.groups[i][event.player] = event;
+            inserted = true;
+            break;
+          }
+        }
+      }
+      if (!inserted) {
+        console.log('bad');
+        debugger;
+      }
+    }
 
     Draft.pastEvents = [];
     return Draft;
@@ -94,28 +121,24 @@
       Draft.events = Draft.events.concat(reset);
     }
 
-    if (Draft.events[Draft.events.length-1].round !== R) {
-        console.log('moving to next round');
-        R++;
+    if (!Draft.events.length) {
+      console.log('all done!');
+    } else if (Draft.events[Draft.events.length-1].round !== R) {
+      console.log('moving to next round');
+      R++;
     }
 
-    console.log(eventz);
     displayCurrentState();
   }
   function doPrevious() {
-    var lastEvent = Draft.pastEvents[Draft.pastEvents.length-1];
-    var modified = lastEvent.playerModified;
-    var lastEvent = Draft.pastEvents.pop();
-    Draft.events.push(lastEvent);
-    displayCurrentState();
+    console.error('doesn\'t work yet');
   }
   function displayCurrentState() {
-    while (picksDiv.firstChild) {
-      picksDiv.removeChild(picksDiv.firstChild);
-    }
     var picks = Draft.seats[S].rounds[0].packs[0].cards;
     for (var i = 0; i < picks.length; i++) {
-      addCardImage(picksDiv, picks[i]);
+      if (!picksDiv.querySelector('#' + normalizeCardName(picks[i].name))) {
+        addCardImage(picksDiv, picks[i]);
+      }
     }
 
     while (packDiv.firstChild) {
@@ -159,7 +182,16 @@
   function normalizeCardName(n) {
     return n.replace(/[\W]/g, '').toLowerCase();
   }
+  function switchSeat(newseat) {
+    if (S !== newseat) {
+      S = newseat;
+      displayCurrentState();
+    } else {
+      console.log('already on that seat');
+    }
+  }
   window.next = doNext;
   window.prev = doPrevious;
+  window.seat = switchSeat;
   displayCurrentState();
 }())

@@ -194,23 +194,6 @@ func AuthMiddleware(next http.Handler) http.Handler {
 }
 
 func ServeReplay(w http.ResponseWriter, r *http.Request) {
-	session, err := store.Get(r, "session-name")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	userIdInt, err := strconv.Atoi(session.Values["userid"].(string))
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	userId := int64(userIdInt)
-
-	if userId != 1 {
-		http.Error(w, "lol no", http.StatusInternalServerError)
-		return
-	}
-
 	re := regexp.MustCompile(`/replay/(\d+)`)
 	parseResult := re.FindStringSubmatch(r.URL.Path)
 
