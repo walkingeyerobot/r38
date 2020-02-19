@@ -90,6 +90,10 @@
         var librarianIndex = Draft.seats[nextEvent.player].rounds[0].packs[0].cards.findIndex(v => v.name === 'Cogwork Librarian');
         var removedCard = Draft.seats[nextEvent.player].rounds[0].packs[0].cards.splice(librarianIndex, 1)[0];
         Draft.seats[nextEvent.player].rounds[R].packs[0].cards.push(removedCard);
+
+        if (nextEvent.player === S) {
+          picksDiv.removeChild(picksDiv.querySelector('#cogworklibrarian'));
+        }
       }
 
       var nextSeat;
