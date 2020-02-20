@@ -1,5 +1,5 @@
 (function() {
-  let S = 6;
+  let S = 0;
   const packDiv = document.querySelector('#pack');
   const picksDiv = document.querySelector('#picks');
   let R = 1;
@@ -55,28 +55,24 @@
       }
     }
 
-    Draft.pastEvents = [];
+    Draft.pastGroups = [];
     return Draft;
   }
   let Draft = getDraftObject();
   window.Draft = Draft;
   function doNext() {
-    var lastEvent = Draft.events[Draft.events.length-1];
-    var round = lastEvent.round;
-    var eventCount = 0;
-    var eventz = new Array(8);
-    var reset = [];
-    do {
-      lastEvent = Draft.events[Draft.events.length-1];
-      if (eventz[lastEvent.player]) {
-        reset.push(Draft.events.pop());
+    if (Draft.groups.length === 0) {
+      return;
+    }
+
+    var group = Draft.groups.shift();
+    Draft.pastGroups.unshift(group);
+
+    for (var i = 0; i < group.length; i++) {
+      if (group[i] == null) {
         continue;
       }
-      eventz[lastEvent.player] = lastEvent;      
-      eventCount++;
-
-      var nextEvent = Draft.events.pop();
-      Draft.pastEvents.push(nextEvent);
+      var nextEvent = group[i];
 
       var pickedCardIndex = Draft.seats[nextEvent.player].rounds[R].packs[0].cards.findIndex(v => v.name === nextEvent.card1);
       var removedCard = Draft.seats[nextEvent.player].rounds[R].packs[0].cards.splice(pickedCardIndex, 1)[0];
@@ -118,16 +114,11 @@
         });
         delete Draft.extraPack;
       }
-
-    } while (Draft.events.length > 0 && eventCount < 8 && Draft.events[Draft.events.length-1].round === round);
-
-    if (reset.length) {
-      Draft.events = Draft.events.concat(reset);
     }
 
-    if (!Draft.events.length) {
+    if (!Draft.groups.length) {
       console.log('all done!');
-    } else if (Draft.events[Draft.events.length-1].round !== R) {
+    } else if (Draft.groups[0].every((v) => v == null || v.round === R + 1)) {
       console.log('moving to next round');
       R++;
     }
@@ -154,15 +145,23 @@
       addCardImage(packDiv, pack[i]);
     }
 
-    for (var i = Draft.events.length - 1; i >= 0; i--) {
-      if (Draft.events[i].player !== S) {
-        continue;
+    if (Draft.groups.length === 0) {
+      var txtDiv = document.createElement('div');
+      txtDiv.textContent = 'Draft Over!';
+      packDiv.append(txtDiv);
+    } else {
+      var nextEvent = Draft.groups[0][S];
+      if (nextEvent) {
+        document.querySelector('#' + normalizeCardName(nextEvent.card1)).classList.add('selected');
+        if (nextEvent.card2) {
+          document.querySelector('#' + normalizeCardName(nextEvent.card2)).classList.add('selected');
+          document.querySelector('#cogworklibrarian').classList.add('selected');
+        }
+      } else {
+        var txtDiv = document.createElement('div');
+        txtDiv.textContent = 'Waiting on other players...';
+        packDiv.append(txtDiv);
       }
-      document.querySelector('#' + normalizeCardName(Draft.events[i].card1)).classList.add('selected');
-      if (Draft.events[i].card2) {
-        document.querySelector('#' + normalizeCardName(Draft.events[i].card2)).classList.add('selected');
-      }
-      break;
     }
   }
   function addCardImage(div, card) {
@@ -189,13 +188,22 @@
   function switchSeat(newseat) {
     if (S !== newseat) {
       S = newseat;
+      while (picksDiv.firstChild) {
+        picksDiv.removeChild(picksDiv.firstChild);
+      }
       displayCurrentState();
     } else {
       console.log('already on that seat');
     }
   }
+  function switchSeatEvent(e) {
+    switchSeat(parseInt(e.target.value, 10));
+  }
   window.next = doNext;
   window.prev = doPrevious;
   window.seat = switchSeat;
   displayCurrentState();
+
+  document.querySelector('#next').addEventListener('click', doNext);
+  document.querySelector('#seat').addEventListener('input', switchSeatEvent);
 }())

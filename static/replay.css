@@ -6,3 +6,6 @@
 .card.selected {
     border-color: yellow;
 }
+#picks #cogworklibrarian.selected {
+    border-color: red;
+}
