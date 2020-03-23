@@ -6,6 +6,8 @@
   function getDraftObject() {
     let Draft = JSON.parse(window.DraftString);
 
+    Draft.events = Draft.events || [];
+
     Draft.events.sort((a, b) => {
       if (a.round < b.round) {
         return 1;
@@ -56,6 +58,11 @@
     }
 
     Draft.pastGroups = [];
+
+    for (var i = 0; i < Draft.seats.length; i++) {
+      document.querySelector('#seat>option[value="' + i + '"]').textContent = Draft.seats[i].name;
+    }
+    
     return Draft;
   }
   let Draft = getDraftObject();
@@ -74,17 +81,20 @@
       }
       var nextEvent = group[i];
 
-      var pickedCardIndex = Draft.seats[nextEvent.player].rounds[R].packs[0].cards.findIndex(v => v.name === nextEvent.card1);
-      var removedCard = Draft.seats[nextEvent.player].rounds[R].packs[0].cards.splice(pickedCardIndex, 1)[0];
+      var pickedCardIndex = Draft.seats[nextEvent.player].rounds[R].packs[0].cards.findIndex(v => v && v.name === nextEvent.card1);
+      var removedCard = Draft.seats[nextEvent.player].rounds[R].packs[0].cards[pickedCardIndex];
+      Draft.seats[nextEvent.player].rounds[R].packs[0].cards[pickedCardIndex] = null;
       Draft.seats[nextEvent.player].rounds[0].packs[0].cards.push(removedCard);
 
       if (nextEvent.card2) {
-        var pickedCardIndex = Draft.seats[nextEvent.player].rounds[R].packs[0].cards.findIndex(v => v.name === nextEvent.card2);
-        var removedCard = Draft.seats[nextEvent.player].rounds[R].packs[0].cards.splice(pickedCardIndex, 1)[0];
+        var pickedCardIndex = Draft.seats[nextEvent.player].rounds[R].packs[0].cards.findIndex(v => v && v.name === nextEvent.card2);
+        var removedCard = Draft.seats[nextEvent.player].rounds[R].packs[0].cards[pickedCardIndex];
+        Draft.seats[nextEvent.player].rounds[R].packs[0].cards[pickedCardIndex] = null;
         Draft.seats[nextEvent.player].rounds[0].packs[0].cards.push(removedCard);
 
-        var librarianIndex = Draft.seats[nextEvent.player].rounds[0].packs[0].cards.findIndex(v => v.name === 'Cogwork Librarian');
-        var removedCard = Draft.seats[nextEvent.player].rounds[0].packs[0].cards.splice(librarianIndex, 1)[0];
+        var librarianIndex = Draft.seats[nextEvent.player].rounds[0].packs[0].cards.findIndex(v => v && v.name === 'Cogwork Librarian');
+        var removedCard = Draft.seats[nextEvent.player].rounds[0].packs[0].cards[librarianIndex];
+        Draft.seats[nextEvent.player].rounds[0].packs[0].cards[librarianIndex] = null;
         Draft.seats[nextEvent.player].rounds[R].packs[0].cards.push(removedCard);
 
         if (nextEvent.player === S) {
@@ -105,10 +115,10 @@
         }
       }
 
-      var packToPass = Draft.seats[nextEvent.player].rounds[R].packs.splice(0, 1)[0];
+      var packToPass = Draft.seats[nextEvent.player].rounds[R].packs.shift()
       Draft.seats[nextSeat].rounds[R].packs.push(packToPass);
 
-      if (nextEvent.card1 === 'Lore Seeker') {
+      if (nextEvent.card1 === 'Lore Seeker' || nextEvent.card2 === 'Lore Seeker') {
         Draft.seats[nextEvent.player].rounds[R].packs.unshift({
           cards: Draft.extraPack
         });
@@ -126,11 +136,52 @@
     displayCurrentState();
   }
   function doPrevious() {
-    console.error('doesn\'t work yet');
+    if (Draft.pastGroups.length === 0) {
+      return;
+    }
+
+    var group = Draft.pastGroups.shift();
+    Draft.groups.unshift(group);
+
+    if (Draft.pastGroups[0].every((v) => v == null || v.round === R - 1)) {
+      console.log('moving to previous round');
+      R--;
+    }
+
+    for (var i = 0; i < group.length; i++) {
+      if (group[i] == null) {
+        continue;
+      }
+
+      var pastEvent = group[i];
+
+      if (pastEvent.card1 === 'Lore Seeker' || pastEvent.card2 === 'Lore Seeker') {
+        Draft.extraPack = Draft.seats[pastEvent.player].rounds[R].packs.shift().cards;
+      }
+
+      var previousSeat;
+      if (R % 2 === 0) {
+        previousSeat = pastEvent.player + 1;
+        if (previousSeat === 8) {
+          previousSeat = 0;
+        }
+      } else {
+        previousSeat = pastEvent.player - 1;
+        if (previousSeat === -1) {
+          previousSeat = 7;
+        }
+      }
+
+      var packToPass = Draft.seats[previousSeat].rounds[R].packs.pop();
+      Draft.seats[pastEvent.player].rounds[R].packs.unshift(packToPass);
+    }
   }
   function displayCurrentState() {
     var picks = Draft.seats[S].rounds[0].packs[0].cards;
     for (var i = 0; i < picks.length; i++) {
+      if (!picks[i]) {
+        continue;
+      }
       if (!picksDiv.querySelector('#' + normalizeCardName(picks[i].name))) {
         addCardImage(picksDiv, picks[i]);
       }
@@ -165,6 +216,9 @@
     }
   }
   function addCardImage(div, card) {
+    if (!card) {
+      return;
+    }
     var ret = document.createElement('div');
     var img = document.createElement('img');
     var name = document.createElement('div');

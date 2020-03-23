@@ -87,6 +87,7 @@ type Card struct {
 
 type Seat struct {
 	Rounds []Round `json:"rounds"`
+	Name   string  `json:"name"`
 }
 
 type Round struct {
@@ -130,7 +131,8 @@ func main() {
 		return
 	}
 
-	// MakeDraft("test draft v2.0")
+	// MakeDraft("mtgo draft 1")
+	// MakeDraft("mtgo draft 2")
 
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":12264"),
@@ -194,6 +196,18 @@ func AuthMiddleware(next http.Handler) http.Handler {
 }
 
 func ServeReplay(w http.ResponseWriter, r *http.Request) {
+	session, err := store.Get(r, "session-name")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	userIdInt, err := strconv.Atoi(session.Values["userid"].(string))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	userId := int64(userIdInt)
+
 	re := regexp.MustCompile(`/replay/(\d+)`)
 	parseResult := re.FindStringSubmatch(r.URL.Path)
 
@@ -209,6 +223,44 @@ func ServeReplay(w http.ResponseWriter, r *http.Request) {
 	}
 
 	draftId := int64(draftIdInt)
+
+	query := `select min(round) from seats where draft=?`
+	row := database.QueryRow(query, draftId)
+	var round int64
+	err = row.Scan(&round)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if round != 4 && userId != 1 && draftId != 9 {
+		query = `select user from seats where draft=? and position is not null`
+		rows, err := database.Query(query, draftId)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer rows.Close()
+
+		valid := true
+		for rows.Next() {
+			var playerId sql.NullInt64
+			err = rows.Scan(&playerId)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			if !playerId.Valid || playerId.Int64 == userId {
+				valid = false
+				break
+			}
+		}
+
+		if !valid {
+			http.Error(w, "lol no", http.StatusInternalServerError)
+			return
+		}
+	}
 
 	json, err := GetJson(draftId)
 
@@ -585,7 +637,7 @@ func ServeView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	re := regexp.MustCompile(`/view/(\d+)`)
+	re := regexp.MustCompile(`/view/(\d+)/(\d+)`)
 	parseResult := re.FindStringSubmatch(r.URL.Path)
 
 	if parseResult == nil {
@@ -593,15 +645,22 @@ func ServeView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	positionInt, err := strconv.Atoi(parseResult[1])
+	draftInt, err := strconv.Atoi(parseResult[1])
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	draftId := int64(draftInt)
+
+	positionInt, err := strconv.Atoi(parseResult[2])
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	position := int64(positionInt)
 
-	query := `select user from seats where position=? and draft=8`
-	row := database.QueryRow(query, position)
+	query := `select user from seats where position=? and draft=?`
+	row := database.QueryRow(query, position, draftId)
 	var user2Id int64
 	err = row.Scan(&user2Id)
 	if err != nil {
@@ -609,7 +668,7 @@ func ServeView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	doServeDraft(w, r, user2Id, 8)
+	doServeDraft(w, r, user2Id, 9)
 }
 
 func doServeDraft(w http.ResponseWriter, r *http.Request, userId int64, draftId int64) {
@@ -810,7 +869,7 @@ func MakeDraft(name string) {
 	}
 
 	query = `INSERT INTO cards (pack, original_pack, edition, number, tags, name) VALUES (?, ?, ?, ?, ?, ?)`
-	file, err := os.Open("cube.csv")
+	file, err := os.Open("vintagecube.csv")
 	if err != nil {
 		// error
 		return
@@ -920,7 +979,7 @@ func getUserDataFromGoogle(code string) ([]byte, error) {
 }
 
 func getPackPicksAndPowers(draftId int64, userId int64) ([]Card, []Card, []Card, error) {
-	query := `select packs.round, cards.id, cards.name, cards.tags, cards.number, cards.edition, cards.faceup from drafts join seats join packs join cards where drafts.id=? and drafts.id=seats.draft and seats.id=packs.seat and packs.id=cards.pack and seats.user=? and (packs.round=0 or (packs.round=seats.round and packs.modified in (select min(packs.modified) from packs join seats join drafts where seats.draft=? and seats.user=? and seats.id=packs.seat and drafts.id=seats.draft and packs.round=seats.round)))`
+	query := `select packs.round, cards.id, cards.name, cards.tags, cards.number, cards.edition, cards.faceup from drafts join seats join packs join cards where drafts.id=? and drafts.id=seats.draft and seats.id=packs.seat and packs.id=cards.pack and seats.user=? and (packs.round=0 or (packs.round=seats.round and packs.modified in (select min(packs.modified) from packs join seats join drafts where seats.draft=? and seats.user=? and seats.id=packs.seat and drafts.id=seats.draft and packs.round=seats.round))) order by cards.modified`
 
 	rows, err := database.Query(query, draftId, userId, draftId, userId)
 	if err == sql.ErrNoRows {
@@ -1032,17 +1091,32 @@ func doPick(userId int64, cardId int64, pass bool) (int64, int64, []string, int6
 		return draftId, oldPackId, announcements, round, err
 	}
 
-	if pass {
-		query = `begin transaction;update cards set pack=? where id=?;update packs set seat=?, modified=modified+10 where id=?;commit`
-		log.Printf("%s\t%d,%d,%d,%d", query, pickId, cardId, newPositionId, oldPackId)
+	var cardModified int64
+	cardModified = 0
+	if draftId > 9 {
+		query = `select max(cards.modified) from cards join packs on cards.pack=packs.id join seats on seats.id=packs.seat where seats.draft=? and seats.user=?`
+		row = database.QueryRow(query, draftId, userId)
 
-		_, err = database.Exec(query, pickId, cardId, newPositionId, oldPackId)
+		err = row.Scan(&cardModified)
+
+		if err != nil {
+			cardModified = 0
+		} else {
+			cardModified += 1
+		}
+	}
+
+	if pass {
+		query = `begin transaction;update cards set pack=?, modified=? where id=?;update packs set seat=?, modified=modified+10 where id=?;commit`
+		log.Printf("%s\t%d,%d,%d,%d,%d", query, pickId, cardModified, cardId, newPositionId, oldPackId)
+
+		_, err = database.Exec(query, pickId, cardModified, cardId, newPositionId, oldPackId)
 		if err != nil {
 			return draftId, oldPackId, announcements, round, err
 		}
 
-		query = `select count(1) from v_packs join seats where v_packs.seat=seats.id and v_packs.round=? and v_packs.count>0`
-		row = database.QueryRow(query, round)
+		query = `select count(1) from v_packs join seats where v_packs.seat=seats.id and v_packs.round=? and v_packs.count>0 and seats.draft=?`
+		row = database.QueryRow(query, round, draftId)
 		var packsLeftInRound int64
 		err = row.Scan(&packsLeftInRound)
 		if err != nil {
@@ -1069,15 +1143,16 @@ func doPick(userId int64, cardId int64, pass bool) (int64, int64, []string, int6
 			if packsLeftInSeat == 0 {
 				err = NotifyByDraftAndPosition(draftId, newPosition)
 				if err != nil {
-					return draftId, oldPackId, announcements, round, err
+					log.Printf("error with notify")
+					// return draftId, oldPackId, announcements, round, err
 				}
 			}
 		}
 	} else {
-		query = `update cards set pack=? where id=?`
-		log.Printf("%s\t%d,%s,%d,%d", query, pickId, cardId)
+		query = `update cards set pack=?, modified=? where id=?`
+		log.Printf("%s\t%d,%s,%d,%d", query, pickId, cardModified, cardId)
 
-		_, err = database.Exec(query, pickId, cardId)
+		_, err = database.Exec(query, pickId, cardModified, cardId)
 		if err != nil {
 			return draftId, oldPackId, announcements, round, err
 		}
@@ -1132,12 +1207,14 @@ func doPick(userId int64, cardId int64, pass bool) (int64, int64, []string, int6
 func NotifyByDraftAndPosition(draftId int64, position int64) error {
 	log.Printf("Attempting to notify %d %d", draftId, position)
 
-	query := `select users.slack,users.discord from users join seats where users.id=seats.user and seats.draft=? and seats.position=?`
+	query := `select users.slack,users.webhook,users.id,users.email from users join seats where users.id=seats.user and seats.draft=? and seats.position=?`
 
 	row := database.QueryRow(query, draftId, position)
 	slack := ""
-	discord := ""
-	err := row.Scan(&slack, &discord)
+	webhook := ""
+	email := ""
+	var userId int64
+	err := row.Scan(&slack, &webhook, &userId, &email)
 	if err == sql.ErrNoRows {
 		return nil
 	} else if err != nil {
@@ -1146,11 +1223,11 @@ func NotifyByDraftAndPosition(draftId int64, position int64) error {
 
 	if slack != "" {
 		var jsonStr = []byte(fmt.Sprintf(`{"text": "%s you have new picks <http://draft.thefoley.net/draft/%d>"}`, slack, draftId))
-		req, err := http.NewRequest("POST", os.Getenv("SLACK_WEBHOOK_URL"), bytes.NewBuffer(jsonStr))
+		req, err := http.NewRequest("POST", webhook, bytes.NewBuffer(jsonStr))
 		if err != nil {
 			return err
 		}
-		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Content-Type", "application/json") // might have to append "; charset=UTF-8"
 
 		client := &http.Client{}
 		resp, err := client.Do(req)
@@ -1163,11 +1240,29 @@ func NotifyByDraftAndPosition(draftId int64, position int64) error {
 			return fmt.Errorf("Error sending msg. Status: %v", resp.Status)
 		}
 	}
+
+	/*
+		if userId == 18 {
+			from := fmt.Sprintf("%s@gmail.com", os.Getenv("GMAIL_EMAIL"))
+			pass := os.Getenv("GMAIL_PASSWORD")
+
+			msg := fmt.Sprintf("From: %s\nTo: %s\nSubject: You have new draft picks!\n\nYou have new draft picks at http://draft.thefoley.net/draft/%d", from, to, draftId)
+
+			err := smtp.SendMail("smtp.gmail.com:587",
+				smtp.PlainAuth("", from, pass, "smtp.gmail.com"),
+				from, []string{to}, []byte(msg))
+
+			if err != nil {
+				return err
+			}
+		}
+	*/
+
 	return nil
 }
 
 func GetJson(draftId int64) (string, error) {
-	query := `select drafts.name, seats.position, packs.original_seat, packs.round, cards.name, cards.edition, cards.number, cards.tags from drafts join seats join packs join cards where drafts.id=seats.draft and seats.id=packs.original_seat and packs.id=cards.original_pack and drafts.id=?`
+	query := `select drafts.name, seats.position, packs.original_seat, packs.round, cards.name, cards.edition, cards.number, cards.tags, users.email from drafts join seats join packs join cards join users where drafts.id=seats.draft and seats.id=packs.original_seat and packs.id=cards.original_pack and drafts.id=? and seats.user=users.id`
 
 	rows, err := database.Query(query, draftId)
 	if err != nil {
@@ -1183,12 +1278,16 @@ func GetJson(draftId int64) (string, error) {
 			draft.Seats[i].Rounds = append(draft.Seats[i].Rounds, Round{Round: j, Packs: []Pack{Pack{Cards: []Card{}}}})
 		}
 	}
+
+	re := regexp.MustCompile(`@.+`)
+
 	for rows.Next() {
 		var nullablePosition sql.NullInt64
 		var packSeat int64
 		var nullableRound sql.NullInt64
 		var card Card
-		err = rows.Scan(&draft.Name, &nullablePosition, &packSeat, &nullableRound, &card.Name, &card.Edition, &card.Number, &card.Tags)
+		var email string
+		err = rows.Scan(&draft.Name, &nullablePosition, &packSeat, &nullableRound, &card.Name, &card.Edition, &card.Number, &card.Tags, &email)
 		if err != nil {
 			return "", err
 		}
@@ -1200,6 +1299,7 @@ func GetJson(draftId int64) (string, error) {
 		packRound := nullableRound.Int64
 
 		draft.Seats[position].Rounds[packRound].Packs[0].Cards = append(draft.Seats[position].Rounds[packRound].Packs[0].Cards, card)
+		draft.Seats[position].Name = re.ReplaceAllString(email, "")
 	}
 
 	query = `select seats.position, events.announcement, cards1.name, cards2.name, events.id, events.modified, events.round from events join seats on events.draft=seats.draft and events.user=seats.user left join cards as cards1 on events.card1=cards1.id left join cards as cards2 on events.card2=cards2.id where events.draft=?`
