@@ -18,6 +18,7 @@ import (
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"html/template"
+	"io"
 	"io/ioutil"
 	"log"
 	badrand "math/rand"
@@ -83,6 +84,7 @@ type Card struct {
 	Tags    string `json:"tags"`
 	Number  string `json:"number"`
 	Edition string `json:"edition"`
+	Mtgo    string `json:"-"`
 }
 
 type Seat struct {
@@ -171,6 +173,8 @@ func NewHandler() http.Handler {
 	mux.Handle("/pick/", AuthMiddleware(pickHandler))
 	joinHandler := http.HandlerFunc(ServeJoin)
 	mux.Handle("/join/", AuthMiddleware(joinHandler))
+	mtgoHandler := http.HandlerFunc(ServeMtgo)
+	mux.Handle("/mtgo/", AuthMiddleware(mtgoHandler))
 	indexHandler := http.HandlerFunc(ServeIndex)
 	mux.Handle("/", AuthMiddleware(indexHandler))
 
@@ -193,6 +197,52 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 	})
+}
+
+func ServeMtgo(w http.ResponseWriter, r *http.Request) {
+	session, err := store.Get(r, "session-name")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	userIdInt, err := strconv.Atoi(session.Values["userid"].(string))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	userId := int64(userIdInt)
+
+	re := regexp.MustCompile(`/mtgo/(\d+)`)
+	parseResult := re.FindStringSubmatch(r.URL.Path)
+
+	if parseResult == nil {
+		http.Error(w, "bad url", http.StatusInternalServerError)
+		return
+	}
+
+	draftIdInt, err := strconv.Atoi(parseResult[1])
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	draftId := int64(draftIdInt)
+
+	_, myPicks, _, err := getPackPicksAndPowers(draftId, userId)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Disposition", "attachment; filename=r38export.dek")
+	w.Header().Set("Content-Type", r.Header.Get("Content-Type"))
+
+	io.WriteString(w, "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<Deck xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\n<NetDeckID>0</NetDeckID>\n<PreconstructedDeckID>0</PreconstructedDeckID>\n")
+
+	for _, pick := range myPicks {
+		io.WriteString(w, fmt.Sprintf("<Cards CatID=\"%s\" Quantity=\"1\" Sideboard=\"false\" Name=\"%s\" />\n", pick.Mtgo, pick.Name))
+	}
+
+	io.WriteString(w, "</Deck>")
 }
 
 func ServeReplay(w http.ResponseWriter, r *http.Request) {
@@ -979,7 +1029,7 @@ func getUserDataFromGoogle(code string) ([]byte, error) {
 }
 
 func getPackPicksAndPowers(draftId int64, userId int64) ([]Card, []Card, []Card, error) {
-	query := `select packs.round, cards.id, cards.name, cards.tags, cards.number, cards.edition, cards.faceup from drafts join seats join packs join cards where drafts.id=? and drafts.id=seats.draft and seats.id=packs.seat and packs.id=cards.pack and seats.user=? and (packs.round=0 or (packs.round=seats.round and packs.modified in (select min(packs.modified) from packs join seats join drafts where seats.draft=? and seats.user=? and seats.id=packs.seat and drafts.id=seats.draft and packs.round=seats.round))) order by cards.modified`
+	query := `select packs.round, cards.id, cards.name, cards.tags, cards.number, cards.edition, cards.faceup, cards.mtgo from drafts join seats join packs join cards where drafts.id=? and drafts.id=seats.draft and seats.id=packs.seat and packs.id=cards.pack and seats.user=? and (packs.round=0 or (packs.round=seats.round and packs.modified in (select min(packs.modified) from packs join seats join drafts where seats.draft=? and seats.user=? and seats.id=packs.seat and drafts.id=seats.draft and packs.round=seats.round))) order by cards.modified`
 
 	rows, err := database.Query(query, draftId, userId, draftId, userId)
 	if err == sql.ErrNoRows {
@@ -1000,20 +1050,27 @@ func getPackPicksAndPowers(draftId int64, userId int64) ([]Card, []Card, []Card,
 		var number string
 		var edition string
 		var faceup bool
-		err = rows.Scan(&round, &id, &name, &tags, &number, &edition, &faceup)
+		var mtgo sql.NullString
+		err = rows.Scan(&round, &id, &name, &tags, &number, &edition, &faceup, &mtgo)
 		if err != nil {
 			return nil, nil, nil, err
 		}
+
+		var mtgoString string
+		if mtgo.Valid {
+			mtgoString = mtgo.String
+		}
+
 		if round == 0 {
-			myPicks = append(myPicks, Card{Name: name, Tags: tags, Number: number, Edition: edition, Id: id})
+			myPicks = append(myPicks, Card{Name: name, Tags: tags, Number: number, Edition: edition, Id: id, Mtgo: mtgoString})
 			if faceup == true {
 				switch name {
 				case "Cogwork Librarian":
-					powers = append(powers, Card{Name: name, Tags: tags, Number: number, Edition: edition, Id: id})
+					powers = append(powers, Card{Name: name, Tags: tags, Number: number, Edition: edition, Id: id, Mtgo: mtgoString})
 				}
 			}
 		} else {
-			myPack = append(myPack, Card{Name: name, Tags: tags, Number: number, Edition: edition, Id: id})
+			myPack = append(myPack, Card{Name: name, Tags: tags, Number: number, Edition: edition, Id: id, Mtgo: mtgoString})
 		}
 		count++
 	}

@@ -44,7 +44,7 @@
     {{ if not .Picks }}
       <div>no picks yet</div>
     {{ else }}
-      <div>previous picks - <a href="/pdf/{{ .DraftId }}">print proxies</a></div>
+      <div>previous picks - <a href="/pdf/{{ .DraftId }}">print proxies</a> - <a href="/mtgo/{{ .DraftId }}">export to mtgo</a></div>
       {{ range .Picks }}
         <div class="card">
           <img src="http://api.scryfall.com/cards/{{ .Edition }}/{{ .Number }}?format=image&version=normal" height=300 />
