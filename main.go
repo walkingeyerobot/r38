@@ -76,6 +76,7 @@ type DraftPageData struct {
 	Powers    []Card
 	Position  int64
 	Revealed  []string
+	ViewUrl   string
 }
 
 type Card struct {
@@ -227,6 +228,10 @@ func ServeMtgo(w http.ResponseWriter, r *http.Request) {
 	}
 	draftId := int64(draftIdInt)
 
+	doServeMtgo(w, r, userId, draftId)
+}
+
+func doServeMtgo(w http.ResponseWriter, r *http.Request, userId int64, draftId int64) {
 	_, myPicks, _, err := getPackPicksAndPowers(draftId, userId)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -577,6 +582,10 @@ func ServePdf(w http.ResponseWriter, r *http.Request) {
 	}
 	draftId := int64(draftIdInt)
 
+	doServePdf(w, r, userId, draftId)
+}
+
+func doServePdf(w http.ResponseWriter, r *http.Request, userId int64, draftId int64) {
 	_, myPicks, _, err := getPackPicksAndPowers(draftId, userId)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -666,7 +675,7 @@ func ServeDraft(w http.ResponseWriter, r *http.Request) {
 	}
 	draftId := int64(draftIdInt)
 
-	doServeDraft(w, r, userId, draftId)
+	doServeDraft(w, r, userId, draftId, false)
 }
 
 func ServeView(w http.ResponseWriter, r *http.Request) {
@@ -687,7 +696,7 @@ func ServeView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	re := regexp.MustCompile(`/view/(\d+)/(\d+)`)
+	re := regexp.MustCompile(`/view/(\d+)/(\w+)/([\w/]+)`)
 	parseResult := re.FindStringSubmatch(r.URL.Path)
 
 	if parseResult == nil {
@@ -695,33 +704,57 @@ func ServeView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	draftInt, err := strconv.Atoi(parseResult[1])
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	draftId := int64(draftInt)
-
-	positionInt, err := strconv.Atoi(parseResult[2])
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	position := int64(positionInt)
-
-	query := `select user from seats where position=? and draft=?`
-	row := database.QueryRow(query, position, draftId)
-	var user2Id int64
-	err = row.Scan(&user2Id)
+	fakeUserIdInt, err := strconv.Atoi(parseResult[1])
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	doServeDraft(w, r, user2Id, 9)
+	fakeUserId := int64(fakeUserIdInt)
+	urlToView := parseResult[2]
+	otherArgs := parseResult[3]
+
+	switch urlToView {
+	case "draft":
+		re = regexp.MustCompile(`(\d+)`)
+		parseResult = re.FindStringSubmatch(otherArgs)
+
+		draftInt, err := strconv.Atoi(parseResult[1])
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		draftId := int64(draftInt)
+
+		doServeDraft(w, r, fakeUserId, draftId, true)
+	case "mtgo":
+		re = regexp.MustCompile(`(\d+)`)
+		parseResult = re.FindStringSubmatch(otherArgs)
+
+		draftInt, err := strconv.Atoi(parseResult[1])
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		draftId := int64(draftInt)
+
+		doServeMtgo(w, r, fakeUserId, draftId)
+	case "pdf":
+		re = regexp.MustCompile(`(\d+)`)
+		parseResult = re.FindStringSubmatch(otherArgs)
+
+		draftInt, err := strconv.Atoi(parseResult[1])
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		draftId := int64(draftInt)
+
+		doServePdf(w, r, fakeUserId, draftId)
+	}
 }
 
-func doServeDraft(w http.ResponseWriter, r *http.Request, userId int64, draftId int64) {
+func doServeDraft(w http.ResponseWriter, r *http.Request, userId int64, draftId int64, viewing bool) {
 	myPack, myPicks, powers2, err := getPackPicksAndPowers(draftId, userId)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -759,6 +792,9 @@ func doServeDraft(w http.ResponseWriter, r *http.Request, userId int64, draftId 
 	t := template.Must(template.ParseFiles("draft.tmpl"))
 
 	data := DraftPageData{Picks: myPicks, Pack: myPack, DraftId: draftId, DraftName: draftName, Powers: powers2, Position: position, Revealed: revealed}
+	if viewing {
+		data.ViewUrl = fmt.Sprintf("/view/%d", userId)
+	}
 	t.Execute(w, data)
 }
 
