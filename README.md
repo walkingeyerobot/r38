@@ -47,13 +47,13 @@ CREATE VIEW v_packs as select packs.*, count(cards.id) as count from packs left 
 SESSION_SECRET=$(sort --random-sort </usr/share/dict/words | \
   grep -E '^[a-z]+$' | head -n 3 | xargs | \
   sed 's/.*/\L&/; s/[a-z]*/\u&/g; s/\ //g') && \
-echo "export SESSION_SECRET='${SESSION_SECRET}'" > ~/r38-2.env
+echo "export SESSION_SECRET='${SESSION_SECRET}'" > ~/r38-secret.env
 ```
 
 ### Add generated OAuth values to local environment variables
 
 ```bash
-cat <<EOF >> ~/r38-2.env
+cat <<EOF >> ~/r38-secret.env
 export GOOGLE_CLIENT_ID='${ClientID}'
 export GOOGLE_CLIENT_SECRET='${ClientSecret}'
 export GOOGLE_REDIRECT_URL='http://${SITE}:${PORT:-12264}/auth/google/callback'
