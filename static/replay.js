@@ -62,7 +62,7 @@
     for (var i = 0; i < Draft.seats.length; i++) {
       document.querySelector('#seat>option[value="' + i + '"]').textContent = Draft.seats[i].name;
     }
-    
+
     return Draft;
   }
   let Draft = getDraftObject();
@@ -223,7 +223,7 @@
     var img = document.createElement('img');
     var name = document.createElement('div');
     ret.append(img, name);
-    img.src = 'http://api.scryfall.com/cards/' + card.edition + '/' + card.number + '?format=image&version=normal';
+    img.src = '/proxy/' + card.edition + '/' + card.number;
     img.height = '300';
     name.textContent = card.name;
     ret.id = normalizeCardName(card.name);

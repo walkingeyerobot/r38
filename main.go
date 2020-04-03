@@ -134,8 +134,7 @@ func main() {
 		return
 	}
 
-	// MakeDraft("mtgo draft 1")
-	// MakeDraft("mtgo draft 2")
+	MakeDraft("jpgleg draft 1")
 
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":12264"),
@@ -158,7 +157,9 @@ func NewHandler() http.Handler {
 	fs := http.FileServer(http.Dir("static"))
 	mux.Handle("/static/", AuthMiddleware(http.StripPrefix("/static/", fs)))
 
-	replayHandler := http.HandlerFunc(ServeReplay)
+	proxyHandler := http.HandlerFunc(ServeProxy)
+	mux.Handle("/proxy/", AuthMiddleware(proxyHandler))
+    replayHandler := http.HandlerFunc(ServeReplay)
 	mux.Handle("/replay/", AuthMiddleware(replayHandler))
 	viewHandler := http.HandlerFunc(ServeView)
 	mux.Handle("/view/", AuthMiddleware(viewHandler))
@@ -250,6 +251,40 @@ func doServeMtgo(w http.ResponseWriter, r *http.Request, userId int64, draftId i
 	io.WriteString(w, "</Deck>")
 }
 
+// proxyCard is a wrapper around Scryfall's REST API to follow redirects and grab image contents.
+func proxyCard(edition, number string) ([]byte, error) {
+  scryfall := "http://api.scryfall.com/cards/%s/%s?format=image&version=normal"
+  response, err := http.Get(fmt.Sprintf(scryfall, edition, number))
+  if err != nil {
+    return nil, err
+  }
+  defer response.Body.Close()
+  contents, err := ioutil.ReadAll(response.Body)
+  if err != nil {
+    return nil, err
+  }
+  return contents, nil
+}
+
+// ServeProxy repackages proxied image content with a Cache-Control header.
+func ServeProxy(w http.ResponseWriter, r *http.Request) {
+  re := regexp.MustCompile(`/proxy/([a-zA-Z0-9]+)/([a-zA-Z0-9]+)/?`)
+  parseResult := re.FindStringSubmatch(r.URL.Path)
+  if parseResult == nil {
+    http.Error(w, "bad url", http.StatusInternalServerError)
+    return
+  }
+  img, err := proxyCard(parseResult[1], parseResult[2])
+  if err != nil {
+    fmt.Fprintf(w, err.Error(), http.StatusInternalServerError)
+    return
+  }
+  w.Header().Set("Cache-Control", "max-age=86400,public")
+  w.Header().Set("Content-Type", "image/jpeg")
+  w.Write(img)
+  return
+}
+
 func ServeReplay(w http.ResponseWriter, r *http.Request) {
 	session, err := store.Get(r, "session-name")
 	if err != nil {
@@ -325,6 +360,7 @@ func ServeReplay(w http.ResponseWriter, r *http.Request) {
 
 	t.Execute(w, data)
 }
+
 func ServeLibrarian(w http.ResponseWriter, r *http.Request) {
 	session, err := store.Get(r, "session-name")
 	if err != nil {
@@ -608,7 +644,7 @@ func doServePdf(w http.ResponseWriter, r *http.Request, userId int64, draftId in
 
 	for idx, pick := range myPicks {
 		imgResp, err := http.Get(
-			fmt.Sprintf("http://api.scryfall.com/cards/%s/%s?format=image&version=normal",
+			fmt.Sprintf("/proxy/%s/%s",
 				pick.Edition, pick.Number))
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)

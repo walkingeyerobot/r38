@@ -31,7 +31,7 @@
         {{ range .Pack }}
           <div class="card">
             <a href="/pick/{{ .Id }}">
-              <img src="http://api.scryfall.com/cards/{{ .Edition }}/{{ .Number }}?format=image&version=normal" height=300 />
+              <img src="/proxy/{{ .Edition }}/{{ .Number }}" height=300 />
             </a>
             <div>{{ .Name }}</div>
             {{ if .Tags }}
@@ -47,7 +47,7 @@
       <div>previous picks - <a href="{{ .ViewUrl }}/pdf/{{ .DraftId }}">print proxies</a> - <a href="{{ .ViewUrl }}/mtgo/{{ .DraftId }}">export to mtgo</a></div>
       {{ range .Picks }}
         <div class="card">
-          <img src="http://api.scryfall.com/cards/{{ .Edition }}/{{ .Number }}?format=image&version=normal" height=300 />
+          <img src="/proxy/{{ .Edition }}/{{ .Number }}" height=300 />
           <div>{{ .Name }}</div>
           {{ if .Tags }}
             <div>({{ .Tags }})</div>
@@ -63,7 +63,7 @@
       {{ range .Powers }}
         <div class="card">
           <a href="/power/{{ .Id }}">
-            <img src="http://api.scryfall.com/cards/{{ .Edition }}/{{ .Number }}?format=image&version=normal" height=300 />
+            <img src="/proxy/{{ .Edition }}/{{ .Number }}" height=300 />
           </a>
           <div>{{ .Name }}</div>
         </div>
