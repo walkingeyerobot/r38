@@ -1262,8 +1262,8 @@ func doPick(userId int64, cardId int64, pass bool) (int64, int64, []string, int6
 				return draftId, oldPackId, announcements, round, err
 			}
 		} else {
-			query = `select count(1) from v_packs join seats where v_packs.seat=seats.id and seats.user=? and v_packs.round=? and v_packs.count>0`
-			row = database.QueryRow(query, userId, round)
+			query = `select count(1) from v_packs join seats where v_packs.seat=seats.id and seats.user=? and v_packs.round=? and v_packs.count>0 and seats.draft=?`
+			row = database.QueryRow(query, userId, round, draftId)
 			var packsLeftInSeat int64
 			err = row.Scan(&packsLeftInSeat)
 			if err != nil {
