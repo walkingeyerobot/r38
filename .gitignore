@@ -1,5 +1,7 @@
 draft.db
 *.csv
 pkg/
-src/
+/src/
 run.sh
+node_modules/
+/client/dist
