@@ -134,7 +134,8 @@ func main() {
 		return
 	}
 
-	MakeDraft("jpgleg draft 1")
+    // MakeDraft("mtgo draft 1")
+    // MakeDraft("mtgo draft 2")
 
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":12264"),
