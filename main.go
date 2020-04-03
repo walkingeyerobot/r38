@@ -645,7 +645,7 @@ func doServePdf(w http.ResponseWriter, r *http.Request, userId int64, draftId in
 
 	for idx, pick := range myPicks {
 		imgResp, err := http.Get(
-			fmt.Sprintf("/proxy/%s/%s",
+			fmt.Sprintf("http://api.scryfall.com/cards/%s/%s?format=image&version=normal",
 				pick.Edition, pick.Number))
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
