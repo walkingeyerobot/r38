@@ -38,10 +38,10 @@ const store = new Vuex.Store({
 
     initDraft(
         state: RootState,
-        payload: { draft: DraftState, events: TimelineEvent[] }
+        payload: { state: DraftState, events: TimelineEvent[] }
     ) {
-      initialDraftState = cloneDraftState(payload.draft);
-      state.draft = cloneDraftState(payload.draft);
+      initialDraftState = cloneDraftState(payload.state);
+      state.draft = cloneDraftState(payload.state);
       state.events = payload.events;
       state.eventPos = 0;
     },
