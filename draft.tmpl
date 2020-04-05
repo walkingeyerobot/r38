@@ -57,8 +57,8 @@
       <div>previous picks - <a href="{{ .ViewUrl }}/pdf/{{ .DraftId }}">print proxies</a> - <a href="{{ .ViewUrl }}/mtgo/{{ .DraftId }}">export to mtgo</a></div>
       {{ range .Picks }}
         <div class="card">
-            <img src="/proxy/{{ .Edition }}/{{ .Number }}" height=300 />
-            {{template "cardname" .Name}}
+          <img src="/proxy/{{ .Edition }}/{{ .Number }}" height=300 />
+          {{template "cardname" .Name}}
           {{ if .Tags }}
             <div>({{ .Tags }})</div>
           {{ end }}
