@@ -20,7 +20,7 @@
             class="card-img"
             :class="getSelectionClass(card.id)"
             :title="card.definition.name"
-            :src="`http://api.scryfall.com/cards/${card.definition.set}/${card.definition.collector_number}?format=image&version=normal`"
+            :src="`/proxy/${card.definition.set}/${card.definition.collector_number}`"
             >
       </div>
     </div>
@@ -37,7 +37,7 @@
         <img
             class="card-img"
             :title="card.definition.name"
-            :src="`http://api.scryfall.com/cards/${card.definition.set}/${card.definition.collector_number}?format=image&version=normal`"
+            :src="`/proxy/${card.definition.set}/${card.definition.collector_number}`"
             >
       </div>
     </div>
