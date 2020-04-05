@@ -1,5 +1,6 @@
 draft.db
 *.csv
+/*.env
 pkg/
 /src/
 run.sh
