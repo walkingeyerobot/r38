@@ -8,7 +8,7 @@ Then install dependencies:
 
 ```
 $ cd client
-$ npm install
+$ npm ci
 ```
 
 Finally, run `$ npm start` to run the development server. Or run `$ npm run build` to build the production version (to be checked in).
