@@ -20,7 +20,7 @@
             class="card-img"
             :class="getSelectionClass(card.id)"
             :title="card.definition.name"
-            :src="`/proxy/${card.definition.set}/${card.definition.collector_number}`"
+            :src="getImageSrc(card)"
             >
       </div>
     </div>
@@ -37,7 +37,7 @@
         <img
             class="card-img"
             :title="card.definition.name"
-            :src="`/proxy/${card.definition.set}/${card.definition.collector_number}`"
+            :src="getImageSrc(card)"
             >
       </div>
     </div>
@@ -115,6 +115,16 @@ export default Vue.extend({
         }
       }
       return undefined;
+    },
+
+    getImageSrc(card: DraftCard): string {
+      if (process.env.NODE_ENV == 'development') {
+        return `http://api.scryfall.com/cards/${card.definition.set}/`
+            + `${card.definition.collector_number}?format=image&version=normal`;
+      } else {
+        return `/proxy/${card.definition.set}/`
+            + `${card.definition.collector_number}`;
+      }
     }
   },
 
