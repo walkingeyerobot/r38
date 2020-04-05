@@ -9,6 +9,7 @@
     .card {
       display: inline-block;
       vertical-align: top;
+      margin-bottom: 1em;
     }
   </style>
 </head>
@@ -25,6 +26,14 @@
   </div>
   <hr/>
   <div>
+    {{ define "cardname" }}
+      <div style="display:flex;align-items:center;">
+        <span style="margin-left: 4px;padding-bottom: 2px;">{{ . }}</span>
+        <a style="margin-left: 6px"  href="https://scryfall.com/search?q=name:&quot;{{.}}&quot;&unique=cards"
+        ><img width="16" height="16" src="/static/scryfall.png"></a>
+        </div>
+    {{ end }}
+
     {{ if not .Pack }}
       <div>no packs available</div>
     {{ else }}
@@ -34,7 +43,7 @@
             <a href="/pick/{{ .Id }}">
               <img src="/proxy/{{ .Edition }}/{{ .Number }}" height=300 />
             </a>
-            <div>{{ .Name }}</div>
+            {{template "cardname" .Name}}
             {{ if .Tags }}
               <div>({{ .Tags }})</div>
             {{ end }}
@@ -49,7 +58,7 @@
       {{ range .Picks }}
         <div class="card">
           <img src="/proxy/{{ .Edition }}/{{ .Number }}" height=300 />
-          <div>{{ .Name }}</div>
+          {{template "cardname" .Name}}
           {{ if .Tags }}
             <div>({{ .Tags }})</div>
           {{ end }}
