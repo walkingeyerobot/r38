@@ -31,7 +31,7 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import { DraftSeat } from '../../draft/draft_types';
+import { DraftSeat } from '../../draft/DraftState';
 
 import CardPack from './CardPack.vue';
 

@@ -47,7 +47,8 @@
 
 <script lang="ts">
 import Vue from 'vue'
-import { DraftCard, DraftPlayer, DraftSeat, CardPack, CardContainer, TimelineEvent } from '../../draft/draft_types'
+import { DraftCard, DraftPlayer, DraftSeat, CardPack, CardContainer } from '../../draft/DraftState'
+import { TimelineEvent } from '../../draft/TimelineEvent';
 import { SelectedView } from '../../state/selection';
 import { checkNotNil } from '../../util/checkNotNil';
 

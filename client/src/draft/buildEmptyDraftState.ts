@@ -1,4 +1,4 @@
-import { DraftState } from './draft_types';
+import { DraftState } from './DraftState';
 
 export function buildEmptyDraftState(): DraftState {
   return {

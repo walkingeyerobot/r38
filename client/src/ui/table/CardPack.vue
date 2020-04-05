@@ -10,7 +10,7 @@
 
 <script lang="ts">
 import Vue from 'vue'
-import { CardPack } from '../../draft/draft_types';
+import { CardPack } from '../../draft/DraftState';
 
 export default Vue.extend({
   props: {

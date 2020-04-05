@@ -1,7 +1,8 @@
 import { SourceData } from './SourceData';
 import { parseInitialState } from './parseInitialState';
 import { TimelineGenerator } from './TimelineGenerator';
-import { DraftState, TimelineEvent } from '../draft/draft_types';
+import { DraftState } from '../draft/DraftState';
+import { TimelineEvent } from '../draft/TimelineEvent';
 
 export function parseDraft(
   sourceData: SourceData

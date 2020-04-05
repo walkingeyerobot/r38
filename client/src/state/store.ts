@@ -1,7 +1,8 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
 import { SelectedView } from './selection';
-import { DraftState, TimelineEvent } from '../draft/draft_types';
+import { DraftState } from '../draft/DraftState';
+import { TimelineEvent } from '../draft/TimelineEvent';
 import { buildEmptyDraftState } from '../draft/buildEmptyDraftState';
 import { commitTimelineEvent, rollbackTimelineEvent } from '../draft/mutate';
 import { cloneDraftState } from '../draft/cloneDraftState';

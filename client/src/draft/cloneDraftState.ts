@@ -1,4 +1,4 @@
-import { DraftState, CardPack, CardContainer } from './draft_types';
+import { DraftState, CardContainer } from './DraftState';
 
 export function cloneDraftState(src: DraftState) {
   const clonedState: DraftState = JSON.parse(JSON.stringify(src));
