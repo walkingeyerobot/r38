@@ -134,7 +134,7 @@ func main() {
 		return
 	}
 
-	MakeDraft("mtgo draft 1")
+	// MakeDraft("mtgo draft 1")
 	// MakeDraft("mtgo draft 2")
 
 	server := &http.Server{
