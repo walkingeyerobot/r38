@@ -59,7 +59,7 @@ export class TimelineGenerator {
     }
 
     if (this._committedIndex < this._outEvents.length) {
-      const event = this._outEvents[this._committedIndex];
+      // const event = this._outEvents[this._committedIndex];
       // console.log('EVENT', this._committedIndex, event);
       // for (const action of event.actions){
       //   console.log('  ', action);
