@@ -134,7 +134,7 @@ func main() {
 		return
 	}
 
-	// MakeDraft("mtgo draft 1")
+	MakeDraft("mtgo draft 1")
 	// MakeDraft("mtgo draft 2")
 
 	server := &http.Server{
@@ -188,17 +188,19 @@ func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		session, err := store.Get(r, "session-name")
 		if err != nil {
-			fmt.Fprintf(w, `<html><body><a href="/auth/google/login">login</a></body></html>`)
+			t := template.Must(template.ParseFiles("login.tmpl"))
+			t.Execute(w, nil)
 			return
 		}
 		if session.Values["userid"] != nil {
 			log.Printf("%s %s", session.Values["userid"], r.URL.Path)
 			next.ServeHTTP(w, r)
 			return
-		} else {
-			fmt.Fprintf(w, `<html><body><a href="/auth/google/login">login</a></body></html>`)
-			return
 		}
+		t := template.Must(template.ParseFiles("login.tmpl"))
+		t.Execute(w, nil)
+		return
+
 	})
 }
 
