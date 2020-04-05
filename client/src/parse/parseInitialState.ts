@@ -66,7 +66,8 @@ export function parseInitialState(srcData: SourceData): DraftState {
 
 function parsePack(srcPack: SourceCard[]) {
   const pack = [] as DraftCard[];
-  for (const srcPick of srcPack) {
+  for (let i = 0; i < srcPack.length; i++) {
+    const srcPick = srcPack[i];
     pack.push({
       id: nextCardId++,
       definition: {
@@ -75,6 +76,7 @@ function parsePack(srcPack: SourceCard[]) {
         collector_number: srcPick.number,
         tags: srcPick.tags.split(", "),
       },
+      sourcePackIndex: i,
       draftedBy: null,
     });
   }

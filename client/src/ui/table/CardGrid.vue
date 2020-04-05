@@ -12,7 +12,7 @@
         class="selected-pack"
         >
       <div
-          v-for="card in selectedPack.cards"
+          v-for="card in selectedPack"
           :key="card.id"
           class="card"
           >
@@ -67,19 +67,27 @@ export default Vue.extend({
       return null;
     },
 
-    selectedPack(): CardContainer | null {
+    selectedPack(): DraftCard[] | null {
+      let pack: CardContainer | null = null;
+
       if (this.selection == null) {
         return null;
       } else if (this.selection.type == 'pack') {
-        return checkNotNil(
-            this.$tstore.state.draft.packs.get(this.selection.id));
+        pack =
+            checkNotNil(this.$tstore.state.draft.packs.get(this.selection.id));
       } else {
         const player = this.$tstore.state.draft.seats[this.selection.id];
         if (player.queuedPacks.length > 0) {
-          return player.queuedPacks[0];
-        } else {
-          return null;
+          pack = player.queuedPacks[0];
         }
+      }
+
+      if (pack != null) {
+        return pack.cards
+            .concat()
+            .sort((a, b) => a.sourcePackIndex - b.sourcePackIndex);
+      } else {
+        return null;
       }
     },
 

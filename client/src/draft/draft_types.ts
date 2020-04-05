@@ -37,6 +37,8 @@ export interface DraftPlayer {
 export interface DraftCard {
   id: number;
   definition: MtgCard;
+  /** The index position of this card in its original pack */
+  sourcePackIndex: number,
   draftedBy: DraftedBy | null;
 }
 
