@@ -11,6 +11,7 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"errors"
+	"flag"
 	"fmt"
 	"github.com/gorilla/sessions"
 	"github.com/jung-kurt/gofpdf"
@@ -33,6 +34,7 @@ import (
 var secret_key_no_one_will_ever_guess = []byte(os.Getenv("SESSION_SECRET"))
 var store = sessions.NewCookieStore(secret_key_no_one_will_ever_guess)
 var database *sql.DB
+var useAuth bool
 
 type GoogleUserInfo struct {
 	Id      string `json:"id"`
@@ -123,7 +125,15 @@ type ReplayPageData struct {
 	Json string
 }
 
+type r38handler func(w http.ResponseWriter, r *http.Request, userId int64)
+
 func main() {
+	useAuthPtr := flag.Bool("auth", true, "bool")
+
+	flag.Parse()
+
+	useAuth = *useAuthPtr
+
 	var err error
 	database, err = sql.Open("sqlite3", "draft.db")
 	if err != nil {
@@ -139,7 +149,7 @@ func main() {
 
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":12264"),
-		Handler: NewHandler(),
+		Handler: NewHandler(*useAuthPtr),
 	}
 
 	log.Printf("Starting HTTP Server. Listening at %q", server.Addr)
@@ -149,37 +159,69 @@ func main() {
 	}
 }
 
-func NewHandler() http.Handler {
+func NewHandler(useAuth bool) http.Handler {
 	mux := http.NewServeMux()
+
+	middleware := AuthMiddleware
+
+	if !useAuth {
+		middleware = NonAuthMiddleware
+	}
 
 	mux.HandleFunc("/auth/google/login", oauthGoogleLogin)
 	mux.HandleFunc("/auth/google/callback", oauthGoogleCallback)
 
 	fs := http.FileServer(http.Dir("static"))
-	mux.Handle("/static/", AuthMiddleware(http.StripPrefix("/static/", fs)))
+	mux.Handle("/static/", middleware(http.StripPrefix("/static/", fs)))
 
-	proxyHandler := http.HandlerFunc(ServeProxy)
-	mux.Handle("/proxy/", AuthMiddleware(proxyHandler))
-	replayHandler := http.HandlerFunc(ServeReplay)
-	mux.Handle("/replay/", AuthMiddleware(replayHandler))
-	viewHandler := http.HandlerFunc(ServeView)
-	mux.Handle("/view/", AuthMiddleware(viewHandler))
-	librarianHandler := http.HandlerFunc(ServeLibrarian)
-	mux.Handle("/librarian/", AuthMiddleware(librarianHandler))
-	powerHandler := http.HandlerFunc(ServePower)
-	mux.Handle("/power/", AuthMiddleware(powerHandler))
-	draftHandler := http.HandlerFunc(ServeDraft)
-	mux.Handle("/draft/", AuthMiddleware(draftHandler))
-	pdfHandler := http.HandlerFunc(ServePdf)
-	mux.Handle("/pdf/", AuthMiddleware(pdfHandler))
-	pickHandler := http.HandlerFunc(ServePick)
-	mux.Handle("/pick/", AuthMiddleware(pickHandler))
-	joinHandler := http.HandlerFunc(ServeJoin)
-	mux.Handle("/join/", AuthMiddleware(joinHandler))
-	mtgoHandler := http.HandlerFunc(ServeMtgo)
-	mux.Handle("/mtgo/", AuthMiddleware(mtgoHandler))
-	indexHandler := http.HandlerFunc(ServeIndex)
-	mux.Handle("/", AuthMiddleware(indexHandler))
+	addHandler := func(route string, serveFunc r38handler) {
+		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			var userId int64
+			if useAuth {
+				session, err := store.Get(r, "session-name")
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
+				userIdInt, err := strconv.Atoi(session.Values["userid"].(string))
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
+				userId = int64(userIdInt)
+			} else {
+				userId = 1
+			}
+
+			if userId == 1 {
+				q := r.URL.Query()
+				val := q.Get("as")
+				if val != "" {
+					userIdInt, err := strconv.Atoi(val)
+					if err != nil {
+						http.Error(w, err.Error(), http.StatusInternalServerError)
+						return
+					}
+					userId = int64(userIdInt)
+				}
+			}
+
+			serveFunc(w, r, userId)
+		})
+		mux.Handle(route, middleware(handler))
+	}
+
+	addHandler("/proxy/", ServeProxy)
+	addHandler("/replay/", ServeReplay)
+	addHandler("/librarian/", ServeLibrarian)
+	addHandler("/power/", ServePower)
+	addHandler("/draft/", ServeDraft)
+	addHandler("/pdf/", ServePdf)
+	addHandler("/pick/", ServePick)
+	addHandler("/join/", ServeJoin)
+	addHandler("/mtgo/", ServeMtgo)
+	addHandler("/index/", ServeIndex)
+	addHandler("/", ServeIndex)
 
 	return mux
 }
@@ -204,19 +246,15 @@ func AuthMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func ServeMtgo(w http.ResponseWriter, r *http.Request) {
-	session, err := store.Get(r, "session-name")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+func NonAuthMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Printf(r.URL.Path)
+		next.ServeHTTP(w, r)
 		return
-	}
-	userIdInt, err := strconv.Atoi(session.Values["userid"].(string))
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	userId := int64(userIdInt)
+	})
+}
 
+func ServeMtgo(w http.ResponseWriter, r *http.Request, userId int64) {
 	re := regexp.MustCompile(`/mtgo/(\d+)`)
 	parseResult := re.FindStringSubmatch(r.URL.Path)
 
@@ -270,7 +308,7 @@ func proxyCard(edition, number string) ([]byte, error) {
 }
 
 // ServeProxy repackages proxied image content with a Cache-Control header.
-func ServeProxy(w http.ResponseWriter, r *http.Request) {
+func ServeProxy(w http.ResponseWriter, r *http.Request, userId int64) {
 	re := regexp.MustCompile(`/proxy/([a-zA-Z0-9]+)/([a-zA-Z0-9]+)/?`)
 	parseResult := re.FindStringSubmatch(r.URL.Path)
 	if parseResult == nil {
@@ -288,19 +326,7 @@ func ServeProxy(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func ServeReplay(w http.ResponseWriter, r *http.Request) {
-	session, err := store.Get(r, "session-name")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	userIdInt, err := strconv.Atoi(session.Values["userid"].(string))
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	userId := int64(userIdInt)
-
+func ServeReplay(w http.ResponseWriter, r *http.Request, userId int64) {
 	re := regexp.MustCompile(`/replay/(\d+)`)
 	parseResult := re.FindStringSubmatch(r.URL.Path)
 
@@ -364,19 +390,7 @@ func ServeReplay(w http.ResponseWriter, r *http.Request) {
 	t.Execute(w, data)
 }
 
-func ServeLibrarian(w http.ResponseWriter, r *http.Request) {
-	session, err := store.Get(r, "session-name")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	userIdInt, err := strconv.Atoi(session.Values["userid"].(string))
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	userId := int64(userIdInt)
-
+func ServeLibrarian(w http.ResponseWriter, r *http.Request, userId int64) {
 	re := regexp.MustCompile(`/librarian/(\d+)/(\d+)`)
 	parseResult := re.FindStringSubmatch(r.URL.Path)
 
@@ -493,19 +507,7 @@ func ServeLibrarian(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, fmt.Sprintf("/draft/%d", draftId1), http.StatusTemporaryRedirect)
 }
 
-func ServePower(w http.ResponseWriter, r *http.Request) {
-	session, err := store.Get(r, "session-name")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	userIdInt, err := strconv.Atoi(session.Values["userid"].(string))
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	userId := int64(userIdInt)
-
+func ServePower(w http.ResponseWriter, r *http.Request, userId int64) {
 	re := regexp.MustCompile(`/power/(\d+)`)
 	parseResult := re.FindStringSubmatch(r.URL.Path)
 
@@ -559,14 +561,7 @@ func ServePower(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func ServeIndex(w http.ResponseWriter, r *http.Request) {
-	session, err := store.Get(r, "session-name")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	userId := session.Values["userid"]
-
+func ServeIndex(w http.ResponseWriter, r *http.Request, userId int64) {
 	query := `select drafts.id, drafts.name, sum(seats.user is null and seats.position is not null) as empty_seats, coalesce(sum(seats.user = ?), 0) as joined from drafts left join seats on drafts.id = seats.draft group by drafts.id`
 
 	rows, err := database.Query(query, userId, userId)
@@ -593,19 +588,7 @@ func ServeIndex(w http.ResponseWriter, r *http.Request) {
 	t.Execute(w, data)
 }
 
-func ServePdf(w http.ResponseWriter, r *http.Request) {
-	session, err := store.Get(r, "session-name")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	userIdInt, err := strconv.Atoi(session.Values["userid"].(string))
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	userId := int64(userIdInt)
-
+func ServePdf(w http.ResponseWriter, r *http.Request, userId int64) {
 	re := regexp.MustCompile(`/pdf/(\d+)`)
 	parseResult := re.FindStringSubmatch(r.URL.Path)
 
@@ -686,19 +669,7 @@ func doServePdf(w http.ResponseWriter, r *http.Request, userId int64, draftId in
 	}
 }
 
-func ServeDraft(w http.ResponseWriter, r *http.Request) {
-	session, err := store.Get(r, "session-name")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	userIdInt, err := strconv.Atoi(session.Values["userid"].(string))
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	userId := int64(userIdInt)
-
+func ServeDraft(w http.ResponseWriter, r *http.Request, userId int64) {
 	re := regexp.MustCompile(`/draft/(\d+)`)
 	parseResult := re.FindStringSubmatch(r.URL.Path)
 
@@ -715,82 +686,6 @@ func ServeDraft(w http.ResponseWriter, r *http.Request) {
 	draftId := int64(draftIdInt)
 
 	doServeDraft(w, r, userId, draftId, false)
-}
-
-func ServeView(w http.ResponseWriter, r *http.Request) {
-	session, err := store.Get(r, "session-name")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	userIdInt, err := strconv.Atoi(session.Values["userid"].(string))
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	userId := int64(userIdInt)
-
-	if userId != 1 {
-		http.Error(w, "lol no", http.StatusInternalServerError)
-		return
-	}
-
-	re := regexp.MustCompile(`/view/(\d+)/(\w+)/([\w/]+)`)
-	parseResult := re.FindStringSubmatch(r.URL.Path)
-
-	if parseResult == nil {
-		http.Error(w, "bad url", http.StatusInternalServerError)
-		return
-	}
-
-	fakeUserIdInt, err := strconv.Atoi(parseResult[1])
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	fakeUserId := int64(fakeUserIdInt)
-	urlToView := parseResult[2]
-	otherArgs := parseResult[3]
-
-	switch urlToView {
-	case "draft":
-		re = regexp.MustCompile(`(\d+)`)
-		parseResult = re.FindStringSubmatch(otherArgs)
-
-		draftInt, err := strconv.Atoi(parseResult[1])
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		draftId := int64(draftInt)
-
-		doServeDraft(w, r, fakeUserId, draftId, true)
-	case "mtgo":
-		re = regexp.MustCompile(`(\d+)`)
-		parseResult = re.FindStringSubmatch(otherArgs)
-
-		draftInt, err := strconv.Atoi(parseResult[1])
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		draftId := int64(draftInt)
-
-		doServeMtgo(w, r, fakeUserId, draftId)
-	case "pdf":
-		re = regexp.MustCompile(`(\d+)`)
-		parseResult = re.FindStringSubmatch(otherArgs)
-
-		draftInt, err := strconv.Atoi(parseResult[1])
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		draftId := int64(draftInt)
-
-		doServePdf(w, r, fakeUserId, draftId)
-	}
 }
 
 func doServeDraft(w http.ResponseWriter, r *http.Request, userId int64, draftId int64, viewing bool) {
@@ -837,14 +732,7 @@ func doServeDraft(w http.ResponseWriter, r *http.Request, userId int64, draftId 
 	t.Execute(w, data)
 }
 
-func ServeJoin(w http.ResponseWriter, r *http.Request) {
-	session, err := store.Get(r, "session-name")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	userId := session.Values["userid"]
-
+func ServeJoin(w http.ResponseWriter, r *http.Request, userId int64) {
 	re := regexp.MustCompile(`/join/(\d+)`)
 	parseResult := re.FindStringSubmatch(r.URL.Path)
 
@@ -859,7 +747,7 @@ func ServeJoin(w http.ResponseWriter, r *http.Request) {
 
 	row := database.QueryRow(query, draftId, userId)
 	var alreadyJoined bool
-	err = row.Scan(&alreadyJoined)
+	err := row.Scan(&alreadyJoined)
 
 	if err != nil && err != sql.ErrNoRows {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -881,19 +769,7 @@ func ServeJoin(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, fmt.Sprintf("/draft/%s", draftId), http.StatusTemporaryRedirect)
 }
 
-func ServePick(w http.ResponseWriter, r *http.Request) {
-	session, err := store.Get(r, "session-name")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	userIdInt, err := strconv.Atoi(session.Values["userid"].(string))
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	userId := int64(userIdInt)
-
+func ServePick(w http.ResponseWriter, r *http.Request, userId int64) {
 	re := regexp.MustCompile(`/pick/(\d+)`)
 	parseResult := re.FindStringSubmatch(r.URL.Path)
 
