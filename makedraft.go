@@ -124,6 +124,11 @@ func main() {
 	}
 	defer file.Close()
 	reader := csv.NewReader(bufio.NewReader(file))
+	_, err := reader.Read()
+	if err != nil {
+		// error
+		return
+	}
 	lines, err := reader.ReadAll()
 	if err != nil {
 		// error

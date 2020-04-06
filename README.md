@@ -15,7 +15,7 @@ go get -v github.com/walkingeyerobot/r38/...
 ## Pull a usable Cube list (vintagecube.csv):
 
 ```bash
-wget -q -O - 'https://cubecobra.com/cube/download/csv/5e3cfa78fab99c24464f76ee?primary=Color%20Category&secondary=Types-Multicolor&tertiary=CMC2' | tail -n +2 > vintagecube.csv
+wget -O vintagecube.csv 'https://cubecobra.com/cube/download/csv/5e3cfa78fab99c24464f76ee?primary=Color%20Category&secondary=Types-Multicolor&tertiary=CMC2'
 ```
 
 ## Configure the sqlite3 database (draft.db)
@@ -26,12 +26,20 @@ CREATE TABLE sqlite_sequence(name,seq);
 CREATE TABLE users( id integer primary key autoincrement, google_id text unique, email text, picture text, slack string, discord string, webhook string);
 CREATE TABLE seats( id integer primary key autoincrement, position number, user number, draft number, round number default 1);
 CREATE TABLE packs( id integer primary key autoincrement, seat number, modified number, round number , original_seat number);
-CREATE TABLE cards( id integer primary key autoincrement, pack number, edition text, number text, tags text, name text, faceup number default false, original_pack number, modified number default 0, mtgo text);
+CREATE TABLE cards( id integer primary key autoincrement, pack number, edition text, number text, tags text, name text, faceup number default false, original_pack number, modified number default 0, mtgo string);
 CREATE TABLE drafts( id integer primary key autoincrement, name text);
 CREATE TABLE revealed( id integer primary key autoincrement, draft number, message text);
 CREATE TABLE events( id integer primary key autoincrement, draft number, user number, announcement text, card1 number, card2 number, modified number, round number);
 CREATE VIEW v_packs as select packs.*, count(cards.id) as count from packs left join cards on packs.id=cards.pack group by packs.id
 /* v_packs(id,seat,modified,round,original_seat,count) */;
+```
+
+## Run the server without OAuth
+
+You can now run the server without OAuth. You will always be considered logged in as userId 1. To be logged in as a differnt user, add ?as=x to the end of the url you want to view, where x is the id of the user you want to view the page as.
+
+```bash
+source ~/r38-secret.env; go run main.go -auth=false
 ```
 
 ## Configure OAuth for a local environment:
@@ -62,7 +70,9 @@ EOF
 
 ## Configure a draft
 
-Manually mess with `sqlite3`, or uncomment `// MakeDraft("mtgo draft 1")` in `main.go`
+```bash
+go run makedraft.go
+```
 
 ## Start the server
 
