@@ -1,4 +1,4 @@
-draft.db
+draft.db*
 *.csv
 /*.env
 pkg/
