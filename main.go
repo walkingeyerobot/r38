@@ -1,14 +1,11 @@
 package main
 
 import (
-	"bufio"
 	"bytes"
 	"context"
 	"crypto/rand"
 	"database/sql"
 	"encoding/base64"
-	"encoding/binary"
-	"encoding/csv"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -22,7 +19,6 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
-	badrand "math/rand"
 	"net/http"
 	"os"
 	"regexp"
@@ -40,22 +36,6 @@ type GoogleUserInfo struct {
 	Id      string `json:"id"`
 	Email   string `json:"email"`
 	Picture string `json:"picture"`
-}
-
-type cryptoSource struct{}
-
-func (s cryptoSource) Seed(seed int64) {}
-
-func (s cryptoSource) Int63() int64 {
-	return int64(s.Uint64() & ^uint64(1<<63))
-}
-
-func (s cryptoSource) Uint64() (v uint64) {
-	err := binary.Read(rand.Reader, binary.BigEndian, &v)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return v
 }
 
 type Draft struct {
@@ -143,9 +123,6 @@ func main() {
 	if err != nil {
 		return
 	}
-
-	// MakeDraft("mtgo draft 1")
-	// MakeDraft("mtgo draft 2")
 
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":12264"),
@@ -798,100 +775,6 @@ func ServePick(w http.ResponseWriter, r *http.Request, userId int64) {
 	}
 
 	http.Redirect(w, r, fmt.Sprintf("/draft/%d", draftId), http.StatusTemporaryRedirect)
-}
-
-func MakeDraft(name string) {
-	query := `INSERT INTO drafts (name) VALUES (?);`
-	res, err := database.Exec(query, name)
-	if err != nil {
-		// error
-		return
-	}
-
-	draftId, err := res.LastInsertId()
-	if err != nil {
-		// error
-		return
-	}
-	query = `INSERT INTO seats (position, draft) VALUES (?, ?)`
-	var seatIds [9]int64
-	for i := 0; i < 8; i++ {
-		res, err = database.Exec(query, i, draftId)
-		if err != nil {
-			// error
-			return
-		}
-		seatIds[i], err = res.LastInsertId()
-		if err != nil {
-			// error
-			return
-		}
-	}
-
-	res, err = database.Exec(`INSERT INTO seats (position, draft) VALUES(NULL, ?)`, draftId)
-	if err != nil {
-		// error
-		return
-	}
-	seatIds[8], err = res.LastInsertId()
-	if err != nil {
-		// error
-		return
-	}
-
-	query = `INSERT INTO packs (seat, original_seat, modified, round) VALUES (?, ?, 0, ?)`
-	var packIds [25]int64
-	for i := 0; i < 8; i++ {
-		for j := 0; j < 4; j++ {
-			res, err = database.Exec(query, seatIds[i], seatIds[i], j)
-			if err != nil {
-				// error
-				return
-			}
-			if j != 0 {
-				packIds[(3*i)+(j-1)], err = res.LastInsertId()
-				if err != nil {
-					// error
-					return
-				}
-			}
-		}
-	}
-
-	res, err = database.Exec(`INSERT INTO packs (seat, original_seat, modified, round) VALUES (?, ?, 0, NULL)`, seatIds[8], seatIds[8])
-	if err != nil {
-		// error
-		return
-	}
-	packIds[24], err = res.LastInsertId()
-	if err != nil {
-		// error
-		return
-	}
-
-	query = `INSERT INTO cards (pack, original_pack, edition, number, tags, name) VALUES (?, ?, ?, ?, ?, ?)`
-	file, err := os.Open("vintagecube.csv")
-	if err != nil {
-		// error
-		return
-	}
-	defer file.Close()
-	reader := csv.NewReader(bufio.NewReader(file))
-	lines, err := reader.ReadAll()
-	if err != nil {
-		// error
-		return
-	}
-
-	var src cryptoSource
-	rnd := badrand.New(src)
-	for i := 539; i > 164; i-- {
-		j := rnd.Intn(i)
-		lines[i], lines[j] = lines[j], lines[i]
-		packId := packIds[(539-i)/15]
-		database.Exec(query, packId, packId, lines[i][4], lines[i][5], lines[i][10], lines[i][0])
-	}
-	fmt.Printf("done generating new draft\n")
 }
 
 var googleOauthConfig = &oauth2.Config{
