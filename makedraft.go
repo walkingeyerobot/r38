@@ -35,7 +35,7 @@ func main() {
 	flag.Parse()
 
 	name := *draftNamePtr
-	
+
 	var database *sql.DB
 
 	var err error
@@ -47,7 +47,7 @@ func main() {
 	if err != nil {
 		return
 	}
-	
+
 	query := `INSERT INTO drafts (name) VALUES (?);`
 	res, err := database.Exec(query, name)
 	if err != nil {
