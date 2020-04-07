@@ -710,6 +710,11 @@ func doServeDraft(w http.ResponseWriter, r *http.Request, userId int64, draftId 
 }
 
 func ServeJoin(w http.ResponseWriter, r *http.Request, userId int64) {
+	if userId == 19 {
+		http.Error(w, "bad feinberg", http.StatusInternalServerError)
+		return
+	}
+
 	re := regexp.MustCompile(`/join/(\d+)`)
 	parseResult := re.FindStringSubmatch(r.URL.Path)
 
