@@ -1,4 +1,4 @@
-import { DraftState, DraftCard, DraftSeat, CardPack, CardContainer, PlayerPicks } from '../draft/draft_types';
+import { DraftState, DraftCard, DraftSeat, CardPack, CardContainer, PlayerPicks } from '../draft/DraftState';
 import { SourceData, SourceCard } from './SourceData';
 
 // TODO: Make this something more than just a static global

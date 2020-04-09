@@ -1,8 +1,9 @@
 import { SourceEvent } from './SourceData';
-import { DraftState, TimelineEvent, PACK_LOCATION_DEAD, PACK_LOCATION_UNUSED, DraftSeat, CardPack, CardContainer } from '../draft/draft_types';
 import { commitTimelineEvent } from '../draft/mutate';
 import { checkNotNil } from '../util/checkNotNil';
 import { cloneDraftState } from '../draft/cloneDraftState';
+import { DraftState, CardContainer, CardPack, DraftSeat } from '../draft/DraftState';
+import { TimelineEvent, PACK_LOCATION_UNUSED, PACK_LOCATION_DEAD } from '../draft/TimelineEvent';
 
 export class TimelineGenerator {
   private _state!: DraftState;
@@ -58,7 +59,7 @@ export class TimelineGenerator {
     }
 
     if (this._committedIndex < this._outEvents.length) {
-      const event = this._outEvents[this._committedIndex];
+      // const event = this._outEvents[this._committedIndex];
       // console.log('EVENT', this._committedIndex, event);
       // for (const action of event.actions){
       //   console.log('  ', action);

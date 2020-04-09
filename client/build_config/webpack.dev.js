@@ -40,5 +40,11 @@ module.exports = merge.smart(common, {
     // Use hot module replacement, allowing Vue components to be hot-replaced
     // without needing to refresh the page
     hot: true,
+
+    // Causes the dev server to server index.html instead of 404s
+    // Important if we want to handle URLs other than /
+    historyApiFallback: true,
   },
+
+  stats: 'minimal',
 });

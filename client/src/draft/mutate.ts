@@ -1,5 +1,6 @@
-import { DraftState, TimelineEvent, TimelineAction, CardContainer, PackLocation, PACK_LOCATION_UNUSED, PACK_LOCATION_DEAD, CardPack, ActionMovePack } from "../draft/draft_types";
+import { DraftState, CardContainer, CardPack } from "./DraftState";
 import { checkNotNil } from '../util/checkNotNil';
+import { TimelineEvent, TimelineAction, ActionMovePack, PackLocation, PACK_LOCATION_UNUSED, PACK_LOCATION_DEAD } from './TimelineEvent';
 
 export function commitTimelineEvent(event: TimelineEvent, state: DraftState) {
   try {

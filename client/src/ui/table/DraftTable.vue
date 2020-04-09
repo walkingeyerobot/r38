@@ -24,7 +24,7 @@
 <script lang="ts">
 import Vue from "vue";
 import DraftSeatComponent from "./DraftSeat.vue"
-import { DraftState } from "../../draft/draft_types";
+import { DraftState } from "../../draft/DraftState";
 
 export default Vue.extend({
   components: {
