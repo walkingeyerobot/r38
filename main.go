@@ -96,9 +96,11 @@ type DraftEvent struct {
 	Announcements  []string `json:"announcements"`
 	Card1          string   `json:"card1"`
 	Card2          string   `json:"card2"`
+	Cards          []string `json:"cards"`
 	PlayerModified int64    `json:"playerModified"`
 	DraftModified  int64    `json:"draftModified"`
 	Round          int64    `json:"round"`
+	Librarian      bool     `json:"librarian"`
 }
 
 type ReplayPageData struct {
@@ -212,7 +214,9 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 		if session.Values["userid"] != nil {
-			log.Printf("%s %s", session.Values["userid"], r.URL.Path)
+			if !strings.HasPrefix(r.URL.Path, "/proxy/") {
+				log.Printf("%s %s", session.Values["userid"], r.URL.Path)
+			}
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -229,6 +233,20 @@ func NonAuthMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 		return
 	})
+}
+
+func isViewing(r *http.Request, userId int64) (bool, error) {
+	session, err := store.Get(r, "session-name")
+	if err != nil {
+		return false, err
+	}
+	realUserIdInt, err := strconv.Atoi(session.Values["userid"].(string))
+	if err != nil {
+		return false, err
+	}
+	realUserId := int64(realUserIdInt)
+
+	return userId != realUserId, nil
 }
 
 func ServeMtgo(w http.ResponseWriter, r *http.Request, userId int64) {
@@ -662,10 +680,6 @@ func ServeDraft(w http.ResponseWriter, r *http.Request, userId int64) {
 	}
 	draftId := int64(draftIdInt)
 
-	doServeDraft(w, r, userId, draftId, false)
-}
-
-func doServeDraft(w http.ResponseWriter, r *http.Request, userId int64, draftId int64, viewing bool) {
 	myPack, myPicks, powers2, err := getPackPicksAndPowers(draftId, userId)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -703,8 +717,10 @@ func doServeDraft(w http.ResponseWriter, r *http.Request, userId int64, draftId 
 	t := template.Must(template.ParseFiles("draft.tmpl"))
 
 	data := DraftPageData{Picks: myPicks, Pack: myPack, DraftId: draftId, DraftName: draftName, Powers: powers2, Position: position, Revealed: revealed}
-	if viewing {
-		data.ViewUrl = fmt.Sprintf("/view/%d", userId)
+
+	viewing, err := isViewing(r, userId)
+	if err == nil && viewing {
+		data.ViewUrl = fmt.Sprintf("?as=%d", userId)
 	}
 	t.Execute(w, data)
 }
@@ -1157,15 +1173,16 @@ func NotifyByDraftAndPosition(draftId int64, position int64) error {
 	return nil
 }
 
-func GetJson(draftId int64) (string, error) {
+func GetJsonObject(draftId int64) (DraftJson, error) {
+	var draft DraftJson
+
 	query := `select drafts.name, seats.position, packs.original_seat, packs.round, cards.name, cards.edition, cards.number, cards.tags, users.email from drafts join seats join packs join cards join users where drafts.id=seats.draft and seats.id=packs.original_seat and packs.id=cards.original_pack and drafts.id=? and seats.user=users.id`
 
 	rows, err := database.Query(query, draftId)
 	if err != nil {
-		return "", err
+		return draft, err
 	}
 	defer rows.Close()
-	var draft DraftJson
 	var i int64
 	var j int64
 	for i = 0; i < 8; i++ {
@@ -1185,7 +1202,7 @@ func GetJson(draftId int64) (string, error) {
 		var email string
 		err = rows.Scan(&draft.Name, &nullablePosition, &packSeat, &nullableRound, &card.Name, &card.Edition, &card.Number, &card.Tags, &email)
 		if err != nil {
-			return "", err
+			return draft, err
 		}
 		if !nullablePosition.Valid || !nullableRound.Valid {
 			draft.ExtraPack = append(draft.ExtraPack, card)
@@ -1201,7 +1218,7 @@ func GetJson(draftId int64) (string, error) {
 	query = `select seats.position, events.announcement, cards1.name, cards2.name, events.id, events.modified, events.round from events join seats on events.draft=seats.draft and events.user=seats.user left join cards as cards1 on events.card1=cards1.id left join cards as cards2 on events.card2=cards2.id where events.draft=?`
 	rows, err = database.Query(query, draftId)
 	if err != nil && err != sql.ErrNoRows {
-		return "", err
+		return draft, err
 	}
 	defer rows.Close()
 	for rows.Next() {
@@ -1209,11 +1226,14 @@ func GetJson(draftId int64) (string, error) {
 		var announcements string
 		var card2 sql.NullString
 		err = rows.Scan(&event.Player, &announcements, &event.Card1, &card2, &event.DraftModified, &event.PlayerModified, &event.Round)
+		event.Cards = append(event.Cards, event.Card1)
 		if err != nil {
-			return "", err
+			return draft, err
 		}
 		if card2.Valid {
 			event.Card2 = card2.String
+			event.Cards = append(event.Cards, card2.String)
+			event.Librarian = true
 		}
 		if announcements != "" {
 			event.Announcements = strings.Split(announcements, "\n")
@@ -1222,13 +1242,36 @@ func GetJson(draftId int64) (string, error) {
 		}
 		draft.Events = append(draft.Events, event)
 	}
+	return draft, nil
+}
 
-	b, err := json.Marshal(draft)
+func GetJson(draftId int64) (string, error) {
+	draft, err := GetJsonObject(draftId)
+	if err != nil {
+		return "", err
+	}
+	ret, err := json.Marshal(draft)
 	if err != nil {
 		return "", err
 	}
 
-	return string(b), nil
+	return string(ret), nil
+}
+
+func GetFilteredJson(draftId int64, userId int64) (string, error) {
+	draft, err := GetJsonObject(draftId)
+	if err != nil {
+		return "", err
+	}
+
+	// TODO: shell out to a node process that filters the draft.
+
+	ret, err := json.Marshal(draft)
+	if err != nil {
+		return "", err
+	}
+
+	return string(ret), nil
 }
 
 func DoEvent(draftId int64, userId int64, announcements []string, cardId1 int64, cardId2 sql.NullInt64, round int64) error {
