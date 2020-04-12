@@ -98,7 +98,7 @@ export class TimelineGenerator {
       }
       this._eventIndex--;
       playerData.currentRound++;
-      playerData.nextEpoch = 0;
+      playerData.nextEpoch = 1;
       outEvent.roundEpoch = 0;
 
       const nextPack = checkNotNil(seat.unopenedPacks[0]);

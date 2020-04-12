@@ -6,6 +6,7 @@ import { TimelineEvent } from '../draft/TimelineEvent';
 import { buildEmptyDraftState } from '../draft/buildEmptyDraftState';
 import { commitTimelineEvent, rollbackTimelineEvent } from '../draft/mutate';
 import { cloneDraftState } from '../draft/cloneDraftState';
+import { find } from '../util/collection';
 
 Vue.use(Vuex);
 
@@ -76,12 +77,14 @@ const store = new Vuex.Store({
           }
           for (let i = state.eventPos; i < state.events.length; i++) {
             const event = state.events[i];
-            if (event.round != nextEvent.round
-                || event.roundEpoch != nextEvent.roundEpoch) {
+            if (event.roundEpoch == nextEvent.roundEpoch
+                // Always skip over roundEpoch 0, which is just opening packs
+                || event.roundEpoch == 0) {
+              commitTimelineEvent(event, state.draft);
+              state.eventPos++;
+            } else {
               break;
             }
-            commitTimelineEvent(event, state.draft);
-            state.eventPos++;
           }
           break;
         default:
@@ -99,15 +102,26 @@ const store = new Vuex.Store({
           }
           break;
         case 'synchronized':
-          const [currentRound, currentEpoch] = getCurrentEpoch(state);
+          // We want to roll back epochs until we roll back an epoch that
+          // contains a pick (some epochs just contain things like opening
+          // packs). So we roll back events until we find one that picks a card,
+          // then set the targetEpoch to that event's epoch.
+          let targetEpoch = null as number | null;
+
           for (let i = state.eventPos - 1; i >= 0; i--) {
             const event = state.events[i];
-            if (event.round != currentRound
-                || event.roundEpoch != currentEpoch) {
+
+            if (targetEpoch == null
+                && find(event.actions, { type: 'move-card' }) != -1) {
+              targetEpoch = event.roundEpoch;
+            }
+
+            if (targetEpoch == null || event.roundEpoch == targetEpoch) {
+              rollbackTimelineEvent(event, state.draft);
+              state.eventPos--;
+            } else {
               break;
             }
-            rollbackTimelineEvent(event, state.draft);
-            state.eventPos--;
           }
           break;
         default:

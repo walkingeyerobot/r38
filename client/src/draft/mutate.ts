@@ -2,7 +2,18 @@ import { DraftState, CardContainer, CardPack } from "./DraftState";
 import { checkNotNil } from '../util/checkNotNil';
 import { TimelineEvent, TimelineAction, ActionMovePack, PackLocation, PACK_LOCATION_UNUSED, PACK_LOCATION_DEAD } from './TimelineEvent';
 
+const DEBUG = false;
+
 export function commitTimelineEvent(event: TimelineEvent, state: DraftState) {
+  if (DEBUG) {
+    console.log(
+        'APPLYING EVENT:',
+        event.id,
+        event.round,
+        event.roundEpoch,
+        event.associatedSeat,
+        event.actions.map(a => a.type));
+  }
   try {
     for (const action of event.actions) {
       applyAction(action, state);
