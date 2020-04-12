@@ -6,3 +6,4 @@ pkg/
 run.sh
 node_modules/
 /client/dist
+static/dist
