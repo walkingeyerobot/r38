@@ -1,31 +1,36 @@
 <template>
   <div
       class="_draft-seat"
+      :class="{ selected: isSelected, }"
+      @click="onHeaderClick"
       >
     <div
         :class="{ selected: isSelected, }"
-        @click="onHeaderClick"
+        class="header"
         >
       <div class="player-label">
         {{ seat.player.name }}
       </div>
     </div>
 
-    <div class="unopened-packs">
-      <CardPack
-          v-for="pack in seat.unopenedPacks"
-          :key="pack.id"
-          :pack="pack"
-          />
-    </div>
-
-    <div class="active-packs">
+    <div class="card-cnt">
       <CardPack
           v-for="pack in seat.queuedPacks"
           :key="pack.id"
           :pack="pack"
+          class="opened-pack"
+          />
+
+      <div class="spacer"></div>
+
+      <CardPack
+          v-for="pack in seat.unopenedPacks"
+          :key="pack.id"
+          :pack="pack"
+          class="unopened-pack"
           />
     </div>
+
   </div>
 </template>
 
@@ -70,21 +75,34 @@ export default Vue.extend({
 
 <style scoped>
 ._draft-seat {
-  width: 0;
-  flex: 1;
+  height: 70px;
+  padding: 10px 10px 0 10px;
 }
 
-.selected {
-  font-weight: bold;
+._draft-seat.selected {
+  background: #EAEAEA;
 }
 
-.unopened-packs {
-  margin-top: 10px;
+.header {
+  margin-bottom: 6px;
 }
 
-.active-packs {
-  min-height: 80px;
-  margin-top: 10px;
+.card-cnt {
+  display: flex;
+  flex-direction: row;
+}
+
+.spacer {
+  flex: 1
+}
+
+.opened-pack {
+  margin-right: 3px;
+}
+
+.unopened-pack {
+  margin-left: 3px;
+  filter: saturate(20%);
 }
 
 </style>

@@ -1,11 +1,5 @@
 <template>
   <div class="_card-grid">
-    <div
-        class="selected-player"
-        v-if="selectedSeat"
-        >
-      {{ selectedSeat.player.name }}
-    </div>
 
     <div
         v-if="selectedPack"
@@ -25,6 +19,12 @@
       </div>
     </div>
 
+    <div
+        class="pool-label"
+        v-if="selectedSeat && selectedPack"
+        >
+      Drafted
+    </div>
     <div
         v-if="selectedSeat"
         class="player-grid"
@@ -143,7 +143,9 @@ export default Vue.extend({
 <style scoped>
 
 ._card-grid {
-  border-top: 1px solid black;
+  padding-top: 10px;
+  padding-left: 10px;
+  overflow-y: scroll;
 }
 
 .player-grid, .selected-pack {
@@ -153,8 +155,12 @@ export default Vue.extend({
   padding: 10px;
 }
 
-.selected-pack {
-  border-bottom: 1px solid black;
+.pool-label {
+  border-top: 1px solid #EAEAEA;
+  padding-top: 10px;
+  margin-left: 10px;
+  margin-right: 10px;
+  margin-bottom: 5px;
 }
 
 .card {
