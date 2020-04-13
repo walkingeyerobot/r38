@@ -25,7 +25,12 @@ export default Vue.extend({
   created() {
     const srcData = this.getServerPayload();
     const draft = parseDraft(srcData);
+
     this.$tstore.commit('initDraft', draft);
+    if (this.$tstore.state.draft.isComplete) {
+      this.$tstore.commit('setTimeMode', 'synchronized');
+      this.$tstore.commit('goTo', this.$tstore.state.events.length);
+    }
   },
 
   methods: {

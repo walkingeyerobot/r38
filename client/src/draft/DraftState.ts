@@ -2,7 +2,8 @@
 export interface DraftState {
   seats: DraftSeat[];
   unusedPacks: CardPack[];
-  packs: Map<number, CardContainer>
+  packs: Map<number, CardContainer>;
+  isComplete: boolean;
 }
 
 export interface DraftSeat {
