@@ -12,6 +12,7 @@ export function parseInitialState(srcData: SourceData): DraftState {
     seats: [],
     unusedPacks: [],
     packs: packMap,
+    isComplete: false,
   };
 
   for (const [i, srcSeat] of srcData.seats.entries()) {

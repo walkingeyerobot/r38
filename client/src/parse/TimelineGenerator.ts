@@ -26,6 +26,10 @@ export class TimelineGenerator {
     this.initialize(state, events);
   }
 
+  isComplete() {
+    return this._state.isComplete;
+  }
+
   private initialize(state: DraftState, events: SourceEvent[]) {
     this._state = state;
     this._srcEvents = events;
@@ -68,6 +72,7 @@ export class TimelineGenerator {
       this._committedIndex++;
       return true;
     } else {
+      this._state.isComplete = this.isDraftComplete();
       return false;
     }
   }
@@ -226,6 +231,15 @@ export class TimelineGenerator {
       };
       this._outEvents.push(event);
     }
+  }
+
+  private isDraftComplete() {
+    for (let seat of this._state.seats) {
+      if (seat.unopenedPacks.length > 0 || seat.queuedPacks.length > 0) {
+        return false;
+      }
+    }
+    return true;
   }
 }
 

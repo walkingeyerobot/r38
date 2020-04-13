@@ -5,5 +5,6 @@ export function buildEmptyDraftState(): DraftState {
     seats: [],
     unusedPacks: [],
     packs: new Map(),
+    isComplete: false,
   }
 }
