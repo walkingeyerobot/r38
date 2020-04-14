@@ -68,6 +68,9 @@ type Card struct {
 	Number  string `json:"number"`
 	Edition string `json:"edition"`
 	Mtgo    string `json:"-"`
+	Cmc     int64  `json:"cmc"`
+	Type    string `json:"type"`
+	Color   string `json:"color"`
 }
 
 type Seat struct {
@@ -1176,7 +1179,7 @@ func NotifyByDraftAndPosition(draftId int64, position int64) error {
 func GetJsonObject(draftId int64) (DraftJson, error) {
 	var draft DraftJson
 
-	query := `select drafts.name, seats.position, packs.original_seat, packs.round, cards.name, cards.edition, cards.number, cards.tags, users.email from drafts join seats join packs join cards join users where drafts.id=seats.draft and seats.id=packs.original_seat and packs.id=cards.original_pack and drafts.id=? and seats.user=users.id`
+	query := `select drafts.name, seats.position, packs.original_seat, packs.round, cards.name, cards.edition, cards.number, cards.tags, users.email, cards.cmc, cards.type, cards.color from drafts join seats join packs join cards join users where drafts.id=seats.draft and seats.id=packs.original_seat and packs.id=cards.original_pack and drafts.id=? and seats.user=users.id`
 
 	rows, err := database.Query(query, draftId)
 	if err != nil {
@@ -1200,10 +1203,22 @@ func GetJsonObject(draftId int64) (DraftJson, error) {
 		var nullableRound sql.NullInt64
 		var card Card
 		var email string
-		err = rows.Scan(&draft.Name, &nullablePosition, &packSeat, &nullableRound, &card.Name, &card.Edition, &card.Number, &card.Tags, &email)
+		var nullableCmc sql.NullInt64
+		var nullableType sql.NullString
+		var nullableColor sql.NullString
+		err = rows.Scan(&draft.Name, &nullablePosition, &packSeat, &nullableRound, &card.Name, &card.Edition, &card.Number, &card.Tags, &email, &nullableCmc, &nullableType, &nullableColor)
 		if err != nil {
 			return draft, err
 		}
+
+		if nullableCmc.Valid {
+			card.Cmc = nullableCmc.Int64
+		} else {
+			card.Cmc = -1
+		}
+		card.Type = nullableType.String
+		card.Type = nullableColor.String
+
 		if !nullablePosition.Valid || !nullableRound.Valid {
 			draft.ExtraPack = append(draft.ExtraPack, card)
 			continue

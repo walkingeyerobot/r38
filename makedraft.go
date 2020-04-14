@@ -116,7 +116,7 @@ func main() {
 		return
 	}
 
-	query = `INSERT INTO cards (pack, original_pack, edition, number, tags, name) VALUES (?, ?, ?, ?, ?, ?)`
+	query = `INSERT INTO cards (pack, original_pack, edition, number, tags, name, cmc, type, color) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
 	file, err := os.Open("vintagecube.csv")
 	if err != nil {
 		// error
@@ -141,7 +141,7 @@ func main() {
 		j := rnd.Intn(i)
 		lines[i], lines[j] = lines[j], lines[i]
 		packId := packIds[(539-i)/15]
-		database.Exec(query, packId, packId, lines[i][4], lines[i][5], lines[i][10], lines[i][0])
+		database.Exec(query, packId, packId, lines[i][4], lines[i][5], lines[i][10], lines[i][0], lines[i][1], lines[i][2], lines[i][3])
 	}
 	fmt.Printf("done generating new draft\n")
 }
