@@ -154,7 +154,7 @@ func NewHandler(useAuth bool) http.Handler {
 	mux.HandleFunc("/auth/google/callback", oauthGoogleCallback)
 
 	fs := http.FileServer(http.Dir("static"))
-	mux.Handle("/static/", middleware(http.StripPrefix("/static/", fs)))
+	mux.Handle("/static/", http.StripPrefix("/static/", fs))
 
 	addHandler := func(route string, serveFunc r38handler) {
 		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
