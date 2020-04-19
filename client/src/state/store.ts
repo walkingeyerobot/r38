@@ -1,12 +1,12 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
-import { SelectedView } from './selection';
-import { DraftState } from '../draft/DraftState';
-import { TimelineEvent } from '../draft/TimelineEvent';
-import { buildEmptyDraftState } from '../draft/buildEmptyDraftState';
-import { commitTimelineEvent, rollbackTimelineEvent } from '../draft/mutate';
-import { cloneDraftState } from '../draft/cloneDraftState';
-import { find } from '../util/collection';
+import {SelectedView} from './selection';
+import {DraftState, MtgCard} from '../draft/DraftState';
+import {TimelineEvent} from '../draft/TimelineEvent';
+import {buildEmptyDraftState} from '../draft/buildEmptyDraftState';
+import {commitTimelineEvent, rollbackTimelineEvent} from '../draft/mutate';
+import {cloneDraftState} from '../draft/cloneDraftState';
+import {find} from '../util/collection';
 
 Vue.use(Vuex);
 
@@ -16,9 +16,26 @@ export interface RootState {
   events: TimelineEvent[],
   eventPos: number,
   timeMode: TimeMode,
+  decks: Deck[],
 }
 
 export type TimeMode = 'original' | 'synchronized';
+
+export type CardColumn = MtgCard[];
+
+export interface Deck {
+  maindeck: CardColumn[],
+  sideboard: CardColumn[],
+}
+
+export interface CardMove {
+  deckIndex: number,
+  sourceColumnIndex: number,
+  sourceCardIndex: number,
+  sourceMaindeck: boolean,
+  targetColumnIndex: number,
+  targetMaindeck: boolean,
+}
 
 const state: RootState = {
   selection: null,
@@ -26,7 +43,8 @@ const state: RootState = {
   events: [],
   eventPos: 0,
   timeMode: 'original',
-}
+  decks: [],
+};
 
 let initialDraftState: DraftState = buildEmptyDraftState();
 
@@ -112,7 +130,7 @@ const store = new Vuex.Store({
             const event = state.events[i];
 
             if (targetEpoch == null
-                && find(event.actions, { type: 'move-card' }) != -1) {
+                && find(event.actions, {type: 'move-card'}) != -1) {
               targetEpoch = event.roundEpoch;
             }
 
@@ -149,7 +167,7 @@ const store = new Vuex.Store({
           const event = state.events[i];
           if (event.round > currentRound
               || (event.round == currentRound
-                    && event.roundEpoch > currentEpoch)) {
+                  && event.roundEpoch > currentEpoch)) {
             break;
           }
           console.log('  Applying event', event.id);
@@ -194,15 +212,30 @@ const store = new Vuex.Store({
       }
     },
 
+    moveCard(state: RootState, move: CardMove) {
+      if (move.sourceMaindeck !== move.targetMaindeck
+          || move.sourceColumnIndex !== move.targetColumnIndex) {
+        let card: MtgCard;
+        if (move.sourceMaindeck) {
+          [card] = state.decks[move.deckIndex].maindeck[move.sourceColumnIndex]
+              .splice(move.sourceCardIndex, 1);
+        } else {
+          [card] = state.decks[move.deckIndex].sideboard[move.sourceColumnIndex]
+              .splice(move.sourceCardIndex, 1);
+        }
+        if (move.targetMaindeck) {
+          state.decks[move.deckIndex].maindeck[move.targetColumnIndex].push(card);
+        } else {
+          state.decks[move.deckIndex].sideboard[move.targetColumnIndex].push(card);
+        }
+      }
+    },
+
   },
 
-  getters: {
+  getters: {},
 
-  },
-
-  actions: {
-
-  },
+  actions: {},
 
 });
 
