@@ -64,10 +64,23 @@
             sourceCardIndex: Number(targetElement.dataset["index"]),
             targetMaindeck: false,
             targetColumnIndex: 0,
+            targetCardIndex: 0,
           };
           e.dataTransfer.setData("text/plain", JSON.stringify(cardMove));
           e.dataTransfer.effectAllowed = "move";
         }
+      },
+
+      getTargetIndex: function (e: DragEvent) {
+        let targetIndex = 0;
+        for (let i = 0; i < this.$el.childElementCount; i++) {
+          const child = this.$el.children[i];
+          const isTarget = child === e.target || child === (<Element>e.target).parentNode;
+          if (isTarget) {
+            targetIndex = i + 1;
+          }
+        }
+        return targetIndex;
       },
 
       dragOver(e: DragEvent) {
@@ -75,30 +88,46 @@
         if (e.dataTransfer) {
           e.dataTransfer.dropEffect = "move";
           this.$el.classList.add("columnDrop");
+          if (this.$el.childElementCount > 0) {
+            let targetIndex = this.getTargetIndex(e);
+            for (let i = 0; i < this.$el.childElementCount; i++) {
+              const child = this.$el.children[i];
+              child.classList.toggle("cardDropAbove",
+                  i === 0 && targetIndex === 0);
+              child.classList.toggle("cardDropBelow",
+                  i === targetIndex - 1);
+            }
+          }
         }
       },
 
       dragEnd(e: DragEvent) {
         e.preventDefault();
-        if (e.dataTransfer) {
-          this.$el.classList.remove("columnDrop");
-        }
+        this.clearClasses();
       },
 
       drop(e: DragEvent) {
         e.preventDefault();
         if (e.dataTransfer) {
           const cardMove: CardMove = JSON.parse(e.dataTransfer.getData("text/plain"));
-          // TODO find correct index based on event target
           this.$tstore.commit("moveCard",
               {
                 ...cardMove,
                 targetMaindeck: this.maindeck,
                 targetColumnIndex: this.columnIndex,
+                targetCardIndex: this.getTargetIndex(e),
               });
         }
+        this.clearClasses();
+      },
+
+      clearClasses() {
         this.$el.classList.remove("columnDrop");
-      }
+        for (const child of this.$el.children) {
+          child.classList.remove("cardDropAbove");
+          child.classList.remove("cardDropBelow");
+        }
+      },
     },
   });
 </script>
@@ -117,6 +146,7 @@
   .card {
     height: 30px;
     overflow-y: visible;
+    position: relative;
   }
 
   .card-img {
@@ -128,5 +158,29 @@
 
   .card-img:hover {
     border-color: #bbd;
+  }
+
+  .cardDropAbove:before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 10px;
+    background: #00f;
+    border-radius: 2px;
+    pointer-events: none;
+  }
+
+  .cardDropBelow:before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 10px;
+    background: #00f;
+    border-radius: 2px;
+    pointer-events: none;
   }
 </style>

@@ -34,6 +34,7 @@ export interface CardMove {
   sourceCardIndex: number,
   sourceMaindeck: boolean,
   targetColumnIndex: number,
+  targetCardIndex: number,
   targetMaindeck: boolean,
 }
 
@@ -213,21 +214,35 @@ const store = new Vuex.Store({
     },
 
     moveCard(state: RootState, move: CardMove) {
+      let card: MtgCard;
+      let source: CardColumn[];
+      if (move.sourceMaindeck) {
+        source = state.decks[move.deckIndex].maindeck;
+      } else {
+        source = state.decks[move.deckIndex].sideboard;
+      }
       if (move.sourceMaindeck !== move.targetMaindeck
           || move.sourceColumnIndex !== move.targetColumnIndex) {
-        let card: MtgCard;
-        if (move.sourceMaindeck) {
-          [card] = state.decks[move.deckIndex].maindeck[move.sourceColumnIndex]
-              .splice(move.sourceCardIndex, 1);
-        } else {
-          [card] = state.decks[move.deckIndex].sideboard[move.sourceColumnIndex]
-              .splice(move.sourceCardIndex, 1);
-        }
+        [card] = source[move.sourceColumnIndex]
+            .splice(move.sourceCardIndex, 1);
+        let target: CardColumn[];
         if (move.targetMaindeck) {
-          state.decks[move.deckIndex].maindeck[move.targetColumnIndex].push(card);
+          target = state.decks[move.deckIndex].maindeck;
         } else {
-          state.decks[move.deckIndex].sideboard[move.targetColumnIndex].push(card);
+          target = state.decks[move.deckIndex].sideboard;
         }
+        target[move.targetColumnIndex]
+            .splice(move.targetCardIndex, 0, card);
+      } else if (move.sourceCardIndex !== move.targetCardIndex
+          && move.sourceCardIndex !== move.targetCardIndex + 1) {
+        [card] = source[move.sourceColumnIndex]
+            .splice(move.sourceCardIndex, 1);
+        const targetCardIndex =
+            (move.targetCardIndex < move.sourceCardIndex)
+                ? move.targetCardIndex
+                : move.targetCardIndex - 1;
+        source[move.targetColumnIndex]
+            .splice(targetCardIndex, 0, card);
       }
     },
 
