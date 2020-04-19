@@ -1,7 +1,7 @@
 const path = require('path');
 const merge = require('webpack-merge');
 
-const common = require('./webpack.common');
+const common = require('./webpack.common')('development');
 
 const PROJECT_ROOT = path.resolve(__dirname, '../../');
 const CLIENT_ROOT = path.resolve(__dirname, '../');

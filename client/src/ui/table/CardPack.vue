@@ -11,6 +11,7 @@
 <script lang="ts">
 import Vue from 'vue'
 import { CardPack } from '../../draft/DraftState';
+import { navTo } from '../../router/url_manipulation';
 
 export default Vue.extend({
   props: {
@@ -30,9 +31,11 @@ export default Vue.extend({
 
   methods: {
     onClick() {
-      this.$tstore.commit('setSelection', {
-        type: 'pack',
-        id: this.pack.id,
+      navTo(this.$tstore, this.$route, this.$router, {
+        selection: {
+          type: 'pack',
+          id: this.pack.id,
+        },
       });
     },
   },

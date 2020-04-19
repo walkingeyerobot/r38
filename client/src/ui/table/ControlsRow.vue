@@ -24,6 +24,7 @@
 
 <script lang="ts">
 import Vue from 'vue'
+import { navTo } from '../../router/url_manipulation';
 export default Vue.extend({
   computed: {
     synchronizeTimeline: {
@@ -33,6 +34,7 @@ export default Vue.extend({
 
       set(value) {
         this.$tstore.commit('setTimeMode', value ? 'synchronized' : 'original');
+        navTo(this.$tstore, this.$route, this.$router, {});
       }
     }
   },
@@ -40,18 +42,24 @@ export default Vue.extend({
   methods: {
     onNextClick() {
       this.$tstore.commit('goNext');
+      navTo(this.$tstore, this.$route, this.$router, {});
     },
 
     onPrevClick() {
       this.$tstore.commit('goBack');
+      navTo(this.$tstore, this.$route, this.$router, {});
     },
 
     onStartClick() {
-      this.$tstore.commit('goTo', 0);
+      navTo(this.$tstore, this.$route, this.$router, {
+        eventIndex: 0,
+      });
     },
 
     onEndClick() {
-      this.$tstore.commit('goTo', this.$tstore.state.events.length);
+      navTo(this.$tstore, this.$route, this.$router, {
+        eventIndex: this.$tstore.state.events.length,
+      });
     },
   },
 });

@@ -11,7 +11,7 @@ See https://github.com/vuejs/vetur/issues/815.
 
 {
   "compilerOptions": {
-    "target": "esnext",
+    "target": "es2018",
     "module": "esnext",
 
     "strict": true,

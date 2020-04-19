@@ -13,6 +13,7 @@ Vue.use(Vuex);
 export interface RootState {
   selection: SelectedView | null,
   draft: DraftState,
+  draftId: number,
   events: TimelineEvent[],
   eventPos: number,
   timeMode: TimeMode,
@@ -41,6 +42,7 @@ export interface CardMove {
 const state: RootState = {
   selection: null,
   draft: buildEmptyDraftState(),
+  draftId: 0,
   events: [],
   eventPos: 0,
   timeMode: 'original',
@@ -59,12 +61,24 @@ const store = new Vuex.Store({
 
     initDraft(
         state: RootState,
-        payload: { state: DraftState, events: TimelineEvent[] }
+        payload: {
+          id: number,
+          draft: {
+            state: DraftState,
+            events: TimelineEvent[],
+          },
+        }
     ) {
-      initialDraftState = cloneDraftState(payload.state);
-      state.draft = cloneDraftState(payload.state);
-      state.events = payload.events;
+      initialDraftState = cloneDraftState(payload.draft.state);
+
+      state.draftId = payload.id;
+      state.draft = cloneDraftState(payload.draft.state);
+      state.events = payload.draft.events;
       state.eventPos = 0;
+      state.selection = {
+        type: 'seat',
+        id: 0,
+      };
     },
 
     pushEvent(state: RootState, event: TimelineEvent) {
@@ -161,7 +175,6 @@ const store = new Vuex.Store({
         state.events.sort(sortEventsLockstep);
         state.draft = cloneDraftState(initialDraftState);
 
-        console.log('Fast-forwarding...');
         state.eventPos = 0;
         let i = 0;
         for (; i < state.events.length; i++) {
@@ -171,7 +184,6 @@ const store = new Vuex.Store({
                   && event.roundEpoch > currentEpoch)) {
             break;
           }
-          console.log('  Applying event', event.id);
           commitTimelineEvent(event, state.draft);
         }
         state.eventPos = i;
@@ -194,7 +206,6 @@ const store = new Vuex.Store({
 
         state.events.sort((a, b) => a.id - b.id);
 
-        console.log('Fast-forwarding...');
         state.draft = cloneDraftState(initialDraftState);
         state.eventPos = 0;
 
@@ -205,7 +216,6 @@ const store = new Vuex.Store({
             if (event.id == targetEvent.id) {
               break;
             }
-            console.log('  Applying event', event.id);
             commitTimelineEvent(event, state.draft);
           }
           state.eventPos = i;
