@@ -1,7 +1,7 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
 import { SelectedView } from './selection';
-import { DraftState } from '../draft/DraftState';
+import { DraftState, MtgCard } from '../draft/DraftState';
 import { TimelineEvent } from '../draft/TimelineEvent';
 import { buildEmptyDraftState } from '../draft/buildEmptyDraftState';
 import { commitTimelineEvent, rollbackTimelineEvent } from '../draft/mutate';
@@ -16,9 +16,27 @@ export interface RootState {
   events: TimelineEvent[],
   eventPos: number,
   timeMode: TimeMode,
+  decks: Deck[],
 }
 
 export type TimeMode = 'original' | 'synchronized';
+
+export type CardColumn = MtgCard[];
+
+export interface Deck {
+  maindeck: CardColumn[],
+  sideboard: CardColumn[],
+}
+
+export interface CardMove {
+  deckIndex: number,
+  sourceColumnIndex: number,
+  sourceCardIndex: number,
+  sourceMaindeck: boolean,
+  targetColumnIndex: number,
+  targetCardIndex: number,
+  targetMaindeck: boolean,
+}
 
 const state: RootState = {
   selection: null,
@@ -26,7 +44,8 @@ const state: RootState = {
   events: [],
   eventPos: 0,
   timeMode: 'original',
-}
+  decks: [],
+};
 
 let initialDraftState: DraftState = buildEmptyDraftState();
 
@@ -112,7 +131,7 @@ const store = new Vuex.Store({
             const event = state.events[i];
 
             if (targetEpoch == null
-                && find(event.actions, { type: 'move-card' }) != -1) {
+                && find(event.actions, {type: 'move-card'}) != -1) {
               targetEpoch = event.roundEpoch;
             }
 
@@ -149,7 +168,7 @@ const store = new Vuex.Store({
           const event = state.events[i];
           if (event.round > currentRound
               || (event.round == currentRound
-                    && event.roundEpoch > currentEpoch)) {
+                  && event.roundEpoch > currentEpoch)) {
             break;
           }
           console.log('  Applying event', event.id);
@@ -194,15 +213,56 @@ const store = new Vuex.Store({
       }
     },
 
+    moveCard(state: RootState, move: CardMove) {
+      let card: MtgCard;
+      let source: CardColumn[];
+      if (move.sourceMaindeck) {
+        source = state.decks[move.deckIndex].maindeck;
+      } else {
+        source = state.decks[move.deckIndex].sideboard;
+      }
+      if (move.sourceMaindeck !== move.targetMaindeck
+          || move.sourceColumnIndex !== move.targetColumnIndex) {
+        [card] = source[move.sourceColumnIndex]
+            .splice(move.sourceCardIndex, 1);
+        let target: CardColumn[];
+        if (move.targetMaindeck) {
+          target = state.decks[move.deckIndex].maindeck;
+        } else {
+          target = state.decks[move.deckIndex].sideboard;
+        }
+        target[move.targetColumnIndex]
+            .splice(move.targetCardIndex, 0, card);
+      } else if (move.sourceCardIndex !== move.targetCardIndex
+          && move.sourceCardIndex !== move.targetCardIndex + 1) {
+        [card] = source[move.sourceColumnIndex]
+            .splice(move.sourceCardIndex, 1);
+        const targetCardIndex =
+            (move.targetCardIndex < move.sourceCardIndex)
+                ? move.targetCardIndex
+                : move.targetCardIndex - 1;
+        source[move.targetColumnIndex]
+            .splice(targetCardIndex, 0, card);
+      }
+    },
+
+    initDeck(state: RootState) {
+      if (state.selection !== null && state.selection.type === 'seat') {
+        const cards = state.draft.seats[state.selection.id].player.picks.cards.map(
+            card => card.definition);
+        Vue.set(store.state.decks, state.selection.id, {
+          sideboard: [cards, [], [], [], [], [], []],
+          maindeck: [[], [], [], [], [], [], []],
+        });
+      }
+
+    },
+
   },
 
-  getters: {
+  getters: {},
 
-  },
-
-  actions: {
-
-  },
+  actions: {},
 
 });
 
