@@ -1,12 +1,12 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
-import {SelectedView} from './selection';
-import {DraftState, MtgCard} from '../draft/DraftState';
-import {TimelineEvent} from '../draft/TimelineEvent';
-import {buildEmptyDraftState} from '../draft/buildEmptyDraftState';
-import {commitTimelineEvent, rollbackTimelineEvent} from '../draft/mutate';
-import {cloneDraftState} from '../draft/cloneDraftState';
-import {find} from '../util/collection';
+import { SelectedView } from './selection';
+import { DraftState, MtgCard } from '../draft/DraftState';
+import { TimelineEvent } from '../draft/TimelineEvent';
+import { buildEmptyDraftState } from '../draft/buildEmptyDraftState';
+import { commitTimelineEvent, rollbackTimelineEvent } from '../draft/mutate';
+import { cloneDraftState } from '../draft/cloneDraftState';
+import { find } from '../util/collection';
 
 Vue.use(Vuex);
 
@@ -244,6 +244,18 @@ const store = new Vuex.Store({
         source[move.targetColumnIndex]
             .splice(targetCardIndex, 0, card);
       }
+    },
+
+    initDeck(state: RootState) {
+      if (state.selection !== null && state.selection.type === 'seat') {
+        const cards = state.draft.seats[state.selection.id].player.picks.cards.map(
+            card => card.definition);
+        Vue.set(store.state.decks, state.selection.id, {
+          sideboard: [cards, [], [], [], [], [], []],
+          maindeck: [[], [], [], [], [], [], []],
+        });
+      }
+
     },
 
   },

@@ -3,19 +3,21 @@
     <DeckBuilderSection
         :columns="sideboard"
         :deckIndex="deckIndex"
-        :maindeck="false"/>
+        :maindeck="false"
+    />
     <DeckBuilderSection
         :columns="maindeck"
         :deckIndex="deckIndex"
-        :maindeck="true"/>
+        :maindeck="true"
+    />
   </div>
 </template>
 
 <script lang="ts">
   import Vue from 'vue';
-  import {SelectedView} from "../../state/selection.js";
-  import {DraftSeat} from "../../draft/DraftState.js";
-  import {CardColumn, Deck} from "../../state/store.js";
+  import { SelectedView } from "../../state/selection.js";
+  import { DraftSeat } from "../../draft/DraftState.js";
+  import { CardColumn, Deck } from "../../state/store.js";
   import DeckBuilderSection from "./DeckBuilderSection.vue";
 
   export default Vue.extend({
@@ -44,11 +46,7 @@
           return null;
         } else {
           if (!this.$tstore.state.decks[this.selectedSeat.position]) {
-            const cards = this.selectedSeat.player.picks.cards.map(card => card.definition);
-            this.$set(this.$tstore.state.decks, this.selectedSeat.position, {
-              sideboard: [cards, [], [], [], [], [], []],
-              maindeck: [[], [], [], [], [], [], []],
-            });
+            this.$tstore.commit("initDeck");
           }
           return this.$tstore.state.decks[this.selectedSeat.position];
         }

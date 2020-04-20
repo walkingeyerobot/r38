@@ -1,6 +1,6 @@
 <template>
   <div
-      class="column"
+      class="_column"
       @dragover="dragOver"
       @dragleave="dragEnd"
       @dragend="dragEnd"
@@ -8,14 +8,14 @@
   >
     <div
         v-for="(card, index) in column"
+        :key="card.set + '|' + card.collector_number"
+        @dragstart="dragStart($event, index)"
         class="card"
     >
       <img
           class="card-img"
           :src="getImageSrc(card)"
           :alt="card.name"
-          :data-index="index"
-          @dragstart="dragStart"
       />
     </div>
   </div>
@@ -23,8 +23,8 @@
 
 <script lang="ts">
   import Vue from 'vue';
-  import {MtgCard} from "../../draft/DraftState.js";
-  import {CardColumn, CardMove} from "../../state/store.js";
+  import { MtgCard } from "../../draft/DraftState.js";
+  import { CardColumn, CardMove } from "../../state/store.js";
 
   export default Vue.extend({
     name: 'DeckBuilderColumn',
@@ -54,14 +54,13 @@
         }
       },
 
-      dragStart(e: DragEvent) {
+      dragStart(e: DragEvent, index: number) {
         if (e.dataTransfer) {
-          const targetElement = <HTMLElement>e.target;
           const cardMove: CardMove = {
             deckIndex: this.deckIndex,
             sourceMaindeck: this.maindeck,
             sourceColumnIndex: this.columnIndex,
-            sourceCardIndex: Number(targetElement.dataset["index"]),
+            sourceCardIndex: index,
             targetMaindeck: false,
             targetColumnIndex: 0,
             targetCardIndex: 0,
@@ -134,7 +133,7 @@
 
 <style scoped>
 
-  .column {
+  ._column {
     padding: 10px;
     width: 204px;
   }

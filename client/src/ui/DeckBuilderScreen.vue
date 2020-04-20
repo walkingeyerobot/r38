@@ -1,5 +1,5 @@
 <template>
-  <div class="_home">
+  <div class="_deck-builder-screen">
     <div class="main">
       <DraftTable class="table"/>
       <DeckBuilder class="deckbuilder"/>
@@ -12,8 +12,8 @@
 
   import DraftTable from './table/DraftTable.vue';
   import DeckBuilder from './deckbuilder/DeckBuilder.vue';
-  import {parseDraft} from "../parse/parseDraft";
-  import {FAKE_DATA_03} from "../fake_data/FAKE_DATA_03";
+  import { parseDraft } from "../parse/parseDraft";
+  import { FAKE_DATA_03 } from "../fake_data/FAKE_DATA_03";
 
   export default Vue.extend({
     name: 'DeckBuilderScreen',
@@ -45,7 +45,7 @@
 </script>
 
 <style scoped>
-  ._home {
+  ._deck-builder-screen {
     height: 100%;
     display: flex;
     flex-direction: column;

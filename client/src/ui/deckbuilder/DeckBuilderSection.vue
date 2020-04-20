@@ -12,7 +12,7 @@
 
 <script lang="ts">
   import Vue from 'vue'
-  import {CardColumn} from "../../state/store.js";
+  import { CardColumn } from "../../state/store.js";
   import DeckBuilderColumn from "./DeckBuilderColumn.vue";
 
   export default Vue.extend({
