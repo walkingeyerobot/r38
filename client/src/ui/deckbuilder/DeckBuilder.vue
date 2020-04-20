@@ -4,12 +4,12 @@
         :columns="sideboard"
         :deckIndex="deckIndex"
         :maindeck="false"
-    />
+        />
     <DeckBuilderSection
         :columns="maindeck"
         :deckIndex="deckIndex"
         :maindeck="true"
-    />
+        />
   </div>
 </template>
 

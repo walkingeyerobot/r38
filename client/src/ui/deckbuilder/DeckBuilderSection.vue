@@ -6,7 +6,7 @@
         :deckIndex="deckIndex"
         :maindeck="maindeck"
         :columnIndex="index"
-    />
+        />
   </div>
 </template>
 

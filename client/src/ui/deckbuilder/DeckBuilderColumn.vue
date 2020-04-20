@@ -5,18 +5,18 @@
       @dragleave="dragEnd"
       @dragend="dragEnd"
       @drop="drop"
-  >
+      >
     <div
         v-for="(card, index) in column"
         :key="card.set + '|' + card.collector_number"
         @dragstart="dragStart($event, index)"
         class="card"
-    >
+        >
       <img
           class="card-img"
           :src="getImageSrc(card)"
           :alt="card.name"
-      />
+          />
     </div>
   </div>
 </template>
