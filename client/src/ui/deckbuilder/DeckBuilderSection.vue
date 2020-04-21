@@ -2,6 +2,7 @@
   <div class="section">
     <DeckBuilderColumn
         v-for="(column, index) in columns"
+        :key="index"
         :column="column"
         :deckIndex="deckIndex"
         :maindeck="maindeck"

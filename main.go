@@ -195,6 +195,7 @@ func NewHandler(useAuth bool) http.Handler {
 
 	addHandler("/proxy/", ServeProxy)
 	addHandler("/replay/", ServeReplay)
+	addHandler("/deckbuilder/", ServeDeckbuilder)
 	addHandler("/librarian/", ServeLibrarian)
 	addHandler("/power/", ServePower)
 	addHandler("/draft/", ServeDraft)
@@ -328,6 +329,17 @@ func ServeReplay(w http.ResponseWriter, r *http.Request, userId int64) {
 	re := regexp.MustCompile(`/replay/(\d+)`)
 	parseResult := re.FindStringSubmatch(r.URL.Path)
 
+	ServeVueApp(parseResult, w, userId)
+}
+
+func ServeDeckbuilder(w http.ResponseWriter, r *http.Request, userId int64) {
+	re := regexp.MustCompile(`/deckbuilder/(\d+)`)
+	parseResult := re.FindStringSubmatch(r.URL.Path)
+
+	ServeVueApp(parseResult, w, userId)
+}
+
+func ServeVueApp(parseResult []string, w http.ResponseWriter, userId int64) {
 	if parseResult == nil {
 		http.Error(w, "bad url", http.StatusInternalServerError)
 		return
