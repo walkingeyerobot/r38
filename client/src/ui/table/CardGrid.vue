@@ -5,19 +5,14 @@
         v-if="selectedPack"
         class="selected-pack"
         >
-      <div
+      <CardView
           v-for="card in selectedPack"
           :key="card.id"
+          :card="card"
+          :selectionStyle="getSelectionStyle(card.id)"
           class="card"
-          @click="onPackCardClicked(card.id)"
-          >
-        <img
-            class="card-img"
-            :class="getSelectionClass(card.id)"
-            :title="card.definition.name"
-            :src="getImageSrc(card)"
-            >
-      </div>
+          @click.native="onPackCardClicked(card.id)"
+          />
     </div>
 
     <div
@@ -30,18 +25,15 @@
         v-if="selectedSeat"
         class="player-grid"
         >
-      <div
+
+      <CardView
           v-for="card in selectedSeat.player.picks.cards"
           :key="card.id"
+          :card="card"
+          :selectionStyle="getSelectionStyle(card.id)"
           class="card"
-          @click="onPoolCardClicked(card.id)"
-          >
-        <img
-            class="card-img"
-            :title="card.definition.name"
-            :src="getImageSrc(card)"
-            >
-      </div>
+          @click.native="onPoolCardClicked(card.id)"
+          />
     </div>
 
   </div>
@@ -56,8 +48,13 @@ import { checkNotNil } from '../../util/checkNotNil';
 import { navTo } from '../../router/url_manipulation';
 import { Store } from 'vuex';
 import { RootState } from '../../state/store';
+import CardView from './CardView.vue';
 
 export default Vue.extend({
+
+  components: {
+    CardView
+  },
 
   computed: {
     selection(): SelectedView | null {
@@ -115,30 +112,20 @@ export default Vue.extend({
   },
 
   methods: {
-    getSelectionClass(cardId: number) {
+    getSelectionStyle(cardId: number) {
       if (this.nextEventForSeat == null) {
         return undefined;
       }
       for (const action of this.nextEventForSeat.actions) {
         if (action.type == 'move-card' && action.card == cardId) {
           if (action.to == this.selectedSeat!.player.picks.id) {
-            return 'action-picked'
+            return 'picked'
           } else {
-            return 'action-returned';
+            return 'returned';
           }
         }
       }
       return undefined;
-    },
-
-    getImageSrc(card: DraftCard): string {
-      if (process.env.NODE_ENV == 'development') {
-        return `http://api.scryfall.com/cards/${card.definition.set}/`
-            + `${card.definition.collector_number}?format=image&version=normal`;
-      } else {
-        return `/proxy/${card.definition.set}/`
-            + `${card.definition.collector_number}`;
-      }
     },
 
     onPackCardClicked(cardId: number) {
@@ -224,7 +211,6 @@ function containsPick(event: TimelineEvent, cardId: number) {
   }
   return false;
 }
-
 </script>
 
 <style scoped>
@@ -252,43 +238,5 @@ function containsPick(event: TimelineEvent, cardId: number) {
 
 .card {
   margin: 0 10px 10px 0;
-  cursor: pointer;
-  position: relative;
-  display: flex; /* so we perfectly wrap the enclosed image */
 }
-
-.card::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  box-shadow: 0 0 4px 1.2px rgba(0, 0, 0, 0.7);
-  opacity: 0;
-  transition: opacity 110ms cubic-bezier(0.33, 1, 0.68, 1);
-  border-radius: 9px;
-}
-
-.card:hover::before {
-  opacity: 1;
-}
-
-/* native is 745 × 1040 */
-.card-img {
-  width: 200px;
-  height: 279px;
-  background: #AAA;
-  border-radius: 9px;
-  overflow: hidden;
-}
-
-.action-picked {
-  outline: 5px solid #00F;
-}
-
-.action-returned {
-  outline: 5px solid #F00;
-}
-
 </style>
