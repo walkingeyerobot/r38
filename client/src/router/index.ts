@@ -7,12 +7,12 @@ Vue.use(VueRouter);
 
 const routes = [
   {
-    path: '/',
+    path: '/replay/*',
     name: 'Home',
     component: Home,
   },
   {
-    path: '/deckbuilder',
+    path: '/deckbuilder/*',
     name: 'DeckBuilderScreen',
     component: DeckBuilderScreen,
   }
