@@ -42,7 +42,8 @@ type Draft struct {
 }
 
 type IndexPageData struct {
-	Drafts []Draft
+	Drafts  []Draft
+	ViewUrl string
 }
 
 type DraftPageData struct {
@@ -610,6 +611,12 @@ func ServeIndex(w http.ResponseWriter, r *http.Request, userId int64) {
 	t := template.Must(template.ParseFiles("index.tmpl"))
 
 	data := IndexPageData{Drafts: Drafts}
+
+	viewing, err := IsViewing(r, userId)
+	if err == nil && viewing {
+		data.ViewUrl = fmt.Sprintf("?as=%d", userId)
+	}
+
 	t.Execute(w, data)
 }
 

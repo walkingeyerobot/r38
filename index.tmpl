@@ -11,13 +11,13 @@
       {{ range .Drafts }}
       <li>
 	{{ if .Joined }}
-	  <span><a href="/draft/{{ .Id }}">{{ .Name }}</a></span>
+	  <span><a href="/draft/{{ .Id }}{{ .ViewUrl }}">{{ .Name }}</a></span>
 	{{ else }}
 	  <span>{{ .Name }}</span>
 	{{ end }}  
 	<span>{{ .Seats }} seats available.</span>
 	{{ if .Joinable }}
-	  <span><a href="/join/{{ .Id }}">Join!</a></span>
+	  <span><a href="/join/{{ .Id }}{{ .ViewUrl }}">Join!</a></span>
 	{{ end }}
       </li>
       {{ end }}
