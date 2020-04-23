@@ -13,8 +13,8 @@
 
 <script lang="ts">
   import Vue from 'vue'
-  import { CardColumn } from "../../state/store.js";
   import DeckBuilderColumn from "./DeckBuilderColumn.vue";
+  import { CardColumn } from '../../state/DeckBuilderModule';
 
   export default Vue.extend({
     name: 'DeckBuilderSection',
@@ -44,9 +44,5 @@
     flex-direction: row;
     height: 50%;
     overflow-y: scroll;
-  }
-
-  .section:first-child {
-    border-bottom: 3px solid #555;
   }
 </style>

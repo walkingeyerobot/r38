@@ -12,7 +12,7 @@
 import Vue from 'vue';
 import { parseDraft } from '../parse/parseDraft';
 import { SourceData } from '../parse/SourceData';
-import { FAKE_DATA_03 } from '../fake_data/FAKE_DATA_03';
+import { getServerPayload } from '../parse/getServerPayload';
 
 import ControlsRow from './table/ControlsRow.vue';
 import DraftTable from './table/DraftTable.vue';
@@ -30,7 +30,7 @@ export default Vue.extend({
   },
 
   created() {
-    const srcData = this.getServerPayload();
+    const srcData = getServerPayload();
     const draft = parseDraft(srcData);
 
     this.$tstore.commit('initDraft', {
@@ -44,18 +44,6 @@ export default Vue.extend({
     }
 
     applyReplayUrlState(this.$tstore, this.$route.params);
-  },
-
-  methods: {
-    getServerPayload() {
-      if (window.DraftString != undefined) {
-        console.log('Found server payload, loading!');
-        return JSON.parse(window.DraftString);
-      } else {
-        console.log(`Couldn't find server payload, falling back to default...`);
-        return FAKE_DATA_03;
-      }
-    },
   },
 
   watch: {
