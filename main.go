@@ -27,11 +27,6 @@ import (
 	"time"
 )
 
-var secret_key_no_one_will_ever_guess = []byte(os.Getenv("SESSION_SECRET"))
-var store = sessions.NewCookieStore(secret_key_no_one_will_ever_guess)
-var database *sql.DB
-var useAuth bool
-
 type GoogleUserInfo struct {
 	Id      string `json:"id"`
 	Email   string `json:"email"`
@@ -111,6 +106,13 @@ type ReplayPageData struct {
 }
 
 type r38handler func(w http.ResponseWriter, r *http.Request, userId int64)
+type viewingFunc func(r *http.Request, userId int64) (bool, error)
+
+var secret_key_no_one_will_ever_guess = []byte(os.Getenv("SESSION_SECRET"))
+var store = sessions.NewCookieStore(secret_key_no_one_will_ever_guess)
+var database *sql.DB
+var useAuth bool
+var IsViewing viewingFunc
 
 func main() {
 	useAuthPtr := flag.Bool("auth", true, "bool")
@@ -118,6 +120,12 @@ func main() {
 	flag.Parse()
 
 	useAuth = *useAuthPtr
+
+	if useAuth {
+		IsViewing = AuthIsViewing
+	} else {
+		IsViewing = NonAuthIsViewing
+	}
 
 	var err error
 	database, err = sql.Open("sqlite3", "draft.db")
@@ -135,7 +143,8 @@ func main() {
 	}
 
 	log.Printf("Starting HTTP Server. Listening at %q", server.Addr)
-	err = server.ListenAndServe()
+	err = server.ListenAndServe() // this call blocks
+
 	if err != nil {
 		log.Printf("%v", err)
 	}
@@ -233,13 +242,15 @@ func AuthMiddleware(next http.Handler) http.Handler {
 
 func NonAuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Printf(r.URL.Path)
+		if !strings.HasPrefix(r.URL.Path, "/proxy/") {
+			log.Printf(r.URL.Path)
+		}
 		next.ServeHTTP(w, r)
 		return
 	})
 }
 
-func isViewing(r *http.Request, userId int64) (bool, error) {
+func AuthIsViewing(r *http.Request, userId int64) (bool, error) {
 	session, err := store.Get(r, "session-name")
 	if err != nil {
 		return false, err
@@ -251,6 +262,10 @@ func isViewing(r *http.Request, userId int64) (bool, error) {
 	realUserId := int64(realUserIdInt)
 
 	return userId != realUserId, nil
+}
+
+func NonAuthIsViewing(r *http.Request, userId int64) (bool, error) {
+	return userId != 1, nil
 }
 
 func ServeMtgo(w http.ResponseWriter, r *http.Request, userId int64) {
@@ -733,7 +748,7 @@ func ServeDraft(w http.ResponseWriter, r *http.Request, userId int64) {
 
 	data := DraftPageData{Picks: myPicks, Pack: myPack, DraftId: draftId, DraftName: draftName, Powers: powers2, Position: position, Revealed: revealed}
 
-	viewing, err := isViewing(r, userId)
+	viewing, err := IsViewing(r, userId)
 	if err == nil && viewing {
 		data.ViewUrl = fmt.Sprintf("?as=%d", userId)
 	}
