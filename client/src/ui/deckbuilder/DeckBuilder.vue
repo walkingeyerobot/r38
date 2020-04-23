@@ -1,13 +1,14 @@
 <template>
   <div>
     <DeckBuilderSection
+        class="maindeck"
         :columns="sideboard"
-        :deckIndex="deckIndex"
+        :deckIndex="state.selectedSeat"
         :maindeck="false"
         />
     <DeckBuilderSection
         :columns="maindeck"
-        :deckIndex="deckIndex"
+        :deckIndex="state.selectedSeat"
         :maindeck="true"
         />
   </div>
@@ -17,8 +18,8 @@
   import Vue from 'vue';
   import { SelectedView } from "../../state/selection.js";
   import { DraftSeat } from "../../draft/DraftState.js";
-  import { CardColumn, Deck } from "../../state/store.js";
   import DeckBuilderSection from "./DeckBuilderSection.vue";
+  import { DeckBuilderState, CardColumn, Deck } from '../../state/DeckBuilderModule.js';
 
   export default Vue.extend({
     name: 'DeckBuilder',
@@ -28,28 +29,12 @@
     },
 
     computed: {
-      selection(): SelectedView | null {
-        return this.$tstore.state.selection;
+      state(): DeckBuilderState {
+        return this.$tstore.state.deckbuilder;
       },
 
-      selectedSeat(): DraftSeat | null {
-        return this.selection == null || this.selection.type == 'pack' ? null :
-            this.$tstore.state.draft.seats[this.selection.id];
-      },
-
-      deckIndex(): number {
-        return this.selectedSeat === null ? 0 : this.selectedSeat.position;
-      },
-
-      deck(): Deck | null {
-        if (this.selectedSeat === null) {
-          return null;
-        } else {
-          if (!this.$tstore.state.decks[this.selectedSeat.position]) {
-            this.$tstore.commit("initDeck");
-          }
-          return this.$tstore.state.decks[this.selectedSeat.position];
-        }
+      deck(): Deck | undefined {
+        return this.state.decks[this.state.selectedSeat];
       },
 
       sideboard(): CardColumn[] {
@@ -66,5 +51,7 @@
 </script>
 
 <style scoped>
-
+.maindeck {
+  border-bottom: 1px solid #EAEAEA;
+}
 </style>

@@ -8,14 +8,14 @@
       >
     <div
         v-for="(card, index) in column"
-        :key="card.set + '|' + card.collector_number"
+        :key="card.id"
         @dragstart="dragStart($event, index)"
         class="card"
         >
       <img
           class="card-img"
-          :src="getImageSrc(card)"
-          :alt="card.name"
+          :src="getImageSrc(card.definition)"
+          :alt="card.definition.name"
           />
     </div>
   </div>
@@ -24,7 +24,7 @@
 <script lang="ts">
   import Vue from 'vue';
   import { MtgCard } from "../../draft/DraftState.js";
-  import { CardColumn, CardMove } from "../../state/store.js";
+  import { CardColumn, CardMove } from "../../state/DeckBuilderModule";
 
   export default Vue.extend({
     name: 'DeckBuilderColumn',
@@ -109,7 +109,7 @@
         e.preventDefault();
         if (e.dataTransfer) {
           const cardMove: CardMove = JSON.parse(e.dataTransfer.getData("text/plain"));
-          this.$tstore.commit("moveCard",
+          this.$tstore.commit("deckbuilder/moveCard",
               {
                 ...cardMove,
                 targetMaindeck: this.maindeck,

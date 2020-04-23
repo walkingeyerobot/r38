@@ -9,6 +9,7 @@
           v-for="card in selectedPack"
           :key="card.id"
           class="card"
+          @click="onPackCardClicked(card.id)"
           >
         <img
             class="card-img"
@@ -33,6 +34,7 @@
           v-for="card in selectedSeat.player.picks.cards"
           :key="card.id"
           class="card"
+          @click="onPoolCardClicked(card.id)"
           >
         <img
             class="card-img"
@@ -51,6 +53,9 @@ import { DraftCard, DraftPlayer, DraftSeat, CardPack, CardContainer } from '../.
 import { TimelineEvent } from '../../draft/TimelineEvent';
 import { SelectedView } from '../../state/selection';
 import { checkNotNil } from '../../util/checkNotNil';
+import { navTo } from '../../router/url_manipulation';
+import { Store } from 'vuex';
+import { RootState } from '../../state/store';
 
 export default Vue.extend({
 
@@ -134,10 +139,92 @@ export default Vue.extend({
         return `/proxy/${card.definition.set}/`
             + `${card.definition.collector_number}`;
       }
+    },
+
+    onPackCardClicked(cardId: number) {
+      this.jumpToPick(cardId, 'future');
+    },
+
+    onPoolCardClicked(cardId: number) {
+      this.jumpToPick(cardId, 'past');
+    },
+
+    jumpToPick(cardId: number, direction: 'future' | 'past') {
+      const pick =
+          findPick(
+              cardId,
+              this.$tstore.state.eventPos,
+              this.$tstore.state.events,
+              direction);
+      if (pick != null) {
+        const adjustedIndex =
+            maybeAdjustToStartOfEpoch(this.$tstore, pick.index);
+
+        navTo(this.$tstore, this.$route, this.$router, {
+          eventIndex: adjustedIndex,
+          selection: {
+            type: 'seat',
+            id: pick.seat,
+          },
+        });
+      }
     }
   },
-
 });
+
+function maybeAdjustToStartOfEpoch(store: Store<RootState>, index: number) {
+  let newIndex = index;
+  const event = store.state.events[index];
+  if (event != undefined && store.state.timeMode == 'synchronized') {
+    for (let i = index; i >= 0; i--) {
+      if (store.state.events[i].roundEpoch != event.roundEpoch) {
+        break;
+      }
+      newIndex = i;
+    }
+  }
+  return newIndex;
+}
+
+function findPick(
+  cardId: number,
+  currentIndex: number,
+  events: TimelineEvent[],
+  direction: 'future' | 'past',
+) {
+  if (direction == 'future') {
+    for (let i = currentIndex; i < events.length; i++) {
+      const event = events[i];
+      if (containsPick(event, cardId)) {
+        return {
+          index: i,
+          seat: event.associatedSeat,
+        };
+      }
+    }
+  } else {
+    for (let i = currentIndex; i >= 0; i--) {
+      const event = events[i];
+      if (containsPick(event, cardId)) {
+        return {
+          index: i,
+          seat: event.associatedSeat,
+        };
+      }
+    }
+  }
+  return null;
+}
+
+function containsPick(event: TimelineEvent, cardId: number) {
+  for (let action of event.actions) {
+    if (action.type == 'move-card' && action.card == cardId) {
+      return true;
+    }
+  }
+  return false;
+}
+
 </script>
 
 <style scoped>
@@ -165,6 +252,26 @@ export default Vue.extend({
 
 .card {
   margin: 0 10px 10px 0;
+  cursor: pointer;
+  position: relative;
+  display: flex; /* so we perfectly wrap the enclosed image */
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  box-shadow: 0 0 4px 1.2px rgba(0, 0, 0, 0.7);
+  opacity: 0;
+  transition: opacity 110ms cubic-bezier(0.33, 1, 0.68, 1);
+  border-radius: 9px;
+}
+
+.card:hover::before {
+  opacity: 1;
 }
 
 /* native is 745 × 1040 */
@@ -172,6 +279,8 @@ export default Vue.extend({
   width: 200px;
   height: 279px;
   background: #AAA;
+  border-radius: 9px;
+  overflow: hidden;
 }
 
 .action-picked {

@@ -12,11 +12,13 @@
 import Vue from 'vue';
 import { parseDraft } from '../parse/parseDraft';
 import { SourceData } from '../parse/SourceData';
-import { FAKE_DATA_03 } from '../fake_data/FAKE_DATA_03';
+import { getServerPayload } from '../parse/getServerPayload';
 
 import ControlsRow from './table/ControlsRow.vue';
 import DraftTable from './table/DraftTable.vue';
 import CardGrid from './table/CardGrid.vue';
+import { SelectedView } from '../state/selection';
+import { applyReplayUrlState } from '../router/url_manipulation';
 
 export default Vue.extend({
   name: 'Home',
@@ -28,28 +30,27 @@ export default Vue.extend({
   },
 
   created() {
-    const srcData = this.getServerPayload();
+    const srcData = getServerPayload();
     const draft = parseDraft(srcData);
 
-    this.$tstore.commit('initDraft', draft);
+    this.$tstore.commit('initDraft', {
+      id: parseInt(this.$route.params['draftId']),
+      draft,
+    });
+
     if (this.$tstore.state.draft.isComplete) {
       this.$tstore.commit('setTimeMode', 'synchronized');
       this.$tstore.commit('goTo', this.$tstore.state.events.length);
     }
+
+    applyReplayUrlState(this.$tstore, this.$route.params);
   },
 
-  methods: {
-    getServerPayload() {
-      if (window.DraftString != undefined) {
-        console.log('Found server payload, loading!');
-        return JSON.parse(window.DraftString);
-      } else {
-        console.log(`Couldn't find server payload, falling back to default...`);
-        return FAKE_DATA_03;
-      }
+  watch: {
+    $route(to, from) {
+      applyReplayUrlState(this.$tstore, this.$route.params);
     },
-  },
-
+  }
 });
 </script>
 

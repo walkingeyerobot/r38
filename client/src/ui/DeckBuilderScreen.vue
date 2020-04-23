@@ -1,8 +1,8 @@
 <template>
   <div class="_deck-builder-screen">
     <div class="main">
-      <DraftTable class="table"/>
-      <DeckBuilder class="deckbuilder"/>
+      <DeckBuilderPlayerSelector class="player-selector" />
+      <DeckBuilder class="deckbuilder" />
     </div>
   </div>
 </template>
@@ -10,35 +10,46 @@
 <script lang="ts">
   import Vue from 'vue';
 
-  import DraftTable from './table/DraftTable.vue';
   import DeckBuilder from './deckbuilder/DeckBuilder.vue';
+  import DeckBuilderPlayerSelector from './deckbuilder/DeckBuilderPlayerSelector.vue';
   import { parseDraft } from "../parse/parseDraft";
-  import { FAKE_DATA_03 } from "../fake_data/FAKE_DATA_03";
+  import { MtgCard, DraftCard } from '../draft/DraftState';
+  import { DeckInitializer } from '../state/DeckBuilderModule';
+  import { commitTimelineEvent } from '../draft/mutate';
+  import { getServerPayload } from '../parse/getServerPayload';
 
   export default Vue.extend({
     name: 'DeckBuilderScreen',
 
     components: {
-      DraftTable,
       DeckBuilder,
+      DeckBuilderPlayerSelector,
     },
 
     created() {
-      const srcData = this.getServerPayload();
-      const draft = parseDraft(srcData);
-      this.$tstore.commit('initDraft', draft);
-      this.$tstore.commit('goTo', this.$tstore.state.events.length);
+      const draftState = this.generateCurrentDraftState();
+
+      const init = [] as DeckInitializer[];
+      for (let seat of draftState.seats) {
+        init.push({
+          player: {
+            seatPosition: seat.player.seatPosition,
+            name: seat.player.name,
+          },
+          pool: seat.player.picks.cards.concat(),
+        });
+      }
+      this.$tstore.commit('deckbuilder/initDecks', init);
     },
 
     methods: {
-      getServerPayload() {
-        if (window.DraftString != undefined) {
-          console.log('Found server payload, loading!');
-          return JSON.parse(window.DraftString);
-        } else {
-          console.log(`Couldn't find server payload, falling back to default...`);
-          return FAKE_DATA_03;
+      generateCurrentDraftState() {
+        const srcData = getServerPayload();
+        const draft = parseDraft(srcData);
+        for (let event of draft.events) {
+          commitTimelineEvent(event, draft.state);
         }
+        return draft.state;
       },
     }
   })
@@ -58,8 +69,8 @@
     overflow: hidden;
   }
 
-  .table {
-    width: 300px;
+  .player-selector {
+    width: 200px;
     flex: 0 0 auto;
   }
 
