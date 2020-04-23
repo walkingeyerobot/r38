@@ -15,39 +15,39 @@
 </template>
 
 <script lang="ts">
-  import Vue from 'vue';
-  import { SelectedView } from "../../state/selection.js";
-  import { DraftSeat } from "../../draft/DraftState.js";
-  import DeckBuilderSection from "./DeckBuilderSection.vue";
-  import { DeckBuilderState, CardColumn, Deck } from '../../state/DeckBuilderModule.js';
+import Vue from 'vue';
+import { SelectedView } from "../../state/selection.js";
+import { DraftSeat } from "../../draft/DraftState.js";
+import DeckBuilderSection from "./DeckBuilderSection.vue";
+import { DeckBuilderState, CardColumn, Deck } from '../../state/DeckBuilderModule.js';
 
-  export default Vue.extend({
-    name: 'DeckBuilder',
+export default Vue.extend({
+  name: 'DeckBuilder',
 
-    components: {
-      DeckBuilderSection,
+  components: {
+    DeckBuilderSection,
+  },
+
+  computed: {
+    state(): DeckBuilderState {
+      return this.$tstore.state.deckbuilder;
     },
 
-    computed: {
-      state(): DeckBuilderState {
-        return this.$tstore.state.deckbuilder;
-      },
-
-      deck(): Deck | undefined {
-        return this.state.decks[this.state.selectedSeat];
-      },
-
-      sideboard(): CardColumn[] {
-        return this.deck ? this.deck.sideboard : [];
-      },
-
-      maindeck(): CardColumn[] {
-        return this.deck ? this.deck.maindeck : [];
-      },
+    deck(): Deck | undefined {
+      return this.state.decks[this.state.selectedSeat];
     },
 
-    methods: {},
-  });
+    sideboard(): CardColumn[] {
+      return this.deck ? this.deck.sideboard : [];
+    },
+
+    maindeck(): CardColumn[] {
+      return this.deck ? this.deck.maindeck : [];
+    },
+  },
+
+  methods: {},
+});
 </script>
 
 <style scoped>
