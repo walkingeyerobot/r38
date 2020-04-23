@@ -729,6 +729,13 @@ func ServeDraft(w http.ResponseWriter, r *http.Request, userId int64) {
 		revealed = append(revealed, msg)
 	}
 
+	// Auto-pick the last card in the pack.
+	if len(myPack) == 1 {
+		cardId := myPack[0].Id
+		http.Redirect(w, r, fmt.Sprintf("/pick/%d", cardId), http.StatusTemporaryRedirect)
+		return
+	}
+
 	t := template.Must(template.ParseFiles("draft.tmpl"))
 
 	data := DraftPageData{Picks: myPicks, Pack: myPack, DraftId: draftId, DraftName: draftName, Powers: powers2, Position: position, Revealed: revealed}
