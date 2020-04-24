@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="_deck-builder-main">
     <DeckBuilderSection
         class="maindeck"
         :columns="sideboard"
@@ -7,6 +7,7 @@
         :maindeck="false"
         />
     <DeckBuilderSection
+        class="sideboard"
         :columns="maindeck"
         :deckIndex="state.selectedSeat"
         :maindeck="true"
@@ -49,7 +50,18 @@ export default Vue.extend({
 </script>
 
 <style scoped>
+._deck-builder-main {
+  display: flex;
+  flex-direction: column;
+  overflow-x: scroll;
+}
+
 .maindeck {
+  flex: 3 0 0;
   border-bottom: 1px solid #EAEAEA;
+}
+
+.sideboard {
+  flex: 2 0 0;
 }
 </style>

@@ -1,13 +1,15 @@
 <template>
-  <div class="section">
-    <DeckBuilderColumn
-        v-for="(column, index) in columns"
-        :key="index"
-        :column="column"
-        :deckIndex="deckIndex"
-        :maindeck="maindeck"
-        :columnIndex="index"
-        />
+  <div class="_deck-builder-section">
+    <div class="column-cnt">
+      <DeckBuilderColumn
+          v-for="(column, index) in columns"
+          :key="index"
+          :column="column"
+          :deckIndex="deckIndex"
+          :maindeck="maindeck"
+          :columnIndex="index"
+          />
+    </div>
   </div>
 </template>
 
@@ -39,10 +41,12 @@ export default Vue.extend({
 </script>
 
 <style scoped>
-.section {
+._deck-builder-section {
+  overflow: scroll;
+}
+
+.column-cnt {
   display: flex;
   flex-direction: row;
-  height: 50%;
-  overflow-y: scroll;
 }
 </style>
