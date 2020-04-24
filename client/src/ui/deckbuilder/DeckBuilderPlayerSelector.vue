@@ -39,6 +39,8 @@ export default Vue.extend({
 
 .player {
   padding: 10px 10px;
+  cursor: default;
+  user-select: none;
 }
 
 .player.selected {

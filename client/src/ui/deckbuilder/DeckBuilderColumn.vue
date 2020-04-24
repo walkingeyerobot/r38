@@ -136,6 +136,8 @@ export default Vue.extend({
 ._column {
   padding: 10px;
   width: 204px;
+  flex: 0 0 auto;
+  padding-bottom: 250px;
 }
 
 .columnDrop {
