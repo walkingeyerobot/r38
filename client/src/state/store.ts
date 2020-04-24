@@ -52,18 +52,14 @@ const store = new Vuex.Store({
     initDraft(
         state: CoreState,
         payload: {
-          id: number,
-          draft: {
-            state: DraftState,
-            events: TimelineEvent[],
-          },
+          state: DraftState,
+          events: TimelineEvent[],
         }
     ) {
-      initialDraftState = cloneDraftState(payload.draft.state);
+      initialDraftState = cloneDraftState(payload.state);
 
-      state.draftId = payload.id;
-      state.draft = cloneDraftState(payload.draft.state);
-      state.events = payload.draft.events;
+      state.draft = cloneDraftState(payload.state);
+      state.events = payload.events;
       state.eventPos = 0;
       state.selection = {
         type: 'seat',
@@ -150,6 +146,10 @@ const store = new Vuex.Store({
         default:
           throw new Error(`Unrecognized timeMode: ${state.timeMode}`);
       }
+    },
+
+    setDraftId(state: CoreState, draftId: number) {
+      state.draftId = draftId;
     },
 
     setTimeMode(state: CoreState, mode: TimeMode) {
