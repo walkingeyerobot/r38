@@ -34,11 +34,12 @@ type GoogleUserInfo struct {
 }
 
 type Draft struct {
-	Name     string
-	Id       int64
-	Seats    int64
-	Joined   bool
-	Joinable bool
+	Name       string
+	Id         int64
+	Seats      int64
+	Joined     bool
+	Joinable   bool
+	Replayable bool
 }
 
 type IndexPageData struct {
@@ -369,42 +370,14 @@ func ServeVueApp(parseResult []string, w http.ResponseWriter, userId int64) {
 
 	draftId := int64(draftIdInt)
 
-	query := `select min(round) from seats where draft=?`
-	row := database.QueryRow(query, draftId)
-	var round int64
-	err = row.Scan(&round)
+	canViewReplay, err := CanViewReplay(draftId, userId)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	if round != 4 && userId != 1 && draftId != 9 {
-		query = `select user from seats where draft=? and position is not null`
-		rows, err := database.Query(query, draftId)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		defer rows.Close()
-
-		valid := true
-		for rows.Next() {
-			var playerId sql.NullInt64
-			err = rows.Scan(&playerId)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-			if !playerId.Valid || playerId.Int64 == userId {
-				valid = false
-				break
-			}
-		}
-
-		if !valid {
-			http.Error(w, "lol no", http.StatusInternalServerError)
-			return
-		}
+	if !canViewReplay {
+		http.Error(w, "lol no", http.StatusInternalServerError)
+		return
 	}
 
 	json, err := GetJson(draftId)
@@ -414,6 +387,44 @@ func ServeVueApp(parseResult []string, w http.ResponseWriter, userId int64) {
 	data := ReplayPageData{Json: json}
 
 	t.Execute(w, data)
+}
+
+func CanViewReplay(draftId int64, userId int64) (bool, error) {
+	query := `select min(round) from seats where draft=?`
+	row := database.QueryRow(query, draftId)
+	var round int64
+	err := row.Scan(&round)
+	if err != nil {
+		return false, err
+	}
+
+	if round != 4 && userId != 1 && draftId != 9 {
+		query = `select user from seats where draft=? and position is not null`
+		rows, err := database.Query(query, draftId)
+		if err != nil {
+			return false, err
+		}
+		defer rows.Close()
+
+		valid := true
+		for rows.Next() {
+			var playerId sql.NullInt64
+			err = rows.Scan(&playerId)
+			if err != nil {
+				return false, err
+			}
+			if !playerId.Valid || playerId.Int64 == userId {
+				valid = false
+				break
+			}
+		}
+
+		if !valid {
+			return false, nil
+		}
+	}
+
+	return true, nil
 }
 
 func ServeLibrarian(w http.ResponseWriter, r *http.Request, userId int64) {
@@ -605,6 +616,12 @@ func ServeIndex(w http.ResponseWriter, r *http.Request, userId int64) {
 			return
 		}
 		d.Joinable = d.Seats > 0 && !d.Joined
+		d.Replayable, err = CanViewReplay(d.Id, userId)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
 		Drafts = append(Drafts, d)
 	}
 

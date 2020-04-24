@@ -20,6 +20,9 @@
         {{ if .Joinable }}
           <span><a href="/join/{{ .Id }}{{ $viewUrl }}">Join!</a></span>
         {{ end }}
+        {{ if .Replayable }}
+          <span><a href="/replay/{{ .Id }}{{ $viewUrl }}">Replay</a></span>
+        {{ end }}
       </li>
     {{ end }}
   </ul>
