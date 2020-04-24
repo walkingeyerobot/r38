@@ -133,7 +133,7 @@ function applyUrl(store: Store<RootState>, parse: ParsedUrl) {
 
   if (parse.eventIndex != undefined
       && parse.eventIndex >= 0
-      && parse.eventIndex < store.state.events.length) {
+      && parse.eventIndex <= store.state.events.length) {
     store.commit('goTo', parse.eventIndex);
   }
 
