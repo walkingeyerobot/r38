@@ -33,22 +33,19 @@ export default Vue.extend({
     const srcData = getServerPayload();
     const draft = parseDraft(srcData);
 
-    this.$tstore.commit('initDraft', {
-      id: parseInt(this.$route.params['draftId']),
-      draft,
-    });
+    this.$tstore.commit('initDraft', draft);
 
     if (this.$tstore.state.draft.isComplete) {
       this.$tstore.commit('setTimeMode', 'synchronized');
       this.$tstore.commit('goTo', this.$tstore.state.events.length);
     }
 
-    applyReplayUrlState(this.$tstore, this.$route.params);
+    applyReplayUrlState(this.$tstore, this.$route);
   },
 
   watch: {
     $route(to, from) {
-      applyReplayUrlState(this.$tstore, this.$route.params);
+      applyReplayUrlState(this.$tstore, this.$route);
     },
   }
 });

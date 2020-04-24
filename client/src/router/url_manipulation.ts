@@ -67,68 +67,86 @@ function generateReplayUrl(state: RootState, to: TargetState): string {
  */
 export function applyReplayUrlState(
   store: Store<RootState>,
-  params: { [key: string]: string },
+  route: Route,
 ) {
-  let timelineMode: TimeMode | null = null;
-  switch (params['timelineMode']) {
-    case 't':
-      timelineMode = 'original';
-      break;
-    case 's':
-      timelineMode = 'synchronized';
-      break;
-    default:
-      console.error('Unrecognized timeline mode:', params['timelineMode']);
-      break;
+  const parsedUrl = parseUrl(route);
+  applyUrl(store, parsedUrl);
+}
+
+function parseUrl(route: Route) {
+  const parsedUrl: ParsedUrl = {
+    draftId: parseInt(route.params['draftId']),
+  };
+
+  const rawParams  = route.params['param'] || '';
+  const params = rawParams.split('/');
+
+  for (let i = 0; i < params.length; i++) {
+
+    const param = params[i];
+    i++;
+    const value = parseInt(params[i]);
+    if (value == NaN) {
+      console.error('Invalid value:', value);
+      continue;
+    }
+
+    switch (param) {
+      case 's':
+        parsedUrl.timeMode = 'synchronized';
+        parsedUrl.eventIndex = value;
+        break;
+      case 't':
+        parsedUrl.timeMode = 'original';
+        parsedUrl.eventIndex = value;
+        break;
+      case 'pack':
+        parsedUrl.selection = {
+          type: 'pack',
+          id: value,
+        }
+        break;
+      case 'seat':
+        parsedUrl.selection = {
+          type: 'seat',
+          id: value,
+        }
+        break;
+      default:
+        console.warn('Unrecognized URL param:', param);
+        break;
+    }
   }
 
-  if (timelineMode != null && timelineMode != store.state.timeMode) {
-    store.commit('setTimeMode', timelineMode);
+  return parsedUrl;
+}
+
+function applyUrl(store: Store<RootState>, parse: ParsedUrl) {
+  if (store.state.draftId != parse.draftId) {
+    store.commit('setDraftId', parse.draftId);
   }
 
-  const eventIndex = parseInt(params['eventIndex']);
-  if (eventIndex == NaN
-      || eventIndex < 0
-      || eventIndex > store.state.events.length) {
-    console.error('Invalid event index:', params['eventIndex']);
-  } else if (eventIndex != store.state.eventPos) {
-    store.commit('goTo', eventIndex);
+  if (parse.timeMode != undefined
+      && parse.timeMode != store.state.timeMode) {
+    store.commit('setTimeMode', parse.timeMode);
   }
 
-  const selection = parseSelection(store, params);
-  if (selection != null
-      && (store.state.selection == null
-          || selection.type != store.state.selection.type
-          || selection.id != store.state.selection.id)) {
-    store.commit('setSelection', selection);
+  if (parse.eventIndex != undefined
+      && parse.eventIndex >= 0
+      && parse.eventIndex < store.state.events.length) {
+    store.commit('goTo', parse.eventIndex);
+  }
+
+  if (parse.selection != undefined
+      && (parse.selection.type != store.state.selection?.type
+          || parse.selection.id != store.state.selection.id)) {
+    store.commit('setSelection', parse.selection);
   }
 }
 
-function parseSelection(
-  store: Store<RootState>,
-  params: { [key: string]: string },
-): SelectedView | null {
-  let selectionType: 'pack' | 'seat';
-  switch (params['selectionType']) {
-    case 'pack':
-    case 'seat':
-      selectionType = params['selectionType'];
-      break;
-    case undefined:
-      return null;
-    default:
-      console.error('Invalid selection type:', params['selectionType']);
-      return null;
-  }
-
-  const locationId = parseInt(params['locationId']);
-  if (locationId == NaN || !store.state.draft.packs.has(locationId)) {
-    console.error('Invalid location ID:', params['locationId']);
-    return null;
-  }
-
-  return {
-    type: selectionType,
-    id: locationId,
-  };
+interface ParsedUrl {
+  draftId: number,
+  timeMode?: TimeMode,
+  eventIndex?: number,
+  selection?: SelectedView,
 }

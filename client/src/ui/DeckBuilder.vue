@@ -2,7 +2,7 @@
   <div class="_deck-builder-screen">
     <div class="main">
       <DeckBuilderPlayerSelector class="player-selector" />
-      <DeckBuilder class="deckbuilder" />
+      <DeckBuilderMain class="deckbuilder" />
     </div>
   </div>
 </template>
@@ -10,7 +10,7 @@
 <script lang="ts">
 import Vue from 'vue';
 
-import DeckBuilder from './deckbuilder/DeckBuilder.vue';
+import DeckBuilderMain from './deckbuilder/DeckBuilderMain.vue';
 import DeckBuilderPlayerSelector from './deckbuilder/DeckBuilderPlayerSelector.vue';
 import { parseDraft } from "../parse/parseDraft";
 import { MtgCard, DraftCard } from '../draft/DraftState';
@@ -19,10 +19,8 @@ import { commitTimelineEvent } from '../draft/mutate';
 import { getServerPayload } from '../parse/getServerPayload';
 
 export default Vue.extend({
-  name: 'DeckBuilderScreen',
-
   components: {
-    DeckBuilder,
+    DeckBuilderMain,
     DeckBuilderPlayerSelector,
   },
 

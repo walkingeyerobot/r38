@@ -22,8 +22,6 @@ import DeckBuilderSection from "./DeckBuilderSection.vue";
 import { DeckBuilderState, CardColumn, Deck } from '../../state/DeckBuilderModule.js';
 
 export default Vue.extend({
-  name: 'DeckBuilder',
-
   components: {
     DeckBuilderSection,
   },
