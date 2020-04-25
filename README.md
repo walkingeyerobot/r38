@@ -14,9 +14,13 @@ go get -v github.com/walkingeyerobot/r38/...
 
 ## Pull a usable Cube list (vintagecube.csv):
 
+
 ```bash
-wget -O vintagecube.csv 'https://cubecobra.com/cube/download/csv/5e3cfa78fab99c24464f76ee?primary=Color%20Category&secondary=Types-Multicolor&tertiary=CMC2'
+wget -O cube.csv 'https://cubecobra.com/cube/download/csv/5e3cfa78fab99c24464f76ee?primary=Color%20Category&secondary=Types-Multicolor&tertiary=CMC2'
 ```
+
+NOTE: As of 2020-04-24, the CSV output needs a minor hack to formatting: add `,Blank` to the CSV header line if the last field is "MTGO ID".
+
 
 ## Configure the sqlite3 database (draft.db)
 
@@ -36,7 +40,7 @@ CREATE VIEW v_packs as select packs.*, count(cards.id) as count from packs left 
 
 ## Run the server without OAuth
 
-You can now run the server without OAuth. You will always be considered logged in as userId 1. To be logged in as a differnt user, add ?as=x to the end of the url you want to view, where x is the id of the user you want to view the page as.
+You can now run the server without OAuth. You will always be considered logged in as userId 1. To be logged in as a different user, add ?as=x to the end of the url you want to view, where x is the id of the user you want to view the page as.
 
 ```bash
 source ~/r38-secret.env; go run main.go -auth=false
