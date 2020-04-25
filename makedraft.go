@@ -33,6 +33,8 @@ func (s cryptoSource) Uint64() (v uint64) {
 
 func main() {
 	draftNamePtr := flag.String("name", "untitled draft", "string")
+	filenamePtr := flag.String("filename", "cube.csv", "string")
+	databasePtr := flag.String("database", "draft.db", "string")
 	flag.Parse()
 
 	name := *draftNamePtr
@@ -40,7 +42,7 @@ func main() {
 	var database *sql.DB
 
 	var err error
-	database, err = sql.Open("sqlite3", "draft.db")
+	database, err = sql.Open("sqlite3", *databasePtr)
 	if err != nil {
 		return
 	}
@@ -118,7 +120,7 @@ func main() {
 	}
 
 	query = `INSERT INTO cards (pack, original_pack, edition, number, tags, name, cmc, type, color, mtgo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-	file, err := os.Open("cube.csv")
+	file, err := os.Open(*filenamePtr)
 	if err != nil {
 		// error
 		return
