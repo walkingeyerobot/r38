@@ -634,15 +634,10 @@ func ServeIndex(w http.ResponseWriter, r *http.Request, userId int64) {
 		Drafts = append(Drafts, d)
 	}
 
+	viewParam := GetViewParam(r, userId)
+	data := IndexPageData{Drafts: Drafts, ViewUrl: viewParam}
+
 	t := template.Must(template.ParseFiles("index.tmpl"))
-
-	data := IndexPageData{Drafts: Drafts}
-
-	viewing, err := IsViewing(r, userId)
-	if err == nil && viewing {
-		data.ViewUrl = fmt.Sprintf("?as=%d", userId)
-	}
-
 	t.Execute(w, data)
 }
 

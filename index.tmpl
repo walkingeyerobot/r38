@@ -8,20 +8,20 @@
 <div>
   <div>drafts</div>
   <ul>
-    {{ $viewUrl := .ViewUrl}}
+    {{ $ViewURL := .ViewUrl}}
     {{ range .Drafts }}
       <li>
         {{ if .Joined }}
-          <span><a href="/draft/{{ .Id }}{{ $viewUrl }}">{{ .Name }}</a></span>
+          <span><a href="/draft/{{ .Id }}{{ $ViewURL }}">{{ .Name }}</a></span>
         {{ else }}
           <span>{{ .Name }}</span>
         {{ end }}
         <span>{{ .Seats }} seats available.</span>
         {{ if .Joinable }}
-          <span><a href="/join/{{ .Id }}{{ $viewUrl }}">Join!</a></span>
+          <span><a href="/join/{{ .Id }}{{ $ViewURL }}">Join!</a></span>
         {{ end }}
         {{ if .Replayable }}
-          <span><a href="/replay/{{ .Id }}{{ $viewUrl }}">Replay</a></span>
+          <span><a href="/replay/{{ .Id }}{{ $ViewURL }}">Replay</a></span>
         {{ end }}
       </li>
     {{ end }}
