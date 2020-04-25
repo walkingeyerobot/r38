@@ -44,23 +44,25 @@ func main() {
 	var err error
 	database, err = sql.Open("sqlite3", *databasePtr)
 	if err != nil {
+        log.Printf("error opening database %s: %s", *databasePtr, err)
 		return
 	}
 	err = database.Ping()
 	if err != nil {
+        log.Printf("error pinging database: %s", err)
 		return
 	}
 
 	query := `INSERT INTO drafts (name) VALUES (?);`
 	res, err := database.Exec(query, name)
 	if err != nil {
-		// error
+        log.Printf("error creating draft: %s", err)
 		return
 	}
 
 	draftId, err := res.LastInsertId()
 	if err != nil {
-		// error
+        log.Printf("could not get draft ID: %s", err)
 		return
 	}
 	query = `INSERT INTO seats (position, draft) VALUES (?, ?)`
@@ -68,24 +70,24 @@ func main() {
 	for i := 0; i < 8; i++ {
 		res, err = database.Exec(query, i, draftId)
 		if err != nil {
-			// error
+            log.Printf("could not create seats in draft: %s", err)
 			return
 		}
 		seatIds[i], err = res.LastInsertId()
 		if err != nil {
-			// error
+            log.Printf("could not finalize seat creation: %s", err)
 			return
 		}
 	}
 
 	res, err = database.Exec(`INSERT INTO seats (position, draft) VALUES(NULL, ?)`, draftId)
 	if err != nil {
-		// error
+        log.Printf("error assigning seats: %s", err)
 		return
 	}
 	seatIds[8], err = res.LastInsertId()
 	if err != nil {
-		// error
+        log.Printf("error assigning seats: %s", err)
 		return
 	}
 
@@ -95,13 +97,13 @@ func main() {
 		for j := 0; j < 4; j++ {
 			res, err = database.Exec(query, seatIds[i], seatIds[i], j)
 			if err != nil {
-				// error
+                log.Printf("error creating packs: %s", err)
 				return
 			}
 			if j != 0 {
 				packIds[(3*i)+(j-1)], err = res.LastInsertId()
 				if err != nil {
-					// error
+                    log.Printf("error creating packs: %s", err)
 					return
 				}
 			}
@@ -110,19 +112,19 @@ func main() {
 
 	res, err = database.Exec(`INSERT INTO packs (seat, original_seat, modified, round) VALUES (?, ?, 0, NULL)`, seatIds[8], seatIds[8])
 	if err != nil {
-		// error
+        log.Printf("error creating packs: %s", err)
 		return
 	}
 	packIds[24], err = res.LastInsertId()
 	if err != nil {
-		// error
+        log.Printf("error creating packs: %s", err)
 		return
 	}
 
 	query = `INSERT INTO cards (pack, original_pack, edition, number, tags, name, cmc, type, color, mtgo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 	file, err := os.Open(*filenamePtr)
 	if err != nil {
-		// error
+        log.Printf("could not open file %s: %s", *filenamePtr, err)
 		return
 	}
 	defer file.Close()
@@ -131,19 +133,19 @@ func main() {
 	normalReader := bufio.NewReader(file)
 	_, _, err = normalReader.ReadLine()
 	if err != nil {
-		// error
+        log.Printf("error discarding first line of file %s: %s", *filenamePtr, err)
 		return
 	}
 
 	reader := csv.NewReader(normalReader)
 	if err != nil {
-		// error
+        log.Printf("error processing CSV file %s: %s", *filenamePtr, err)
 		return
 	}
 
 	lines, err := reader.ReadAll()
 	if err != nil {
-		// error
+        log.Printf("error reading CSV file %s: %s", *filenamePtr, err)
 		return
 	}
 
@@ -159,7 +161,7 @@ func main() {
 			// if a card is foil, increment the mtgo id
 			mtgoIdInt, err := strconv.Atoi(mtgoId)
 			if err != nil {
-				// error
+                log.Printf("could not convert foil version %s: %s", mtgoId, err)
 				return
 			}
 			mtgoIdInt++
