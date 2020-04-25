@@ -7,44 +7,32 @@ import { buildEmptyDraftState } from '../draft/buildEmptyDraftState';
 import { commitTimelineEvent, rollbackTimelineEvent } from '../draft/mutate';
 import { cloneDraftState } from '../draft/cloneDraftState';
 import { find } from '../util/collection';
+import { DeckBuilderModule, DeckBuilderState } from './DeckBuilderModule';
 
 Vue.use(Vuex);
 
-export interface RootState {
+export interface RootState extends CoreState {
+  deckbuilder: DeckBuilderState,
+}
+
+interface CoreState {
   selection: SelectedView | null,
   draft: DraftState,
+  draftId: number,
   events: TimelineEvent[],
   eventPos: number,
   timeMode: TimeMode,
-  decks: Deck[],
 }
 
 export type TimeMode = 'original' | 'synchronized';
 
-export type CardColumn = MtgCard[];
-
-export interface Deck {
-  maindeck: CardColumn[],
-  sideboard: CardColumn[],
-}
-
-export interface CardMove {
-  deckIndex: number,
-  sourceColumnIndex: number,
-  sourceCardIndex: number,
-  sourceMaindeck: boolean,
-  targetColumnIndex: number,
-  targetCardIndex: number,
-  targetMaindeck: boolean,
-}
-
-const state: RootState = {
+const state: CoreState = {
   selection: null,
   draft: buildEmptyDraftState(),
+  draftId: 0,
   events: [],
   eventPos: 0,
   timeMode: 'original',
-  decks: [],
 };
 
 let initialDraftState: DraftState = buildEmptyDraftState();
@@ -52,26 +40,38 @@ let initialDraftState: DraftState = buildEmptyDraftState();
 const store = new Vuex.Store({
   state,
 
+  modules: {
+    deckbuilder: DeckBuilderModule,
+  },
+
   mutations: {
-    setSelection(state: RootState, selection: SelectedView) {
+    setSelection(state: CoreState, selection: SelectedView) {
       state.selection = selection;
     },
 
     initDraft(
-        state: RootState,
-        payload: { state: DraftState, events: TimelineEvent[] }
+        state: CoreState,
+        payload: {
+          state: DraftState,
+          events: TimelineEvent[],
+        }
     ) {
       initialDraftState = cloneDraftState(payload.state);
+
       state.draft = cloneDraftState(payload.state);
       state.events = payload.events;
       state.eventPos = 0;
+      state.selection = {
+        type: 'seat',
+        id: 0,
+      };
     },
 
-    pushEvent(state: RootState, event: TimelineEvent) {
+    pushEvent(state: CoreState, event: TimelineEvent) {
       state.events.push(event);
     },
 
-    goTo(state: RootState, index: number) {
+    goTo(state: CoreState, index: number) {
       state.draft = cloneDraftState(initialDraftState);
       let i = 0;
       for (; i < state.events.length && i < index; i++) {
@@ -80,7 +80,7 @@ const store = new Vuex.Store({
       state.eventPos = i;
     },
 
-    goNext(state: RootState) {
+    goNext(state: CoreState) {
       switch (state.timeMode) {
         case 'original':
           if (state.eventPos < state.events.length) {
@@ -111,7 +111,7 @@ const store = new Vuex.Store({
       }
     },
 
-    goBack(state: RootState) {
+    goBack(state: CoreState) {
       switch (state.timeMode) {
         case 'original':
           if (state.eventPos > 0) {
@@ -148,7 +148,11 @@ const store = new Vuex.Store({
       }
     },
 
-    setTimeMode(state: RootState, mode: TimeMode) {
+    setDraftId(state: CoreState, draftId: number) {
+      state.draftId = draftId;
+    },
+
+    setTimeMode(state: CoreState, mode: TimeMode) {
       if (state.timeMode == mode) {
         return;
       }
@@ -161,7 +165,6 @@ const store = new Vuex.Store({
         state.events.sort(sortEventsLockstep);
         state.draft = cloneDraftState(initialDraftState);
 
-        console.log('Fast-forwarding...');
         state.eventPos = 0;
         let i = 0;
         for (; i < state.events.length; i++) {
@@ -171,7 +174,6 @@ const store = new Vuex.Store({
                   && event.roundEpoch > currentEpoch)) {
             break;
           }
-          console.log('  Applying event', event.id);
           commitTimelineEvent(event, state.draft);
         }
         state.eventPos = i;
@@ -194,7 +196,6 @@ const store = new Vuex.Store({
 
         state.events.sort((a, b) => a.id - b.id);
 
-        console.log('Fast-forwarding...');
         state.draft = cloneDraftState(initialDraftState);
         state.eventPos = 0;
 
@@ -205,57 +206,11 @@ const store = new Vuex.Store({
             if (event.id == targetEvent.id) {
               break;
             }
-            console.log('  Applying event', event.id);
             commitTimelineEvent(event, state.draft);
           }
           state.eventPos = i;
         }
       }
-    },
-
-    moveCard(state: RootState, move: CardMove) {
-      let card: MtgCard;
-      let source: CardColumn[];
-      if (move.sourceMaindeck) {
-        source = state.decks[move.deckIndex].maindeck;
-      } else {
-        source = state.decks[move.deckIndex].sideboard;
-      }
-      if (move.sourceMaindeck !== move.targetMaindeck
-          || move.sourceColumnIndex !== move.targetColumnIndex) {
-        [card] = source[move.sourceColumnIndex]
-            .splice(move.sourceCardIndex, 1);
-        let target: CardColumn[];
-        if (move.targetMaindeck) {
-          target = state.decks[move.deckIndex].maindeck;
-        } else {
-          target = state.decks[move.deckIndex].sideboard;
-        }
-        target[move.targetColumnIndex]
-            .splice(move.targetCardIndex, 0, card);
-      } else if (move.sourceCardIndex !== move.targetCardIndex
-          && move.sourceCardIndex !== move.targetCardIndex + 1) {
-        [card] = source[move.sourceColumnIndex]
-            .splice(move.sourceCardIndex, 1);
-        const targetCardIndex =
-            (move.targetCardIndex < move.sourceCardIndex)
-                ? move.targetCardIndex
-                : move.targetCardIndex - 1;
-        source[move.targetColumnIndex]
-            .splice(targetCardIndex, 0, card);
-      }
-    },
-
-    initDeck(state: RootState) {
-      if (state.selection !== null && state.selection.type === 'seat') {
-        const cards = state.draft.seats[state.selection.id].player.picks.cards.map(
-            card => card.definition);
-        Vue.set(store.state.decks, state.selection.id, {
-          sideboard: [cards, [], [], [], [], [], []],
-          maindeck: [[], [], [], [], [], [], []],
-        });
-      }
-
     },
 
   },
@@ -287,7 +242,7 @@ function sortEventsLockstep(a: TimelineEvent, b: TimelineEvent) {
   return a.id - b.id;
 }
 
-function getCurrentEpoch(state: RootState): [number, number] {
+function getCurrentEpoch(state: CoreState): [number, number] {
   let currentRound = 1;
   let currentEpoch = 0;
   const mostRecentEvent =

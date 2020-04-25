@@ -5,18 +5,14 @@
         v-if="selectedPack"
         class="selected-pack"
         >
-      <div
+      <CardView
           v-for="card in selectedPack"
           :key="card.id"
+          :card="card"
+          :selectionStyle="getSelectionStyle(card.id)"
           class="card"
-          >
-        <img
-            class="card-img"
-            :class="getSelectionClass(card.id)"
-            :title="card.definition.name"
-            :src="getImageSrc(card)"
-            >
-      </div>
+          @click.native="onPackCardClicked(card.id)"
+          />
     </div>
 
     <div
@@ -29,17 +25,15 @@
         v-if="selectedSeat"
         class="player-grid"
         >
-      <div
+
+      <CardView
           v-for="card in selectedSeat.player.picks.cards"
           :key="card.id"
+          :card="card"
+          :selectionStyle="getSelectionStyle(card.id)"
           class="card"
-          >
-        <img
-            class="card-img"
-            :title="card.definition.name"
-            :src="getImageSrc(card)"
-            >
-      </div>
+          @click.native="onPoolCardClicked(card.id)"
+          />
     </div>
 
   </div>
@@ -51,8 +45,16 @@ import { DraftCard, DraftPlayer, DraftSeat, CardPack, CardContainer } from '../.
 import { TimelineEvent } from '../../draft/TimelineEvent';
 import { SelectedView } from '../../state/selection';
 import { checkNotNil } from '../../util/checkNotNil';
+import { navTo } from '../../router/url_manipulation';
+import { Store } from 'vuex';
+import { RootState } from '../../state/store';
+import CardView from './CardView.vue';
 
 export default Vue.extend({
+
+  components: {
+    CardView
+  },
 
   computed: {
     selection(): SelectedView | null {
@@ -110,34 +112,105 @@ export default Vue.extend({
   },
 
   methods: {
-    getSelectionClass(cardId: number) {
+    getSelectionStyle(cardId: number) {
       if (this.nextEventForSeat == null) {
         return undefined;
       }
       for (const action of this.nextEventForSeat.actions) {
         if (action.type == 'move-card' && action.card == cardId) {
           if (action.to == this.selectedSeat!.player.picks.id) {
-            return 'action-picked'
+            return 'picked'
           } else {
-            return 'action-returned';
+            return 'returned';
           }
         }
       }
       return undefined;
     },
 
-    getImageSrc(card: DraftCard): string {
-      if (process.env.NODE_ENV == 'development') {
-        return `http://api.scryfall.com/cards/${card.definition.set}/`
-            + `${card.definition.collector_number}?format=image&version=normal`;
-      } else {
-        return `/proxy/${card.definition.set}/`
-            + `${card.definition.collector_number}`;
+    onPackCardClicked(cardId: number) {
+      this.jumpToPick(cardId, 'future');
+    },
+
+    onPoolCardClicked(cardId: number) {
+      this.jumpToPick(cardId, 'past');
+    },
+
+    jumpToPick(cardId: number, direction: 'future' | 'past') {
+      const pick =
+          findPick(
+              cardId,
+              this.$tstore.state.eventPos,
+              this.$tstore.state.events,
+              direction);
+      if (pick != null) {
+        const adjustedIndex =
+            maybeAdjustToStartOfEpoch(this.$tstore, pick.index);
+
+        navTo(this.$tstore, this.$route, this.$router, {
+          eventIndex: adjustedIndex,
+          selection: {
+            type: 'seat',
+            id: pick.seat,
+          },
+        });
       }
     }
   },
-
 });
+
+function maybeAdjustToStartOfEpoch(store: Store<RootState>, index: number) {
+  let newIndex = index;
+  const event = store.state.events[index];
+  if (event != undefined && store.state.timeMode == 'synchronized') {
+    for (let i = index; i >= 0; i--) {
+      if (store.state.events[i].roundEpoch != event.roundEpoch) {
+        break;
+      }
+      newIndex = i;
+    }
+  }
+  return newIndex;
+}
+
+function findPick(
+  cardId: number,
+  currentIndex: number,
+  events: TimelineEvent[],
+  direction: 'future' | 'past',
+) {
+  if (direction == 'future') {
+    for (let i = currentIndex; i < events.length; i++) {
+      const event = events[i];
+      if (containsPick(event, cardId)) {
+        return {
+          index: i,
+          seat: event.associatedSeat,
+        };
+      }
+    }
+  } else {
+    for (let i = currentIndex; i >= 0; i--) {
+      const event = events[i];
+      if (containsPick(event, cardId)) {
+        return {
+          index: i,
+          seat: event.associatedSeat,
+        };
+      }
+    }
+  }
+  return null;
+}
+
+function containsPick(event: TimelineEvent, cardId: number) {
+  for (let action of event.actions) {
+    if (action.type == 'move-card' && action.card == cardId) {
+      return true;
+    }
+  }
+  return false;
+}
 </script>
 
 <style scoped>
@@ -166,20 +239,4 @@ export default Vue.extend({
 .card {
   margin: 0 10px 10px 0;
 }
-
-/* native is 745 × 1040 */
-.card-img {
-  width: 200px;
-  height: 279px;
-  background: #AAA;
-}
-
-.action-picked {
-  outline: 5px solid #00F;
-}
-
-.action-returned {
-  outline: 5px solid #F00;
-}
-
 </style>

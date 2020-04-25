@@ -37,6 +37,7 @@
 <script lang="ts">
 import Vue from 'vue';
 import { DraftSeat } from '../../draft/DraftState';
+import { navTo } from '../../router/url_manipulation';
 
 import CardPack from './CardPack.vue';
 
@@ -63,9 +64,11 @@ export default Vue.extend({
 
   methods: {
     onHeaderClick() {
-      this.$tstore.commit('setSelection', {
-        type: 'seat',
-        id: this.seat.position,
+      navTo(this.$tstore, this.$route, this.$router, {
+        selection: {
+          type: 'seat',
+          id: this.seat.position,
+        },
       });
     },
   },

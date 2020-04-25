@@ -39,7 +39,7 @@
       <div>current pack</div>
         {{ range .Pack }}
           <div class="card">
-            <a href="/pick/{{ .Id }}">
+            <a href="/pick/{{ .Id }}{{ .ViewUrl }}">
               <img src="/proxy/{{ .Edition }}/{{ .Number }}" height=300 />
             </a>
             {{template "cardname" .Name}}
@@ -71,7 +71,7 @@
     {{ else }}
       {{ range .Powers }}
         <div class="card">
-          <a href="/power/{{ .Id }}">
+          <a href="/power/{{ .Id }}{{ .ViewUrl }}">
             <img src="/proxy/{{ .Edition }}/{{ .Number }}" height=300 />
           </a>
           <div>{{ .Name }}</div>

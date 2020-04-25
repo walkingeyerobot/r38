@@ -1,20 +1,20 @@
 import Vue from 'vue';
-import VueRouter from 'vue-router';
-import DeckBuilderScreen from '../ui/DeckBuilderScreen.vue';
-import Home from '../ui/Home.vue';
+import VueRouter, { RouteConfig } from 'vue-router';
+import DeckBuilder from '../ui/DeckBuilder.vue';
+import Replay from '../ui/Replay.vue';
 
 Vue.use(VueRouter);
 
+// See https://github.com/pillarjs/path-to-regexp/ for route matching language
+
 const routes = [
   {
-    path: '/replay/*',
-    name: 'Home',
-    component: Home,
+    path: `/replay/:draftId(\\d+)/:param*`,
+    component: Replay,
   },
   {
     path: '/deckbuilder/*',
-    name: 'DeckBuilderScreen',
-    component: DeckBuilderScreen,
+    component: DeckBuilder,
   }
   // TODO: Figure out route splitting in the future
   // {
@@ -26,7 +26,14 @@ const routes = [
   //   component: () =>
   //     import(/* webpackChunkName: 'about' */ '../ui/About.vue'),
   // },
-];
+] as RouteConfig[];
+
+if (DEVELOPMENT) {
+  routes.push({
+    path: '/*',
+    redirect: '/replay/0',
+  })
+}
 
 const router = new VueRouter({
   mode: 'history',

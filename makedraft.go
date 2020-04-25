@@ -12,6 +12,7 @@ import (
 	"log"
 	badrand "math/rand"
 	"os"
+	"strconv"
 )
 
 type cryptoSource struct{}
@@ -116,19 +117,28 @@ func main() {
 		return
 	}
 
-	query = `INSERT INTO cards (pack, original_pack, edition, number, tags, name, cmc, type, color) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
-	file, err := os.Open("vintagecube.csv")
+	query = `INSERT INTO cards (pack, original_pack, edition, number, tags, name, cmc, type, color, mtgo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	file, err := os.Open("cube.csv")
 	if err != nil {
 		// error
 		return
 	}
 	defer file.Close()
-	reader := csv.NewReader(bufio.NewReader(file))
-	_, err = reader.Read() // throw away the first line
+
+	// read the first line as a text file and throw it away
+	normalReader := bufio.NewReader(file)
+	_, _, err = normalReader.ReadLine()
 	if err != nil {
 		// error
 		return
 	}
+
+	reader := csv.NewReader(normalReader)
+	if err != nil {
+		// error
+		return
+	}
+
 	lines, err := reader.ReadAll()
 	if err != nil {
 		// error
@@ -141,7 +151,19 @@ func main() {
 		j := rnd.Intn(i)
 		lines[i], lines[j] = lines[j], lines[i]
 		packId := packIds[(539-i)/15]
-		database.Exec(query, packId, packId, lines[i][4], lines[i][5], lines[i][10], lines[i][0], lines[i][1], lines[i][2], lines[i][3])
+		finish := lines[i][7]
+		mtgoId := lines[i][12]
+		if finish == "Foil" {
+			// if a card is foil, increment the mtgo id
+			mtgoIdInt, err := strconv.Atoi(mtgoId)
+			if err != nil {
+				// error
+				return
+			}
+			mtgoIdInt++
+			mtgoId = fmt.Sprintf("%d", mtgoIdInt)
+		}
+		database.Exec(query, packId, packId, lines[i][4], lines[i][5], lines[i][10], lines[i][0], lines[i][1], lines[i][2], lines[i][3], mtgoId)
 	}
 	fmt.Printf("done generating new draft\n")
 }
