@@ -39,7 +39,7 @@
       <div>current pack</div>
         {{ range .Pack }}
           <div class="card">
-            <a href="/pick/{{ .Id }}{{ .ViewUrl }}">
+            <a href="/pick/{{ .Id }}{{ $.ViewUrl }}">
               <img src="/proxy/{{ .Edition }}/{{ .Number }}" height=300 />
             </a>
             {{template "cardname" .Name}}
@@ -53,7 +53,7 @@
     {{ if not .Picks }}
       <div>no picks yet</div>
     {{ else }}
-      <div>previous picks - <a href="/pdf/{{ .DraftId }}{{ .ViewUrl }}">print proxies</a> - <a href="/mtgo/{{ .DraftId }}{{ .ViewUrl }}">export to mtgo</a></div>
+      <div>previous picks - <a href="/pdf/{{ .DraftId }}{{ $.ViewUrl }}">print proxies</a> - <a href="/mtgo/{{ .DraftId }}{{ $.ViewUrl }}">export to mtgo</a></div>
       {{ range .Picks }}
         <div class="card">
           <img src="/proxy/{{ .Edition }}/{{ .Number }}" height=300 />
@@ -71,7 +71,7 @@
     {{ else }}
       {{ range .Powers }}
         <div class="card">
-          <a href="/power/{{ .Id }}{{ .ViewUrl }}">
+          <a href="/power/{{ .Id }}{{ $.ViewUrl }}">
             <img src="/proxy/{{ .Edition }}/{{ .Number }}" height=300 />
           </a>
           <div>{{ .Name }}</div>
