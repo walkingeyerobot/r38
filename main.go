@@ -270,6 +270,15 @@ func NonAuthIsViewing(r *http.Request, userId int64) (bool, error) {
 	return userId != 1, nil
 }
 
+func GetViewParam(r *http.Request, userId int64) string {
+	param := ""
+	viewing, err := IsViewing(r, userId)
+	if err == nil && viewing {
+		param = fmt.Sprintf("?as=%d", userId)
+	}
+	return param
+}
+
 func ServeMtgo(w http.ResponseWriter, r *http.Request, userId int64) {
 	re := regexp.MustCompile(`/mtgo/(\d+)`)
 	parseResult := re.FindStringSubmatch(r.URL.Path)
@@ -767,22 +776,18 @@ func ServeDraft(w http.ResponseWriter, r *http.Request, userId int64) {
 		}
 		revealed = append(revealed, msg)
 	}
-
+	viewParam := GetViewParam(r, userId)
 	// Auto-pick the last card in the pack.
 	if len(myPack) == 1 {
 		cardId := myPack[0].Id
-		http.Redirect(w, r, fmt.Sprintf("/pick/%d", cardId), http.StatusTemporaryRedirect)
+		http.Redirect(w, r, fmt.Sprintf("/pick/%d%s", cardId, viewParam), http.StatusTemporaryRedirect)
 		return
 	}
 
 	t := template.Must(template.ParseFiles("draft.tmpl"))
 
-	data := DraftPageData{Picks: myPicks, Pack: myPack, DraftId: draftId, DraftName: draftName, Powers: powers2, Position: position, Revealed: revealed}
+	data := DraftPageData{Picks: myPicks, Pack: myPack, DraftId: draftId, DraftName: draftName, Powers: powers2, Position: position, Revealed: revealed, ViewUrl: viewParam}
 
-	viewing, err := IsViewing(r, userId)
-	if err == nil && viewing {
-		data.ViewUrl = fmt.Sprintf("?as=%d", userId)
-	}
 	t.Execute(w, data)
 }
 
@@ -855,8 +860,8 @@ func ServePick(w http.ResponseWriter, r *http.Request, userId int64) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	http.Redirect(w, r, fmt.Sprintf("/draft/%d", draftId), http.StatusTemporaryRedirect)
+	viewParam := GetViewParam(r, userId)
+	http.Redirect(w, r, fmt.Sprintf("/draft/%d%s", draftId, viewParam), http.StatusTemporaryRedirect)
 }
 
 var googleOauthConfig = &oauth2.Config{
