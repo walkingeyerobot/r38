@@ -20,7 +20,7 @@ const (
 	discordURLAPI     = "https://discordapp.com/api/users/@me"
 )
 
-//GoogleUserInfo contains user account info from Google.
+// GoogleUserInfo contains user account info from Google.
 type GoogleUserInfo struct {
 	ID      string `json:"id"`
 	Email   string `json:"email"`
