@@ -2,19 +2,11 @@ package main
 
 import (
 	"bytes"
-	"context"
-	"crypto/rand"
 	"database/sql"
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/gorilla/sessions"
-	"github.com/jung-kurt/gofpdf"
-	_ "github.com/mattn/go-sqlite3"
-	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/google"
 	"html/template"
 	"io"
 	"io/ioutil"
@@ -24,14 +16,11 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"time"
-)
 
-type GoogleUserInfo struct {
-	Id      string `json:"id"`
-	Email   string `json:"email"`
-	Picture string `json:"picture"`
-}
+	"github.com/gorilla/sessions"
+	"github.com/jung-kurt/gofpdf"
+	_ "github.com/mattn/go-sqlite3"
+)
 
 type Draft struct {
 	Name       string
@@ -118,7 +107,6 @@ var IsViewing viewingFunc
 
 func main() {
 	useAuthPtr := flag.Bool("auth", true, "bool")
-
 	flag.Parse()
 
 	useAuth = *useAuthPtr
@@ -163,6 +151,9 @@ func NewHandler(useAuth bool) http.Handler {
 
 	mux.HandleFunc("/auth/google/login", oauthGoogleLogin)
 	mux.HandleFunc("/auth/google/callback", oauthGoogleCallback)
+
+	mux.HandleFunc("/auth/discord/login", oauthDiscordLogin)
+	mux.HandleFunc("/auth/discord/callback", oauthDiscordCallback)
 
 	fs := http.FileServer(http.Dir("static"))
 	mux.Handle("/static/", http.StripPrefix("/static/", fs))
@@ -857,91 +848,6 @@ func ServePick(w http.ResponseWriter, r *http.Request, userId int64) {
 	}
 	viewParam := GetViewParam(r, userId)
 	http.Redirect(w, r, fmt.Sprintf("/draft/%d%s", draftId, viewParam), http.StatusTemporaryRedirect)
-}
-
-var googleOauthConfig = &oauth2.Config{
-	RedirectURL:  os.Getenv("GOOGLE_REDIRECT_URL"),
-	ClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
-	ClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
-	Scopes:       []string{"https://www.googleapis.com/auth/userinfo.email"},
-	Endpoint:     google.Endpoint,
-}
-
-const oauthGoogleUrlAPI = "https://www.googleapis.com/oauth2/v2/userinfo?access_token="
-
-func oauthGoogleLogin(w http.ResponseWriter, r *http.Request) {
-	oauthState := generateStateOauthCookie(w)
-	u := googleOauthConfig.AuthCodeURL(oauthState)
-	http.Redirect(w, r, u, http.StatusTemporaryRedirect)
-}
-
-func oauthGoogleCallback(w http.ResponseWriter, r *http.Request) {
-	oauthState, _ := r.Cookie("oauthstate")
-
-	if r.FormValue("state") != oauthState.Value {
-		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
-		return
-	}
-
-	data, err := getUserDataFromGoogle(r.FormValue("code"))
-	if err != nil {
-		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
-		return
-	}
-
-	session, err := store.Get(r, "session-name")
-	var p GoogleUserInfo
-	err = json.Unmarshal(data, &p)
-	if err != nil {
-		fmt.Fprintf(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	statement, _ := database.Prepare(`INSERT INTO users (google_id, email, picture, slack, discord) VALUES (?, ?, ?, "", "")`)
-	statement.Exec(p.Id, p.Email, p.Picture)
-	row := database.QueryRow(`SELECT id FROM users WHERE google_id = ?`, p.Id)
-	var rowid string
-	err = row.Scan(&rowid)
-	if err != nil {
-		fmt.Fprintf(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	session.Values["userid"] = rowid
-	err = session.Save(r, w)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
-}
-
-func generateStateOauthCookie(w http.ResponseWriter) string {
-	var expiration = time.Now().Add(365 * 24 * time.Hour)
-
-	b := make([]byte, 16)
-	rand.Read(b)
-	state := base64.URLEncoding.EncodeToString(b)
-	cookie := http.Cookie{Name: "oauthstate", Value: state, Expires: expiration}
-	http.SetCookie(w, &cookie)
-
-	return state
-}
-
-func getUserDataFromGoogle(code string) ([]byte, error) {
-	token, err := googleOauthConfig.Exchange(context.Background(), code)
-	if err != nil {
-		return nil, fmt.Errorf("code exchange wrong: %s", err.Error())
-	}
-	response, err := http.Get(oauthGoogleUrlAPI + token.AccessToken)
-	if err != nil {
-		return nil, fmt.Errorf("failed getting user info: %s", err.Error())
-	}
-	defer response.Body.Close()
-	contents, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed read response: %s", err.Error())
-	}
-	return contents, nil
 }
 
 func getPackPicksAndPowers(draftId int64, userId int64) ([]Card, []Card, []Card, error) {
