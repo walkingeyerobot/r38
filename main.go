@@ -149,9 +149,6 @@ func NewHandler(useAuth bool) http.Handler {
 		middleware = NonAuthMiddleware
 	}
 
-	mux.HandleFunc("/auth/google/login", oauthGoogleLogin)
-	mux.HandleFunc("/auth/google/callback", oauthGoogleCallback)
-
 	mux.HandleFunc("/auth/discord/login", oauthDiscordLogin)
 	mux.HandleFunc("/auth/discord/callback", oauthDiscordCallback)
 
@@ -939,7 +936,7 @@ func doPick(userId int64, cardId int64, pass bool) (int64, int64, []string, int6
 		return draftId, -1, announcements, round, err
 	}
 
-	query = `select packs.id, seats.id from packs join seats join users where seats.user=? and seats.id=packs.seat and packs.round=0 and seats.draft=? and users.id=seats.user`
+	query = `select packs.id, seats.id from packs join seats where seats.user=? and seats.id=packs.seat and packs.round=0 and seats.draft=?`
 
 	row = database.QueryRow(query, userId, draftId)
 	var pickId int64
@@ -1086,56 +1083,32 @@ func doPick(userId int64, cardId int64, pass bool) (int64, int64, []string, int6
 func NotifyByDraftAndPosition(draftId int64, position int64) error {
 	log.Printf("Attempting to notify %d %d", draftId, position)
 
-	query := `select users.slack,users.webhook,users.id,users.email from users join seats where users.id=seats.user and seats.draft=? and seats.position=?`
+	query := `select users.discord_id from users join seats where users.id=seats.user and seats.draft=? and seats.position=?`
 
 	row := database.QueryRow(query, draftId, position)
-	slack := ""
-	webhook := ""
-	email := ""
-	var userId int64
-	err := row.Scan(&slack, &webhook, &userId, &email)
-	if err == sql.ErrNoRows {
-		return nil
-	} else if err != nil {
+	var discordId string
+	err := row.Scan(&discordId)
+	if err != nil {
 		return err
 	}
 
-	if slack != "" {
-		var jsonStr = []byte(fmt.Sprintf(`{"text": "%s you have new picks <http://draft.thefoley.net/draft/%d>"}`, slack, draftId))
-		req, err := http.NewRequest("POST", webhook, bytes.NewBuffer(jsonStr))
-		if err != nil {
-			return err
-		}
-		req.Header.Set("Content-Type", "application/json") // might have to append "; charset=UTF-8"
-
-		client := &http.Client{}
-		resp, err := client.Do(req)
-		if err != nil {
-			return err
-		}
-		defer resp.Body.Close()
-
-		if resp.StatusCode >= 400 {
-			return fmt.Errorf("Error sending msg. Status: %v", resp.Status)
-		}
+	var jsonStr = []byte(fmt.Sprintf(`{"text": "<@%s> you have new picks <http://draft.thefoley.net/draft/%d>"}`, discordId, draftId))
+	req, err := http.NewRequest("POST", os.Getenv("DISCORD_WEBHOOK_URL"), bytes.NewBuffer(jsonStr))
+	if err != nil {
+		return err
 	}
+	req.Header.Set("Content-Type", "application/json")
 
-	/*
-		if userId == 18 {
-			from := fmt.Sprintf("%s@gmail.com", os.Getenv("GMAIL_EMAIL"))
-			pass := os.Getenv("GMAIL_PASSWORD")
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 
-			msg := fmt.Sprintf("From: %s\nTo: %s\nSubject: You have new draft picks!\n\nYou have new draft picks at http://draft.thefoley.net/draft/%d", from, to, draftId)
-
-			err := smtp.SendMail("smtp.gmail.com:587",
-				smtp.PlainAuth("", from, pass, "smtp.gmail.com"),
-				from, []string{to}, []byte(msg))
-
-			if err != nil {
-				return err
-			}
-		}
-	*/
+	if resp.StatusCode >= 400 {
+		return fmt.Errorf("Error sending msg. Status: %v", resp.Status)
+	}
 
 	return nil
 }
@@ -1143,7 +1116,7 @@ func NotifyByDraftAndPosition(draftId int64, position int64) error {
 func GetJsonObject(draftId int64) (DraftJson, error) {
 	var draft DraftJson
 
-	query := `select drafts.name, seats.position, packs.original_seat, packs.round, cards.name, cards.edition, cards.number, cards.tags, users.email, cards.cmc, cards.type, cards.color from drafts join seats join packs join cards join users where drafts.id=seats.draft and seats.id=packs.original_seat and packs.id=cards.original_pack and drafts.id=? and seats.user=users.id`
+	query := `select drafts.name, seats.position, packs.original_seat, packs.round, cards.name, cards.edition, cards.number, cards.tags, users.discord_name, cards.cmc, cards.type, cards.color from drafts join seats join packs join cards join users where drafts.id=seats.draft and seats.id=packs.original_seat and packs.id=cards.original_pack and drafts.id=? and seats.user=users.id`
 
 	rows, err := database.Query(query, draftId)
 	if err != nil {
@@ -1159,18 +1132,16 @@ func GetJsonObject(draftId int64) (DraftJson, error) {
 		}
 	}
 
-	re := regexp.MustCompile(`@.+`)
-
 	for rows.Next() {
 		var nullablePosition sql.NullInt64
 		var packSeat int64
 		var nullableRound sql.NullInt64
 		var card Card
-		var email string
+		var discordId string
 		var nullableCmc sql.NullInt64
 		var nullableType sql.NullString
 		var nullableColor sql.NullString
-		err = rows.Scan(&draft.Name, &nullablePosition, &packSeat, &nullableRound, &card.Name, &card.Edition, &card.Number, &card.Tags, &email, &nullableCmc, &nullableType, &nullableColor)
+		err = rows.Scan(&draft.Name, &nullablePosition, &packSeat, &nullableRound, &card.Name, &card.Edition, &card.Number, &card.Tags, &discordId, &nullableCmc, &nullableType, &nullableColor)
 		if err != nil {
 			return draft, err
 		}
@@ -1191,7 +1162,7 @@ func GetJsonObject(draftId int64) (DraftJson, error) {
 		packRound := nullableRound.Int64
 
 		draft.Seats[position].Rounds[packRound].Packs[0].Cards = append(draft.Seats[position].Rounds[packRound].Packs[0].Cards, card)
-		draft.Seats[position].Name = re.ReplaceAllString(email, "")
+		draft.Seats[position].Name = discordId
 	}
 
 	query = `select seats.position, events.announcement, cards1.name, cards2.name, events.id, events.modified, events.round from events join seats on events.draft=seats.draft and events.user=seats.user left join cards as cards1 on events.card1=cards1.id left join cards as cards2 on events.card2=cards2.id where events.draft=?`

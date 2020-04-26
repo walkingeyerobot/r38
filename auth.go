@@ -3,50 +3,29 @@ package main
 import (
 	"context"
 	"crypto/rand"
+	"database/sql"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"time"
 
 	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/google"
 )
 
 const (
-	oauthGoogleURLAPI = "https://www.googleapis.com/oauth2/v2/userinfo?access_token="
-	discordURLAPI     = "https://discordapp.com/api/users/@me"
+	discordURLAPI = "https://discordapp.com/api/users/@me"
 )
-
-// GoogleUserInfo contains user account info from Google.
-type GoogleUserInfo struct {
-	ID      string `json:"id"`
-	Email   string `json:"email"`
-	Picture string `json:"picture"`
-}
 
 // DiscordUserInfo contains user account info from Discord.
 type DiscordUserInfo struct {
-	ID       string `json:"id"`
-	Email    string `json:"email"`
-	Picture  string `json:"avatar"`
-	Discord  string `json:"discriminator"`
-	Username string `json:"username"`
-}
-
-// TODO(walkingeyerobot): Tear out google oauth after migration,
-// or make environment variables / callback URIs / generic and consistent?
-// We may also want to rename google_id to oauth_id in sql schema; right now
-// I'm overloading that field with discord_id but don't know if it matters.
-
-var googleOauthConfig = &oauth2.Config{
-	RedirectURL:  os.Getenv("GOOGLE_REDIRECT_URL"),
-	ClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
-	ClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
-	Scopes:       []string{"https://www.googleapis.com/auth/userinfo.email"},
-	Endpoint:     google.Endpoint,
+	ID      string `json:"id"`
+	Email   string `json:"email"`
+	Picture string `json:"avatar"`
+	Name    string `json:"username"`
 }
 
 var discordOauthConfig = &oauth2.Config{
@@ -77,53 +56,8 @@ func oauthLogin(w http.ResponseWriter, r *http.Request, config *oauth2.Config) {
 	http.Redirect(w, r, u, http.StatusTemporaryRedirect)
 }
 
-func oauthGoogleLogin(w http.ResponseWriter, r *http.Request) {
-	oauthLogin(w, r, googleOauthConfig)
-}
-
 func oauthDiscordLogin(w http.ResponseWriter, r *http.Request) {
 	oauthLogin(w, r, discordOauthConfig)
-}
-
-// TODO(jpgleg): See about deduping/refactoring the below, if we're keeping both.
-func oauthGoogleCallback(w http.ResponseWriter, r *http.Request) {
-	oauthState, _ := r.Cookie("oauthstate")
-
-	if r.FormValue("state") != oauthState.Value {
-		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
-		return
-	}
-
-	data, err := getUserDataFromGoogle(r.FormValue("code"))
-	if err != nil {
-		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
-		return
-	}
-
-	session, err := store.Get(r, "session-name")
-	var p GoogleUserInfo
-	err = json.Unmarshal(data, &p)
-	if err != nil {
-		fmt.Fprintf(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	statement, _ := database.Prepare(`INSERT INTO users (google_id, email, picture, slack, discord) VALUES (?, ?, ?, "", "")`)
-	statement.Exec(p.ID, p.Email, p.Picture)
-	row := database.QueryRow(`SELECT id FROM users WHERE google_id = ?`, p.ID)
-	var rowid string
-	err = row.Scan(&rowid)
-	if err != nil {
-		fmt.Fprintf(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	session.Values["userid"] = rowid
-	err = session.Save(r, w)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 }
 
 func oauthDiscordCallback(w http.ResponseWriter, r *http.Request) {
@@ -148,11 +82,35 @@ func oauthDiscordCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	p.Picture = fmt.Sprintf("https://cdn.discordapp.com/avatars/%v/%s.png", p.ID, p.Picture)
-	p.Discord = fmt.Sprintf("%s#%s", p.Username, p.Discord)
 
-	statement, _ := database.Prepare(`INSERT INTO users (google_id, email, picture, slack, discord) VALUES (?, ?, ?, "", ?)`)
-	statement.Exec(p.ID, p.Email, p.Picture, p.Discord)
-	row := database.QueryRow(`SELECT id FROM users WHERE google_id = ?`, p.ID)
+	statement, _ := database.Prepare(`INSERT INTO users (discord_id, discord_name, picture) VALUES (?, ?, ?)`)
+	statement.Exec(p.ID, p.Name, p.Picture)
+
+	// BEGIN MIGRATION BLOCK
+	// delete this block when migration to discord oauth is deemed complete
+
+	row := database.QueryRow(`SELECT id FROM users_old WHERE slack="<@" || ? || ">"`, p.ID)
+	var oldUserId int64
+	err = row.Scan(&oldUserId)
+	if err == sql.ErrNoRows {
+		// everything is fine, new user
+	} else if err != nil {
+		// something bad happened
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	} else {
+		log.Printf("found old user")
+		// we found the old user
+		_, err = database.Exec(`delete from users where id=?; UPDATE users set id=? where discord_id=?`, oldUserId, oldUserId, p.ID)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
+
+	// END MIGRATION BLOCK
+
+	row = database.QueryRow(`SELECT id FROM users WHERE discord_id = ?`, p.ID)
 	var rowid string
 	err = row.Scan(&rowid)
 	if err != nil {
@@ -167,23 +125,6 @@ func oauthDiscordCallback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
-}
-
-func getUserDataFromGoogle(code string) ([]byte, error) {
-	token, err := googleOauthConfig.Exchange(context.Background(), code)
-	if err != nil {
-		return nil, fmt.Errorf("code exchange wrong: %s", err.Error())
-	}
-	response, err := http.Get(oauthGoogleURLAPI + token.AccessToken)
-	if err != nil {
-		return nil, fmt.Errorf("failed getting user info: %s", err.Error())
-	}
-	defer response.Body.Close()
-	contents, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed read response: %s", err.Error())
-	}
-	return contents, nil
 }
 
 func getUserDataFromDiscord(code string) ([]byte, error) {
