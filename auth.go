@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"time"
@@ -23,7 +22,6 @@ const (
 // DiscordUserInfo contains user account info from Discord.
 type DiscordUserInfo struct {
 	ID      string `json:"id"`
-	Email   string `json:"email"`
 	Picture string `json:"avatar"`
 	Name    string `json:"username"`
 }
@@ -32,7 +30,7 @@ var discordOauthConfig = &oauth2.Config{
 	RedirectURL:  os.Getenv("DISCORD_REDIRECT_URL"),
 	ClientID:     os.Getenv("DISCORD_CLIENT_ID"),
 	ClientSecret: os.Getenv("DISCORD_CLIENT_SECRET"),
-	Scopes:       []string{"email", "identify"},
+	Scopes:       []string{"identify"},
 	Endpoint: oauth2.Endpoint{
 		AuthURL:  "https://discordapp.com/api/oauth2/authorize",
 		TokenURL: "https://discordapp.com/api/oauth2/token",
@@ -99,9 +97,8 @@ func oauthDiscordCallback(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	} else {
-		log.Printf("found old user")
 		// we found the old user
-		_, err = database.Exec(`delete from users where id=?; UPDATE users set id=? where discord_id=?`, oldUserId, oldUserId, p.ID)
+		_, err = database.Exec(`delete from users where id=? and discord_id is null; UPDATE users set id=? where discord_id=?`, oldUserId, oldUserId, p.ID)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
