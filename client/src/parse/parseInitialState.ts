@@ -1,5 +1,5 @@
-import { DraftState, DraftCard, DraftSeat, CardPack, CardContainer, PlayerPicks } from '../draft/DraftState';
-import { SourceData, SourceCard } from './SourceData';
+import {CardContainer, CardPack, DraftCard, DraftSeat, DraftState, PlayerPicks} from '../draft/DraftState';
+import {SourceCard, SourceData} from './SourceData';
 
 // TODO: Make this something more than just a static global
 let nextCardId = 0;
@@ -75,6 +75,7 @@ function parsePack(srcPack: SourceCard[]) {
         name: srcPick.name,
         set: srcPick.edition,
         collector_number: srcPick.number,
+        cmc: srcPick.cmc,
         tags: srcPick.tags.split(", "),
       },
       sourcePackIndex: i,

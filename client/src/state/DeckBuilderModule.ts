@@ -1,5 +1,7 @@
-import { DraftCard } from '../draft/DraftState';
-import { VuexModule } from './vuex/VuexModule';
+import {DraftCard} from '../draft/DraftState';
+import {VuexModule} from './vuex/VuexModule';
+
+const NUM_COLUMNS = 7;
 
 /**
  * Vuex module for storing state related to the deck builder.
@@ -19,13 +21,17 @@ export const DeckBuilderModule = VuexModule({
     ) {
       state.decks = [];
       for (let initializer of init) {
+        const sideboard: CardColumn[] = (<DraftCard[][]>Array(NUM_COLUMNS)).fill([]).map(() => []);
+        for (const card of initializer.pool) {
+          sideboard[Math.min(card.definition.cmc, sideboard.length - 1)].push(card);
+        }
         state.decks.push({
           player: {
             seatPosition: initializer.player.seatPosition,
             name: initializer.player.name,
           },
-          sideboard: [initializer.pool, [], [], [], [], [], []],
-          maindeck: [[], [], [], [], [], [], []],
+          sideboard,
+          maindeck: (<DraftCard[][]>Array(NUM_COLUMNS)).fill([]).map(() => []),
         });
       }
     },
