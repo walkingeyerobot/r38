@@ -112,6 +112,9 @@ function parseUrl(route: Route) {
           id: value,
         }
         break;
+      case '':
+        // No params, ignore this stub
+        break;
       default:
         console.warn('Unrecognized URL param:', param);
         break;
