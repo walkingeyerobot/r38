@@ -1152,7 +1152,7 @@ func GetJsonObject(draftId int64) (DraftJson, error) {
 			card.Cmc = -1
 		}
 		card.Type = nullableType.String
-		card.Type = nullableColor.String
+		card.Color = nullableColor.String
 
 		if !nullablePosition.Valid || !nullableRound.Valid {
 			draft.ExtraPack = append(draft.ExtraPack, card)
@@ -1192,6 +1192,7 @@ func GetJsonObject(draftId int64) (DraftJson, error) {
 		}
 		draft.Events = append(draft.Events, event)
 	}
+
 	return draft, nil
 }
 
