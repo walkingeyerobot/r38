@@ -1035,30 +1035,6 @@ func doPick(userId int64, cardId int64, pass bool) (int64, int64, []string, int6
 	}
 
 	switch cardName {
-	case "Lore Seeker":
-		query = `select packs.id from packs join seats where packs.seat=seats.id and seats.draft=? and seats.position is null`
-		row = database.QueryRow(query, draftId)
-		var extraPackId int64
-		err = row.Scan(&extraPackId)
-		if err != nil {
-			return draftId, oldPackId, announcements, round, err
-		}
-
-		query = `update packs set seat = ?, round = ?, modified = ? where id = ?`
-		log.Printf("%s\t%d,%d,%d,%d", query, seatId, round, modified+5, extraPackId)
-		_, err = database.Exec(query, seatId, round, modified+5, extraPackId)
-		if err != nil {
-			return draftId, oldPackId, announcements, round, err
-		}
-
-		query = `INSERT INTO revealed (draft, message) VALUES (?, "Seat " || ? || " revealed Lore Seeker.")`
-		log.Printf("%s\t%d,%d", query, draftId, position)
-		_, err = database.Exec(query, draftId, position)
-		if err != nil {
-			return draftId, oldPackId, announcements, round, err
-		}
-
-		announcements = append(announcements, fmt.Sprintf("Seat %d revealed Lore Seeker", position))
 	case "Cogwork Librarian":
 		query = `update cards set faceup=true where id=?`
 		log.Printf("%s\t%d", query, cardId)
