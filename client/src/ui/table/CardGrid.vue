@@ -190,7 +190,9 @@ function findPick(
       }
     }
   } else {
-    for (let i = currentIndex; i >= 0; i--) {
+    // We could be at currentIndex = length if at the end of the draft
+    const startingPos = Math.min(currentIndex, events.length - 1);
+    for (let i = startingPos; i >= 0; i--) {
       const event = events[i];
       if (containsPick(event, cardId)) {
         return {
