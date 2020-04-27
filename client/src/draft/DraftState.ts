@@ -48,6 +48,7 @@ export interface MtgCard {
   name: string;
   set: string;
   collector_number: string;
+  cmc: number,
 
   // custom stuff
   tags: string[];

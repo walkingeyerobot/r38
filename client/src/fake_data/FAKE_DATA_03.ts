@@ -1,4 +1,4 @@
-import { SourceData } from '../parse/SourceData';
+import {SourceData} from '../parse/SourceData';
 
 export const FAKE_DATA_03: SourceData = {
   "seats":[
@@ -22,91 +22,106 @@ export const FAKE_DATA_03: SourceData = {
                   "name":"Thragtusk",
                   "tags":"",
                   "number":"185",
-                  "edition":"c19"
+                  "edition":"c19",
+                  "cmc": 5,
                 },
                 {
                   "name":"Ophiomancer",
                   "tags":"",
                   "number":"84",
-                  "edition":"c13"
+                  "edition":"c13",
+                  "cmc": 3,
                 },
                 {
                   "name":"Damnation",
                   "tags":"",
                   "number":"63",
-                  "edition":"mm3"
+                  "edition":"mm3",
+                  "cmc": 4,
                 },
                 {
                   "name":"Umezawa's Jitte",
                   "tags":"",
                   "number":"14",
-                  "edition":"v16"
+                  "edition":"v16",
+                  "cmc": 2,
                 },
                 {
                   "name":"Gifts Ungiven",
                   "tags":"",
                   "number":"5",
-                  "edition":"ss1"
+                  "edition":"ss1",
+                  "cmc": 4,
                 },
                 {
                   "name":"Dack Fayden",
                   "tags":"",
                   "number":"RA6",
-                  "edition":"med"
+                  "edition":"med",
+                  "cmc": 3,
                 },
                 {
                   "name":"Primeval Titan",
                   "tags":"",
                   "number":"183",
-                  "edition":"ima"
+                  "edition":"ima",
+                  "cmc": 6,
                 },
                 {
                   "name":"Faith's Fetters",
                   "tags":"",
                   "number":"105",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 4,
                 },
                 {
                   "name":"Seething Song",
                   "tags":"",
                   "number":"70",
-                  "edition":"ddg"
+                  "edition":"ddg",
+                  "cmc": 2,
                 },
                 {
                   "name":"Lingering Souls",
                   "tags":"",
                   "number":"162",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 3,
                 },
                 {
                   "name":"Spectral Procession",
                   "tags":"",
                   "number":"33",
-                  "edition":"mm2"
+                  "edition":"mm2",
+                  "cmc": 3,
                 },
                 {
                   "name":"Mox Diamond",
                   "tags":"",
                   "number":"10",
-                  "edition":"v10"
+                  "edition":"v10",
+                  "cmc": 0,
                 },
                 {
                   "name":"Knight of Autumn",
                   "tags":"",
                   "number":"183",
-                  "edition":"grn"
+                  "edition":"grn",
+                  "cmc": 3,
                 },
                 {
                   "name":"Emrakul, the Promised End",
                   "tags":"",
                   "number":"6",
-                  "edition":"emn"
+                  "edition":"emn",
+                  "cmc": 13,
                 },
                 {
                   "name":"Burning of Xinye",
                   "tags":"",
                   "number":"2",
-                  "edition":"v14"
+                  "edition":"v14",
+                  "cmc": 6,
                 }
               ]
             }
@@ -121,91 +136,106 @@ export const FAKE_DATA_03: SourceData = {
                   "name":"Oath of Druids",
                   "tags":"",
                   "number":"159",
-                  "edition":"c16"
+                  "edition":"c16",
+                  "cmc": 2,
                 },
                 {
                   "name":"Goblin Rabblemaster",
                   "tags":"",
                   "number":"46",
-                  "edition":"ddt"
+                  "edition":"ddt",
+                  "cmc": 3,
                 },
                 {
                   "name":"Monastery Swiftspear",
                   "tags":"",
                   "number":"1017",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 1,
                 },
                 {
                   "name":"Black Lotus",
                   "tags":"",
                   "number":"233",
-                  "edition":"cei"
+                  "edition":"cei",
+                  "cmc": 0,
                 },
                 {
                   "name":"Crucible of Worlds",
                   "tags":"",
                   "number":"229",
-                  "edition":"m19"
+                  "edition":"m19",
+                  "cmc": 3,
                 },
                 {
                   "name":"Sweltering Suns",
                   "tags":"",
                   "number":"149",
-                  "edition":"akh"
+                  "edition":"akh",
+                  "cmc": 3,
                 },
                 {
                   "name":"Nicol Bolas, Dragon-God",
                   "tags":"",
                   "number":"WS6",
-                  "edition":"med"
+                  "edition":"med",
+                  "cmc": 5,
                 },
                 {
                   "name":"Phyrexian Revoker",
                   "tags":"",
                   "number":"225",
-                  "edition":"m15"
+                  "edition":"m15",
+                  "cmc": 2,
                 },
                 {
                   "name":"Garruk, Primal Hunter",
                   "tags":"",
                   "number":"167",
-                  "edition":"c19"
+                  "edition":"c19",
+                  "cmc": 5,
                 },
                 {
                   "name":"Garruk Wildspeaker",
                   "tags":"",
                   "number":"1",
-                  "edition":"gvl"
+                  "edition":"gvl",
+                  "cmc": 4,
                 },
                 {
                   "name":"Dimir Signet",
                   "tags":"",
                   "number":"22",
-                  "edition":"gk1"
+                  "edition":"gk1",
+                  "cmc": 2,
                 },
                 {
                   "name":"Eternal Witness",
                   "tags":"",
                   "number":"1200",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 3,
                 },
                 {
                   "name":"Shardless Agent",
                   "tags":"",
                   "number":"1484",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 3,
                 },
                 {
                   "name":"Brainstorm",
                   "tags":"",
                   "number":"301",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 1,
                 },
                 {
                   "name":"Mizzium Mortars",
                   "tags":"",
                   "number":"32",
-                  "edition":"gk1"
+                  "edition":"gk1",
+                  "cmc": 2,
                 }
               ]
             }
@@ -220,91 +250,106 @@ export const FAKE_DATA_03: SourceData = {
                   "name":"Day of Judgment",
                   "tags":"",
                   "number":"2",
-                  "edition":"e02"
+                  "edition":"e02",
+                  "cmc": 4,
                 },
                 {
                   "name":"Biogenic Ooze",
                   "tags":"",
                   "number":"122",
-                  "edition":"rna"
+                  "edition":"rna",
+                  "cmc": 5,
                 },
                 {
                   "name":"Teferi, Hero of Dominaria",
                   "tags":"",
                   "number":"GR6",
-                  "edition":"med"
+                  "edition":"med",
+                  "cmc": 5,
                 },
                 {
                   "name":"Sakura-Tribe Elder",
                   "tags":"",
                   "number":"1322",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 2,
                 },
                 {
                   "name":"Tendrils of Agony",
                   "tags":"",
                   "number":"75",
-                  "edition":"scg"
+                  "edition":"scg",
+                  "cmc": 4,
                 },
                 {
                   "name":"Control Magic",
                   "tags":"",
                   "number":"34",
-                  "edition":"cma"
+                  "edition":"cma",
+                  "cmc": 4,
                 },
                 {
                   "name":"Raging Ravine",
                   "tags":"",
                   "number":"249",
-                  "edition":"uma"
+                  "edition":"uma",
+                  "cmc": 0,
                 },
                 {
                   "name":"Eidolon of the Great Revel",
                   "tags":"",
                   "number":"128",
-                  "edition":"a25"
+                  "edition":"a25",
+                  "cmc": 2,
                 },
                 {
                   "name":"Pernicious Deed",
                   "tags":"",
                   "number":"212",
-                  "edition":"a25"
+                  "edition":"a25",
+                  "cmc": 3,
                 },
                 {
                   "name":"Avalanche Riders",
                   "tags":"",
                   "number":"844",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 4,
                 },
                 {
                   "name":"Arcane Artisan",
                   "tags":"",
                   "number":"33",
-                  "edition":"bbd"
+                  "edition":"bbd",
+                  "cmc": 3,
                 },
                 {
                   "name":"Questing Beast",
                   "tags":"",
                   "number":"171",
-                  "edition":"eld"
+                  "edition":"eld",
+                  "cmc": 4,
                 },
                 {
                   "name":"Darkslick Shores",
                   "tags":"",
                   "number":"226",
-                  "edition":"som"
+                  "edition":"som",
+                  "cmc": 0,
                 },
                 {
                   "name":"Gideon, Ally of Zendikar",
                   "tags":"",
                   "number":"29",
-                  "edition":"bfz"
+                  "edition":"bfz",
+                  "cmc": 4,
                 },
                 {
                   "name":"Wasteland",
                   "tags":"",
                   "number":"248",
-                  "edition":"ema"
+                  "edition":"ema",
+                  "cmc": 0,
                 }
               ]
             }
@@ -334,91 +379,106 @@ export const FAKE_DATA_03: SourceData = {
                   "name":"Spear of Heliod",
                   "tags":"",
                   "number":"33",
-                  "edition":"ths"
+                  "edition":"ths",
+                  "cmc": 3,
                 },
                 {
                   "name":"Restoration Angel",
                   "tags":"",
                   "number":"28",
-                  "edition":"ima"
+                  "edition":"ima",
+                  "cmc": 4,
                 },
                 {
                   "name":"Hellrider",
                   "tags":"",
                   "number":"98",
-                  "edition":"mm3"
+                  "edition":"mm3",
+                  "cmc": 4,
                 },
                 {
                   "name":"Flooded Strand",
                   "tags":"",
                   "number":"233",
-                  "edition":"ktk"
+                  "edition":"ktk",
+                  "cmc": 0,
                 },
                 {
                   "name":"Baleful Strix",
                   "tags":"",
                   "number":"1395",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 2,
                 },
                 {
                   "name":"Creeping Tar Pit",
                   "tags":"",
                   "number":"239",
-                  "edition":"uma"
+                  "edition":"uma",
+                  "cmc": 0,
                 },
                 {
                   "name":"Finale of Devastation",
                   "tags":"",
                   "number":"160",
-                  "edition":"war"
+                  "edition":"war",
+                  "cmc": 2,
                 },
                 {
                   "name":"Ancestral Recall",
                   "tags":"",
                   "number":"48",
-                  "edition":"cei"
+                  "edition":"cei",
+                  "cmc": 1,
                 },
                 {
                   "name":"Grave Titan",
                   "tags":"",
                   "number":"676",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 6,
                 },
                 {
                   "name":"Imperial Recruiter",
                   "tags":"",
                   "number":"136",
-                  "edition":"a25"
+                  "edition":"a25",
+                  "cmc": 3,
                 },
                 {
                   "name":"Batterskull",
                   "tags":"",
                   "number":"130",
-                  "edition":"nph"
+                  "edition":"nph",
+                  "cmc": 5,
                 },
                 {
                   "name":"Snapcaster Mage",
                   "tags":"",
                   "number":"71",
-                  "edition":"uma"
+                  "edition":"uma",
+                  "cmc": 2,
                 },
                 {
                   "name":"Lotus Cobra",
                   "tags":"",
                   "number":"174",
-                  "edition":"ima"
+                  "edition":"ima",
+                  "cmc": 2,
                 },
                 {
                   "name":"Sword of Feast and Famine",
                   "tags":"",
                   "number":"10",
-                  "edition":"md1"
+                  "edition":"md1",
+                  "cmc": 3,
                 },
                 {
                   "name":"Giver of Runes",
                   "tags":"",
                   "number":"13",
-                  "edition":"mh1"
+                  "edition":"mh1",
+                  "cmc": 1,
                 }
               ]
             }
@@ -433,91 +493,106 @@ export const FAKE_DATA_03: SourceData = {
                   "name":"Banefire",
                   "tags":"",
                   "number":"130",
-                  "edition":"m19"
+                  "edition":"m19",
+                  "cmc": 1,
                 },
                 {
                   "name":"Banishing Light",
                   "tags":"",
                   "number":"4",
-                  "edition":"thb"
+                  "edition":"thb",
+                  "cmc": 3,
                 },
                 {
                   "name":"Elspeth, Sun's Champion",
                   "tags":"",
                   "number":"1",
-                  "edition":"ddo"
+                  "edition":"ddo",
+                  "cmc": 6,
                 },
                 {
                   "name":"Corpse Dance",
                   "tags":"",
                   "number":"116",
-                  "edition":"tmp"
+                  "edition":"tmp",
+                  "cmc": 2,
                 },
                 {
                   "name":"Liliana, Death's Majesty",
                   "tags":"",
                   "number":"701",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 5,
                 },
                 {
                   "name":"Rakdos Signet",
                   "tags":"",
                   "number":"76",
-                  "edition":"gk2"
+                  "edition":"gk2",
+                  "cmc": 2,
                 },
                 {
                   "name":"High Tide",
                   "tags":"",
                   "number":"18c",
-                  "edition":"fem"
+                  "edition":"fem",
+                  "cmc": 1,
                 },
                 {
                   "name":"Impulse",
                   "tags":"",
                   "number":"404",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 2,
                 },
                 {
                   "name":"Inferno Titan",
                   "tags":"",
                   "number":"109",
-                  "edition":"cm2"
+                  "edition":"cm2",
+                  "cmc": 6,
                 },
                 {
                   "name":"Toxic Deluge",
                   "tags":"",
                   "number":"108",
-                  "edition":"ema"
+                  "edition":"ema",
+                  "cmc": 3,
                 },
                 {
                   "name":"Animate Dead",
                   "tags":"",
                   "number":"566",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 2,
                 },
                 {
                   "name":"Heartbeat of Spring",
                   "tags":"",
                   "number":"212",
-                  "edition":"chk"
+                  "edition":"chk",
+                  "cmc": 3,
                 },
                 {
                   "name":"Mishra's Factory",
                   "tags":"",
                   "number":"1680",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 0,
                 },
                 {
                   "name":"Brimaz, King of Oreskos",
                   "tags":"",
                   "number":"5",
-                  "edition":"bng"
+                  "edition":"bng",
+                  "cmc": 3,
                 },
                 {
                   "name":"Hero's Downfall",
                   "tags":"",
                   "number":"2",
-                  "edition":"cp2"
+                  "edition":"cp2",
+                  "cmc": 3,
                 }
               ]
             }
@@ -532,91 +607,106 @@ export const FAKE_DATA_03: SourceData = {
                   "name":"Master of the Wild Hunt",
                   "tags":"",
                   "number":"181",
-                  "edition":"a25"
+                  "edition":"a25",
+                  "cmc": 4,
                 },
                 {
                   "name":"Vendilion Clique",
                   "tags":"",
                   "number":"76",
-                  "edition":"a25"
+                  "edition":"a25",
+                  "cmc": 3,
                 },
                 {
                   "name":"Fyndhorn Elves",
                   "tags":"",
                   "number":"4",
-                  "edition":"v13"
+                  "edition":"v13",
+                  "cmc": 1,
                 },
                 {
                   "name":"Leonin Relic-Warder",
                   "tags":"",
                   "number":"158",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 2,
                 },
                 {
                   "name":"Tireless Tracker",
                   "tags":"",
                   "number":"1361",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 3,
                 },
                 {
                   "name":"Natural Order",
                   "tags":"",
                   "number":"177",
-                  "edition":"ema"
+                  "edition":"ema",
+                  "cmc": 4,
                 },
                 {
                   "name":"Murderous Rider",
                   "tags":"",
                   "number":"97",
-                  "edition":"eld"
+                  "edition":"eld",
+                  "cmc": 3,
                 },
                 {
                   "name":"The Scarab God",
                   "tags":"",
                   "number":"145",
-                  "edition":"hou"
+                  "edition":"hou",
+                  "cmc": 5,
                 },
                 {
                   "name":"Ashiok, Nightmare Weaver",
                   "tags":"",
                   "number":"188",
-                  "edition":"ths"
+                  "edition":"ths",
+                  "cmc": 3,
                 },
                 {
                   "name":"Daretti, Ingenious Iconoclast",
                   "tags":"",
                   "number":"GR3",
-                  "edition":"med"
+                  "edition":"med",
+                  "cmc": 4,
                 },
                 {
                   "name":"Gush",
                   "tags":"",
                   "number":"397",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 4,
                 },
                 {
                   "name":"Bloodbraid Elf",
                   "tags":"",
                   "number":"1402",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 4,
                 },
                 {
                   "name":"Gonti, Lord of Luxury",
                   "tags":"",
                   "number":"671",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 4,
                 },
                 {
                   "name":"Vampire Nighthawk",
                   "tags":"",
                   "number":"813",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 3,
                 },
                 {
                   "name":"Dismember",
                   "tags":"",
                   "number":"629",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 3,
                 }
               ]
             }
@@ -646,91 +736,106 @@ export const FAKE_DATA_03: SourceData = {
                   "name":"Lion's Eye Diamond",
                   "tags":"",
                   "number":"307",
-                  "edition":"mir"
+                  "edition":"mir",
+                  "cmc": 0,
                 },
                 {
                   "name":"Force of Will",
                   "tags":"",
                   "number":"49",
-                  "edition":"ema"
+                  "edition":"ema",
+                  "cmc": 5,
                 },
                 {
                   "name":"Grim Lavamancer",
                   "tags":"",
                   "number":"50",
-                  "edition":"e01"
+                  "edition":"e01",
+                  "cmc": 1,
                 },
                 {
                   "name":"Blooming Marsh",
                   "tags":"",
                   "number":"243",
-                  "edition":"kld"
+                  "edition":"kld",
+                  "cmc": 0,
                 },
                 {
                   "name":"Huntmaster of the Fells",
                   "tags":"",
                   "number":"11",
-                  "edition":"v17"
+                  "edition":"v17",
+                  "cmc": 4,
                 },
                 {
                   "name":"Disenchant",
                   "tags":"",
                   "number":"77",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 2,
                 },
                 {
                   "name":"Demonic Tutor",
                   "tags":"",
                   "number":"620",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 2,
                 },
                 {
                   "name":"Char",
                   "tags":"",
                   "number":"28",
-                  "edition":"gk1"
+                  "edition":"gk1",
+                  "cmc": 3,
                 },
                 {
                   "name":"Oona's Prowler",
                   "tags":"",
                   "number":"133",
-                  "edition":"lrw"
+                  "edition":"lrw",
+                  "cmc": 2,
                 },
                 {
                   "name":"Pia and Kiran Nalaar",
                   "tags":"",
                   "number":"47",
-                  "edition":"ddu"
+                  "edition":"ddu",
+                  "cmc": 4,
                 },
                 {
                   "name":"Mox Ruby",
                   "tags":"",
                   "number":"265",
-                  "edition":"cei"
+                  "edition":"cei",
+                  "cmc": 0,
                 },
                 {
                   "name":"Griselbrand",
                   "tags":"",
                   "number":"72",
-                  "edition":"mm3"
+                  "edition":"mm3",
+                  "cmc": 7,
                 },
                 {
                   "name":"Sylvan Library",
                   "tags":"",
                   "number":"187",
-                  "edition":"ema"
+                  "edition":"ema",
+                  "cmc": 2,
                 },
                 {
                   "name":"Carnage Tyrant",
                   "tags":"",
                   "number":"179",
-                  "edition":"xln"
+                  "edition":"xln",
+                  "cmc": 6,
                 },
                 {
                   "name":"Spell Pierce",
                   "tags":"",
                   "number":"81",
-                  "edition":"xln"
+                  "edition":"xln",
+                  "cmc": 1,
                 }
               ]
             }
@@ -745,91 +850,106 @@ export const FAKE_DATA_03: SourceData = {
                   "name":"Faithless Looting",
                   "tags":"",
                   "number":"919",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 1,
                 },
                 {
                   "name":"Knight of the Reliquary",
                   "tags":"",
                   "number":"203",
-                  "edition":"ima"
+                  "edition":"ima",
+                  "cmc": 3,
                 },
                 {
                   "name":"Mana Crypt",
                   "tags":"",
                   "number":"1603",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 0,
                 },
                 {
                   "name":"Legion's Landing",
                   "tags":"",
                   "number":"22",
-                  "edition":"xln"
+                  "edition":"xln",
+                  "cmc": 1,
                 },
                 {
                   "name":"Unexpectedly Absent",
                   "tags":"",
                   "number":"27",
-                  "edition":"cma"
+                  "edition":"cma",
+                  "cmc": 2,
                 },
                 {
                   "name":"Bomat Courier",
                   "tags":"",
                   "number":"199",
-                  "edition":"kld"
+                  "edition":"kld",
+                  "cmc": 1,
                 },
                 {
                   "name":"Library of Alexandria",
                   "tags":"",
                   "number":"76",
-                  "edition":"arn"
+                  "edition":"arn",
+                  "cmc": 0,
                 },
                 {
                   "name":"Kodama's Reach",
                   "tags":"",
                   "number":"171",
-                  "edition":"uma"
+                  "edition":"uma",
+                  "cmc": 3,
                 },
                 {
                   "name":"Verdant Catacombs",
                   "tags":"",
                   "number":"249",
-                  "edition":"mm3"
+                  "edition":"mm3",
+                  "cmc": 0,
                 },
                 {
                   "name":"Botanical Sanctum",
                   "tags":"",
                   "number":"244",
-                  "edition":"kld"
+                  "edition":"kld",
+                  "cmc": 0,
                 },
                 {
                   "name":"Prismatic Vista",
                   "tags":"",
                   "number":"244",
-                  "edition":"mh1"
+                  "edition":"mh1",
+                  "cmc": 0,
                 },
                 {
                   "name":"Arid Mesa",
                   "tags":"",
                   "number":"229",
-                  "edition":"mm3"
+                  "edition":"mm3",
+                  "cmc": 0,
                 },
                 {
                   "name":"Tasigur, the Golden Fang",
                   "tags":"",
                   "number":"117",
-                  "edition":"uma"
+                  "edition":"uma",
+                  "cmc": 6,
                 },
                 {
                   "name":"Kuldotha Forgemaster",
                   "tags":"",
                   "number":"169",
-                  "edition":"som"
+                  "edition":"som",
+                  "cmc": 5,
                 },
                 {
                   "name":"Steam Vents",
                   "tags":"",
                   "number":"257",
-                  "edition":"grn"
+                  "edition":"grn",
+                  "cmc": 0,
                 }
               ]
             }
@@ -844,91 +964,106 @@ export const FAKE_DATA_03: SourceData = {
                   "name":"Mystical Tutor",
                   "tags":"",
                   "number":"6",
-                  "edition":"ss1"
+                  "edition":"ss1",
+                  "cmc": 1,
                 },
                 {
                   "name":"Tezzeret the Seeker",
                   "tags":"",
                   "number":"WS4",
-                  "edition":"med"
+                  "edition":"med",
+                  "cmc": 5,
                 },
                 {
                   "name":"Wheel of Fortune",
                   "tags":"",
                   "number":"185",
-                  "edition":"3ed"
+                  "edition":"3ed",
+                  "cmc": 3,
                 },
                 {
                   "name":"Shambling Vent",
                   "tags":"",
                   "number":"244",
-                  "edition":"bfz"
+                  "edition":"bfz",
+                  "cmc": 0,
                 },
                 {
                   "name":"Sword of Light and Shadow",
                   "tags":"",
                   "number":"217",
-                  "edition":"mma"
+                  "edition":"mma",
+                  "cmc": 3,
                 },
                 {
                   "name":"Anguished Unmaking",
                   "tags":"",
                   "number":"242",
-                  "edition":"soi"
+                  "edition":"soi",
+                  "cmc": 3,
                 },
                 {
                   "name":"Scrubland",
                   "tags":"",
                   "number":"286",
-                  "edition":"3ed"
+                  "edition":"3ed",
+                  "cmc": 0,
                 },
                 {
                   "name":"Mind Twist",
                   "tags":"",
                   "number":"147",
-                  "edition":"4ed"
+                  "edition":"4ed",
+                  "cmc": 1,
                 },
                 {
                   "name":"Mox Pearl",
                   "tags":"",
                   "number":"264",
-                  "edition":"cei"
+                  "edition":"cei",
+                  "cmc": 0,
                 },
                 {
                   "name":"Vivien, Champion of the Wilds",
                   "tags":"",
                   "number":"180",
-                  "edition":"war"
+                  "edition":"war",
+                  "cmc": 3,
                 },
                 {
                   "name":"Shrine of Burning Rage",
                   "tags":"",
                   "number":"153",
-                  "edition":"nph"
+                  "edition":"nph",
+                  "cmc": 2,
                 },
                 {
                   "name":"Collective Brutality",
                   "tags":"",
                   "number":"600",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 2,
                 },
                 {
                   "name":"Wrenn and Six",
                   "tags":"",
                   "number":"217",
-                  "edition":"mh1"
+                  "edition":"mh1",
+                  "cmc": 2,
                 },
                 {
                   "name":"Koth of the Hammer",
                   "tags":"",
                   "number":"44",
-                  "edition":"ddi"
+                  "edition":"ddi",
+                  "cmc": 4,
                 },
                 {
                   "name":"Palinchron",
                   "tags":"",
                   "number":"38",
-                  "edition":"ulg"
+                  "edition":"ulg",
+                  "cmc": 7,
                 }
               ]
             }
@@ -958,91 +1093,106 @@ export const FAKE_DATA_03: SourceData = {
                   "name":"Geist of Saint Traft",
                   "tags":"",
                   "number":"1",
-                  "edition":"ddq"
+                  "edition":"ddq",
+                  "cmc": 3,
                 },
                 {
                   "name":"Mox Sapphire",
                   "tags":"",
                   "number":"266",
-                  "edition":"cei"
+                  "edition":"cei",
+                  "cmc": 0,
                 },
                 {
                   "name":"Sylvan Caryatid",
                   "tags":"",
                   "number":"180",
-                  "edition":"ths"
+                  "edition":"ths",
+                  "cmc": 2,
                 },
                 {
                   "name":"Sulfuric Vortex",
                   "tags":"",
                   "number":"150",
-                  "edition":"ema"
+                  "edition":"ema",
+                  "cmc": 2,
                 },
                 {
                   "name":"Nekrataal",
                   "tags":"",
                   "number":"99",
-                  "edition":"ema"
+                  "edition":"ema",
+                  "cmc": 4,
                 },
                 {
                   "name":"Liliana of the Veil",
                   "tags":"",
                   "number":"104",
-                  "edition":"uma"
+                  "edition":"uma",
+                  "cmc": 3,
                 },
                 {
                   "name":"Narset, Parter of Veils",
                   "tags":"",
                   "number":"61",
-                  "edition":"war"
+                  "edition":"war",
+                  "cmc": 3,
                 },
                 {
                   "name":"Sword of War and Peace",
                   "tags":"",
                   "number":"161",
-                  "edition":"nph"
+                  "edition":"nph",
+                  "cmc": 3,
                 },
                 {
                   "name":"Turnabout",
                   "tags":"",
                   "number":"105",
-                  "edition":"usg"
+                  "edition":"usg",
+                  "cmc": 4,
                 },
                 {
                   "name":"Thief of Sanity",
                   "tags":"",
                   "number":"205",
-                  "edition":"grn"
+                  "edition":"grn",
+                  "cmc": 3,
                 },
                 {
                   "name":"Angel of Invention",
                   "tags":"",
                   "number":"4",
-                  "edition":"kld"
+                  "edition":"kld",
+                  "cmc": 5,
                 },
                 {
                   "name":"Yawgmoth's Bargain",
                   "tags":"",
                   "number":"75",
-                  "edition":"uds"
+                  "edition":"uds",
+                  "cmc": 6,
                 },
                 {
                   "name":"Boros Signet",
                   "tags":"",
                   "number":"97",
-                  "edition":"gk1"
+                  "edition":"gk1",
+                  "cmc": 2,
                 },
                 {
                   "name":"Inkwell Leviathan",
                   "tags":"",
                   "number":"91",
-                  "edition":"c18"
+                  "edition":"c18",
+                  "cmc": 9,
                 },
                 {
                   "name":"Bolas's Citadel",
                   "tags":"",
                   "number":"79",
-                  "edition":"war"
+                  "edition":"war",
+                  "cmc": 7,
                 }
               ]
             }
@@ -1057,91 +1207,106 @@ export const FAKE_DATA_03: SourceData = {
                   "name":"Recurring Nightmare",
                   "tags":"",
                   "number":"72",
-                  "edition":"exo"
+                  "edition":"exo",
+                  "cmc": 3,
                 },
                 {
                   "name":"Kolaghan's Command",
                   "tags":"",
                   "number":"1445",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 3,
                 },
                 {
                   "name":"Academy Ruins",
                   "tags":"",
                   "number":"219",
-                  "edition":"mma"
+                  "edition":"mma",
+                  "cmc": 0,
                 },
                 {
                   "name":"Emry, Lurker of the Loch",
                   "tags":"",
                   "number":"43",
-                  "edition":"eld"
+                  "edition":"eld",
+                  "cmc": 3,
                 },
                 {
                   "name":"Past in Flames",
                   "tags":"",
                   "number":"105",
-                  "edition":"mm3"
+                  "edition":"mm3",
+                  "cmc": 4,
                 },
                 {
                   "name":"Blast Zone",
                   "tags":"",
                   "number":"244",
-                  "edition":"war"
+                  "edition":"war",
+                  "cmc": 0,
                 },
                 {
                   "name":"Fiery Confluence",
                   "tags":"",
                   "number":"98",
-                  "edition":"cm2"
+                  "edition":"cm2",
+                  "cmc": 5,
                 },
                 {
                   "name":"Coalition Relic",
                   "tags":"",
                   "number":"223",
-                  "edition":"a25"
+                  "edition":"a25",
+                  "cmc": 3,
                 },
                 {
                   "name":"Rekindling Phoenix",
                   "tags":"",
                   "number":"111",
-                  "edition":"rix"
+                  "edition":"rix",
+                  "cmc": 4,
                 },
                 {
                   "name":"Karn Liberated",
                   "tags":"",
                   "number":"5",
-                  "edition":"uma"
+                  "edition":"uma",
+                  "cmc": 7,
                 },
                 {
                   "name":"Time Warp",
                   "tags":"",
                   "number":"12",
-                  "edition":"e02"
+                  "edition":"e02",
+                  "cmc": 5,
                 },
                 {
                   "name":"Dire Fleet Daredevil",
                   "tags":"",
                   "number":"99",
-                  "edition":"rix"
+                  "edition":"rix",
+                  "cmc": 2,
                 },
                 {
                   "name":"Wall of Omens",
                   "tags":"",
                   "number":"270",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 2,
                 },
                 {
                   "name":"Den Protector",
                   "tags":"",
                   "number":"161",
-                  "edition":"c19"
+                  "edition":"c19",
+                  "cmc": 2,
                 },
                 {
                   "name":"Mox Jet",
                   "tags":"",
                   "number":"263",
-                  "edition":"cei"
+                  "edition":"cei",
+                  "cmc": 0,
                 }
               ]
             }
@@ -1156,91 +1321,106 @@ export const FAKE_DATA_03: SourceData = {
                   "name":"Seasoned Pyromancer",
                   "tags":"",
                   "number":"145",
-                  "edition":"mh1"
+                  "edition":"mh1",
+                  "cmc": 3,
                 },
                 {
                   "name":"Living Death",
                   "tags":"",
                   "number":"702",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 5,
                 },
                 {
                   "name":"Tithe Taker",
                   "tags":"",
                   "number":"27",
-                  "edition":"rna"
+                  "edition":"rna",
+                  "cmc": 2,
                 },
                 {
                   "name":"Inspiring Vantage",
                   "tags":"",
                   "number":"246",
-                  "edition":"kld"
+                  "edition":"kld",
+                  "cmc": 0,
                 },
                 {
                   "name":"Rotting Regisaur",
                   "tags":"",
                   "number":"111",
-                  "edition":"m20"
+                  "edition":"m20",
+                  "cmc": 3,
                 },
                 {
                   "name":"Lightning Bolt",
                   "tags":"",
                   "number":"1001",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 1,
                 },
                 {
                   "name":"Ulamog, the Ceaseless Hunger",
                   "tags":"",
                   "number":"15",
-                  "edition":"bfz"
+                  "edition":"bfz",
+                  "cmc": 10,
                 },
                 {
                   "name":"Parallax Wave",
                   "tags":"",
                   "number":"17",
-                  "edition":"nem"
+                  "edition":"nem",
+                  "cmc": 4,
                 },
                 {
                   "name":"Avenger of Zendikar",
                   "tags":"",
                   "number":"129",
-                  "edition":"c18"
+                  "edition":"c18",
+                  "cmc": 7,
                 },
                 {
                   "name":"Mana Drain",
                   "tags":"",
                   "number":"65",
-                  "edition":"ima"
+                  "edition":"ima",
+                  "cmc": 2,
                 },
                 {
                   "name":"Copperline Gorge",
                   "tags":"",
                   "number":"225",
-                  "edition":"som"
+                  "edition":"som",
+                  "cmc": 0,
                 },
                 {
                   "name":"Vampire Hexmage",
                   "tags":"",
                   "number":"811",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 2,
                 },
                 {
                   "name":"Fastbond",
                   "tags":"",
                   "number":"194",
-                  "edition":"3ed"
+                  "edition":"3ed",
+                  "cmc": 1,
                 },
                 {
                   "name":"Reclamation Sage",
                   "tags":"",
                   "number":"159",
-                  "edition":"c18"
+                  "edition":"c18",
+                  "cmc": 3,
                 },
                 {
                   "name":"Brightling",
                   "tags":"",
                   "number":"25",
-                  "edition":"bbd"
+                  "edition":"bbd",
+                  "cmc": 5,
                 }
               ]
             }
@@ -1270,91 +1450,106 @@ export const FAKE_DATA_03: SourceData = {
                   "name":"Sensei's Divining Top",
                   "tags":"",
                   "number":"232",
-                  "edition":"ema"
+                  "edition":"ema",
+                  "cmc": 1,
                 },
                 {
                   "name":"Yavimaya Elder",
                   "tags":"",
                   "number":"1379",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 3,
                 },
                 {
                   "name":"Jackal Pup",
                   "tags":"",
                   "number":"985",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 1,
                 },
                 {
                   "name":"Wildfire",
                   "tags":"",
                   "number":"134",
-                  "edition":"mm2"
+                  "edition":"mm2",
+                  "cmc": 6,
                 },
                 {
                   "name":"Elves of Deep Shadow",
                   "tags":"",
                   "number":"1193",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 1,
                 },
                 {
                   "name":"Thundermaw Hellkite",
                   "tags":"",
                   "number":"149",
-                  "edition":"ima"
+                  "edition":"ima",
+                  "cmc": 5,
                 },
                 {
                   "name":"Lotus Bloom",
                   "tags":"",
                   "number":"208",
-                  "edition":"mma"
+                  "edition":"mma",
+                  "cmc": 0,
                 },
                 {
                   "name":"Mishra's Workshop",
                   "tags":"",
                   "number":"81",
-                  "edition":"atq"
+                  "edition":"atq",
+                  "cmc": 0,
                 },
                 {
                   "name":"Vivien Reid",
                   "tags":"",
                   "number":"208",
-                  "edition":"m19"
+                  "edition":"m19",
+                  "cmc": 5,
                 },
                 {
                   "name":"Deranged Hermit",
                   "tags":"",
                   "number":"101",
-                  "edition":"ulg"
+                  "edition":"ulg",
+                  "cmc": 5,
                 },
                 {
                   "name":"Exhume",
                   "tags":"",
                   "number":"17",
-                  "edition":"pd3"
+                  "edition":"pd3",
+                  "cmc": 2,
                 },
                 {
                   "name":"Stirring Wildwood",
                   "tags":"",
                   "number":"251",
-                  "edition":"uma"
+                  "edition":"uma",
+                  "cmc": 0,
                 },
                 {
                   "name":"Dragonlord Atarka",
                   "tags":"",
                   "number":"216",
-                  "edition":"dtk"
+                  "edition":"dtk",
+                  "cmc": 7,
                 },
                 {
                   "name":"Pestermite",
                   "tags":"",
                   "number":"59",
-                  "edition":"mma"
+                  "edition":"mma",
+                  "cmc": 3,
                 },
                 {
                   "name":"Wandering Fumarole",
                   "tags":"",
                   "number":"182",
-                  "edition":"ogw"
+                  "edition":"ogw",
+                  "cmc": 0,
                 }
               ]
             }
@@ -1369,91 +1564,106 @@ export const FAKE_DATA_03: SourceData = {
                   "name":"Go for the Throat",
                   "tags":"",
                   "number":"670",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 3,
                 },
                 {
                   "name":"Repeal",
                   "tags":"",
                   "number":"70",
-                  "edition":"ima"
+                  "edition":"ima",
+                  "cmc": 1,
                 },
                 {
                   "name":"Adanto Vanguard",
                   "tags":"",
                   "number":"10",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 2,
                 },
                 {
                   "name":"Mana Flare",
                   "tags":"",
                   "number":"249",
-                  "edition":"5ed"
+                  "edition":"5ed",
+                  "cmc": 3,
                 },
                 {
                   "name":"Time Spiral",
                   "tags":"",
                   "number":"103",
-                  "edition":"usg"
+                  "edition":"usg",
+                  "cmc": 6,
                 },
                 {
                   "name":"Pyroclasm",
                   "tags":"",
                   "number":"146",
-                  "edition":"a25"
+                  "edition":"a25",
+                  "cmc": 3,
                 },
                 {
                   "name":"Riftwing Cloudskate",
                   "tags":"",
                   "number":"469",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 4,
                 },
                 {
                   "name":"Dreadhorde Arcanist",
                   "tags":"",
                   "number":"125",
-                  "edition":"war"
+                  "edition":"war",
+                  "cmc": 2,
                 },
                 {
                   "name":"Urza, Lord High Artificer",
                   "tags":"",
                   "number":"75",
-                  "edition":"mh1"
+                  "edition":"mh1",
+                  "cmc": 4,
                 },
                 {
                   "name":"Plow Under",
                   "tags":"",
                   "number":"272",
-                  "edition":"8ed"
+                  "edition":"8ed",
+                  "cmc": 5,
                 },
                 {
                   "name":"Winds of Abandon",
                   "tags":"",
                   "number":"37",
-                  "edition":"mh1"
+                  "edition":"mh1",
+                  "cmc": 2,
                 },
                 {
                   "name":"Survival of the Fittest",
                   "tags":"",
                   "number":"129",
-                  "edition":"exo"
+                  "edition":"exo",
+                  "cmc": 2,
                 },
                 {
                   "name":"Abbot of Keral Keep",
                   "tags":"",
                   "number":"127",
-                  "edition":"ori"
+                  "edition":"ori",
+                  "cmc": 2,
                 },
                 {
                   "name":"Condemn",
                   "tags":"",
                   "number":"58",
-                  "edition":"c17"
+                  "edition":"c17",
+                  "cmc": 1,
                 },
                 {
                   "name":"Channel",
                   "tags":"",
                   "number":"157",
-                  "edition":"ima"
+                  "edition":"ima",
+                  "cmc": 1,
                 }
               ]
             }
@@ -1468,91 +1678,106 @@ export const FAKE_DATA_03: SourceData = {
                   "name":"Necromancy",
                   "tags":"",
                   "number":"64",
-                  "edition":"vis"
+                  "edition":"vis",
+                  "cmc": 3,
                 },
                 {
                   "name":"Emrakul, the Aeons Torn",
                   "tags":"",
                   "number":"4",
-                  "edition":"uma"
+                  "edition":"uma",
+                  "cmc": 15,
                 },
                 {
                   "name":"Kiki-Jiki, Mirror Breaker",
                   "tags":"",
                   "number":"991",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 5,
                 },
                 {
                   "name":"Consecrated Sphinx",
                   "tags":"",
                   "number":"47",
-                  "edition":"ima"
+                  "edition":"ima",
+                  "cmc": 6,
                 },
                 {
                   "name":"Mana Vault",
                   "tags":"",
                   "number":"229",
-                  "edition":"uma"
+                  "edition":"uma",
+                  "cmc": 1,
                 },
                 {
                   "name":"Tidehollow Sculler",
                   "tags":"",
                   "number":"2",
-                  "edition":"md1"
+                  "edition":"md1",
+                  "cmc": 2,
                 },
                 {
                   "name":"Solemn Simulacrum",
                   "tags":"",
                   "number":"1632",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 4,
                 },
                 {
                   "name":"Wear // Tear",
                   "tags":"",
                   "number":"135",
-                  "edition":"dgm"
+                  "edition":"dgm",
+                  "cmc": 2,
                 },
                 {
                   "name":"Bone Shredder",
                   "tags":"",
                   "number":"5",
-                  "edition":"dde"
+                  "edition":"dde",
+                  "cmc": 3,
                 },
                 {
                   "name":"Embereth Shieldbreaker",
                   "tags":"",
                   "number":"122",
-                  "edition":"eld"
+                  "edition":"eld",
+                  "cmc": 2,
                 },
                 {
                   "name":"Field of Ruin",
                   "tags":"",
                   "number":"242",
-                  "edition":"thb"
+                  "edition":"thb",
+                  "cmc": 0,
                 },
                 {
                   "name":"Overgrown Tomb",
                   "tags":"",
                   "number":"253",
-                  "edition":"grn"
+                  "edition":"grn",
+                  "cmc": 0,
                 },
                 {
                   "name":"Breeding Pool",
                   "tags":"",
                   "number":"246",
-                  "edition":"rna"
+                  "edition":"rna",
+                  "cmc": 0,
                 },
                 {
                   "name":"Spirebluff Canal",
                   "tags":"",
                   "number":"249",
-                  "edition":"kld"
+                  "edition":"kld",
+                  "cmc": 0,
                 },
                 {
                   "name":"Courser of Kruphix",
                   "tags":"",
                   "number":"1169",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 3,
                 }
               ]
             }
@@ -1582,91 +1807,106 @@ export const FAKE_DATA_03: SourceData = {
                   "name":"Chrome Mox",
                   "tags":"",
                   "number":"219",
-                  "edition":"ema"
+                  "edition":"ema",
+                  "cmc": 0,
                 },
                 {
                   "name":"Angel of Serenity",
                   "tags":"",
                   "number":"16",
-                  "edition":"cm2"
+                  "edition":"cm2",
+                  "cmc": 7,
                 },
                 {
                   "name":"Badlands",
                   "tags":"",
                   "number":"282",
-                  "edition":"3ed"
+                  "edition":"3ed",
+                  "cmc": 0,
                 },
                 {
                   "name":"Bonfire of the Damned",
                   "tags":"",
                   "number":"91",
-                  "edition":"mm3"
+                  "edition":"mm3",
+                  "cmc": 2,
                 },
                 {
                   "name":"Incubation Druid",
                   "tags":"",
                   "number":"131",
-                  "edition":"rna"
+                  "edition":"rna",
+                  "cmc": 2,
                 },
                 {
                   "name":"Llanowar Elves",
                   "tags":"",
                   "number":"1262",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 1,
                 },
                 {
                   "name":"Recruiter of the Guard",
                   "tags":"",
                   "number":"206",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 3,
                 },
                 {
                   "name":"Ancient Tomb",
                   "tags":"",
                   "number":"236",
-                  "edition":"uma"
+                  "edition":"uma",
+                  "cmc": 0,
                 },
                 {
                   "name":"Elspeth, Knight-Errant",
                   "tags":"",
                   "number":"GR1",
-                  "edition":"med"
+                  "edition":"med",
+                  "cmc": 4,
                 },
                 {
                   "name":"Nissa, Who Shakes the World",
                   "tags":"",
                   "number":"169",
-                  "edition":"war"
+                  "edition":"war",
+                  "cmc": 5,
                 },
                 {
                   "name":"Mana Tithe",
                   "tags":"",
                   "number":"171",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 1,
                 },
                 {
                   "name":"Grim Monolith",
                   "tags":"",
                   "number":"126",
-                  "edition":"ulg"
+                  "edition":"ulg",
+                  "cmc": 2,
                 },
                 {
                   "name":"Lightning Strike",
                   "tags":"",
                   "number":"152",
-                  "edition":"m19"
+                  "edition":"m19",
+                  "cmc": 2,
                 },
                 {
                   "name":"Imperial Seal",
                   "tags":"",
                   "number":"78",
-                  "edition":"ptk"
+                  "edition":"ptk",
+                  "cmc": 1,
                 },
                 {
                   "name":"Siege-Gang Commander",
                   "tags":"",
                   "number":"42",
-                  "edition":"gnt"
+                  "edition":"gnt",
+                  "cmc": 5,
                 }
               ]
             }
@@ -1681,91 +1921,106 @@ export const FAKE_DATA_03: SourceData = {
                   "name":"Selfless Spirit",
                   "tags":"",
                   "number":"40",
-                  "edition":"emn"
+                  "edition":"emn",
+                  "cmc": 2,
                 },
                 {
                   "name":"Force of Negation",
                   "tags":"",
                   "number":"52",
-                  "edition":"mh1"
+                  "edition":"mh1",
+                  "cmc": 3,
                 },
                 {
                   "name":"Shriekmaw",
                   "tags":"",
                   "number":"771",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 5,
                 },
                 {
                   "name":"Volcanic Island",
                   "tags":"",
                   "number":"291",
-                  "edition":"3ed"
+                  "edition":"3ed",
+                  "cmc": 0,
                 },
                 {
                   "name":"Stonecoil Serpent",
                   "tags":"",
                   "number":"235",
-                  "edition":"eld"
+                  "edition":"eld",
+                  "cmc": 0,
                 },
                 {
                   "name":"Wilderness Reclamation",
                   "tags":"",
                   "number":"149",
-                  "edition":"rna"
+                  "edition":"rna",
+                  "cmc": 4,
                 },
                 {
                   "name":"Council's Judgment",
                   "tags":"",
                   "number":"16",
-                  "edition":"cns"
+                  "edition":"cns",
+                  "cmc": 3,
                 },
                 {
                   "name":"Reveillark",
                   "tags":"",
                   "number":"31",
-                  "edition":"uma"
+                  "edition":"uma",
+                  "cmc": 5,
                 },
                 {
                   "name":"Golos, Tireless Pilgrim",
                   "tags":"",
                   "number":"226",
-                  "edition":"m20"
+                  "edition":"m20",
+                  "cmc": 5,
                 },
                 {
                   "name":"Tolarian Academy",
                   "tags":"",
                   "number":"330",
-                  "edition":"usg"
+                  "edition":"usg",
+                  "cmc": 0,
                 },
                 {
                   "name":"Karn, Scion of Urza",
                   "tags":"",
                   "number":"RA1",
-                  "edition":"med"
+                  "edition":"med",
+                  "cmc": 4,
                 },
                 {
                   "name":"Lodestone Golem",
                   "tags":"",
                   "number":"219",
-                  "edition":"mm2"
+                  "edition":"mm2",
+                  "cmc": 5,
                 },
                 {
                   "name":"Mastermind's Acquisition",
                   "tags":"",
                   "number":"77",
-                  "edition":"rix"
+                  "edition":"rix",
+                  "cmc": 4,
                 },
                 {
                   "name":"Fact or Fiction",
                   "tags":"",
                   "number":"371",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 4,
                 },
                 {
                   "name":"Flametongue Kavu",
                   "tags":"",
                   "number":"932",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 4,
                 }
               ]
             }
@@ -1780,91 +2035,106 @@ export const FAKE_DATA_03: SourceData = {
                   "name":"Wall of Blossoms",
                   "tags":"",
                   "number":"190",
-                  "edition":"mh1"
+                  "edition":"mh1",
+                  "cmc": 2,
                 },
                 {
                   "name":"Terminate",
                   "tags":"",
                   "number":"1495",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 2,
                 },
                 {
                   "name":"Ajani Vengeant",
                   "tags":"",
                   "number":"1",
-                  "edition":"ddh"
+                  "edition":"ddh",
+                  "cmc": 4,
                 },
                 {
                   "name":"Avacyn's Pilgrim",
                   "tags":"",
                   "number":"1127",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 1,
                 },
                 {
                   "name":"Daretti, Scrap Savant",
                   "tags":"",
                   "number":"898",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 4,
                 },
                 {
                   "name":"Ravages of War",
                   "tags":"",
                   "number":"17",
-                  "edition":"ptk"
+                  "edition":"ptk",
+                  "cmc": 6,
                 },
                 {
                   "name":"Golgari Signet",
                   "tags":"",
                   "number":"73",
-                  "edition":"gk1"
+                  "edition":"gk1",
+                  "cmc": 2,
                 },
                 {
                   "name":"Firebolt",
                   "tags":"",
                   "number":"927",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 1,
                 },
                 {
                   "name":"Maelstrom Pulse",
                   "tags":"",
                   "number":"204",
-                  "edition":"uma"
+                  "edition":"uma",
+                  "cmc": 3,
                 },
                 {
                   "name":"Incinerate",
                   "tags":"",
                   "number":"51",
-                  "edition":"jvc"
+                  "edition":"jvc",
+                  "cmc": 1,
                 },
                 {
                   "name":"Zealous Conscripts",
                   "tags":"",
                   "number":"116",
-                  "edition":"mm3"
+                  "edition":"mm3",
+                  "cmc": 5,
                 },
                 {
                   "name":"Oko, Thief of Crowns",
                   "tags":"",
                   "number":"197",
-                  "edition":"eld"
+                  "edition":"eld",
+                  "cmc": 3,
                 },
                 {
                   "name":"Thirst for Knowledge",
                   "tags":"",
                   "number":"106",
-                  "edition":"c18"
+                  "edition":"c18",
+                  "cmc": 3,
                 },
                 {
                   "name":"Jace, the Mind Sculptor",
                   "tags":"",
                   "number":"WS3",
-                  "edition":"med"
+                  "edition":"med",
+                  "cmc": 4,
                 },
                 {
                   "name":"Hissing Quagmire",
                   "tags":"",
                   "number":"171",
-                  "edition":"ogw"
+                  "edition":"ogw",
+                  "cmc": 0,
                 }
               ]
             }
@@ -1894,91 +2164,106 @@ export const FAKE_DATA_03: SourceData = {
                   "name":"Kitchen Finks",
                   "tags":"",
                   "number":"216",
-                  "edition":"uma"
+                  "edition":"uma",
+                  "cmc": 3,
                 },
                 {
                   "name":"Scavenging Ooze",
                   "tags":"",
                   "number":"143",
-                  "edition":"cm2"
+                  "edition":"cm2",
+                  "cmc": 2,
                 },
                 {
                   "name":"Scalding Tarn",
                   "tags":"",
                   "number":"244",
-                  "edition":"mm3"
+                  "edition":"mm3",
+                  "cmc": 0,
                 },
                 {
                   "name":"Gruul Signet",
                   "tags":"",
                   "number":"1589",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 2,
                 },
                 {
                   "name":"Lumbering Falls",
                   "tags":"",
                   "number":"239",
-                  "edition":"bfz"
+                  "edition":"bfz",
+                  "cmc": 0,
                 },
                 {
                   "name":"Buried Alive",
                   "tags":"",
                   "number":"88",
-                  "edition":"uma"
+                  "edition":"uma",
+                  "cmc": 3,
                 },
                 {
                   "name":"Simic Signet",
                   "tags":"",
                   "number":"130",
-                  "edition":"gk2"
+                  "edition":"gk2",
+                  "cmc": 2,
                 },
                 {
                   "name":"Glorybringer",
                   "tags":"",
                   "number":"134",
-                  "edition":"akh"
+                  "edition":"akh",
+                  "cmc": 5,
                 },
                 {
                   "name":"Blightsteel Colossus",
                   "tags":"",
                   "number":"99",
-                  "edition":"mbs"
+                  "edition":"mbs",
+                  "cmc": 11,
                 },
                 {
                   "name":"Oracle of Mul Daya",
                   "tags":"",
                   "number":"172",
-                  "edition":"zen"
+                  "edition":"zen",
+                  "cmc": 4,
                 },
                 {
                   "name":"Arbor Elf",
                   "tags":"",
                   "number":"1124",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 1,
                 },
                 {
                   "name":"Hangarback Walker",
                   "tags":"",
                   "number":"229",
-                  "edition":"ori"
+                  "edition":"ori",
+                  "cmc": 0,
                 },
                 {
                   "name":"Gideon Blackblade",
                   "tags":"",
                   "number":"WS2",
-                  "edition":"med"
+                  "edition":"med",
+                  "cmc": 3,
                 },
                 {
                   "name":"Walking Ballista",
                   "tags":"",
                   "number":"181",
-                  "edition":"aer"
+                  "edition":"aer",
+                  "cmc": 0,
                 },
                 {
                   "name":"Tundra",
                   "tags":"",
                   "number":"289",
-                  "edition":"3ed"
+                  "edition":"3ed",
+                  "cmc": 0,
                 }
               ]
             }
@@ -1993,91 +2278,106 @@ export const FAKE_DATA_03: SourceData = {
                   "name":"Watery Grave",
                   "tags":"",
                   "number":"259",
-                  "edition":"grn"
+                  "edition":"grn",
+                  "cmc": 0,
                 },
                 {
                   "name":"Lyra Dawnbringer",
                   "tags":"",
                   "number":"26",
-                  "edition":"dom"
+                  "edition":"dom",
+                  "cmc": 5,
                 },
                 {
                   "name":"Sneak Attack",
                   "tags":"",
                   "number":"148",
-                  "edition":"ema"
+                  "edition":"ema",
+                  "cmc": 4,
                 },
                 {
                   "name":"Sower of Temptation",
                   "tags":"",
                   "number":"131",
-                  "edition":"bbd"
+                  "edition":"bbd",
+                  "cmc": 4,
                 },
                 {
                   "name":"Strip Mine",
                   "tags":"",
                   "number":"13",
-                  "edition":"v09"
+                  "edition":"v09",
+                  "cmc": 0,
                 },
                 {
                   "name":"Celestial Colonnade",
                   "tags":"",
                   "number":"238",
-                  "edition":"uma"
+                  "edition":"uma",
+                  "cmc": 0,
                 },
                 {
                   "name":"Night's Whisper",
                   "tags":"",
                   "number":"723",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 3,
                 },
                 {
                   "name":"Ancient Grudge",
                   "tags":"",
                   "number":"838",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 1,
                 },
                 {
                   "name":"Birds of Paradise",
                   "tags":"",
                   "number":"1138",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 1,
                 },
                 {
                   "name":"Hero of Bladehold",
                   "tags":"",
                   "number":"8",
-                  "edition":"mbs"
+                  "edition":"mbs",
+                  "cmc": 3,
                 },
                 {
                   "name":"Mindslaver",
                   "tags":"",
                   "number":"176",
-                  "edition":"som"
+                  "edition":"som",
+                  "cmc": 7,
                 },
                 {
                   "name":"Smuggler's Copter",
                   "tags":"",
                   "number":"235",
-                  "edition":"kld"
+                  "edition":"kld",
+                  "cmc": 2,
                 },
                 {
                   "name":"Hydroid Krasis",
                   "tags":"",
                   "number":"183",
-                  "edition":"rna"
+                  "edition":"rna",
+                  "cmc": 2,
                 },
                 {
                   "name":"Archangel Avacyn",
                   "tags":"",
                   "number":"1",
-                  "edition":"v17"
+                  "edition":"v17",
+                  "cmc": 5,
                 },
                 {
                   "name":"Mother of Runes",
                   "tags":"",
                   "number":"183",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 1,
                 }
               ]
             }
@@ -2092,91 +2392,106 @@ export const FAKE_DATA_03: SourceData = {
                   "name":"Lightning Greaves",
                   "tags":"",
                   "number":"1600",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 2,
                 },
                 {
                   "name":"Woodfall Primus",
                   "tags":"",
                   "number":"195",
-                  "edition":"uma"
+                  "edition":"uma",
+                  "cmc": 8,
                 },
                 {
                   "name":"Fatal Push",
                   "tags":"",
                   "number":"655",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 1,
                 },
                 {
                   "name":"Sword of Body and Mind",
                   "tags":"",
                   "number":"208",
-                  "edition":"som"
+                  "edition":"som",
+                  "cmc": 3,
                 },
                 {
                   "name":"Putrid Imp",
                   "tags":"",
                   "number":"1",
-                  "edition":"pd3"
+                  "edition":"pd3",
+                  "cmc": 2,
                 },
                 {
                   "name":"Magus of the Moon",
                   "tags":"",
                   "number":"138",
-                  "edition":"ima"
+                  "edition":"ima",
+                  "cmc": 3,
                 },
                 {
                   "name":"Cabal Ritual",
                   "tags":"",
                   "number":"2",
-                  "edition":"v16"
+                  "edition":"v16",
+                  "cmc": 2,
                 },
                 {
                   "name":"Torrential Gearhulk",
                   "tags":"",
                   "number":"67",
-                  "edition":"kld"
+                  "edition":"kld",
+                  "cmc": 6,
                 },
                 {
                   "name":"Selesnya Signet",
                   "tags":"",
                   "number":"123",
-                  "edition":"gk1"
+                  "edition":"gk1",
+                  "cmc": 2,
                 },
                 {
                   "name":"Skullclamp",
                   "tags":"",
                   "number":"1630",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 1,
                 },
                 {
                   "name":"Lightning Helix",
                   "tags":"",
                   "number":"1448",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 2,
                 },
                 {
                   "name":"Chain Lightning",
                   "tags":"",
                   "number":"171",
-                  "edition":"bbd"
+                  "edition":"bbd",
+                  "cmc": 1,
                 },
                 {
                   "name":"Blood Crypt",
                   "tags":"",
                   "number":"245",
-                  "edition":"rna"
+                  "edition":"rna",
+                  "cmc": 0,
                 },
                 {
                   "name":"Beast Within",
                   "tags":"",
                   "number":"1134",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 3,
                 },
                 {
                   "name":"Through the Breach",
                   "tags":"",
                   "number":"152",
-                  "edition":"uma"
+                  "edition":"uma",
+                  "cmc": 5,
                 }
               ]
             }
@@ -2206,91 +2521,106 @@ export const FAKE_DATA_03: SourceData = {
                   "name":"Inquisition of Kozilek",
                   "tags":"",
                   "number":"694",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 1,
                 },
                 {
                   "name":"Thoughtseize",
                   "tags":"",
                   "number":"110",
-                  "edition":"ima"
+                  "edition":"ima",
+                  "cmc": 1,
                 },
                 {
                   "name":"Bloodstained Mire",
                   "tags":"",
                   "number":"230",
-                  "edition":"ktk"
+                  "edition":"ktk",
+                  "cmc": 0,
                 },
                 {
                   "name":"Ravenous Chupacabra",
                   "tags":"",
                   "number":"745",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 4,
                 },
                 {
                   "name":"Eureka",
                   "tags":"",
                   "number":"185",
-                  "edition":"leg"
+                  "edition":"leg",
+                  "cmc": 4,
                 },
                 {
                   "name":"Kaya, Orzhov Usurper",
                   "tags":"",
                   "number":"RA8",
-                  "edition":"med"
+                  "edition":"med",
+                  "cmc": 3,
                 },
                 {
                   "name":"Flickerwisp",
                   "tags":"",
                   "number":"9",
-                  "edition":"e01"
+                  "edition":"e01",
+                  "cmc": 4,
                 },
                 {
                   "name":"Upheaval",
                   "tags":"",
                   "number":"13",
-                  "edition":"v14"
+                  "edition":"v14",
+                  "cmc": 6,
                 },
                 {
                   "name":"Opposition",
                   "tags":"",
                   "number":"92",
-                  "edition":"7ed"
+                  "edition":"7ed",
+                  "cmc": 4,
                 },
                 {
                   "name":"Nykthos, Shrine to Nyx",
                   "tags":"",
                   "number":"223",
-                  "edition":"ths"
+                  "edition":"ths",
+                  "cmc": 0,
                 },
                 {
                   "name":"Green Sun's Zenith",
                   "tags":"",
                   "number":"169",
-                  "edition":"ema"
+                  "edition":"ema",
+                  "cmc": 1,
                 },
                 {
                   "name":"Plateau",
                   "tags":"",
                   "number":"284",
-                  "edition":"3ed"
+                  "edition":"3ed",
+                  "cmc": 0,
                 },
                 {
                   "name":"Light Up the Stage",
                   "tags":"",
                   "number":"107",
-                  "edition":"rna"
+                  "edition":"rna",
+                  "cmc": 3,
                 },
                 {
                   "name":"Taiga",
                   "tags":"",
                   "number":"287",
-                  "edition":"3ed"
+                  "edition":"3ed",
+                  "cmc": 0,
                 },
                 {
                   "name":"Ramunap Excavator",
                   "tags":"",
                   "number":"129",
-                  "edition":"hou"
+                  "edition":"hou",
+                  "cmc": 3,
                 }
               ]
             }
@@ -2305,91 +2635,106 @@ export const FAKE_DATA_03: SourceData = {
                   "name":"Misty Rainforest",
                   "tags":"",
                   "number":"240",
-                  "edition":"mm3"
+                  "edition":"mm3",
+                  "cmc": 0,
                 },
                 {
                   "name":"Basalt Monolith",
                   "tags":"",
                   "number":"173",
-                  "edition":"cm2"
+                  "edition":"cm2",
+                  "cmc": 3,
                 },
                 {
                   "name":"Phyrexian Metamorph",
                   "tags":"",
                   "number":"456",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 3,
                 },
                 {
                   "name":"Frost Titan",
                   "tags":"",
                   "number":"112",
-                  "edition":"c14"
+                  "edition":"c14",
+                  "cmc": 6,
                 },
                 {
                   "name":"Oblivion Stone",
                   "tags":"",
                   "number":"205",
-                  "edition":"cm2"
+                  "edition":"cm2",
+                  "cmc": 3,
                 },
                 {
                   "name":"Expansion // Explosion",
                   "tags":"",
                   "number":"224",
-                  "edition":"grn"
+                  "edition":"grn",
+                  "cmc": 2,
                 },
                 {
                   "name":"Teferi, Time Raveler",
                   "tags":"",
                   "number":"221",
-                  "edition":"war"
+                  "edition":"war",
+                  "cmc": 3,
                 },
                 {
                   "name":"Path to Exile",
                   "tags":"",
                   "number":"196",
-                  "edition":"mb1"
+                  "edition":"mb1",
+                  "cmc": 1,
                 },
                 {
                   "name":"Mesmeric Fiend",
                   "tags":"",
                   "number":"97",
-                  "edition":"a25"
+                  "edition":"a25",
+                  "cmc": 2,
                 },
                 {
                   "name":"Memory Jar",
                   "tags":"",
                   "number":"8",
-                  "edition":"v10"
+                  "edition":"v10",
+                  "cmc": 5,
                 },
                 {
                   "name":"Brain Freeze",
                   "tags":"",
                   "number":"29",
-                  "edition":"scg"
+                  "edition":"scg",
+                  "cmc": 2,
                 },
                 {
                   "name":"Edric, Spymaster of Trest",
                   "tags":"",
                   "number":"195",
-                  "edition":"c16"
+                  "edition":"c16",
+                  "cmc": 3,
                 },
                 {
                   "name":"Tangle Wire",
                   "tags":"",
                   "number":"8",
-                  "edition":"v13"
+                  "edition":"v13",
+                  "cmc": 3,
                 },
                 {
                   "name":"Orzhov Signet",
                   "tags":"",
                   "number":"48",
-                  "edition":"gk2"
+                  "edition":"gk2",
+                  "cmc": 2,
                 },
                 {
                   "name":"Ugin, the Spirit Dragon",
                   "tags":"",
                   "number":"WS1",
-                  "edition":"med"
+                  "edition":"med",
+                  "cmc": 8,
                 }
               ]
             }
@@ -2404,91 +2749,106 @@ export const FAKE_DATA_03: SourceData = {
                   "name":"Ulamog, the Infinite Gyre",
                   "tags":"",
                   "number":"7",
-                  "edition":"uma"
+                  "edition":"uma",
+                  "cmc": 11,
                 },
                 {
                   "name":"Ashen Rider",
                   "tags":"",
                   "number":"187",
-                  "edition":"ths"
+                  "edition":"ths",
+                  "cmc": 8,
                 },
                 {
                   "name":"Coercive Portal",
                   "tags":"",
                   "number":"56",
-                  "edition":"cns"
+                  "edition":"cns",
+                  "cmc": 4,
                 },
                 {
                   "name":"Vindicate",
                   "tags":"",
                   "number":"219",
-                  "edition":"a25"
+                  "edition":"a25",
+                  "cmc": 3,
                 },
                 {
                   "name":"Seachrome Coast",
                   "tags":"",
                   "number":"229",
-                  "edition":"som"
+                  "edition":"som",
+                  "cmc": 0,
                 },
                 {
                   "name":"Thalia, Guardian of Thraben",
                   "tags":"",
                   "number":"36",
-                  "edition":"a25"
+                  "edition":"a25",
+                  "cmc": 2,
                 },
                 {
                   "name":"Time Walk",
                   "tags":"",
                   "number":"84",
-                  "edition":"cei"
+                  "edition":"cei",
+                  "cmc": 2,
                 },
                 {
                   "name":"Marsh Flats",
                   "tags":"",
                   "number":"239",
-                  "edition":"mm3"
+                  "edition":"mm3",
+                  "cmc": 0,
                 },
                 {
                   "name":"Ultimate Price",
                   "tags":"",
                   "number":"36",
-                  "edition":"gk2"
+                  "edition":"gk2",
+                  "cmc": 2,
                 },
                 {
                   "name":"Treachery",
                   "tags":"",
                   "number":"50",
-                  "edition":"uds"
+                  "edition":"uds",
+                  "cmc": 5,
                 },
                 {
                   "name":"Silverblade Paladin",
                   "tags":"",
                   "number":"88",
-                  "edition":"c14"
+                  "edition":"c14",
+                  "cmc": 3,
                 },
                 {
                   "name":"Zurgo Bellstriker",
                   "tags":"",
                   "number":"169",
-                  "edition":"dtk"
+                  "edition":"dtk",
+                  "cmc": 2,
                 },
                 {
                   "name":"Ponder",
                   "tags":"",
                   "number":"96",
-                  "edition":"c18"
+                  "edition":"c18",
+                  "cmc": 1,
                 },
                 {
                   "name":"Deceiver Exarch",
                   "tags":"",
                   "number":"36",
-                  "edition":"cma"
+                  "edition":"cma",
+                  "cmc": 3,
                 },
                 {
                   "name":"Underground Sea",
                   "tags":"",
                   "number":"290",
-                  "edition":"3ed"
+                  "edition":"3ed",
+                  "cmc": 0,
                 }
               ]
             }
