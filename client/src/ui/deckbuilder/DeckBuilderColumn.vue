@@ -1,6 +1,7 @@
 <template>
   <div
       class="_column"
+      :class="{columnDrop: dropTargetIndex !== null}"
       @dragover="dragOver"
       @dragleave="dragEnd"
       @dragend="dragEnd"
@@ -11,6 +12,10 @@
         :key="card.id"
         @dragstart="dragStart($event, index)"
         class="card"
+        :class="{
+            cardDropAbove: dropTargetIndex !== null && index === 0 && dropTargetIndex === 0,
+            cardDropBelow: dropTargetIndex !== null && index === dropTargetIndex - 1,
+        }"
         >
       <img
           class="card-img"
@@ -43,6 +48,10 @@ export default Vue.extend({
       type: Boolean
     }
   },
+
+  data: () => ({
+    dropTargetIndex: null as (number | null),
+  }),
 
   methods: {
     getImageSrc(card: MtgCard): string {
@@ -86,23 +95,13 @@ export default Vue.extend({
       e.preventDefault();
       if (e.dataTransfer) {
         e.dataTransfer.dropEffect = "move";
-        this.$el.classList.add("columnDrop");
-        if (this.$el.childElementCount > 0) {
-          let targetIndex = this.getTargetIndex(e);
-          for (let i = 0; i < this.$el.childElementCount; i++) {
-            const child = this.$el.children[i];
-            child.classList.toggle("cardDropAbove",
-                i === 0 && targetIndex === 0);
-            child.classList.toggle("cardDropBelow",
-                i === targetIndex - 1);
-          }
-        }
+        this.dropTargetIndex = this.getTargetIndex(e);
       }
     },
 
     dragEnd(e: DragEvent) {
       e.preventDefault();
-      this.clearClasses();
+      this.dropTargetIndex = null;
     },
 
     drop(e: DragEvent) {
@@ -117,15 +116,7 @@ export default Vue.extend({
               targetCardIndex: this.getTargetIndex(e),
             });
       }
-      this.clearClasses();
-    },
-
-    clearClasses() {
-      this.$el.classList.remove("columnDrop");
-      for (const child of this.$el.children) {
-        child.classList.remove("cardDropAbove");
-        child.classList.remove("cardDropBelow");
-      }
+      this.dropTargetIndex = null;
     },
   },
 });
