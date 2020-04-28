@@ -16,11 +16,11 @@
 </template>
 
 <script lang="ts">
-  import Vue from 'vue';
-  import DeckBuilderSection from "./DeckBuilderSection.vue";
-  import { CardColumn, Deck, DeckBuilderState } from '../../state/DeckBuilderModule.js';
+import Vue from 'vue';
+import DeckBuilderSection from "./DeckBuilderSection.vue";
+import { CardColumn, Deck, DeckBuilderState } from '../../state/DeckBuilderModule.js';
 
-  export default Vue.extend({
+export default Vue.extend({
   components: {
     DeckBuilderSection,
   },
