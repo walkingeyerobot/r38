@@ -1,13 +1,13 @@
 <template>
   <div class="_deck-builder-main">
     <DeckBuilderSection
-        class="maindeck"
+        class="sideboard"
         :columns="sideboard"
         :deckIndex="state.selectedSeat"
         :maindeck="false"
         />
     <DeckBuilderSection
-        class="sideboard"
+        class="maindeck"
         :columns="maindeck"
         :deckIndex="state.selectedSeat"
         :maindeck="true"
@@ -17,10 +17,8 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import { SelectedView } from "../../state/selection.js";
-import { DraftSeat } from "../../draft/DraftState.js";
 import DeckBuilderSection from "./DeckBuilderSection.vue";
-import { DeckBuilderState, CardColumn, Deck } from '../../state/DeckBuilderModule.js';
+import { CardColumn, Deck, DeckBuilderState } from '../../state/DeckBuilderModule.js';
 
 export default Vue.extend({
   components: {
