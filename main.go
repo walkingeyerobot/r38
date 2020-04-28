@@ -969,17 +969,15 @@ func doPick(userId int64, cardId int64, pass bool) (int64, int64, []string, int6
 
 	var cardModified int64
 	cardModified = 0
-	if draftId > 9 {
-		query = `select max(cards.modified) from cards join packs on cards.pack=packs.id join seats on seats.id=packs.seat where seats.draft=? and seats.user=?`
-		row = database.QueryRow(query, draftId, userId)
+	query = `select max(cards.modified) from cards join packs on cards.pack=packs.id join seats on seats.id=packs.seat where seats.draft=? and seats.user=?`
+	row = database.QueryRow(query, draftId, userId)
 
-		err = row.Scan(&cardModified)
+	err = row.Scan(&cardModified)
 
-		if err != nil {
-			cardModified = 0
-		} else {
-			cardModified += 1
-		}
+	if err != nil {
+		cardModified = 0
+	} else {
+		cardModified += 1
 	}
 
 	if pass {
@@ -991,37 +989,27 @@ func doPick(userId int64, cardId int64, pass bool) (int64, int64, []string, int6
 			return draftId, oldPackId, announcements, round, err
 		}
 
-		query = `select count(1) from v_packs join seats where v_packs.seat=seats.id and v_packs.round=? and v_packs.count>0 and seats.draft=?`
-		row = database.QueryRow(query, round, draftId)
-		var packsLeftInRound int64
-		err = row.Scan(&packsLeftInRound)
+		query = `select count(1) from v_packs join seats where v_packs.seat=seats.id and seats.user=? and v_packs.round=? and v_packs.count>0 and seats.draft=?`
+		row = database.QueryRow(query, userId, round, draftId)
+		var packsLeftInSeat int64
+		err = row.Scan(&packsLeftInSeat)
 		if err != nil {
 			return draftId, oldPackId, announcements, round, err
 		}
 
-		if packsLeftInRound == 0 {
-			query = `update seats set round=round+1 where draft=?`
-			log.Printf("%s\t%d", query, draftId)
-
-			_, err = database.Exec(query, draftId)
+		if packsLeftInSeat == 0 {
+			err = NotifyByDraftAndPosition(draftId, newPosition)
 			if err != nil {
-				return draftId, oldPackId, announcements, round, err
-			}
-		} else {
-			query = `select count(1) from v_packs join seats where v_packs.seat=seats.id and seats.user=? and v_packs.round=? and v_packs.count>0 and seats.draft=?`
-			row = database.QueryRow(query, userId, round, draftId)
-			var packsLeftInSeat int64
-			err = row.Scan(&packsLeftInSeat)
-			if err != nil {
-				return draftId, oldPackId, announcements, round, err
+				log.Printf("error with notify")
 			}
 
-			if packsLeftInSeat == 0 {
-				err = NotifyByDraftAndPosition(draftId, newPosition)
-				if err != nil {
-					log.Printf("error with notify")
-					// return draftId, oldPackId, announcements, round, err
-				}
+			// WARNING: if you ever have a draft with anything other than 8 players, 15 cards per pack, and 3 rounds, this will break horribly.
+			query = `update seats set round=round+1 where user=? and draft=? and (select count(1) in (15, 30, 45) from packs join cards on cards.pack=packs.id join seats on seats.id=packs.seat where seats.draft=? and packs.round=0 and seats.user=?)`
+			log.Printf("%s\t%d,%d,%d,%d", query, userId, draftId, draftId, userId)
+			_, err = database.Exec(query, userId, draftId, draftId, userId)
+			if err != nil {
+				log.Printf("error with possibly updating round")
+				// return draftId, oldPackId, announcements, round, err
 			}
 		}
 	} else {
