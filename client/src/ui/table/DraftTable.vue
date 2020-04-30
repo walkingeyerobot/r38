@@ -33,7 +33,6 @@ export default Vue.extend({
 
   display: flex;
   flex-direction: column;
-  padding-top: 10px;
 
   border-right: 1px solid #EAEAEA;
 }

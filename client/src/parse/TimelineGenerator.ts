@@ -13,6 +13,7 @@ export class TimelineGenerator {
   private _eventIndex = 0;
   private _nextTimelineId = 0;
   private _playerTrackers = [] as PlayerTracker[];
+  private _isComplete = false;
 
   generate(state: DraftState, events: SourceEvent[]) {
     this.initialize(cloneDraftState(state), events);
@@ -25,7 +26,7 @@ export class TimelineGenerator {
   }
 
   isComplete() {
-    return this._state.isComplete;
+    return this._isComplete;
   }
 
   private initialize(state: DraftState, events: SourceEvent[]) {
@@ -35,6 +36,7 @@ export class TimelineGenerator {
     this._eventIndex = 0;
     this._nextTimelineId = 0;
     this._playerTrackers = [];
+    this._isComplete = false;
 
     // Fill out our player trackers
     for (const seat of this._state.seats) {
@@ -51,7 +53,7 @@ export class TimelineGenerator {
 
   next(): boolean {
     if (this._eventIndex >= this._srcEvents.length) {
-      this._state.isComplete = this.isDraftComplete();
+      this._isComplete = this.isDraftComplete();
       return false;
     }
     const srcEvent = this._srcEvents[this._eventIndex];
