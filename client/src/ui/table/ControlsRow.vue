@@ -1,6 +1,8 @@
 <template>
   <div class="_controls-row">
-    <div class="start"></div>
+    <div class="start">
+      <div class="draft-name">{{ state.draftName }}</div>
+    </div>
     <div class="center">
       <button @click="onStartClick" class="playback-btn">« Start</button>
       <button @click="onPrevClick" class="playback-btn">‹ Prev</button>
@@ -18,6 +20,12 @@
           >
         Synchronize timeline
       </label>
+      <button class="location-btn">
+        <div class="location-p1">{{ firstLocationLabel }}</div>
+        <div v-if="secondLocationLabel" class="location-p2">
+          {{ secondLocationLabel }}
+        </div>
+      </button>
     </div>
   </div>
 </template>
@@ -25,6 +33,10 @@
 <script lang="ts">
 import Vue from 'vue'
 import { navTo } from '../../router/url_manipulation';
+import { CoreState } from '../../state/store';
+import { getNextPickEventForSelectedPlayer } from '../../state/util/getNextPickEventForSelectedPlayer';
+import { TimelineEvent } from '../../draft/TimelineEvent';
+
 export default Vue.extend({
   computed: {
     synchronizeTimeline: {
@@ -36,7 +48,34 @@ export default Vue.extend({
         this.$tstore.commit('setTimeMode', value ? 'synchronized' : 'original');
         navTo(this.$tstore, this.$route, this.$router, {});
       }
-    }
+    },
+
+    state(): CoreState {
+      return this.$tstore.state;
+    },
+
+    nextPickEvent(): TimelineEvent | null {
+      return getNextPickEventForSelectedPlayer(this.state);
+    },
+
+    firstLocationLabel(): string {
+      const pickEvent = this.nextPickEvent;
+      if (pickEvent != null) {
+        return `Pack ${pickEvent.round}`;
+      } else if (this.state.eventPos >= this.state.events.length) {
+        return `End of draft`;
+      } else {
+        return `Event ${this.state.events[this.state.eventPos].id}`;
+      }
+    },
+
+    secondLocationLabel(): string | null {
+      if (this.nextPickEvent != null) {
+        return `Pick ${this.nextPickEvent.pick + 1}`;
+      } else {
+        return null;
+      }
+    },
   },
 
   methods: {
@@ -58,7 +97,7 @@ export default Vue.extend({
 
     onEndClick() {
       navTo(this.$tstore, this.$route, this.$router, {
-        eventIndex: this.$tstore.state.events.length,
+        eventIndex: this.state.events.length,
       });
     },
   },
@@ -77,6 +116,8 @@ export default Vue.extend({
 
 .start {
   flex: 1 0 0;
+  display: flex;
+  align-items: center;
 }
 
 .center {
@@ -102,4 +143,40 @@ export default Vue.extend({
 .synchronize-label {
   margin-left: 4px;
 }
+
+.draft-name {
+  color: #828282;
+}
+
+.location-btn {
+  padding: 6px 15px;
+  min-width: 150px;
+  text-align: left;
+  margin-left: 15px;
+  user-select: none;
+  cursor: default;
+  display: flex;
+  flex: 0 0 auto;
+
+  /* Override default button styling */
+  font-size: 100%;
+  font-family: inherit;
+  border: 1px solid #EAEAEA;
+  border-radius: 5px;
+}
+
+.location-btn:focus {
+  border-color: #D0D0D0;
+  outline: none;
+}
+
+.location-p1, .location-p2 {
+  flex: 1 0 0;
+  white-space: nowrap;
+}
+
+.location-p2 {
+  margin-left: 13px;
+}
+
 </style>

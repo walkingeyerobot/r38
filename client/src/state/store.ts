@@ -1,13 +1,14 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
 import { SelectedView } from './selection';
-import { DraftState, MtgCard } from '../draft/DraftState';
+import { DraftState } from '../draft/DraftState';
 import { TimelineEvent } from '../draft/TimelineEvent';
 import { buildEmptyDraftState } from '../draft/buildEmptyDraftState';
 import { commitTimelineEvent, rollbackTimelineEvent } from '../draft/mutate';
 import { cloneDraftState } from '../draft/cloneDraftState';
-import { find } from '../util/collection';
 import { DeckBuilderModule, DeckBuilderState } from './DeckBuilderModule';
+import { ParsedDraft } from '../parse/parseDraft';
+import { isPickEvent } from './util/isPickEvent';
 
 Vue.use(Vuex);
 
@@ -15,10 +16,11 @@ export interface RootState extends CoreState {
   deckbuilder: DeckBuilderState,
 }
 
-interface CoreState {
+export interface CoreState {
   selection: SelectedView | null,
   draft: DraftState,
   draftId: number,
+  draftName: string,
   events: TimelineEvent[],
   eventPos: number,
   timeMode: TimeMode,
@@ -30,6 +32,7 @@ const state: CoreState = {
   selection: null,
   draft: buildEmptyDraftState(),
   draftId: 0,
+  draftName: 'Unknown draft',
   events: [],
   eventPos: 0,
   timeMode: 'original',
@@ -51,13 +54,11 @@ const store = new Vuex.Store({
 
     initDraft(
         state: CoreState,
-        payload: {
-          state: DraftState,
-          events: TimelineEvent[],
-        }
+        payload: ParsedDraft,
     ) {
       initialDraftState = cloneDraftState(payload.state);
 
+      state.draftName = payload.name,
       state.draft = cloneDraftState(payload.state);
       state.events = payload.events;
       state.eventPos = 0;
@@ -130,8 +131,7 @@ const store = new Vuex.Store({
           for (let i = state.eventPos - 1; i >= 0; i--) {
             const event = state.events[i];
 
-            if (targetEpoch == null
-                && find(event.actions, {type: 'move-card'}) != -1) {
+            if (targetEpoch == null && isPickEvent(event)) {
               targetEpoch = event.roundEpoch;
             }
 

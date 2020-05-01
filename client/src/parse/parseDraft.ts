@@ -6,11 +6,22 @@ import { TimelineEvent } from '../draft/TimelineEvent';
 
 export function parseDraft(
   sourceData: SourceData
-): { state: DraftState, events: TimelineEvent[] } {
+): ParsedDraft {
   const state = parseInitialState(sourceData);
   const generator = new TimelineGenerator();
   const events = generator.generate(state, sourceData.events);
-  // HACK: This should probably just be an event at the end of the event stream
-  state.isComplete = generator.isComplete();
-  return { state, events };
+
+  return {
+    name: sourceData.name,
+    isComplete: generator.isComplete(),
+    state,
+    events,
+  };
+}
+
+export interface ParsedDraft {
+  name: string,
+  isComplete: boolean,
+  state: DraftState,
+  events: TimelineEvent[],
 }

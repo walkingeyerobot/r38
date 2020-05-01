@@ -37,6 +37,7 @@ export default Vue.extend({
     this.$tstore.commit('setTimeMode', 'synchronized');
     this.$tstore.commit('goTo', this.$tstore.state.events.length);
 
+    document.title = `Replay of ${this.$tstore.state.draftName}`;
     applyReplayUrlState(this.$tstore, this.$route);
   },
 
