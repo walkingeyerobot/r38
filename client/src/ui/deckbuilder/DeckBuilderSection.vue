@@ -1,6 +1,7 @@
 <template>
   <div class="_deck-builder-section">
     <div class="column-cnt"
+         ref="columnContent"
          @mousedown="mouseDown"
          @mousemove="mouseMove"
          @mouseup="mouseUp"
@@ -37,6 +38,7 @@ import { Point, Rectangle } from "../../util/rectangle";
 export default (Vue as VueConstructor<Vue & {
   $refs: {
     columns: InstanceType<typeof DeckBuilderColumn>[],
+    columnContent: HTMLElement,
   }
 }>).extend({
   name: 'DeckBuilderSection',
@@ -73,6 +75,9 @@ export default (Vue as VueConstructor<Vue & {
       } else {
         return null;
       }
+    },
+    selection(): CardLocation[] {
+      return this.$tstore.state.deckbuilder.selection;
     },
   },
 
@@ -135,6 +140,29 @@ export default (Vue as VueConstructor<Vue & {
         e.preventDefault();
       }
     },
+
+    createDragImage() {
+      const dragImage = <HTMLElement>this.$refs.columnContent.cloneNode(false);
+      for (let columnIndex = 0; columnIndex < this.$refs.columns.length; columnIndex++) {
+        if (this.selection.some(location =>
+            location.maindeck === this.maindeck && location.columnIndex === columnIndex)) {
+          const column = <HTMLElement>this.$refs.columns[columnIndex].$el.cloneNode(true);
+          for (let cardIndex = column.childElementCount - 1; cardIndex >= 0; cardIndex--) {
+            if (!this.selection.some(location =>
+                location.maindeck === this.maindeck && location.columnIndex === columnIndex
+                && location.cardIndex === cardIndex)) {
+              column.removeChild(column.children[cardIndex]);
+            }
+          }
+          dragImage.appendChild(column);
+        }
+      }
+      dragImage.style.position = "absolute";
+      dragImage.style.top = "-1000px";
+      dragImage.id = "dragImage";
+      document.body.appendChild(dragImage);
+      return dragImage;
+    }
   },
 
 });

@@ -36,6 +36,7 @@ import Vue from 'vue';
 import { MtgCard } from "../../draft/DraftState.js";
 import { CardColumn, CardLocation, CardMove } from "../../state/DeckBuilderModule";
 import { intersects, Rectangle } from "../../util/rectangle";
+import DeckBuilderSection from "./DeckBuilderSection.vue";
 
 export default Vue.extend({
   name: 'DeckBuilderColumn',
@@ -105,16 +106,7 @@ export default Vue.extend({
       if (e.dataTransfer) {
         if (this.selection.length > 1
             && this.inSelection(index)) {
-          const dragImage = <HTMLElement>this.$el.cloneNode(true);
-          for (let i = dragImage.childElementCount - 1; i >= 0; i--) {
-            if (!this.inSelection(i)) {
-              dragImage.removeChild(dragImage.children[i]);
-            }
-          }
-          dragImage.style.position = "absolute";
-          dragImage.style.top = "-1000px";
-          dragImage.id = "dragImage";
-          document.body.appendChild(dragImage);
+          const dragImage = (<InstanceType<typeof DeckBuilderSection>>this.$parent).createDragImage();
           e.dataTransfer.setDragImage(dragImage, (<HTMLElement>this.$el).offsetWidth / 2, 20);
           cardMove = {
             deckIndex: this.deckIndex,
@@ -193,10 +185,6 @@ export default Vue.extend({
                 maindeck: this.maindeck,
               },
             });
-        const dragImage = document.getElementById("dragImage");
-        if (dragImage) {
-          dragImage.remove();
-        }
       }
       this.dropTargetIndex = null;
     },
