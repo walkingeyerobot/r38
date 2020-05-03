@@ -10,11 +10,14 @@
     <div
         v-for="(card, index) in column"
         :key="card.id"
+        @mousedown="preventMouseDown"
         @dragstart="dragStart($event, index)"
         class="card"
         :class="{
             cardDropAbove: dropTargetIndex !== null && index === 0 && dropTargetIndex === 0,
             cardDropBelow: dropTargetIndex !== null && index === dropTargetIndex - 1,
+            noSelection: selectionRectangle === null,
+            inSelection: inSelection(index),
         }"
         >
       <img
@@ -30,6 +33,7 @@
 import Vue from 'vue';
 import { MtgCard } from "../../draft/DraftState.js";
 import { CardColumn, CardMove } from "../../state/DeckBuilderModule";
+import { intersects, Rectangle } from "../../util/rectangle";
 
 export default Vue.extend({
   name: 'DeckBuilderColumn',
@@ -46,7 +50,10 @@ export default Vue.extend({
     },
     maindeck: {
       type: Boolean
-    }
+    },
+    selectionRectangle: {
+      type: Object as () => (Rectangle | null)
+    },
   },
 
   data: () => ({
@@ -118,6 +125,29 @@ export default Vue.extend({
       }
       this.dropTargetIndex = null;
     },
+
+    preventMouseDown(e: MouseEvent) {
+      e.stopPropagation();
+    },
+
+    inSelection(index: number) {
+      if (this.selectionRectangle) {
+        const child = <HTMLElement>this.$el.children[index];
+        const childRect = {
+          start: {
+            x: child.offsetLeft,
+            y: child.offsetTop,
+          },
+          end: {
+            x: child.offsetLeft + child.offsetWidth,
+            y: child.offsetTop + child.offsetHeight,
+          },
+        };
+        return intersects(childRect, this.selectionRectangle);
+      } else {
+        return false;
+      }
+    }
   },
 });
 </script>
@@ -148,8 +178,19 @@ export default Vue.extend({
   border-radius: 10px;
 }
 
-.card-img:hover {
+.noSelection > .card-img:hover, .inSelection > .card-img {
   border-color: #bbd;
+}
+
+.inSelection::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 279px;
+  border-radius: 10px;
+  background-color: #bbd8;
 }
 
 .cardDropAbove:before {
