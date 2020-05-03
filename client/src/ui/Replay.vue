@@ -1,5 +1,9 @@
 <template>
-  <div class="_home">
+  <div
+      class="_replay"
+      @mousedown.capture="onCaptureMouseDown"
+      @mousedown="onBubbleMouseDown"
+      >
     <ControlsRow />
     <div class="main">
       <DraftTable class="table" />
@@ -19,6 +23,7 @@ import DraftTable from './table/DraftTable.vue';
 import CardGrid from './table/CardGrid.vue';
 import { SelectedView } from '../state/selection';
 import { applyReplayUrlState } from '../router/url_manipulation';
+import { globalClickTracker } from './infra/globalClickTracker';
 
 export default Vue.extend({
   name: 'Home',
@@ -45,12 +50,22 @@ export default Vue.extend({
     $route(to, from) {
       applyReplayUrlState(this.$tstore, this.$route);
     },
-  }
+  },
+
+  methods: {
+    onCaptureMouseDown() {
+      globalClickTracker.onCaptureGlobalMouseDown();
+    },
+
+    onBubbleMouseDown(e: MouseEvent) {
+      globalClickTracker.onBubbleGlobalMouseDown(e);
+    },
+  },
 });
 </script>
 
 <style scoped>
-._home {
+._replay {
   height: 100%;
   display: flex;
   flex-direction: column;

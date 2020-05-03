@@ -10,22 +10,22 @@
       <button @click="onEndClick" class="playback-btn">End »</button>
     </div>
     <div class="end">
-      <input
-          type="checkbox"
-          id="synchronize-checkbox"
-          v-model="synchronizeTimeline">
-      <label
-          for="synchronize-checkbox"
-          class="synchronize-label"
-          >
-        Synchronize timeline
-      </label>
-      <button class="location-btn">
-        <div class="location-p1">{{ firstLocationLabel }}</div>
-        <div v-if="secondLocationLabel" class="location-p2">
-          {{ secondLocationLabel }}
-        </div>
-      </button>
+      <div class="location-cnt">
+        <button
+            class="location-btn"
+            @click="onLocationClick"
+            >
+          <div class="location-p1">{{ firstLocationLabel }}</div>
+          <div v-if="secondLocationLabel" class="location-p2">
+            {{ secondLocationLabel }}
+          </div>
+        </button>
+        <TimelineSelector
+            v-if="timelineOpen"
+            class="timeline-popover"
+            @mousedown.native.capture="onTimelineMouseDown"
+            />
+      </div>
     </div>
   </div>
 </template>
@@ -36,20 +36,23 @@ import { navTo } from '../../router/url_manipulation';
 import { CoreState } from '../../state/store';
 import { getNextPickEventForSelectedPlayer } from '../../state/util/getNextPickEventForSelectedPlayer';
 import { TimelineEvent } from '../../draft/TimelineEvent';
+import { globalClickTracker, UnhandledClickListener } from '../infra/globalClickTracker';
+import TimelineSelector from './TimelineSelector.vue';
+
 
 export default Vue.extend({
+  components: {
+    TimelineSelector,
+  },
+
+  data() {
+    return {
+      timelineOpen: false,
+      globalMouseDownListener: null as UnhandledClickListener | null,
+    };
+  },
+
   computed: {
-    synchronizeTimeline: {
-      get() {
-        return this.$tstore.state.timeMode == 'synchronized';
-      },
-
-      set(value) {
-        this.$tstore.commit('setTimeMode', value ? 'synchronized' : 'original');
-        navTo(this.$tstore, this.$route, this.$router, {});
-      }
-    },
-
     state(): CoreState {
       return this.$tstore.state;
     },
@@ -78,6 +81,19 @@ export default Vue.extend({
     },
   },
 
+  created() {
+    this.globalMouseDownListener = () => this.onGlobalMouseDown();
+    globalClickTracker
+        .registerUnhandledClickListener(this.globalMouseDownListener);
+  },
+
+  destroyed() {
+    if (this.globalMouseDownListener != null) {
+      globalClickTracker
+          .unregisterUnhandledClickListener(this.globalMouseDownListener);
+    }
+  },
+
   methods: {
     onNextClick() {
       this.$tstore.commit('goNext');
@@ -100,6 +116,18 @@ export default Vue.extend({
         eventIndex: this.state.events.length,
       });
     },
+
+    onLocationClick() {
+      this.timelineOpen = !this.timelineOpen;
+    },
+
+    onTimelineMouseDown() {
+      globalClickTracker.onCaptureLocalMouseDown();
+    },
+
+    onGlobalMouseDown() {
+      this.timelineOpen = false;
+    },
   },
 });
 </script>
@@ -112,6 +140,7 @@ export default Vue.extend({
 
   padding: 10px;
   border-bottom: 1px solid #EAEAEA;
+  z-index: 1;
 }
 
 .start {
@@ -127,7 +156,6 @@ export default Vue.extend({
 
 .end {
   flex: 1 0 0;
-  text-align: end;
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -148,15 +176,20 @@ export default Vue.extend({
   color: #828282;
 }
 
-.location-btn {
-  padding: 6px 15px;
-  min-width: 150px;
-  text-align: left;
+.location-cnt {
   margin-left: 15px;
+  font-size: 14px;
+  flex: 0 0 auto;
+  position: relative;
+}
+
+.location-btn {
+  padding: 6px 10px;
+  min-width: 125px;
+  text-align: left;
   user-select: none;
   cursor: default;
   display: flex;
-  flex: 0 0 auto;
 
   /* Override default button styling */
   font-size: 100%;
@@ -177,6 +210,18 @@ export default Vue.extend({
 
 .location-p2 {
   margin-left: 13px;
+}
+
+.timeline-popover {
+  position: absolute;
+  top: calc(100% + 5px);
+  right: 0;
+  width: 300px;
+  height: calc(100vh - 70px);
+  background-color: #FFF;
+  border-radius: 5px;
+  box-shadow: 0px 1px 4px rgba(0, 0, 0, 0.3);
+  border: 1px solid #ccc;
 }
 
 </style>
