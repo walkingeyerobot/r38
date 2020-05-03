@@ -10,7 +10,10 @@
       <button @click="onEndClick" class="playback-btn">End »</button>
     </div>
     <div class="end">
-      <div class="location-cnt">
+      <div
+          class="location-cnt"
+          @mousedown.capture="onTimelineMouseDown"
+          >
         <button
             class="location-btn"
             @click="onLocationClick"
@@ -23,7 +26,6 @@
         <TimelineSelector
             v-if="timelineOpen"
             class="timeline-popover"
-            @mousedown.native.capture="onTimelineMouseDown"
             />
       </div>
     </div>
