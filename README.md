@@ -27,7 +27,8 @@ NOTE: As of 2020-04-24, the CSV output needs a minor hack to formatting: add `,B
 ```sqlite3
 sqlite> .schema
 CREATE TABLE sqlite_sequence(name,seq);
-CREATE TABLE users( id integer primary key autoincrement, google_id text unique, email text, picture text, slack string, discord string, webhook string);
+CREATE TABLE users ( id integer primary key autoincrement, discord_id text unique, discord_name text, picture text );
+CREATE TABLE IF NOT EXISTS "users_old"( id integer primary key autoincrement, google_id text unique, email text, picture text, slack string, discord string, webhook string);
 CREATE TABLE seats( id integer primary key autoincrement, position number, user number, draft number, round number default 1);
 CREATE TABLE packs( id integer primary key autoincrement, seat number, modified number, round number , original_seat number);
 CREATE TABLE cards( id integer primary key autoincrement, pack number, edition text, number text, tags text, name text, faceup number default false, original_pack number, cmc number, type text, color text, modified number default 0, mtgo string);

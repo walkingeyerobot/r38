@@ -79,17 +79,25 @@ func oauthDiscordCallback(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	p.Picture = fmt.Sprintf("https://cdn.discordapp.com/avatars/%v/%s.png", p.ID, p.Picture)
+	if p.Picture != "" {
+		p.Picture = fmt.Sprintf("https://cdn.discordapp.com/avatars/%v/%s.png", p.ID, p.Picture)
+	} else {
+		p.Picture = "http://draft.thefoley.net/static/favicon.png"
+	}
 
-	statement, _ := database.Prepare(`INSERT INTO users (discord_id, discord_name, picture) VALUES (?, ?, ?)`)
+	statement, err := database.Prepare(`INSERT INTO users (discord_id, discord_name, picture) VALUES (?, ?, ?)`)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	statement.Exec(p.ID, p.Name, p.Picture)
 
 	// BEGIN MIGRATION BLOCK
 	// delete this block when migration to discord oauth is deemed complete
 
 	row := database.QueryRow(`SELECT id FROM users_old WHERE slack="<@" || ? || ">"`, p.ID)
-	var oldUserId int64
-	err = row.Scan(&oldUserId)
+	var oldUserID int64
+	err = row.Scan(&oldUserID)
 	if err == sql.ErrNoRows {
 		// everything is fine, new user
 	} else if err != nil {
@@ -98,7 +106,7 @@ func oauthDiscordCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	} else {
 		// we found the old user
-		_, err = database.Exec(`delete from users where id=? and discord_id is null; UPDATE users set id=? where discord_id=?`, oldUserId, oldUserId, p.ID)
+		_, err = database.Exec(`delete from users where id=? and discord_id is null; UPDATE users set id=? where discord_id=?`, oldUserID, oldUserID, p.ID)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

@@ -1,8 +1,12 @@
 <template>
-  <div class="_home">
+  <div
+      class="_replay"
+      @mousedown.capture="onCaptureMouseDown"
+      @mousedown="onBubbleMouseDown"
+      >
     <ControlsRow />
     <div class="main">
-      <DraftTable class="table" />
+      <PlayerSelector class="table" />
       <CardGrid class="grid" />
     </div>
   </div>
@@ -14,18 +18,19 @@ import { parseDraft } from '../parse/parseDraft';
 import { SourceData } from '../parse/SourceData';
 import { getServerPayload } from '../parse/getServerPayload';
 
-import ControlsRow from './table/ControlsRow.vue';
-import DraftTable from './table/DraftTable.vue';
-import CardGrid from './table/CardGrid.vue';
+import ControlsRow from './replay/ControlsRow.vue';
+import PlayerSelector from './replay/PlayerSelector.vue';
+import CardGrid from './replay/CardGrid.vue';
 import { SelectedView } from '../state/selection';
 import { applyReplayUrlState } from '../router/url_manipulation';
+import { globalClickTracker } from './infra/globalClickTracker';
 
 export default Vue.extend({
   name: 'Home',
 
   components: {
     ControlsRow,
-    DraftTable,
+    PlayerSelector,
     CardGrid,
   },
 
@@ -34,12 +39,10 @@ export default Vue.extend({
     const draft = parseDraft(srcData);
 
     this.$tstore.commit('initDraft', draft);
+    this.$tstore.commit('setTimeMode', 'synchronized');
+    this.$tstore.commit('goTo', this.$tstore.state.events.length);
 
-    if (this.$tstore.state.draft.isComplete) {
-      this.$tstore.commit('setTimeMode', 'synchronized');
-      this.$tstore.commit('goTo', this.$tstore.state.events.length);
-    }
-
+    document.title = `Replay of ${this.$tstore.state.draftName}`;
     applyReplayUrlState(this.$tstore, this.$route);
   },
 
@@ -47,12 +50,22 @@ export default Vue.extend({
     $route(to, from) {
       applyReplayUrlState(this.$tstore, this.$route);
     },
-  }
+  },
+
+  methods: {
+    onCaptureMouseDown() {
+      globalClickTracker.onCaptureGlobalMouseDown();
+    },
+
+    onBubbleMouseDown(e: MouseEvent) {
+      globalClickTracker.onBubbleGlobalMouseDown(e);
+    },
+  },
 });
 </script>
 
 <style scoped>
-._home {
+._replay {
   height: 100%;
   display: flex;
   flex-direction: column;

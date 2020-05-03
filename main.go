@@ -1,6 +1,7 @@
 package main
 
 import (
+	"archive/zip"
 	"bytes"
 	"database/sql"
 	"encoding/json"
@@ -94,6 +95,12 @@ type DraftEvent struct {
 
 type ReplayPageData struct {
 	Json string
+}
+
+type bulkMTGOExport struct {
+	PlayerID int64
+	Username string
+	Deck     string
 }
 
 type r38handler func(w http.ResponseWriter, r *http.Request, userId int64)
@@ -209,6 +216,7 @@ func NewHandler(useAuth bool) http.Handler {
 	addHandler("/pick/", ServePick)
 	addHandler("/join/", ServeJoin)
 	addHandler("/mtgo/", ServeMtgo)
+	addHandler("/bulk_mtgo/", ServeBulkMTGO)
 	addHandler("/index/", ServeIndex)
 	addHandler("/", ServeIndex)
 
@@ -274,6 +282,59 @@ func GetViewParam(r *http.Request, userId int64) string {
 	return param
 }
 
+func ServeBulkMTGO(w http.ResponseWriter, r *http.Request, userID int64) {
+	if userID != 1 {
+		http.Error(w, "auth error in bulk export", http.StatusForbidden)
+		return
+	}
+	re := regexp.MustCompile(`/bulk_mtgo/(\d+)`)
+	parseResult := re.FindStringSubmatch(r.URL.Path)
+	if parseResult == nil {
+		http.Error(w, "draft not found", http.StatusInternalServerError)
+		return
+	}
+	draftID, err := strconv.ParseInt(parseResult[1], 10, 64)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	query := `select seats.user, users.discord_name from seats join users where seats.user=users.id and seats.draft=?`
+	rows, err := database.Query(query, draftID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	// Generate the MTGO export for each player.
+	exports := []bulkMTGOExport{}
+	for rows.Next() {
+		var playerID int64
+		var username string
+		err := rows.Scan(&playerID, &username)
+		if err != nil {
+			log.Printf("error reading player in draft %s, skipping: %s", draftID, err)
+			break
+		}
+		export, err := exportToMTGO(playerID, draftID)
+		if err != nil {
+			log.Printf("could not export to MTGO for player %s in draft %s: %s", playerID, draftID, err)
+			break
+		}
+		exports = append(exports, bulkMTGOExport{PlayerID: playerID, Username: username, Deck: export})
+	}
+
+	// Generate the ZIP file for all exported decks.
+	archive, err := createZipExport(exports)
+	if err != nil {
+		log.Printf("error creating zip file: %s", err)
+		return
+	}
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%d-r38-bulk.zip", draftID))
+	w.Header().Set("Content-Type", r.Header.Get("Content-Type"))
+	io.WriteString(w, string(archive))
+}
+
 func ServeMtgo(w http.ResponseWriter, r *http.Request, userId int64) {
 	re := regexp.MustCompile(`/mtgo/(\d+)`)
 	parseResult := re.FindStringSubmatch(r.URL.Path)
@@ -294,22 +355,49 @@ func ServeMtgo(w http.ResponseWriter, r *http.Request, userId int64) {
 }
 
 func doServeMtgo(w http.ResponseWriter, r *http.Request, userId int64, draftId int64) {
-	_, myPicks, _, err := getPackPicksAndPowers(draftId, userId)
+	export, err := exportToMTGO(userId, draftId)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
 	w.Header().Set("Content-Disposition", "attachment; filename=r38export.dek")
 	w.Header().Set("Content-Type", r.Header.Get("Content-Type"))
+	io.WriteString(w, export)
+}
 
-	io.WriteString(w, "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<Deck xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\n<NetDeckID>0</NetDeckID>\n<PreconstructedDeckID>0</PreconstructedDeckID>\n")
-
-	for _, pick := range myPicks {
-		io.WriteString(w, fmt.Sprintf("<Cards CatID=\"%s\" Quantity=\"1\" Sideboard=\"false\" Name=\"%s\" />\n", pick.Mtgo, pick.Name))
+// createZipExport creates a .zip file containing decks from a bulk MTGO export.
+func createZipExport(exports []bulkMTGOExport) ([]byte, error) {
+	buf := new(bytes.Buffer)
+	zipWriter := zip.NewWriter(buf)
+	for _, export := range exports {
+		zipFile, err := zipWriter.Create(fmt.Sprintf("%s.dek", export.Username))
+		if err != nil {
+			return nil, err
+		}
+		_, err = zipFile.Write([]byte(export.Deck))
+		if err != nil {
+			return nil, err
+		}
 	}
+	err := zipWriter.Close()
+	if err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
 
-	io.WriteString(w, "</Deck>")
+// exportToMTGO creates an MTGO compatible .dek string for given user and draft.
+func exportToMTGO(userId int64, draftId int64) (string, error) {
+	_, picks, _, err := getPackPicksAndPowers(draftId, userId)
+	if err != nil {
+		return "", err
+	}
+	export := "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<Deck xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\n<NetDeckID>0</NetDeckID>\n<PreconstructedDeckID>0</PreconstructedDeckID>\n"
+	for _, pick := range picks {
+		export = export + fmt.Sprintf("<Cards CatID=\"%s\" Quantity=\"1\" Sideboard=\"false\" Name=\"%s\" />\n", pick.Mtgo, pick.Name)
+	}
+	export = export + "</Deck>"
+	return export, nil
 }
 
 // proxyCard is a wrapper around Scryfall's REST API to follow redirects and grab image contents.
@@ -767,13 +855,6 @@ func ServeDraft(w http.ResponseWriter, r *http.Request, userId int64) {
 		revealed = append(revealed, msg)
 	}
 	viewParam := GetViewParam(r, userId)
-	// Auto-pick the last card in the pack.
-	if len(myPack) == 1 {
-		cardId := myPack[0].Id
-		http.Redirect(w, r, fmt.Sprintf("/pick/%d%s", cardId, viewParam), http.StatusTemporaryRedirect)
-		return
-	}
-
 	t := template.Must(template.ParseFiles("draft.tmpl"))
 
 	data := DraftPageData{Picks: myPicks, Pack: myPack, DraftId: draftId, DraftName: draftName, Powers: powers2, Position: position, Revealed: revealed, ViewUrl: viewParam}
