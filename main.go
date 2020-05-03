@@ -174,6 +174,13 @@ func NewHandler(useAuth bool) http.Handler {
 				userId = 1
 			}
 
+			/*
+				if userId != 1 {
+					http.Error(w, "server down for maintaince", http.StatusInternalServerError)
+					return
+				}
+			*/
+
 			if userId == 1 {
 				q := r.URL.Query()
 				val := q.Get("as")
@@ -998,9 +1005,17 @@ func doPick(userId int64, cardId int64, pass bool) (int64, int64, []string, int6
 		}
 
 		if packsLeftInSeat == 0 {
-			err = NotifyByDraftAndPosition(draftId, newPosition)
+			query = `select count(1) from seats a join seats b on a.draft=b.draft where a.user=? and b.position=? and a.draft=? and a.round=b.round`
+			row = database.QueryRow(query, userId, newPosition, draftId)
+			var roundsMatch int64
+			err = row.Scan(&roundsMatch)
 			if err != nil {
-				log.Printf("error with notify")
+				log.Printf("cannot determine if rounds match for notify")
+			} else if roundsMatch == 1 {
+				err = NotifyByDraftAndPosition(draftId, newPosition)
+				if err != nil {
+					log.Printf("error with notify")
+				}
 			}
 
 			// WARNING: if you ever have a draft with anything other than 8 players, 15 cards per pack, and 3 rounds, this will break horribly.
@@ -1009,7 +1024,6 @@ func doPick(userId int64, cardId int64, pass bool) (int64, int64, []string, int6
 			_, err = database.Exec(query, userId, draftId, draftId, userId)
 			if err != nil {
 				log.Printf("error with possibly updating round")
-				// return draftId, oldPackId, announcements, round, err
 			}
 		}
 	} else {
