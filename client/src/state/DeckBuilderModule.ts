@@ -51,33 +51,29 @@ export const DeckBuilderModule = VuexModule({
       } else {
         sourceSection = state.decks[move.deckIndex].sideboard;
       }
-      if (move.source[0].maindeck !== move.target.maindeck
-          || !move.source.map(source => source.columnIndex).includes(move.target.columnIndex)) {
-        const cards: DraftCard[] = move.source.map(location =>
-            sourceSection[location.columnIndex][location.cardIndex]);
-        move.source.forEach((location, index) => {
-          sourceSection[location.columnIndex].splice(
-              sourceSection[location.columnIndex].indexOf(cards[index]), 1);
-        });
-        let targetSection: CardColumn[];
-        if (move.target.maindeck) {
-          targetSection = state.decks[move.deckIndex].maindeck;
-        } else {
-          targetSection = state.decks[move.deckIndex].sideboard;
-        }
-        targetSection[move.target.columnIndex]
-            .splice(move.target.cardIndex, 0, ...cards);
-      }/* else if (move.source.cardIndex !== move.target.cardIndex
-          && move.source.cardIndex !== move.target.cardIndex + 1) {
-        [card] = sourceSection[move.source.columnIndex]
-            .splice(move.source.cardIndex, 1);
-        const targetCardIndex =
-            (move.target.cardIndex < move.source.cardIndex)
-                ? move.target.cardIndex
-                : move.target.cardIndex - 1;
-        sourceSection[move.target.columnIndex]
-            .splice(targetCardIndex, 0, card);
-      }*/
+      const cards: DraftCard[] = move.source.map(location =>
+          sourceSection[location.columnIndex][location.cardIndex]);
+      if (move.source.some(location =>
+          location.maindeck === move.target.maindeck
+          && location.columnIndex === move.target.columnIndex)) {
+        move.target.cardIndex -= move.source.filter(location =>
+            location.maindeck === move.target.maindeck
+            && location.columnIndex === move.target.columnIndex
+            && location.cardIndex < move.target.cardIndex
+        ).length;
+      }
+      move.source.forEach((location, index) => {
+        sourceSection[location.columnIndex].splice(
+            sourceSection[location.columnIndex].indexOf(cards[index]), 1);
+      });
+      let targetSection: CardColumn[];
+      if (move.target.maindeck) {
+        targetSection = state.decks[move.deckIndex].maindeck;
+      } else {
+        targetSection = state.decks[move.deckIndex].sideboard;
+      }
+      targetSection[move.target.columnIndex]
+          .splice(move.target.cardIndex, 0, ...cards);
       state.selection = [];
     },
 
