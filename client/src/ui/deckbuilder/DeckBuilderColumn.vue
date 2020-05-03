@@ -101,20 +101,51 @@ export default Vue.extend({
     },
 
     dragStart(e: DragEvent, index: number) {
+      let cardMove: CardMove;
       if (e.dataTransfer) {
-        const cardMove: CardMove = {
-          deckIndex: this.deckIndex,
-          source: {
-            columnIndex: this.columnIndex,
-            cardIndex: index,
-            maindeck: this.maindeck,
-          },
-          target: {
-            columnIndex: 0,
-            cardIndex: 0,
-            maindeck: false,
-          },
-        };
+        if (this.selection.length > 1
+            && this.inSelection(index)) {
+          const dragImage = <HTMLElement>this.$el.cloneNode(true);
+          for (let i = dragImage.childElementCount - 1; i >= 0; i--) {
+            if (!this.inSelection(i)) {
+              dragImage.removeChild(dragImage.children[i]);
+            }
+          }
+          dragImage.style.position = "absolute";
+          dragImage.style.top = "-1000px";
+          dragImage.id = "dragImage";
+          document.body.appendChild(dragImage);
+          e.dataTransfer.setDragImage(dragImage, (<HTMLElement>this.$el).offsetWidth / 2, 20);
+          // TODO expand to selection
+          cardMove = {
+            deckIndex: this.deckIndex,
+            source: {
+              columnIndex: this.columnIndex,
+              cardIndex: index,
+              maindeck: this.maindeck,
+            },
+            target: {
+              columnIndex: 0,
+              cardIndex: 0,
+              maindeck: false,
+            },
+          };
+        } else {
+          this.$tstore.commit("deckbuilder/selectCards", []);
+          cardMove = {
+            deckIndex: this.deckIndex,
+            source: {
+              columnIndex: this.columnIndex,
+              cardIndex: index,
+              maindeck: this.maindeck,
+            },
+            target: {
+              columnIndex: 0,
+              cardIndex: 0,
+              maindeck: false,
+            },
+          };
+        }
         e.dataTransfer.setData("text/plain", JSON.stringify(cardMove));
         e.dataTransfer.effectAllowed = "move";
       }
@@ -158,6 +189,10 @@ export default Vue.extend({
                 maindeck: this.maindeck,
               },
             });
+        const dragImage = document.getElementById("dragImage");
+        if (dragImage) {
+          dragImage.remove();
+        }
       }
       this.dropTargetIndex = null;
     },
