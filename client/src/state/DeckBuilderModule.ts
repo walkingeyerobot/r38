@@ -12,6 +12,7 @@ export const DeckBuilderModule = VuexModule({
   state: {
     selectedSeat: 0,
     decks: [],
+    selection: [],
   } as DeckBuilderState,
 
   mutations: {
@@ -73,12 +74,17 @@ export const DeckBuilderModule = VuexModule({
       }
     },
 
+    selectCards(state: DeckBuilderState, selection: CardLocation[]) {
+      state.selection = selection;
+    },
+
   },
 });
 
 export interface DeckBuilderState {
   selectedSeat: number,
   decks: Deck[],
+  selection: CardLocation[],
 }
 
 export interface Deck {

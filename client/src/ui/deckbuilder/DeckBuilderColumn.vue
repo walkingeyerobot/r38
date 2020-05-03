@@ -12,11 +12,13 @@
         :key="card.id"
         @mousedown="preventMouseDown"
         @dragstart="dragStart($event, index)"
+        @click="select(index)"
         class="card"
         :class="{
             cardDropAbove: dropTargetIndex !== null && index === 0 && dropTargetIndex === 0,
             cardDropBelow: dropTargetIndex !== null && index === dropTargetIndex - 1,
-            noSelection: selectionRectangle === null,
+            noSelectionRectangle: selectionRectangle === null,
+            inSelectionRectangle: inSelectionRectangle.includes(index),
             inSelection: inSelection(index),
         }"
         >
@@ -32,7 +34,7 @@
 <script lang="ts">
 import Vue from 'vue';
 import { MtgCard } from "../../draft/DraftState.js";
-import { CardColumn, CardMove } from "../../state/DeckBuilderModule";
+import { CardColumn, CardLocation, CardMove } from "../../state/DeckBuilderModule";
 import { intersects, Rectangle } from "../../util/rectangle";
 
 export default Vue.extend({
@@ -59,6 +61,34 @@ export default Vue.extend({
   data: () => ({
     dropTargetIndex: null as (number | null),
   }),
+
+  computed: {
+    selection(): CardLocation[] {
+      return this.$tstore.state.deckbuilder.selection;
+    },
+    inSelectionRectangle(): number[] {
+      const result = [];
+      if (this.selectionRectangle) {
+        for (let i = 0 ;i < this.$el.childElementCount; i++) {
+          const child = <HTMLElement>this.$el.children[i];
+          const childRect = {
+            start: {
+              x: child.offsetLeft,
+              y: child.offsetTop,
+            },
+            end: {
+              x: child.offsetLeft + child.offsetWidth,
+              y: child.offsetTop + child.offsetHeight,
+            },
+          };
+          if (intersects(childRect, this.selectionRectangle)) {
+            result.push(i);
+          }
+        }
+      }
+      return result;
+    },
+  },
 
   methods: {
     getImageSrc(card: MtgCard): string {
@@ -132,27 +162,23 @@ export default Vue.extend({
       this.dropTargetIndex = null;
     },
 
+    select(cardIndex: number) {
+      this.$tstore.commit("deckbuilder/selectCards", [{
+        columnIndex: this.columnIndex,
+        cardIndex,
+        maindeck: this.maindeck,
+      }]);
+    },
+
     preventMouseDown(e: MouseEvent) {
       e.stopPropagation();
     },
 
     inSelection(index: number) {
-      if (this.selectionRectangle) {
-        const child = <HTMLElement>this.$el.children[index];
-        const childRect = {
-          start: {
-            x: child.offsetLeft,
-            y: child.offsetTop,
-          },
-          end: {
-            x: child.offsetLeft + child.offsetWidth,
-            y: child.offsetTop + child.offsetHeight,
-          },
-        };
-        return intersects(childRect, this.selectionRectangle);
-      } else {
-        return false;
-      }
+      return this.selection.some(location =>
+          location.maindeck === this.maindeck
+          && location.columnIndex === this.columnIndex
+          && location.cardIndex === index);
     }
   },
 });
@@ -184,11 +210,15 @@ export default Vue.extend({
   border-radius: 10px;
 }
 
-.noSelection > .card-img:hover, .inSelection > .card-img {
+.noSelectionRectangle > .card-img:hover, .inSelectionRectangle > .card-img {
   border-color: #bbd;
 }
 
-.inSelection::after {
+.inSelection > .card-img, .inSelection > .card-img:hover {
+  border-color: #66e;
+}
+
+.inSelectionRectangle::after {
   content: '';
   position: absolute;
   top: 0;

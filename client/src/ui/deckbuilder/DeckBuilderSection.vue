@@ -7,6 +7,7 @@
          >
       <DeckBuilderColumn
           v-for="(column, index) in columns"
+          ref="columns"
           :key="index"
           :column="column"
           :deckIndex="deckIndex"
@@ -28,12 +29,16 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
+import Vue, { VueConstructor } from 'vue'
 import DeckBuilderColumn from "./DeckBuilderColumn.vue";
-import { CardColumn } from '../../state/DeckBuilderModule';
+import { CardColumn, CardLocation } from '../../state/DeckBuilderModule';
 import { Point, Rectangle } from "../../util/rectangle";
 
-export default Vue.extend({
+export default (Vue as VueConstructor<Vue & {
+  $refs: {
+    columns: InstanceType<typeof DeckBuilderColumn>[],
+  }
+}>).extend({
   name: 'DeckBuilderSection',
 
   data: () => ({
@@ -117,7 +122,15 @@ export default Vue.extend({
 
     mouseUp(e: MouseEvent) {
       if (this.selectionRectangle) {
-        // TODO: lock in selection
+        const selection: CardLocation[] =
+            (this.$refs.columns)
+                .flatMap((column, columnIndex) => column.inSelectionRectangle
+                    .map(cardIndex => ({
+                      columnIndex,
+                      cardIndex,
+                      maindeck: this.maindeck,
+                    })));
+        this.$tstore.commit("deckbuilder/selectCards", selection);
         this.selectionRectangle = null;
         e.preventDefault();
       }
