@@ -1,5 +1,5 @@
-import {DraftCard} from '../draft/DraftState';
-import {VuexModule} from './vuex/VuexModule';
+import { DraftCard } from '../draft/DraftState';
+import { VuexModule } from './vuex/VuexModule';
 
 const NUM_COLUMNS = 7;
 
@@ -43,32 +43,32 @@ export const DeckBuilderModule = VuexModule({
     moveCard(state: DeckBuilderState, move: CardMove) {
       let card: DraftCard;
       let source: CardColumn[];
-      if (move.sourceMaindeck) {
+      if (move.source.maindeck) {
         source = state.decks[move.deckIndex].maindeck;
       } else {
         source = state.decks[move.deckIndex].sideboard;
       }
-      if (move.sourceMaindeck !== move.targetMaindeck
-          || move.sourceColumnIndex !== move.targetColumnIndex) {
-        [card] = source[move.sourceColumnIndex]
-            .splice(move.sourceCardIndex, 1);
+      if (move.source.maindeck !== move.target.maindeck
+          || move.source.columnIndex !== move.target.columnIndex) {
+        [card] = source[move.source.columnIndex]
+            .splice(move.source.cardIndex, 1);
         let target: CardColumn[];
-        if (move.targetMaindeck) {
+        if (move.target.maindeck) {
           target = state.decks[move.deckIndex].maindeck;
         } else {
           target = state.decks[move.deckIndex].sideboard;
         }
-        target[move.targetColumnIndex]
-            .splice(move.targetCardIndex, 0, card);
-      } else if (move.sourceCardIndex !== move.targetCardIndex
-          && move.sourceCardIndex !== move.targetCardIndex + 1) {
-        [card] = source[move.sourceColumnIndex]
-            .splice(move.sourceCardIndex, 1);
+        target[move.target.columnIndex]
+            .splice(move.target.cardIndex, 0, card);
+      } else if (move.source.cardIndex !== move.target.cardIndex
+          && move.source.cardIndex !== move.target.cardIndex + 1) {
+        [card] = source[move.source.columnIndex]
+            .splice(move.source.cardIndex, 1);
         const targetCardIndex =
-            (move.targetCardIndex < move.sourceCardIndex)
-                ? move.targetCardIndex
-                : move.targetCardIndex - 1;
-        source[move.targetColumnIndex]
+            (move.target.cardIndex < move.source.cardIndex)
+                ? move.target.cardIndex
+                : move.target.cardIndex - 1;
+        source[move.target.columnIndex]
             .splice(targetCardIndex, 0, card);
       }
     },
@@ -100,12 +100,14 @@ export interface DeckInitializer {
   pool: DraftCard[],
 }
 
+export interface CardLocation {
+  columnIndex: number,
+  cardIndex: number,
+  maindeck: boolean,
+}
+
 export interface CardMove {
   deckIndex: number,
-  sourceColumnIndex: number,
-  sourceCardIndex: number,
-  sourceMaindeck: boolean,
-  targetColumnIndex: number,
-  targetCardIndex: number,
-  targetMaindeck: boolean,
+  source: CardLocation,
+  target: CardLocation,
 }

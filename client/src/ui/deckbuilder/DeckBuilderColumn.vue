@@ -74,12 +74,16 @@ export default Vue.extend({
       if (e.dataTransfer) {
         const cardMove: CardMove = {
           deckIndex: this.deckIndex,
-          sourceMaindeck: this.maindeck,
-          sourceColumnIndex: this.columnIndex,
-          sourceCardIndex: index,
-          targetMaindeck: false,
-          targetColumnIndex: 0,
-          targetCardIndex: 0,
+          source: {
+            columnIndex: this.columnIndex,
+            cardIndex: index,
+            maindeck: this.maindeck,
+          },
+          target: {
+            columnIndex: 0,
+            cardIndex: 0,
+            maindeck: false,
+          },
         };
         e.dataTransfer.setData("text/plain", JSON.stringify(cardMove));
         e.dataTransfer.effectAllowed = "move";
@@ -118,9 +122,11 @@ export default Vue.extend({
         this.$tstore.commit("deckbuilder/moveCard",
             {
               ...cardMove,
-              targetMaindeck: this.maindeck,
-              targetColumnIndex: this.columnIndex,
-              targetCardIndex: this.getTargetIndex(e),
+              target: {
+                columnIndex: this.columnIndex,
+                cardIndex: this.getTargetIndex(e),
+                maindeck: this.maindeck,
+              },
             });
       }
       this.dropTargetIndex = null;
