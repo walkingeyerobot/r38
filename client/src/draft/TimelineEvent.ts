@@ -15,6 +15,7 @@ export type TimelineAction =
 
 export interface ActionMoveCard {
   type: 'move-card';
+  subtype: 'pick-card' | 'return-card',
   cardName: string;
   card: number;
   from: number;

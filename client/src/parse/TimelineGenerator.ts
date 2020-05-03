@@ -87,6 +87,7 @@ export class TimelineGenerator {
     const card = findCard(srcEvent.card1, activePack);
     outEvent.actions.push({
       type: 'move-card' as const,
+      subtype: 'pick-card',
       cardName: card.definition.name,
       card: card.id,
       from: activePack.id,
@@ -153,6 +154,7 @@ export class TimelineGenerator {
       const card2 = findCard(srcEvent.card2, activePack);
       outEvent.actions.push({
         type: 'move-card' as const,
+        subtype: 'pick-card',
         cardName: card2.definition.name,
         card: card2.id,
         from: activePack.id,
@@ -162,6 +164,7 @@ export class TimelineGenerator {
       const librarianCard = findCard('Cogwork Librarian', seat.player.picks);
       outEvent.actions.push({
         type: 'move-card' as const,
+        subtype: 'return-card',
         cardName: librarianCard.definition.name,
         card: librarianCard.id,
         from: seat.player.picks.id,

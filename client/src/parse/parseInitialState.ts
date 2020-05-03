@@ -17,7 +17,7 @@ export function parseInitialState(srcData: SourceData): DraftState {
   for (const [i, srcSeat] of srcData.seats.entries()) {
     const playerPicks: PlayerPicks = {
       id: nextPackId++,
-      type: 'player-picks',
+      type: 'seat',
       cards: []
     };
     packMap.set(playerPicks.id, playerPicks);
@@ -76,9 +76,10 @@ function parsePack(srcPack: SourceCard[]) {
         collector_number: srcPick.number,
         cmc: srcPick.cmc,
         tags: srcPick.tags.split(", "),
+        searchName: srcPick.name.toLocaleLowerCase().normalize(),
       },
       sourcePackIndex: i,
-      draftedBy: null,
+      pickedIn: [],
     });
   }
 
