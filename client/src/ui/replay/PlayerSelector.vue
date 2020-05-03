@@ -1,5 +1,5 @@
 <template>
-  <div class="_draft-table">
+  <div class="_player-selector">
     <draft-seat-component
         v-for="seat in draft.seats"
         :key="seat.position"
@@ -27,7 +27,7 @@ export default Vue.extend({
 </script>
 
 <style scoped>
-._draft-table {
+._player-selector {
   user-select: none;
   cursor: default;
 

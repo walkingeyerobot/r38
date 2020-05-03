@@ -6,7 +6,7 @@
       >
     <ControlsRow />
     <div class="main">
-      <DraftTable class="table" />
+      <PlayerSelector class="table" />
       <CardGrid class="grid" />
     </div>
   </div>
@@ -18,9 +18,9 @@ import { parseDraft } from '../parse/parseDraft';
 import { SourceData } from '../parse/SourceData';
 import { getServerPayload } from '../parse/getServerPayload';
 
-import ControlsRow from './table/ControlsRow.vue';
-import DraftTable from './table/DraftTable.vue';
-import CardGrid from './table/CardGrid.vue';
+import ControlsRow from './replay/ControlsRow.vue';
+import PlayerSelector from './replay/PlayerSelector.vue';
+import CardGrid from './replay/CardGrid.vue';
 import { SelectedView } from '../state/selection';
 import { applyReplayUrlState } from '../router/url_manipulation';
 import { globalClickTracker } from './infra/globalClickTracker';
@@ -30,7 +30,7 @@ export default Vue.extend({
 
   components: {
     ControlsRow,
-    DraftTable,
+    PlayerSelector,
     CardGrid,
   },
 
