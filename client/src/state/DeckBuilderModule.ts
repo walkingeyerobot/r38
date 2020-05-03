@@ -42,36 +42,43 @@ export const DeckBuilderModule = VuexModule({
     },
 
     moveCard(state: DeckBuilderState, move: CardMove) {
-      let card: DraftCard;
-      let source: CardColumn[];
-      if (move.source.maindeck) {
-        source = state.decks[move.deckIndex].maindeck;
-      } else {
-        source = state.decks[move.deckIndex].sideboard;
+      if (move.source.length === 0) {
+        return;
       }
-      if (move.source.maindeck !== move.target.maindeck
-          || move.source.columnIndex !== move.target.columnIndex) {
-        [card] = source[move.source.columnIndex]
-            .splice(move.source.cardIndex, 1);
-        let target: CardColumn[];
+      let sourceSection: CardColumn[];
+      if (move.source[0].maindeck) {
+        sourceSection = state.decks[move.deckIndex].maindeck;
+      } else {
+        sourceSection = state.decks[move.deckIndex].sideboard;
+      }
+      if (move.source[0].maindeck !== move.target.maindeck
+          || !move.source.map(source => source.columnIndex).includes(move.target.columnIndex)) {
+        const cards: DraftCard[] = move.source.map(location =>
+            sourceSection[location.columnIndex][location.cardIndex]);
+        move.source.forEach((location, index) => {
+          sourceSection[location.columnIndex].splice(
+              sourceSection[location.columnIndex].indexOf(cards[index]), 1);
+        });
+        let targetSection: CardColumn[];
         if (move.target.maindeck) {
-          target = state.decks[move.deckIndex].maindeck;
+          targetSection = state.decks[move.deckIndex].maindeck;
         } else {
-          target = state.decks[move.deckIndex].sideboard;
+          targetSection = state.decks[move.deckIndex].sideboard;
         }
-        target[move.target.columnIndex]
-            .splice(move.target.cardIndex, 0, card);
-      } else if (move.source.cardIndex !== move.target.cardIndex
+        targetSection[move.target.columnIndex]
+            .splice(move.target.cardIndex, 0, ...cards);
+      }/* else if (move.source.cardIndex !== move.target.cardIndex
           && move.source.cardIndex !== move.target.cardIndex + 1) {
-        [card] = source[move.source.columnIndex]
+        [card] = sourceSection[move.source.columnIndex]
             .splice(move.source.cardIndex, 1);
         const targetCardIndex =
             (move.target.cardIndex < move.source.cardIndex)
                 ? move.target.cardIndex
                 : move.target.cardIndex - 1;
-        source[move.target.columnIndex]
+        sourceSection[move.target.columnIndex]
             .splice(targetCardIndex, 0, card);
-      }
+      }*/
+      state.selection = [];
     },
 
     selectCards(state: DeckBuilderState, selection: CardLocation[]) {
@@ -114,6 +121,6 @@ export interface CardLocation {
 
 export interface CardMove {
   deckIndex: number,
-  source: CardLocation,
+  source: CardLocation[],
   target: CardLocation,
 }

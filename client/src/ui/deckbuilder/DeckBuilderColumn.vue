@@ -3,7 +3,7 @@
       class="_column"
       :class="{columnDrop: dropTargetIndex !== null}"
       @dragover="dragOver"
-      @dragleave="dragEnd"
+      @dragleave="dragLeave"
       @dragend="dragEnd"
       @drop="drop"
       >
@@ -116,14 +116,9 @@ export default Vue.extend({
           dragImage.id = "dragImage";
           document.body.appendChild(dragImage);
           e.dataTransfer.setDragImage(dragImage, (<HTMLElement>this.$el).offsetWidth / 2, 20);
-          // TODO expand to selection
           cardMove = {
             deckIndex: this.deckIndex,
-            source: {
-              columnIndex: this.columnIndex,
-              cardIndex: index,
-              maindeck: this.maindeck,
-            },
+            source: this.selection,
             target: {
               columnIndex: 0,
               cardIndex: 0,
@@ -134,11 +129,11 @@ export default Vue.extend({
           this.$tstore.commit("deckbuilder/selectCards", []);
           cardMove = {
             deckIndex: this.deckIndex,
-            source: {
+            source: [{
               columnIndex: this.columnIndex,
               cardIndex: index,
               maindeck: this.maindeck,
-            },
+            }],
             target: {
               columnIndex: 0,
               cardIndex: 0,
@@ -171,9 +166,18 @@ export default Vue.extend({
       }
     },
 
+    dragLeave(e: DragEvent) {
+      e.preventDefault();
+      this.dropTargetIndex = null;
+    },
+
     dragEnd(e: DragEvent) {
       e.preventDefault();
       this.dropTargetIndex = null;
+      const dragImage = document.getElementById("dragImage");
+      if (dragImage) {
+        dragImage.remove();
+      }
     },
 
     drop(e: DragEvent) {
