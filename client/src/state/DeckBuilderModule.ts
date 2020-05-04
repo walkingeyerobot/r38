@@ -1,5 +1,5 @@
-import {DraftCard} from '../draft/DraftState';
-import {VuexModule} from './vuex/VuexModule';
+import { DraftCard } from '../draft/DraftState';
+import { VuexModule } from './vuex/VuexModule';
 
 const NUM_COLUMNS = 7;
 
@@ -12,6 +12,7 @@ export const DeckBuilderModule = VuexModule({
   state: {
     selectedSeat: 0,
     decks: [],
+    selection: [],
   } as DeckBuilderState,
 
   mutations: {
@@ -41,36 +42,43 @@ export const DeckBuilderModule = VuexModule({
     },
 
     moveCard(state: DeckBuilderState, move: CardMove) {
-      let card: DraftCard;
-      let source: CardColumn[];
-      if (move.sourceMaindeck) {
-        source = state.decks[move.deckIndex].maindeck;
+      if (move.source.length === 0) {
+        return;
+      }
+      let sourceSection: CardColumn[];
+      if (move.source[0].maindeck) {
+        sourceSection = state.decks[move.deckIndex].maindeck;
       } else {
-        source = state.decks[move.deckIndex].sideboard;
+        sourceSection = state.decks[move.deckIndex].sideboard;
       }
-      if (move.sourceMaindeck !== move.targetMaindeck
-          || move.sourceColumnIndex !== move.targetColumnIndex) {
-        [card] = source[move.sourceColumnIndex]
-            .splice(move.sourceCardIndex, 1);
-        let target: CardColumn[];
-        if (move.targetMaindeck) {
-          target = state.decks[move.deckIndex].maindeck;
-        } else {
-          target = state.decks[move.deckIndex].sideboard;
-        }
-        target[move.targetColumnIndex]
-            .splice(move.targetCardIndex, 0, card);
-      } else if (move.sourceCardIndex !== move.targetCardIndex
-          && move.sourceCardIndex !== move.targetCardIndex + 1) {
-        [card] = source[move.sourceColumnIndex]
-            .splice(move.sourceCardIndex, 1);
-        const targetCardIndex =
-            (move.targetCardIndex < move.sourceCardIndex)
-                ? move.targetCardIndex
-                : move.targetCardIndex - 1;
-        source[move.targetColumnIndex]
-            .splice(targetCardIndex, 0, card);
+      const cards: DraftCard[] = move.source.map(location =>
+          sourceSection[location.columnIndex][location.cardIndex]);
+      if (move.source.some(location =>
+          location.maindeck === move.target.maindeck
+          && location.columnIndex === move.target.columnIndex)) {
+        move.target.cardIndex -= move.source.filter(location =>
+            location.maindeck === move.target.maindeck
+            && location.columnIndex === move.target.columnIndex
+            && location.cardIndex < move.target.cardIndex
+        ).length;
       }
+      move.source.forEach((location, index) => {
+        sourceSection[location.columnIndex].splice(
+            sourceSection[location.columnIndex].indexOf(cards[index]), 1);
+      });
+      let targetSection: CardColumn[];
+      if (move.target.maindeck) {
+        targetSection = state.decks[move.deckIndex].maindeck;
+      } else {
+        targetSection = state.decks[move.deckIndex].sideboard;
+      }
+      targetSection[move.target.columnIndex]
+          .splice(move.target.cardIndex, 0, ...cards);
+      state.selection = [];
+    },
+
+    selectCards(state: DeckBuilderState, selection: CardLocation[]) {
+      state.selection = selection;
     },
 
   },
@@ -79,6 +87,7 @@ export const DeckBuilderModule = VuexModule({
 export interface DeckBuilderState {
   selectedSeat: number,
   decks: Deck[],
+  selection: CardLocation[],
 }
 
 export interface Deck {
@@ -100,12 +109,14 @@ export interface DeckInitializer {
   pool: DraftCard[],
 }
 
+export interface CardLocation {
+  columnIndex: number,
+  cardIndex: number,
+  maindeck: boolean,
+}
+
 export interface CardMove {
   deckIndex: number,
-  sourceColumnIndex: number,
-  sourceCardIndex: number,
-  sourceMaindeck: boolean,
-  targetColumnIndex: number,
-  targetCardIndex: number,
-  targetMaindeck: boolean,
+  source: CardLocation[],
+  target: CardLocation,
 }
