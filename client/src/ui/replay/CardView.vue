@@ -105,7 +105,7 @@ export default Vue.extend({
   top: 0;
   right: 0;
   bottom: 0;
-  box-shadow: 0 0 4px 1.2px rgba(0, 0, 0, 0.7);
+  box-shadow: 0 1px 4px 1.2px rgba(0, 0, 0, 0.7);
   opacity: 0;
   transition: opacity 110ms cubic-bezier(0.33, 1, 0.68, 1);
   border-radius: 9px;

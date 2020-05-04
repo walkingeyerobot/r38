@@ -6,7 +6,7 @@ export function isPickEvent(event: TimelineEvent): boolean {
 }
 
 export function getPickAction(event: TimelineEvent): ActionMoveCard | null {
-  const index = find(event.actions, { type: 'move-card' });
+  const index = find(event.actions, { subtype: 'pick-card' });
   if (index != -1) {
     return event.actions[index] as ActionMoveCard;
   } else {

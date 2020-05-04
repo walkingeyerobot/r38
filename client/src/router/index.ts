@@ -8,6 +8,9 @@ Vue.use(VueRouter);
 // See https://github.com/pillarjs/path-to-regexp/ for route matching language
 
 const routes = [
+  // login
+  // index
+  // draft
   {
     path: `/replay/:draftId(\\d+)/:param*`,
     component: Replay,

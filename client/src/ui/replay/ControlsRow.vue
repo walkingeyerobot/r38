@@ -2,14 +2,6 @@
   <div class="_controls-row">
     <div class="start">
       <div class="draft-name">{{ state.draftName }}</div>
-    </div>
-    <div class="center">
-      <button @click="onStartClick" class="playback-btn">« Start</button>
-      <button @click="onPrevClick" class="playback-btn">‹ Prev</button>
-      <button @click="onNextClick" class="playback-btn">Next ›</button>
-      <button @click="onEndClick" class="playback-btn">End »</button>
-    </div>
-    <div class="end">
       <div
           class="location-cnt"
           @mousedown.capture="onTimelineMouseDown"
@@ -29,22 +21,33 @@
             />
       </div>
     </div>
+    <div class="center">
+      <button @click="onStartClick" class="playback-btn">« Start</button>
+      <button @click="onPrevClick" class="playback-btn">‹ Prev</button>
+      <button @click="onNextClick" class="playback-btn">Next ›</button>
+      <button @click="onEndClick" class="playback-btn">End »</button>
+    </div>
+    <div class="end">
+      <SearchBox />
+    </div>
   </div>
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
+import Vue from 'vue';
+import TimelineSelector from './TimelineSelector.vue';
+import SearchBox from './controls_row/SearchBox.vue';
+
 import { navTo } from '../../router/url_manipulation';
 import { CoreState } from '../../state/store';
-import { getNextPickEventForSelectedPlayer } from '../../state/util/getNextPickEventForSelectedPlayer';
+import { getNextPickEventForSelectedPlayer, getNextPickEvent } from '../../state/util/getNextPickEventForSelectedPlayer';
 import { TimelineEvent } from '../../draft/TimelineEvent';
 import { globalClickTracker, UnhandledClickListener } from '../infra/globalClickTracker';
-import TimelineSelector from './TimelineSelector.vue';
-
 
 export default Vue.extend({
   components: {
     TimelineSelector,
+    SearchBox,
   },
 
   data() {
@@ -60,7 +63,11 @@ export default Vue.extend({
     },
 
     nextPickEvent(): TimelineEvent | null {
-      return getNextPickEventForSelectedPlayer(this.state);
+      if (this.state.selection?.type == 'seat') {
+        return getNextPickEventForSelectedPlayer(this.state);
+      } else {
+        return getNextPickEvent(this.state);
+      }
     },
 
     firstLocationLabel(): string {
@@ -217,7 +224,7 @@ export default Vue.extend({
 .timeline-popover {
   position: absolute;
   top: calc(100% + 5px);
-  right: 0;
+  left: 0;
   width: 300px;
   height: calc(100vh - 70px);
   background-color: #FFF;
