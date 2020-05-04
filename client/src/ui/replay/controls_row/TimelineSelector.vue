@@ -83,11 +83,11 @@ gets its own entry.
 
 <script lang="ts">
 import Vue from 'vue';
-import { CoreState } from '../../state/store';
-import { navTo } from '../../router/url_manipulation';
-import { isPickEvent, getPickAction } from '../../state/util/isPickEvent';
-import { find } from '../../util/collection';
-import { TimelineEvent } from '../../draft/TimelineEvent';
+import { CoreState } from '../../../state/store';
+import { navTo } from '../../../router/url_manipulation';
+import { isPickEvent, getPickAction } from '../../../state/util/isPickEvent';
+import { find } from '../../../util/collection';
+import { TimelineEvent } from '../../../draft/TimelineEvent';
 
 
 export default Vue.extend({
