@@ -114,14 +114,13 @@ export default Vue.extend({
 <style scoped>
 
 ._timeline-button {
-  margin-left: 15px;
   font-size: 14px;
   flex: 0 0 auto;
   position: relative;
 }
 
 .button {
-  padding: 6px 10px;
+  padding: 5px 10px;
   min-width: 125px;
   text-align: left;
   user-select: none;
@@ -131,8 +130,9 @@ export default Vue.extend({
   /* Override default button styling */
   font-size: 100%;
   font-family: inherit;
-  border: 1px solid #EAEAEA;
+  border: 1px solid #c7c7c7;
   border-radius: 5px;
+  color: inherit;
 }
 
 .button:focus {
