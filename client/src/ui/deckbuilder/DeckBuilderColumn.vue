@@ -3,18 +3,23 @@
       class="_column"
       :class="{columnDrop: dropTargetIndex !== null}"
       @dragover="dragOver"
-      @dragleave="dragEnd"
+      @dragleave="dragLeave"
       @dragend="dragEnd"
       @drop="drop"
       >
     <div
         v-for="(card, index) in column"
         :key="card.id"
+        @mousedown="preventMouseDown"
         @dragstart="dragStart($event, index)"
+        @click="select(index)"
         class="card"
         :class="{
             cardDropAbove: dropTargetIndex !== null && index === 0 && dropTargetIndex === 0,
             cardDropBelow: dropTargetIndex !== null && index === dropTargetIndex - 1,
+            noSelectionRectangle: selectionRectangle === null,
+            inSelectionRectangle: inSelectionRectangle.includes(index),
+            inSelection: inSelection(index),
         }"
         >
       <img
@@ -29,7 +34,9 @@
 <script lang="ts">
 import Vue from 'vue';
 import { MtgCard } from "../../draft/DraftState.js";
-import { CardColumn, CardMove } from "../../state/DeckBuilderModule";
+import { CardColumn, CardLocation, CardMove } from "../../state/DeckBuilderModule";
+import { intersects, Rectangle } from "../../util/rectangle";
+import DeckBuilderSection from "./DeckBuilderSection.vue";
 
 export default Vue.extend({
   name: 'DeckBuilderColumn',
@@ -46,12 +53,43 @@ export default Vue.extend({
     },
     maindeck: {
       type: Boolean
-    }
+    },
+    selectionRectangle: {
+      type: Object as () => (Rectangle | null)
+    },
   },
 
   data: () => ({
     dropTargetIndex: null as (number | null),
   }),
+
+  computed: {
+    selection(): CardLocation[] {
+      return this.$tstore.state.deckbuilder.selection;
+    },
+    inSelectionRectangle(): number[] {
+      const result = [];
+      if (this.selectionRectangle) {
+        for (let i = 0 ;i < this.$el.childElementCount; i++) {
+          const child = <HTMLElement>this.$el.children[i];
+          const childRect = {
+            start: {
+              x: child.offsetLeft,
+              y: child.offsetTop,
+            },
+            end: {
+              x: child.offsetLeft + child.offsetWidth,
+              y: child.offsetTop + child.offsetHeight,
+            },
+          };
+          if (intersects(childRect, this.selectionRectangle)) {
+            result.push(i);
+          }
+        }
+      }
+      return result;
+    },
+  },
 
   methods: {
     getImageSrc(card: MtgCard): string {
@@ -64,16 +102,37 @@ export default Vue.extend({
     },
 
     dragStart(e: DragEvent, index: number) {
+      let cardMove: CardMove;
       if (e.dataTransfer) {
-        const cardMove: CardMove = {
-          deckIndex: this.deckIndex,
-          sourceMaindeck: this.maindeck,
-          sourceColumnIndex: this.columnIndex,
-          sourceCardIndex: index,
-          targetMaindeck: false,
-          targetColumnIndex: 0,
-          targetCardIndex: 0,
-        };
+        if (this.selection.length > 1
+            && this.inSelection(index)) {
+          const dragImage = (<InstanceType<typeof DeckBuilderSection>>this.$parent).createDragImage();
+          e.dataTransfer.setDragImage(dragImage, (<HTMLElement>this.$el).offsetWidth / 2, 20);
+          cardMove = {
+            deckIndex: this.deckIndex,
+            source: this.selection,
+            target: {
+              columnIndex: 0,
+              cardIndex: 0,
+              maindeck: false,
+            },
+          };
+        } else {
+          this.$tstore.commit("deckbuilder/selectCards", []);
+          cardMove = {
+            deckIndex: this.deckIndex,
+            source: [{
+              columnIndex: this.columnIndex,
+              cardIndex: index,
+              maindeck: this.maindeck,
+            }],
+            target: {
+              columnIndex: 0,
+              cardIndex: 0,
+              maindeck: false,
+            },
+          };
+        }
         e.dataTransfer.setData("text/plain", JSON.stringify(cardMove));
         e.dataTransfer.effectAllowed = "move";
       }
@@ -99,9 +158,18 @@ export default Vue.extend({
       }
     },
 
+    dragLeave(e: DragEvent) {
+      e.preventDefault();
+      this.dropTargetIndex = null;
+    },
+
     dragEnd(e: DragEvent) {
       e.preventDefault();
       this.dropTargetIndex = null;
+      const dragImage = document.getElementById("dragImage");
+      if (dragImage) {
+        dragImage.remove();
+      }
     },
 
     drop(e: DragEvent) {
@@ -111,13 +179,34 @@ export default Vue.extend({
         this.$tstore.commit("deckbuilder/moveCard",
             {
               ...cardMove,
-              targetMaindeck: this.maindeck,
-              targetColumnIndex: this.columnIndex,
-              targetCardIndex: this.getTargetIndex(e),
+              target: {
+                columnIndex: this.columnIndex,
+                cardIndex: this.getTargetIndex(e),
+                maindeck: this.maindeck,
+              },
             });
       }
       this.dropTargetIndex = null;
     },
+
+    select(cardIndex: number) {
+      this.$tstore.commit("deckbuilder/selectCards", [{
+        columnIndex: this.columnIndex,
+        cardIndex,
+        maindeck: this.maindeck,
+      }]);
+    },
+
+    preventMouseDown(e: MouseEvent) {
+      e.stopPropagation();
+    },
+
+    inSelection(index: number) {
+      return this.selection.some(location =>
+          location.maindeck === this.maindeck
+          && location.columnIndex === this.columnIndex
+          && location.cardIndex === index);
+    }
   },
 });
 </script>
@@ -148,8 +237,23 @@ export default Vue.extend({
   border-radius: 10px;
 }
 
-.card-img:hover {
+.noSelectionRectangle > .card-img:hover, .inSelectionRectangle > .card-img {
   border-color: #bbd;
+}
+
+.inSelection > .card-img, .inSelection > .card-img:hover {
+  border-color: #66e;
+}
+
+.inSelectionRectangle::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 279px;
+  border-radius: 10px;
+  background-color: #bbd8;
 }
 
 .cardDropAbove:before {

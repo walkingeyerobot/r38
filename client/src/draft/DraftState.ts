@@ -1,3 +1,4 @@
+import { TimelineEvent } from './TimelineEvent';
 
 export interface DraftState {
   seats: DraftSeat[];
@@ -23,7 +24,7 @@ export interface CardPack {
 }
 
 export interface PlayerPicks {
-  type: 'player-picks';
+  type: 'seat';
   id: number;
   cards: DraftCard[];
 }
@@ -39,7 +40,7 @@ export interface DraftCard {
   definition: MtgCard;
   /** The index position of this card in its original pack */
   sourcePackIndex: number,
-  draftedBy: DraftedBy | null;
+  pickedIn: TimelineEvent[],
 }
 
 export interface MtgCard {
@@ -51,9 +52,7 @@ export interface MtgCard {
 
   // custom stuff
   tags: string[];
-}
 
-export interface DraftedBy {
-  player: DraftPlayer;
-  round: number;
+  // Post-processed name for quick string comparison
+  searchName: string;
 }

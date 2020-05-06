@@ -16,3 +16,17 @@ export function getNextPickEventForSelectedPlayer(
   }
   return pickEvent;
 }
+
+export function getNextPickEvent(
+  state: CoreState,
+): TimelineEvent | null {
+  let pickEvent: TimelineEvent | null = null;
+  for (let i = state.eventPos; i < state.events.length; i++) {
+    const event = state.events[i];
+    if (isPickEvent(event)) {
+      pickEvent = event;
+      break;
+    }
+  }
+  return pickEvent;
+}
