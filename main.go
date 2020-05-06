@@ -938,7 +938,7 @@ func ServePick(w http.ResponseWriter, r *http.Request, userId int64) {
 func getPackPicksAndPowers(draftId int64, userId int64) ([]Card, []Card, []Card, error) {
 	// query := `select packs.round, cards.id, cards.name, cards.tags, cards.number, cards.edition, cards.faceup, cards.mtgo from drafts join seats join packs join cards where drafts.id=? and drafts.id=seats.draft and seats.id=packs.seat and packs.id=cards.pack and seats.user=? and (packs.round=0 or (packs.round=seats.round and packs.modified in (select min(packs.modified) from packs join seats join drafts where seats.draft=? and seats.user=? and seats.id=packs.seat and drafts.id=seats.draft and packs.round=seats.round))) order by cards.modified`
 
-       query := `select
+	query := `select
                     packs.round,
                     cards.id,
                     cards.name,
