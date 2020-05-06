@@ -936,7 +936,38 @@ func ServePick(w http.ResponseWriter, r *http.Request, userId int64) {
 }
 
 func getPackPicksAndPowers(draftId int64, userId int64) ([]Card, []Card, []Card, error) {
-	query := `select packs.round, cards.id, cards.name, cards.tags, cards.number, cards.edition, cards.faceup, cards.mtgo from drafts join seats join packs join cards where drafts.id=? and drafts.id=seats.draft and seats.id=packs.seat and packs.id=cards.pack and seats.user=? and (packs.round=0 or (packs.round=seats.round and packs.modified in (select min(packs.modified) from packs join seats join drafts where seats.draft=? and seats.user=? and seats.id=packs.seat and drafts.id=seats.draft and packs.round=seats.round))) order by cards.modified`
+	// query := `select packs.round, cards.id, cards.name, cards.tags, cards.number, cards.edition, cards.faceup, cards.mtgo from drafts join seats join packs join cards where drafts.id=? and drafts.id=seats.draft and seats.id=packs.seat and packs.id=cards.pack and seats.user=? and (packs.round=0 or (packs.round=seats.round and packs.modified in (select min(packs.modified) from packs join seats join drafts where seats.draft=? and seats.user=? and seats.id=packs.seat and drafts.id=seats.draft and packs.round=seats.round))) order by cards.modified`
+
+       query := `select
+                    packs.round,
+                    cards.id,
+                    cards.name,
+                    cards.tags,
+                    cards.number,
+                    cards.edition,
+                    cards.faceup,
+                    cards.mtgo,
+                    cards.modified,
+                    packs.id,
+                    seats.position,
+                    draft.name
+                  from drafts
+                  join seats on drafts.id=seats.draft
+                  join packs on seats.id=packs.seat
+                  join cards on packs.id=cards.pack
+                  where seats.draft=?
+                    and seats.user=?
+                    and (packs.round=0
+                         or (packs.round=seats.round
+                             and packs.id=
+                               (select v_packs.id
+                                from v_packs
+                                join seats on seats.id=v_packs.seat
+                                where seats.draft=?
+                                  and seats.user=?
+                                order by v_packs.count desc
+                                limit 1)))
+                  order by cards.modified`
 
 	rows, err := database.Query(query, draftId, userId, draftId, userId)
 	if err == sql.ErrNoRows {
