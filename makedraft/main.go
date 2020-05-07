@@ -80,17 +80,6 @@ func main() {
 		}
 	}
 
-	res, err = database.Exec(`INSERT INTO seats (position, draft) VALUES(NULL, ?)`, draftId)
-	if err != nil {
-		log.Printf("error assigning seats: %s", err)
-		return
-	}
-	seatIds[8], err = res.LastInsertId()
-	if err != nil {
-		log.Printf("error assigning seats: %s", err)
-		return
-	}
-
 	query = `INSERT INTO packs (seat, original_seat, modified, round) VALUES (?, ?, 0, ?)`
 	var packIds [25]int64
 	for i := 0; i < 8; i++ {
