@@ -959,6 +959,7 @@ func getPackPicksAndPowers(draftId int64, userId int64) ([]Card, []Card, []Card,
                                 join seats on seats.id=v_packs.seat
                                 where seats.draft=?
                                   and seats.user=?
+                                  and v_packs.round=seats.round
                                 order by v_packs.count desc
                                 limit 1)))
                   order by cards.modified`
