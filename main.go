@@ -946,11 +946,7 @@ func getPackPicksAndPowers(draftId int64, userId int64) ([]Card, []Card, []Card,
                     cards.number,
                     cards.edition,
                     cards.faceup,
-                    cards.mtgo,
-                    cards.modified,
-                    packs.id,
-                    seats.position,
-                    draft.name
+                    cards.mtgo
                   from drafts
                   join seats on drafts.id=seats.draft
                   join packs on seats.id=packs.seat
