@@ -2,34 +2,19 @@ package main
 
 import (
 	"bufio"
-	"crypto/rand"
 	"database/sql"
-	"encoding/binary"
 	"encoding/csv"
 	"flag"
 	"fmt"
 	_ "github.com/mattn/go-sqlite3"
 	"log"
-	badrand "math/rand"
 	"os"
 	"strconv"
+	
+	"time"
+	"math/rand"
+	"math"
 )
-
-type cryptoSource struct{}
-
-func (s cryptoSource) Seed(seed int64) {}
-
-func (s cryptoSource) Int63() int64 {
-	return int64(s.Uint64() & ^uint64(1<<63))
-}
-
-func (s cryptoSource) Uint64() (v uint64) {
-	err := binary.Read(rand.Reader, binary.BigEndian, &v)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return v
-}
 
 type Card struct {
 	Mtgo string
@@ -52,6 +37,13 @@ type CardSet struct {
 
 var database *sql.DB
 
+const MAX_M = 2
+const MAX_R = 3
+const MAX_U = 5
+const MAX_C = 8
+
+type hopperRefill func(h *Hopper) ()
+
 func main() {
 	draftNamePtr := flag.String("name", "untitled draft", "string")
 	filenamePtr := flag.String("filename", "ktk.csv", "string")
@@ -60,7 +52,15 @@ func main() {
 
 	name := *draftNamePtr
 
+	rand.Seed(time.Now().UnixNano())
+
 	var err error
+	var lol [24]int64
+	err = generateStandardDraft(lol, *filenamePtr)
+	if err == nil {
+		return
+	}
+	
 	database, err = sql.Open("sqlite3", *databasePtr)
 	if err != nil {
 		log.Printf("error opening database %s: %s", *databasePtr, err)
@@ -77,17 +77,24 @@ func main() {
 		return
 	}
 
-	err = generateStandardDraft(packIds, *filenamePtr)
-	if err != nil {
-		return
-	}
-
-	/*
 	err = generateCubeDraft(packIds, *filenamePtr)
 	if err != nil {
 		return
 	}
-*/
+}
+
+type Hopper struct {
+	Cards []Card
+	Refill hopperRefill
+}
+
+func (h *Hopper) Pop() Card {
+	ret := h.Cards[0]
+	h.Cards = h.Cards[1:]
+	if len(h.Cards) == 0 {
+		h.Refill(h)
+	}
+	return ret
 }
 
 func generateEmptyDraft(name string) ([24]int64, error) {
@@ -182,10 +189,8 @@ func generateCubeDraft(packIds [24]int64, filename string) (error) {
 
 	query := `INSERT INTO cards (pack, original_pack, edition, number, tags, name, cmc, type, color, mtgo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
-	var src cryptoSource
-	rnd := badrand.New(src)
 	for i := 539; i > 179; i-- {
-		j := rnd.Intn(i)
+		j := rand.Intn(i)
 		lines[i], lines[j] = lines[j], lines[i]
 		packId := packIds[(539-i)/15]
 		finish := lines[i][7]
@@ -211,9 +216,6 @@ func generateStandardDraft(packIds [24]int64, filename string) (error) {
 	if err != nil {
 		return err
 	}
-
-	var src cryptoSource
-	rnd := badrand.New(src)
 
 	var allCards CardSet
 
@@ -241,159 +243,163 @@ func generateStandardDraft(packIds [24]int64, filename string) (error) {
 		}
 	}
 
+/*
 	mythicCount := len(allCards.Mythics)
 	rareCount := len(allCards.Rares)
 	uncommonCount := len(allCards.Uncommons)
 	commonCount := len(allCards.Commons)
+*/
 
-	var draftPool CardSet
-
-	for {
-		for i := 0; i < 24; i++ {
-			r := rnd.Intn(rareCount * 2 + mythicCount)
-			if r < mythicCount {
-				draftPool.Rares = append(draftPool.Rares, allCards.Mythics[rnd.Intn(mythicCount)])
-			} else {
-				draftPool.Rares = append(draftPool.Rares, allCards.Rares[rnd.Intn(rareCount)])
-			}
+	refillRares := func(h *Hopper) () {
+		if len(h.Cards) == 0 {
+			return
 		}
-
-		qq := violatesQuantityLimit(draftPool)
-		log.Printf("%v", qq)
-
-		if qq == true {
-			log.Printf("violated quantity limit test 1")
-			draftPool.Rares = []Card{}
-			continue
+		h.Cards = append(append(allCards.Mythics, allCards.Rares...), allCards.Rares...)
+		shuffle(h.Cards)
+	}
+	refillUncommons := func(h *Hopper) {
+		if len(h.Cards) == 0 {
+			return
 		}
-
-		// if we reach here, everything is good so far
-		break
+		h.Cards = append(allCards.Uncommons, allCards.Uncommons...)
+		shuffle(h.Cards)
+	}
+	refillCommons := func(h *Hopper) {
+		if len(h.Cards) == 0 {
+			return
+		}
+		h.Cards = append(allCards.Commons, allCards.Commons...)
+		shuffle(h.Cards)
 	}
 
-	// rares and mythics are all set at this point
-	// move on to uncommons
+	var hoppers [14]*Hopper
+	hoppers[0] = &(Hopper{Refill: refillRares})
 
-	for {
-		for i := 0; i < 72; i++ {
-			r := rnd.Intn(uncommonCount)
-			draftPool.Uncommons = append(draftPool.Uncommons, allCards.Uncommons[r])
-		}
+	hoppers[1] = &(Hopper{Refill: refillUncommons})
+	hoppers[2] = &(Hopper{Refill: refillUncommons})
+	hoppers[3] = &(Hopper{Refill: refillUncommons})
 
-		if violatesQuantityLimit(draftPool) {
-			log.Printf("violated quantity limit test 2")
-			draftPool.Uncommons = []Card{}
-			continue
-		}
-		
-		break
+	hoppers[4] = &(Hopper{Refill: refillCommons})
+	hoppers[5] = hoppers[4]
+	hoppers[6] = &(Hopper{Refill: refillCommons})
+	hoppers[7] = hoppers[6]
+	hoppers[8] = &(Hopper{Refill: refillCommons})
+	hoppers[9] = hoppers[8]
+	hoppers[10] = &(Hopper{Refill: refillCommons})
+	hoppers[11] = hoppers[10]
+	hoppers[12] = &(Hopper{Refill: refillCommons})
+	hoppers[13] = hoppers[12]
+
+	for i, hopper := range hoppers {
+		hopper.Refill(hopper)
 	}
 
-	// uncommons are all set at this point
-	// do foils next
+	var pack [14]Card	
 
 	for {
-		for i := 0; i < 24; i++ {
-			r := rnd.Intn(4)
-			if r > 0 {
-				// add nothing
-				continue
-			}
-
-			r = rnd.Intn(7)
-			var card Card
-			if r < 4 {
-				// add a foil common
-				card = allCards.Commons[rnd.Intn(commonCount)]
-			} else if r < 6 {
-				// add a foil uncommon
-				card = allCards.Uncommons[rnd.Intn(uncommonCount)]
-			} else {
-				r = rnd.Intn(rareCount * 2 + mythicCount)
-				if r < mythicCount {
-					// add a foil mythic
-					card = allCards.Mythics[rnd.Intn(mythicCount)]
-				} else {
-					// add a foil rare
-					card = allCards.Rares[rnd.Intn(rareCount)]
-				}
-			}
-
-			draftPool.Foils = append(draftPool.Foils, card)
+		for i, hopper := range hoppers {
+			pack[i] = hopper.Pop()
 		}
 
-		if violatesQuantityLimit(draftPool) {
-			log.Printf("violated quantity limit test 3")
-			draftPool.Foils = []Card{}
-			continue
+		if okPack(pack) {
+			break
 		}
-		
-		break
+		for _, card := range pack {
+			log.Printf("%s\t%s", card.Rarity, card.Name)
+		}
 	}
 
-	log.Printf("%v", draftPool)
-	
+	for _, card := range pack {
+		log.Printf("%s\t%s", card.Rarity, card.Name)
+	}
+
 	return nil
 }
 
-func violatesQuantityLimit(draftPool CardSet) (bool) {
-	log.Printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-	MAX_M := 2
-	MAX_R := 3
-	MAX_U := 5
-	MAX_C := 8
+func okPack(pack [14]Card) (bool) {
+	h := make(map[Card]int)
+	c := make(map[rune]int)
+	for _, card := range pack {
+		h[card]++
+		if h[card] > 1 {
+			log.Printf("bad")
+			return false
+		}
+		if card.Rarity == "C" {
+			for _, d := range card.Color {
+				c[d]++
+			}
+		}
+	}
 
-	fails := false
+	var total int
+	for _, v := range c {
+		total += v
+	}
+	average := float64(total) / 5.0
+	var sd float64
+	for _, v := range c {
+		sd += math.Pow(float64(v) - average, 2)
+	}
+
+	sd = math.Sqrt(sd / 5.0)
+
+	log.Printf("sd: %f", sd)
+	log.Printf("%v", c)
+
+	if sd > 1.2 {
+		return false
+	}
 	
+	log.Printf("good")
+	return true
+}
+
+func violatesQuantityLimit(draftPool CardSet) (bool) {
 	countsM := make(map[string]int)
 	countsR := make(map[string]int)
 	countsU := make(map[string]int)
 	countsC := make(map[string]int)
 	for _, list := range [][]Card{draftPool.Rares, draftPool.Uncommons, draftPool.Commons, draftPool.Foils} {
 		for _, card := range list {
-			log.Printf("%s", card.Name)
 			switch card.Rarity {
 			case "M":
 				old := countsM[card.Name]
 				if old >= MAX_M {
-					log.Printf("failed: %d >= %d", old, MAX_M)
-					fails = true
+					return true
 				}
 				countsM[card.Name] = old + 1
 			case "R":
 				old := countsR[card.Name]
 				if old >= MAX_R {
-					log.Printf("failed: %d >= %d", old, MAX_M)
-					fails = true
+					return true
 				}
 				countsR[card.Name] = old + 1
 			case "U":
 				old := countsU[card.Name]
 				if old >= MAX_U {
-					log.Printf("failed: %d >= %d", old, MAX_M)
-					fails = true
+					return true
 				}
 				countsU[card.Name] = old + 1
 			case "C":
 				old := countsC[card.Name]
 				if old >= MAX_C {
-					log.Printf("failed: %d >= %d", old, MAX_M)
-					fails = true
+					return true
 				}
 				countsC[card.Name] = old + 1
 			default:
 				log.Printf("wtf")
-				fails = true
+				return true
 			}
 		}
 	}
 
-	if fails {
-		log.Printf("%v", countsR)
-	} else {
-		log.Printf("passes")
-		log.Printf("%v", fails)
+	return false
+}
+
+func shuffle(slice []Card) {
+	for i := len(slice) - 1; i > 0; i-- {
+		j := rand.Intn(i)
+		slice[i], slice[j] = slice[j], slice[i]
 	}
-	log.Printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-	return fails
 }
