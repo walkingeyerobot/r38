@@ -1,4 +1,5 @@
 const path = require('path');
+const webpack = require('webpack');
 const merge = require('webpack-merge');
 
 const common = require('./webpack.common')('production');
@@ -20,4 +21,11 @@ module.exports = merge.smart(common, {
     // from.
     path: path.resolve(PROJECT_ROOT, 'static/dist'),
   },
+
+  plugins: [
+    new webpack.NormalModuleReplacementPlugin(
+      /src\/fake_data\/devReplayData\.ts$/,
+      './devReplayData.stub.ts',
+    ),
+  ],
 });
