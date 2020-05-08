@@ -16,17 +16,18 @@
 
 <script lang="ts">
 import Vue from 'vue';
+import { deckBuilderStore as store, DeckBuilderStore } from '../../state/DeckBuilderModule';
 
 export default Vue.extend({
   computed: {
-    state() {
-      return this.$tstore.state.deckbuilder;
+    state(): DeckBuilderStore {
+      return store;
     },
   },
 
   methods: {
     onPlayerClick(index: number) {
-      this.$tstore.commit('deckbuilder/setSelectedSeat', index);
+      store.setSelectedSeat(index);
     },
   },
 });

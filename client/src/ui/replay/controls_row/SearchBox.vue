@@ -72,13 +72,14 @@ results.
 
 <script lang="ts">
 import Vue from 'vue';
-import { CoreState } from '../../../state/store';
 import { CardContainer, MtgCard } from '../../../draft/DraftState';
 import { navTo } from '../../../router/url_manipulation';
 import { SelectedView } from '../../../state/selection';
 import { find } from '../../../util/collection';
 import { TimelineEvent, TimelineAction } from '../../../draft/TimelineEvent';
 import { globalClickTracker, UnhandledClickListener } from '../../infra/globalClickTracker';
+
+import { replayStore as store } from '../../../state/ReplayModule';
 
 
 export default Vue.extend({
@@ -92,10 +93,6 @@ export default Vue.extend({
   },
 
   computed: {
-    state(): CoreState {
-      return this.$tstore.state;
-    },
-
     searchResults(): CardSearchResult[] {
       if (!this.resultsOpen) {
         return [];
@@ -143,7 +140,7 @@ export default Vue.extend({
     },
 
     onCardNameClick(result: CardSearchResult) {
-      navTo(this.$tstore, this.$route, this.$router, {
+      navTo(store, this.$route, this.$router, {
         selection: {
           id: result.packId,
           type: result.packType,
@@ -153,9 +150,9 @@ export default Vue.extend({
 
     onPickTimeClick(pick: CardSearchResult['picked']) {
       if (pick != null) {
-        const index = find(this.state.events, { id: pick.eventId });
+        const index = find(store.events, { id: pick.eventId });
         if (index != -1) {
-          navTo(this.$tstore, this.$route, this.$router, {
+          navTo(store, this.$route, this.$router, {
             eventIndex: index,
             selection: {
               id: pick.seatId,
@@ -175,7 +172,7 @@ export default Vue.extend({
 
       const finalQuery = query.toLocaleLowerCase().normalize();
       const results = [] as CardSearchResult[];
-      for (let pack of this.state.draft.packs.values()) {
+      for (let pack of store.draft.packs.values()) {
         for (let card of pack.cards) {
 
           if (card.definition.searchName.indexOf(query) != -1) {
@@ -188,7 +185,7 @@ export default Vue.extend({
               card: card.definition,
               picked: pickEvent != null ? {
                 playerName:
-                    this.state.draft.seats[pickEvent.associatedSeat]
+                    store.draft.seats[pickEvent.associatedSeat]
                         .player.name,
                 seatId: pickEvent.associatedSeat,
                 eventId: pickEvent.id,

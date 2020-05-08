@@ -32,9 +32,11 @@ the timeline.
 import Vue from 'vue';
 import TimelineSelector from './TimelineSelector.vue';
 import { globalClickTracker, UnhandledClickListener } from '../../infra/globalClickTracker';
-import { CoreState } from '../../../state/store';
 import { getNextPickEventForSelectedPlayer, getNextPickEvent } from '../../../state/util/getNextPickEventForSelectedPlayer';
 import { TimelineEvent } from '../../../draft/TimelineEvent';
+
+import { replayStore as store, ReplayModule } from '../../../state/ReplayModule';
+
 
 export default Vue.extend({
   components: {
@@ -49,15 +51,11 @@ export default Vue.extend({
   },
 
   computed: {
-    state(): CoreState {
-      return this.$tstore.state;
-    },
-
     nextPickEvent(): TimelineEvent | null {
-      if (this.state.selection?.type == 'seat') {
-        return getNextPickEventForSelectedPlayer(this.state);
+      if (store.selection?.type == 'seat') {
+        return getNextPickEventForSelectedPlayer(store);
       } else {
-        return getNextPickEvent(this.state);
+        return getNextPickEvent(store);
       }
     },
 
@@ -65,10 +63,10 @@ export default Vue.extend({
       const pickEvent = this.nextPickEvent;
       if (pickEvent != null) {
         return `Pack ${pickEvent.round}`;
-      } else if (this.state.eventPos >= this.state.events.length) {
+      } else if (store.eventPos >= store.events.length) {
         return `End of draft`;
       } else {
-        return `Event ${this.state.events[this.state.eventPos].id}`;
+        return `Event ${store.events[store.eventPos].id}`;
       }
     },
 

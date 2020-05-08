@@ -83,32 +83,29 @@ gets its own entry.
 
 <script lang="ts">
 import Vue from 'vue';
-import { CoreState } from '../../../state/store';
 import { navTo } from '../../../router/url_manipulation';
 import { isPickEvent, getPickAction } from '../../../state/util/isPickEvent';
 import { find } from '../../../util/collection';
 import { TimelineEvent } from '../../../draft/TimelineEvent';
 
+import { replayStore as store } from '../../../state/ReplayModule';
+
 
 export default Vue.extend({
   computed: {
-    state(): CoreState {
-      return this.$tstore.state;
-    },
-
     synchronizeTimeline: {
       get() {
-        return this.$tstore.state.timeMode == 'synchronized';
+        return store.timeMode == 'synchronized';
       },
 
       set(value) {
-        this.$tstore.commit('setTimeMode', value ? 'synchronized' : 'original');
-        navTo(this.$tstore, this.$route, this.$router, {});
+        store.setTimeMode(value ? 'synchronized' : 'original');
+        navTo(store, this.$route, this.$router, {});
       }
     },
 
     listEntries(): ListEntry[] {
-      if (this.state.timeMode == 'synchronized') {
+      if (store.timeMode == 'synchronized') {
         return this.computeSynchronizedList();
       } else {
         return this.computeTemporalList();
@@ -116,16 +113,16 @@ export default Vue.extend({
     },
 
     currentEventId(): number {
-      const event = this.state.events[this.state.eventPos];
+      const event = store.events[store.eventPos];
       return event != undefined ? event.id : -1;
     }
   },
 
   methods: {
     onSyncPickClicked(eventId: number) {
-      const index = find(this.state.events, { id: eventId });
+      const index = find(store.events, { id: eventId });
       if (index != -1) {
-        navTo(this.$tstore, this.$route, this.$router, {
+        navTo(store, this.$route, this.$router, {
           eventIndex: index,
         });
       } else {
@@ -134,9 +131,9 @@ export default Vue.extend({
     },
 
     onTempPickClicked(eventId: number, seatId: number) {
-      const index = find(this.state.events, { id: eventId });
+      const index = find(store.events, { id: eventId });
       if (index != -1) {
-        navTo(this.$tstore, this.$route, this.$router, {
+        navTo(store, this.$route, this.$router, {
           eventIndex: index,
           selection: {
             type: 'seat',
@@ -153,7 +150,7 @@ export default Vue.extend({
       let currentPick = -1;
       const entries = [] as ListEntry[];
 
-      for (let event of this.state.events) {
+      for (let event of store.events) {
         if (event.round != currentRound) {
           entries.push({
             type: 'synchronized-header',
@@ -178,7 +175,7 @@ export default Vue.extend({
 
     computeTemporalList() {
       const entries = [] as ListEntry[];
-      for (let event of this.state.events) {
+      for (let event of store.events) {
         const pickAction = getPickAction(event);
 
         if (pickAction != null) {
@@ -188,8 +185,7 @@ export default Vue.extend({
             seatId: event.associatedSeat,
             round: event.round,
             pick: event.pick,
-            playerName:
-                this.state.draft.seats[event.associatedSeat].player.name,
+            playerName: store.draft.seats[event.associatedSeat].player.name,
             cardName: pickAction.cardName,
           });
         } else {
