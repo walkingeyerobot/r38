@@ -10,29 +10,29 @@ import (
 	"log"
 	"os"
 	"strconv"
-	
-	"time"
-	"math/rand"
+
 	"math"
+	"math/rand"
+	"time"
 )
 
 type Card struct {
-	Mtgo string
+	Mtgo   string
 	Number string
 	Rarity string
-	Name string
-	Color string
-	Cmc int64
-	Type string
+	Name   string
+	Color  string
+	Cmc    int64
+	Type   string
 	Rating float64
 }
 
 type CardSet struct {
-	Mythics []Card
-	Rares []Card
+	Mythics   []Card
+	Rares     []Card
 	Uncommons []Card
-	Commons []Card
-	Foils []Card
+	Commons   []Card
+	Foils     []Card
 }
 
 var database *sql.DB
@@ -42,7 +42,7 @@ const MAX_R = 3
 const MAX_U = 5
 const MAX_C = 8
 
-type hopperRefill func(h *Hopper) ()
+type hopperRefill func(h *Hopper)
 
 func main() {
 	draftNamePtr := flag.String("name", "untitled draft", "string")
@@ -60,7 +60,7 @@ func main() {
 	if err == nil {
 		return
 	}
-	
+
 	database, err = sql.Open("sqlite3", *databasePtr)
 	if err != nil {
 		log.Printf("error opening database %s: %s", *databasePtr, err)
@@ -84,7 +84,7 @@ func main() {
 }
 
 type Hopper struct {
-	Cards []Card
+	Cards  []Card
 	Refill hopperRefill
 }
 
@@ -181,7 +181,7 @@ func readCsv(filename string) ([][]string, error) {
 	return lines, nil
 }
 
-func generateCubeDraft(packIds [24]int64, filename string) (error) {
+func generateCubeDraft(packIds [24]int64, filename string) error {
 	lines, err := readCsv(filename)
 	if err != nil {
 		return err
@@ -211,7 +211,7 @@ func generateCubeDraft(packIds [24]int64, filename string) (error) {
 	return nil
 }
 
-func generateStandardDraft(packIds [24]int64, filename string) (error) {
+func generateStandardDraft(packIds [24]int64, filename string) error {
 	lines, err := readCsv(filename)
 	if err != nil {
 		return err
@@ -243,14 +243,14 @@ func generateStandardDraft(packIds [24]int64, filename string) (error) {
 		}
 	}
 
-/*
-	mythicCount := len(allCards.Mythics)
-	rareCount := len(allCards.Rares)
-	uncommonCount := len(allCards.Uncommons)
-	commonCount := len(allCards.Commons)
-*/
+	/*
+		mythicCount := len(allCards.Mythics)
+		rareCount := len(allCards.Rares)
+		uncommonCount := len(allCards.Uncommons)
+		commonCount := len(allCards.Commons)
+	*/
 
-	refillRares := func(h *Hopper) () {
+	refillRares := func(h *Hopper) {
 		if len(h.Cards) == 0 {
 			return
 		}
@@ -294,7 +294,7 @@ func generateStandardDraft(packIds [24]int64, filename string) (error) {
 		hopper.Refill(hopper)
 	}
 
-	var pack [14]Card	
+	var pack [14]Card
 
 	for {
 		for i, hopper := range hoppers {
@@ -316,7 +316,7 @@ func generateStandardDraft(packIds [24]int64, filename string) (error) {
 	return nil
 }
 
-func okPack(pack [14]Card) (bool) {
+func okPack(pack [14]Card) bool {
 	h := make(map[Card]int)
 	c := make(map[rune]int)
 	for _, card := range pack {
@@ -339,7 +339,7 @@ func okPack(pack [14]Card) (bool) {
 	average := float64(total) / 5.0
 	var sd float64
 	for _, v := range c {
-		sd += math.Pow(float64(v) - average, 2)
+		sd += math.Pow(float64(v)-average, 2)
 	}
 
 	sd = math.Sqrt(sd / 5.0)
@@ -350,12 +350,12 @@ func okPack(pack [14]Card) (bool) {
 	if sd > 1.2 {
 		return false
 	}
-	
+
 	log.Printf("good")
 	return true
 }
 
-func violatesQuantityLimit(draftPool CardSet) (bool) {
+func violatesQuantityLimit(draftPool CardSet) bool {
 	countsM := make(map[string]int)
 	countsR := make(map[string]int)
 	countsU := make(map[string]int)
