@@ -5,7 +5,8 @@
   "private": true,
   "scripts": {
     "start": "webpack-dev-server --config build_config/webpack.dev.js",
-    "build": "webpack --config build_config/webpack.prod.js",
+    "build": "webpack --config build_config/webpack.prod.js --progress --hide-modules",
+    "build-stats": "webpack --config build_config/webpack.prod.js --progress --profile --json > stats.json",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
