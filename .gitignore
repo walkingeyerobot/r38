@@ -6,4 +6,5 @@ pkg/
 run.sh
 node_modules/
 /client/dist
+/client/stats.json
 static/dist
