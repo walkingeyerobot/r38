@@ -1,7 +1,6 @@
-import { TimeMode, RootState } from '../state/store';
-import { Store } from 'vuex';
-import { SelectedView } from '../state/selection';
 import VueRouter, { Route } from 'vue-router';
+import { SelectedView } from '../state/selection';
+import { ReplayModule, TimeMode } from '../state/ReplayModule';
 
 /**
  * Navigates the UI to a particular state, updating the URL to match.
@@ -17,12 +16,12 @@ import VueRouter, { Route } from 'vue-router';
  * @param to The desired UI state to move to
  */
 export function navTo(
-  store: Store<RootState>,
+  state: ReplayModule,
   route: Route,
   router: VueRouter,
   to: TargetState,
 ) {
-  const url = generateReplayUrl(store.state, to);
+  const url = generateReplayUrl(state, to);
   if (url != route.path) {
     router.push(url);
   }
@@ -35,7 +34,7 @@ export interface TargetState {
 }
 
 
-function generateReplayUrl(state: RootState, to: TargetState): string {
+function generateReplayUrl(state: ReplayModule, to: TargetState): string {
   const draftId = state.draftId;
 
   const timeMode = to.timeMode != undefined ? to.timeMode : state.timeMode;
@@ -66,11 +65,11 @@ function generateReplayUrl(state: RootState, to: TargetState): string {
  * @param params The URL params (`this.$route.params`)
  */
 export function applyReplayUrlState(
-  store: Store<RootState>,
+  state: ReplayModule,
   route: Route,
 ) {
   const parsedUrl = parseUrl(route);
-  applyUrl(store, parsedUrl);
+  applyUrl(state, parsedUrl);
 }
 
 function parseUrl(route: Route) {
@@ -124,26 +123,25 @@ function parseUrl(route: Route) {
   return parsedUrl;
 }
 
-function applyUrl(store: Store<RootState>, parse: ParsedUrl) {
-  if (store.state.draftId != parse.draftId) {
-    store.commit('setDraftId', parse.draftId);
+function applyUrl(state: ReplayModule, parse: ParsedUrl) {
+  if (state.draftId != parse.draftId) {
+    state.setDraftId(parse.draftId);
   }
 
-  if (parse.timeMode != undefined
-      && parse.timeMode != store.state.timeMode) {
-    store.commit('setTimeMode', parse.timeMode);
+  if (parse.timeMode != undefined && parse.timeMode != state.timeMode) {
+    state.setTimeMode(parse.timeMode);
   }
 
   if (parse.eventIndex != undefined
       && parse.eventIndex >= 0
-      && parse.eventIndex <= store.state.events.length) {
-    store.commit('goTo', parse.eventIndex);
+      && parse.eventIndex <= state.events.length) {
+    state.goTo(parse.eventIndex);
   }
 
   if (parse.selection != undefined
-      && (parse.selection.type != store.state.selection?.type
-          || parse.selection.id != store.state.selection.id)) {
-    store.commit('setSelection', parse.selection);
+      && (parse.selection.type != state.selection?.type
+          || parse.selection.id != state.selection.id)) {
+    state.setSelection(parse.selection);
   }
 }
 

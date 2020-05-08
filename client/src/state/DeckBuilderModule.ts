@@ -1,19 +1,21 @@
 import { DraftCard } from '../draft/DraftState';
-import { VuexModule } from './vuex/VuexModule';
+import { vuexModule } from './vuex/vuexModule2';
+import { rootStore } from './store';
+
 
 const NUM_COLUMNS = 7;
+
 
 /**
  * Vuex module for storing state related to the deck builder.
  */
-export const DeckBuilderModule = VuexModule({
-  namespaced: true,
+export const deckBuilderStore = vuexModule(rootStore, 'deckbuilder', {
 
-  state: {
-    selectedSeat: 0,
-    decks: [],
-    selection: [],
-  } as DeckBuilderState,
+  selectedSeat: 0,
+  decks: [],
+  selection: [],
+
+} as DeckBuilderState, {
 
   mutations: {
     initDecks(
@@ -22,9 +24,11 @@ export const DeckBuilderModule = VuexModule({
     ) {
       state.decks = [];
       for (let initializer of init) {
-        const sideboard: CardColumn[] = (<DraftCard[][]>Array(NUM_COLUMNS)).fill([]).map(() => []);
+        const sideboard: CardColumn[] =
+            (<DraftCard[][]>Array(NUM_COLUMNS)).fill([]).map(() => []);
         for (const card of initializer.pool) {
-          sideboard[Math.min(card.definition.cmc, sideboard.length - 1)].push(card);
+          sideboard[Math.min(card.definition.cmc, sideboard.length - 1)]
+              .push(card);
         }
         state.decks.push({
           player: {
@@ -80,11 +84,16 @@ export const DeckBuilderModule = VuexModule({
     selectCards(state: DeckBuilderState, selection: CardLocation[]) {
       state.selection = selection;
     },
-
   },
+
+  getters: {},
+
+  actions: {},
 });
 
-export interface DeckBuilderState {
+export type DeckBuilderStore = typeof deckBuilderStore;
+
+interface DeckBuilderState {
   selectedSeat: number,
   decks: Deck[],
   selection: CardLocation[],

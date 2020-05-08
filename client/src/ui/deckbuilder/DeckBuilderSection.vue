@@ -32,7 +32,7 @@
 <script lang="ts">
 import Vue, { VueConstructor } from 'vue'
 import DeckBuilderColumn from "./DeckBuilderColumn.vue";
-import { CardColumn, CardLocation } from '../../state/DeckBuilderModule';
+import { deckBuilderStore as store, CardColumn, CardLocation } from '../../state/DeckBuilderModule';
 import { Point, Rectangle } from "../../util/rectangle";
 
 export default (Vue as VueConstructor<Vue & {
@@ -77,7 +77,7 @@ export default (Vue as VueConstructor<Vue & {
       }
     },
     selection(): CardLocation[] {
-      return this.$tstore.state.deckbuilder.selection;
+      return store.selection;
     },
   },
 
@@ -135,7 +135,7 @@ export default (Vue as VueConstructor<Vue & {
                       cardIndex,
                       maindeck: this.maindeck,
                     })));
-        this.$tstore.commit("deckbuilder/selectCards", selection);
+        store.selectCards(selection);
         this.selectionRectangle = null;
         e.preventDefault();
       }

@@ -8,7 +8,7 @@
       <button @click="onEndClick" class="playback-btn">End</button>
     </div>
     <div class="center">
-      <div class="draft-name">{{ state.draftName }}</div>
+      <div class="draft-name">{{ store.draftName }}</div>
     </div>
     <div class="end">
       <SearchBox />
@@ -22,10 +22,12 @@ import TimelineButton from './controls_row/TimelineButton.vue';
 import SearchBox from './controls_row/SearchBox.vue';
 
 import { navTo } from '../../router/url_manipulation';
-import { CoreState } from '../../state/store';
 import { getNextPickEventForSelectedPlayer, getNextPickEvent } from '../../state/util/getNextPickEventForSelectedPlayer';
 import { TimelineEvent } from '../../draft/TimelineEvent';
 import { globalClickTracker, UnhandledClickListener } from '../infra/globalClickTracker';
+
+import { replayStore as store, ReplayModule } from '../../state/ReplayModule';
+
 
 export default Vue.extend({
   components: {
@@ -34,31 +36,31 @@ export default Vue.extend({
   },
 
   computed: {
-    state(): CoreState {
-      return this.$tstore.state;
+    store(): ReplayModule {
+      return store;
     },
   },
 
   methods: {
     onNextClick() {
-      this.$tstore.commit('goNext');
-      navTo(this.$tstore, this.$route, this.$router, {});
+      store.goNext();
+      navTo(store, this.$route, this.$router, {});
     },
 
     onPrevClick() {
-      this.$tstore.commit('goBack');
-      navTo(this.$tstore, this.$route, this.$router, {});
+      store.goBack();
+      navTo(store, this.$route, this.$router, {});
     },
 
     onStartClick() {
-      navTo(this.$tstore, this.$route, this.$router, {
+      navTo(store, this.$route, this.$router, {
         eventIndex: 0,
       });
     },
 
     onEndClick() {
-      navTo(this.$tstore, this.$route, this.$router, {
-        eventIndex: this.state.events.length,
+      navTo(store, this.$route, this.$router, {
+        eventIndex: store.events.length,
       });
     },
   },

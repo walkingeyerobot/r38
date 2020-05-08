@@ -13,6 +13,9 @@ import Vue from 'vue'
 import { CardPack } from '../../draft/DraftState';
 import { navTo } from '../../router/url_manipulation';
 
+import { replayStore as store } from '../../state/ReplayModule';
+
+
 export default Vue.extend({
   props: {
     pack: {
@@ -22,7 +25,7 @@ export default Vue.extend({
 
   computed: {
     isSelected(): boolean {
-      const selection = this.$tstore.state.selection;
+      const selection = store.selection;
       return selection != null
           && selection.type == 'pack'
           && selection.id == this.pack.id;
@@ -31,7 +34,7 @@ export default Vue.extend({
 
   methods: {
     onClick() {
-      navTo(this.$tstore, this.$route, this.$router, {
+      navTo(store, this.$route, this.$router, {
         selection: {
           type: 'pack',
           id: this.pack.id,

@@ -34,7 +34,7 @@
 <script lang="ts">
 import Vue from 'vue';
 import { MtgCard } from "../../draft/DraftState.js";
-import { CardColumn, CardLocation, CardMove } from "../../state/DeckBuilderModule";
+import { deckBuilderStore as store, CardColumn, CardLocation, CardMove } from "../../state/DeckBuilderModule";
 import { intersects, Rectangle } from "../../util/rectangle";
 import DeckBuilderSection from "./DeckBuilderSection.vue";
 
@@ -65,7 +65,7 @@ export default Vue.extend({
 
   computed: {
     selection(): CardLocation[] {
-      return this.$tstore.state.deckbuilder.selection;
+      return store.selection;
     },
     inSelectionRectangle(): number[] {
       const result = [];
@@ -118,7 +118,7 @@ export default Vue.extend({
             },
           };
         } else {
-          this.$tstore.commit("deckbuilder/selectCards", []);
+          store.selectCards([]);
           cardMove = {
             deckIndex: this.deckIndex,
             source: [{
@@ -176,7 +176,7 @@ export default Vue.extend({
       e.preventDefault();
       if (e.dataTransfer) {
         const cardMove: CardMove = JSON.parse(e.dataTransfer.getData("text/plain"));
-        this.$tstore.commit("deckbuilder/moveCard",
+        store.moveCard(
             {
               ...cardMove,
               target: {
@@ -190,7 +190,7 @@ export default Vue.extend({
     },
 
     select(cardIndex: number) {
-      this.$tstore.commit("deckbuilder/selectCards", [{
+      store.selectCards([{
         columnIndex: this.columnIndex,
         cardIndex,
         maindeck: this.maindeck,
