@@ -32,15 +32,15 @@ export interface PlayerPicks {
 export interface DraftPlayer {
   seatPosition: number;
   name: string;
-  picks: CardContainer
+  picks: CardContainer;
 }
 
 export interface DraftCard {
   id: number;
   definition: MtgCard;
   /** The index position of this card in its original pack */
-  sourcePackIndex: number,
-  pickedIn: TimelineEvent[],
+  sourcePackIndex: number;
+  pickedIn: TimelineEvent[];
 }
 
 export interface MtgCard {
@@ -48,7 +48,8 @@ export interface MtgCard {
   name: string;
   set: string;
   collector_number: string;
-  cmc: number,
+  cmc: number;
+  color: string;
 
   // custom stuff
   tags: string[];

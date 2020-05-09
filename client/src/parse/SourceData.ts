@@ -26,6 +26,7 @@ export interface SourceCard {
   tags: string;
   number: string;
   cmc: number;
+  color: string;
   edition: string;
 }
 
