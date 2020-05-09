@@ -30,8 +30,8 @@ type hopperRefill func(h *Hopper)
 
 func main() {
 	draftNamePtr := flag.String("name", "untitled draft", "string")
-	filenamePtr := flag.String("filename", "ktk.csv", "string")
-	databasePtr := flag.String("database", "draft2.db", "string")
+	filenamePtr := flag.String("filename", "cube.csv", "string")
+	databasePtr := flag.String("database", "draft.db", "string")
 	flag.Parse()
 
 	name := *draftNamePtr
@@ -56,8 +56,8 @@ func main() {
 		return
 	}
 
-	err = generateStandardDraft(packIds, *filenamePtr)
-	// err = generateCubeDraft(packIds, *filenamePtr)
+	// err = generateStandardDraft(packIds, *filenamePtr)
+	err = generateCubeDraft(packIds, *filenamePtr)
 	if err != nil {
 		return
 	}
@@ -297,7 +297,7 @@ func generateStandardDraft(packIds [24]int64, filename string) error {
 			if card.Foil {
 				tags = "foil"
 			}
-			database.Exec(query, packId, packId, "KTK", card.Number, tags, card.Name, card.Cmc, card.Type, card.ColorIdentity, card.Mtgo)
+			database.Exec(query, packId, packId, "ktk", card.Number, tags, card.Name, card.Cmc, card.Type, card.ColorIdentity, card.Mtgo)
 		}
 	}
 
