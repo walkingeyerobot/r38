@@ -16,31 +16,15 @@ import (
 	"time"
 )
 
-type Card struct {
-	Mtgo   string
-	Number string
-	Rarity string
-	Name   string
-	Color  string
-	Cmc    int64
-	Type   string
-	Rating float64
-}
-
-type CardSet struct {
-	Mythics   []Card
-	Rares     []Card
-	Uncommons []Card
-	Commons   []Card
-	Foils     []Card
-}
-
 var database *sql.DB
 
 const MAX_M = 2
 const MAX_R = 3
-const MAX_U = 5
-const MAX_C = 8
+const MAX_U = 7
+const MAX_C = 11
+const PACK_COLOR_STDEV = 1.55
+const RATING_STDEV = 1.1
+const POOL_COLOR_STDEV = 5.0
 
 type hopperRefill func(h *Hopper)
 
@@ -55,11 +39,6 @@ func main() {
 	rand.Seed(time.Now().UnixNano())
 
 	var err error
-	var lol [24]int64
-	err = generateStandardDraft(lol, *filenamePtr)
-	if err == nil {
-		return
-	}
 
 	database, err = sql.Open("sqlite3", *databasePtr)
 	if err != nil {
@@ -77,24 +56,11 @@ func main() {
 		return
 	}
 
-	err = generateCubeDraft(packIds, *filenamePtr)
+	err = generateStandardDraft(packIds, *filenamePtr)
+	// err = generateCubeDraft(packIds, *filenamePtr)
 	if err != nil {
 		return
 	}
-}
-
-type Hopper struct {
-	Cards  []Card
-	Refill hopperRefill
-}
-
-func (h *Hopper) Pop() Card {
-	ret := h.Cards[0]
-	h.Cards = h.Cards[1:]
-	if len(h.Cards) == 0 {
-		h.Refill(h)
-	}
-	return ret
 }
 
 func generateEmptyDraft(name string) ([24]int64, error) {
@@ -220,15 +186,24 @@ func generateStandardDraft(packIds [24]int64, filename string) error {
 	var allCards CardSet
 
 	for _, line := range lines {
-		cmc, err := strconv.ParseInt(line[5], 10, 64)
+		cmc, err := strconv.ParseInt(line[6], 10, 64)
 		if err != nil {
 			return err
 		}
-		rating, err := strconv.ParseFloat(line[7], 64)
+		rating, err := strconv.ParseFloat(line[8], 64)
 		if err != nil {
 			return err
 		}
-		card := Card{Mtgo: line[0], Number: line[1], Rarity: line[2], Name: line[3], Color: line[4], Type: line[6], Cmc: cmc, Rating: rating}
+		card := Card{
+			Mtgo:          line[0],
+			Number:        line[1],
+			Rarity:        line[2],
+			Name:          line[3],
+			Color:         line[4],
+			ColorIdentity: line[5],
+			Cmc:           cmc,
+			Type:          line[7],
+			Rating:        rating}
 		switch card.Rarity {
 		case "M":
 			allCards.Mythics = append(allCards.Mythics, card)
@@ -238,168 +213,236 @@ func generateStandardDraft(packIds [24]int64, filename string) error {
 			allCards.Uncommons = append(allCards.Uncommons, card)
 		case "C":
 			allCards.Commons = append(allCards.Commons, card)
+		case "B":
+			allCards.Basics = append(allCards.Basics, card)
 		default:
 			return fmt.Errorf("Error determining rarity of %v", line)
 		}
 	}
 
-	/*
-		mythicCount := len(allCards.Mythics)
-		rareCount := len(allCards.Rares)
-		uncommonCount := len(allCards.Uncommons)
-		commonCount := len(allCards.Commons)
-	*/
+	var hoppers [15]Hopper
 
-	refillRares := func(h *Hopper) {
-		if len(h.Cards) == 0 {
-			return
-		}
-		h.Cards = append(append(allCards.Mythics, allCards.Rares...), allCards.Rares...)
-		shuffle(h.Cards)
-	}
-	refillUncommons := func(h *Hopper) {
-		if len(h.Cards) == 0 {
-			return
-		}
-		h.Cards = append(allCards.Uncommons, allCards.Uncommons...)
-		shuffle(h.Cards)
-	}
-	refillCommons := func(h *Hopper) {
-		if len(h.Cards) == 0 {
-			return
-		}
-		h.Cards = append(allCards.Commons, allCards.Commons...)
-		shuffle(h.Cards)
+	resetHoppers := func() {
+		hoppers[0] = MakeNormalHopper(allCards.Mythics, allCards.Rares, allCards.Rares)
+
+		hoppers[1] = MakeNormalHopper(allCards.Uncommons, allCards.Uncommons)
+		hoppers[2] = MakeNormalHopper(allCards.Uncommons, allCards.Uncommons)
+		hoppers[3] = MakeNormalHopper(allCards.Uncommons, allCards.Uncommons)
+
+		hoppers[4] = MakeNormalHopper(allCards.Commons, allCards.Commons)
+		hoppers[5] = hoppers[4]
+		hoppers[6] = MakeNormalHopper(allCards.Commons, allCards.Commons)
+		hoppers[7] = hoppers[6]
+		hoppers[8] = MakeNormalHopper(allCards.Commons, allCards.Commons)
+		hoppers[9] = hoppers[8]
+		hoppers[10] = MakeNormalHopper(allCards.Commons, allCards.Commons)
+		hoppers[11] = hoppers[10]
+		hoppers[12] = MakeNormalHopper(allCards.Commons, allCards.Commons)
+		hoppers[13] = MakeFoilHopper(&hoppers[12],
+			allCards.Mythics, allCards.Rares, allCards.Rares,
+			allCards.Uncommons, allCards.Uncommons, allCards.Uncommons,
+			allCards.Commons, allCards.Commons, allCards.Commons, allCards.Commons,
+			allCards.Basics, allCards.Basics, allCards.Basics, allCards.Basics)
+
+		hoppers[14] = MakeBasicLandHopper(allCards.Basics)
 	}
 
-	var hoppers [14]*Hopper
-	hoppers[0] = &(Hopper{Refill: refillRares})
-
-	hoppers[1] = &(Hopper{Refill: refillUncommons})
-	hoppers[2] = &(Hopper{Refill: refillUncommons})
-	hoppers[3] = &(Hopper{Refill: refillUncommons})
-
-	hoppers[4] = &(Hopper{Refill: refillCommons})
-	hoppers[5] = hoppers[4]
-	hoppers[6] = &(Hopper{Refill: refillCommons})
-	hoppers[7] = hoppers[6]
-	hoppers[8] = &(Hopper{Refill: refillCommons})
-	hoppers[9] = hoppers[8]
-	hoppers[10] = &(Hopper{Refill: refillCommons})
-	hoppers[11] = hoppers[10]
-	hoppers[12] = &(Hopper{Refill: refillCommons})
-	hoppers[13] = hoppers[12]
-
-	for i, hopper := range hoppers {
-		hopper.Refill(hopper)
-	}
-
-	var pack [14]Card
+	var packs [24][15]Card
+	packAttempts := 0
+	draftAttempts := 0
 
 	for {
-		for i, hopper := range hoppers {
-			pack[i] = hopper.Pop()
-		}
+		resetHoppers()
+		resetDraft := false
+		draftAttempts++
+		for i := 0; i < 24; { // we'll manually increment i
+			packAttempts++
+			for j, hopper := range hoppers {
+				var empty bool
+				packs[i][j], empty = hopper.Pop()
+				if empty {
+					resetDraft = true
+					break
+				}
+			}
 
-		if okPack(pack) {
+			if resetDraft {
+				break
+			}
+
+			for _, card := range packs[i] {
+				log.Printf("%s\t%v\t%s", card.Rarity, card.Foil, card.Name)
+			}
+
+			if okPack(packs[i]) {
+				i++
+			}
+		}
+		if !resetDraft && okDraft(packs) {
 			break
 		}
+		log.Printf("RESETTING DRAFT")
+	}
+
+	log.Printf("draft attempts: %d", draftAttempts)
+	log.Printf("pack attempts: %d", packAttempts)
+
+	log.Printf("inserting into db...")
+	query := `INSERT INTO cards (pack, original_pack, edition, number, tags, name, cmc, type, color, mtgo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+
+	for i, pack := range packs {
 		for _, card := range pack {
-			log.Printf("%s\t%s", card.Rarity, card.Name)
+			packId := packIds[i]
+			var tags string
+			if card.Foil {
+				tags = "foil"
+			}
+			database.Exec(query, packId, packId, "KTK", card.Number, tags, card.Name, card.Cmc, card.Type, card.ColorIdentity, card.Mtgo)
 		}
 	}
 
-	for _, card := range pack {
-		log.Printf("%s\t%s", card.Rarity, card.Name)
-	}
-
+	log.Printf("done!")
 	return nil
 }
 
-func okPack(pack [14]Card) bool {
-	h := make(map[Card]int)
-	c := make(map[rune]int)
+func okPack(pack [15]Card) bool {
+	passes := true
+	cardHash := make(map[Card]int)
+	colorHash := make(map[rune]float64)
+	var ratings []float64
+	totalCommons := 0
 	for _, card := range pack {
-		h[card]++
-		if h[card] > 1 {
-			log.Printf("bad")
-			return false
+		if card.Foil {
+			continue
+		}
+		cardHash[card]++
+		if cardHash[card] > 1 {
+			log.Printf("found duplicated card %s", card.Name)
+			passes = false
 		}
 		if card.Rarity == "C" {
-			for _, d := range card.Color {
-				c[d]++
+			for _, color := range card.ColorIdentity {
+				colorHash[color]++
+			}
+			ratings = append(ratings, card.Rating)
+			totalCommons++
+		}
+		// TODO: analyize uncommon color distribution
+	}
+
+	// calculate stdev for color
+	var colors []float64
+	for _, v := range colorHash {
+		colors = append(colors, v)
+	}
+
+	if len(colors) != 5 {
+		// a color is missing
+		log.Printf("a color is missing")
+		passes = false
+		for {
+			colors = append(colors, 0)
+			if len(colors) == 5 {
+				break
 			}
 		}
 	}
 
-	var total int
-	for _, v := range c {
-		total += v
+	colorStdev := stdev(colors)
+	ratingStdev := stdev(ratings)
+	log.Printf("color stdev:\t%f", colorStdev)
+	log.Printf("rating stdev:\t%f", ratingStdev)
+
+	if colorStdev > PACK_COLOR_STDEV {
+		log.Printf("color stdev too high")
+		passes = false
 	}
-	average := float64(total) / 5.0
-	var sd float64
-	for _, v := range c {
-		sd += math.Pow(float64(v)-average, 2)
-	}
-
-	sd = math.Sqrt(sd / 5.0)
-
-	log.Printf("sd: %f", sd)
-	log.Printf("%v", c)
-
-	if sd > 1.2 {
-		return false
+	if ratingStdev > RATING_STDEV {
+		log.Printf("rating stdev too high")
+		passes = false
 	}
 
-	log.Printf("good")
-	return true
+	if passes {
+		log.Printf("pack passes!")
+	} else {
+		log.Printf("pack fails :(")
+	}
+
+	return passes
 }
 
-func violatesQuantityLimit(draftPool CardSet) bool {
-	countsM := make(map[string]int)
-	countsR := make(map[string]int)
-	countsU := make(map[string]int)
-	countsC := make(map[string]int)
-	for _, list := range [][]Card{draftPool.Rares, draftPool.Uncommons, draftPool.Commons, draftPool.Foils} {
-		for _, card := range list {
+func okDraft(packs [24][15]Card) bool {
+	passes := true
+
+	cardHash := make(map[Card]int)
+	colorHash := make(map[rune]float64)
+	for _, pack := range packs {
+		for _, card := range pack {
+			cardHash[card]++
+			qty := cardHash[card]
 			switch card.Rarity {
 			case "M":
-				old := countsM[card.Name]
-				if old >= MAX_M {
-					return true
+				if qty > MAX_M {
+					log.Printf("found %d %s, which is more than MAX_M %d", qty, card.Name, MAX_M)
+					passes = false
 				}
-				countsM[card.Name] = old + 1
 			case "R":
-				old := countsR[card.Name]
-				if old >= MAX_R {
-					return true
+				if qty > MAX_R {
+					log.Printf("found %d %s, which is more than MAX_R %d", qty, card.Name, MAX_R)
+					passes = false
 				}
-				countsR[card.Name] = old + 1
 			case "U":
-				old := countsU[card.Name]
-				if old >= MAX_U {
-					return true
+				if qty > MAX_U {
+					log.Printf("found %d %s, which is more than MAX_U %d", qty, card.Name, MAX_U)
+					passes = false
 				}
-				countsU[card.Name] = old + 1
 			case "C":
-				old := countsC[card.Name]
-				if old >= MAX_C {
-					return true
+				if qty > MAX_C {
+					log.Printf("found %d %s, which is more than MAX_C %d", qty, card.Name, MAX_C)
+					passes = false
 				}
-				countsC[card.Name] = old + 1
-			default:
-				log.Printf("wtf")
-				return true
+				if !card.Foil {
+					for _, color := range card.ColorIdentity {
+						colorHash[color]++
+					}
+				}
 			}
 		}
 	}
 
-	return false
+	// calculate stdev for color
+	var colors []float64
+	for _, v := range colorHash {
+		colors = append(colors, v)
+	}
+
+	colorStdev := stdev(colors)
+
+	log.Printf("all commons color stdev:\t%f", colorStdev)
+
+	if colorStdev > POOL_COLOR_STDEV {
+		log.Printf("color stdev too high")
+		passes = false
+	}
+
+	if passes {
+		log.Printf("draft passes!")
+	} else {
+		log.Printf("draft fails :(")
+	}
+
+	return passes
 }
 
-func shuffle(slice []Card) {
-	for i := len(slice) - 1; i > 0; i-- {
-		j := rand.Intn(i)
-		slice[i], slice[j] = slice[j], slice[i]
+func stdev(list []float64) float64 {
+	var sum float64
+	for _, val := range list {
+		sum += val
 	}
+	avg := sum / float64(len(list))
+	sum = 0
+	for _, val := range list {
+		sum += math.Pow(val-avg, 2)
+	}
+	return math.Sqrt(sum / float64(len(list)))
 }
