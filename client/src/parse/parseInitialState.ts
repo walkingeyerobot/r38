@@ -76,6 +76,7 @@ function parsePack(srcPack: SourceCard[]) {
         collector_number: srcPick.number,
         cmc: srcPick.cmc,
         color: srcPick.color,
+        mtgo: srcPick.mtgo || "",
         tags: srcPick.tags.split(", "),
         searchName: srcPick.name.toLocaleLowerCase().normalize(),
       },

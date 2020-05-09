@@ -54,7 +54,7 @@ type Card struct {
 	Tags    string `json:"tags"`
 	Number  string `json:"number"`
 	Edition string `json:"edition"`
-	Mtgo    string `json:"-"`
+	Mtgo    string `json:"mtgo"`
 	Cmc     int64  `json:"cmc"`
 	Type    string `json:"type"`
 	Color   string `json:"color"`
@@ -1202,7 +1202,7 @@ func NotifyByDraftAndPosition(draftId int64, position int64) error {
 func GetJsonObject(draftId int64) (DraftJson, error) {
 	var draft DraftJson
 
-	query := `select drafts.name, seats.position, packs.original_seat, packs.round, cards.name, cards.edition, cards.number, cards.tags, users.discord_name, cards.cmc, cards.type, cards.color from drafts join seats join packs join cards join users where drafts.id=seats.draft and seats.id=packs.original_seat and packs.id=cards.original_pack and drafts.id=? and seats.user=users.id`
+	query := `select drafts.name, seats.position, packs.original_seat, packs.round, cards.name, cards.edition, cards.number, cards.tags, users.discord_name, cards.cmc, cards.type, cards.color, cards.mtgo from drafts join seats join packs join cards join users where drafts.id=seats.draft and seats.id=packs.original_seat and packs.id=cards.original_pack and drafts.id=? and seats.user=users.id`
 
 	rows, err := database.Query(query, draftId)
 	if err != nil {
@@ -1227,7 +1227,8 @@ func GetJsonObject(draftId int64) (DraftJson, error) {
 		var nullableCmc sql.NullInt64
 		var nullableType sql.NullString
 		var nullableColor sql.NullString
-		err = rows.Scan(&draft.Name, &nullablePosition, &packSeat, &nullableRound, &card.Name, &card.Edition, &card.Number, &card.Tags, &discordId, &nullableCmc, &nullableType, &nullableColor)
+		var nullableMtgo sql.NullString
+		err = rows.Scan(&draft.Name, &nullablePosition, &packSeat, &nullableRound, &card.Name, &card.Edition, &card.Number, &card.Tags, &discordId, &nullableCmc, &nullableType, &nullableColor, &nullableMtgo)
 		if err != nil {
 			return draft, err
 		}
@@ -1239,6 +1240,11 @@ func GetJsonObject(draftId int64) (DraftJson, error) {
 		}
 		card.Type = nullableType.String
 		card.Color = nullableColor.String
+		if nullableMtgo.Valid {
+			card.Mtgo = nullableMtgo.String
+		} else {
+			card.Mtgo = ""
+		}
 
 		if !nullablePosition.Valid || !nullableRound.Valid {
 			draft.ExtraPack = append(draft.ExtraPack, card)
