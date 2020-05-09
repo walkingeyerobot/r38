@@ -307,7 +307,7 @@ func generateStandardDraft(packIds [24]int64, filename string) error {
 
 func okPack(pack [15]Card) bool {
 	passes := true
-	cardHash := make(map[Card]int)
+	cardHash := make(map[string]int)
 	colorHash := make(map[rune]float64)
 	var ratings []float64
 	totalCommons := 0
@@ -315,8 +315,8 @@ func okPack(pack [15]Card) bool {
 		if card.Foil {
 			continue
 		}
-		cardHash[card]++
-		if cardHash[card] > 1 {
+		cardHash[card.Name]++
+		if cardHash[card.Name] > 1 {
 			log.Printf("found duplicated card %s", card.Name)
 			passes = false
 		}
@@ -374,12 +374,12 @@ func okPack(pack [15]Card) bool {
 func okDraft(packs [24][15]Card) bool {
 	passes := true
 
-	cardHash := make(map[Card]int)
+	cardHash := make(map[string]int)
 	colorHash := make(map[rune]float64)
 	for _, pack := range packs {
 		for _, card := range pack {
-			cardHash[card]++
-			qty := cardHash[card]
+			cardHash[card.Name]++
+			qty := cardHash[card.Name]
 			switch card.Rarity {
 			case "M":
 				if qty > MAX_M {
