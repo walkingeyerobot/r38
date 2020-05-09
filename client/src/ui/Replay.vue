@@ -25,8 +25,11 @@ import { SelectedView } from '../state/selection';
 import { applyReplayUrlState } from '../router/url_manipulation';
 import { globalClickTracker } from './infra/globalClickTracker';
 
+import { replayStore as store } from '../state/ReplayModule';
+
+
 export default Vue.extend({
-  name: 'Home',
+  name: 'Replay',
 
   components: {
     ControlsRow,
@@ -38,17 +41,17 @@ export default Vue.extend({
     const srcData = getServerPayload();
     const draft = parseDraft(srcData);
 
-    this.$tstore.commit('initDraft', draft);
-    this.$tstore.commit('setTimeMode', 'synchronized');
-    this.$tstore.commit('goTo', this.$tstore.state.events.length);
+    store.initDraft(draft);
+    store.setTimeMode('synchronized');
+    store.goTo(store.events.length);
 
-    document.title = `Replay of ${this.$tstore.state.draftName}`;
-    applyReplayUrlState(this.$tstore, this.$route);
+    document.title = `Replay of ${store.draftName}`;
+    applyReplayUrlState(store, this.$route);
   },
 
   watch: {
     $route(to, from) {
-      applyReplayUrlState(this.$tstore, this.$route);
+      applyReplayUrlState(store, this.$route);
     },
   },
 

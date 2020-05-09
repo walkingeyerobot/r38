@@ -1,11 +1,12 @@
 import Vue from 'vue';
 import VueRouter, { RouteConfig } from 'vue-router';
-import DeckBuilder from '../ui/DeckBuilder.vue';
-import Replay from '../ui/Replay.vue';
 
 Vue.use(VueRouter);
 
 // See https://github.com/pillarjs/path-to-regexp/ for route matching language
+
+// We use chunk splitting so that we only load the source for the route we're
+// looking at right now. That's what the webpackChunkName directive does below
 
 const routes = [
   // login
@@ -13,22 +14,14 @@ const routes = [
   // draft
   {
     path: `/replay/:draftId(\\d+)/:param*`,
-    component: Replay,
+    component: () =>
+        import(/* webpackChunkName: 'replay' */ '../ui/Replay.vue'),
   },
   {
     path: '/deckbuilder/*',
-    component: DeckBuilder,
+    component: () =>
+        import(/* webpackChunkName: 'deckbuilder' */ '../ui/DeckBuilder.vue'),
   }
-  // TODO: Figure out route splitting in the future
-  // {
-  //   path: '/about',
-  //   name: 'About',
-  //   // route level code-splitting
-  //   // this generates a separate chunk (about.[hash].js) for this route
-  //   // which is lazy-loaded when the route is visited.
-  //   component: () =>
-  //     import(/* webpackChunkName: 'about' */ '../ui/About.vue'),
-  // },
 ] as RouteConfig[];
 
 if (DEVELOPMENT) {

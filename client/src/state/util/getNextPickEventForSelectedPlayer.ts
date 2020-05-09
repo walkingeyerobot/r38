@@ -1,14 +1,14 @@
-import { CoreState } from '../store';
 import { TimelineEvent } from '../../draft/TimelineEvent';
 import { isPickEvent } from './isPickEvent';
+import { ReplayModule } from '../ReplayModule';
 
 export function getNextPickEventForSelectedPlayer(
-  state: CoreState,
+  store: ReplayModule,
 ): TimelineEvent | null {
-  const seatId = state.selection?.id;
+  const seatId = store.selection?.id;
   let pickEvent: TimelineEvent | null = null;
-  for (let i = state.eventPos; i < state.events.length; i++) {
-    const event = state.events[i];
+  for (let i = store.eventPos; i < store.events.length; i++) {
+    const event = store.events[i];
     if (event.associatedSeat == seatId && isPickEvent(event)) {
       pickEvent = event;
       break;
@@ -18,11 +18,12 @@ export function getNextPickEventForSelectedPlayer(
 }
 
 export function getNextPickEvent(
-  state: CoreState,
+  store: ReplayModule,
 ): TimelineEvent | null {
+  console.log('STORE.events:', store.events, store);
   let pickEvent: TimelineEvent | null = null;
-  for (let i = state.eventPos; i < state.events.length; i++) {
-    const event = state.events[i];
+  for (let i = store.eventPos; i < store.events.length; i++) {
+    const event = store.events[i];
     if (isPickEvent(event)) {
       pickEvent = event;
       break;

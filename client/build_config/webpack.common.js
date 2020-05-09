@@ -25,8 +25,15 @@ module.exports = mode => {
     output: {
       // The all-important `path` field is specified in .dev and .prod
 
-      // Filename of compiled JS bundle(s)
+      // Our compiled entry point -- the thing we include as a script tag in
+      // our HTML. Right now we have just one entry point app, so this will be
+      // app.bundle.js
       filename: '[name].bundle.js',
+
+      // Our app is broken into chunks and loaded lazily when we need them. This
+      // specifies their filenames. The chunks themselves are specified in
+      // src/router/index.ts
+      chunkFilename: '[name].bundle.js',
 
       // URL route that the webserver will serve our output from
       publicPath: '/static/dist/',

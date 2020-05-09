@@ -14,9 +14,10 @@ import DeckBuilderMain from './deckbuilder/DeckBuilderMain.vue';
 import DeckBuilderPlayerSelector from './deckbuilder/DeckBuilderPlayerSelector.vue';
 import { parseDraft } from "../parse/parseDraft";
 import { MtgCard, DraftCard } from '../draft/DraftState';
-import { DeckInitializer } from '../state/DeckBuilderModule';
+import { deckBuilderStore as store, DeckInitializer } from '../state/DeckBuilderModule';
 import { commitTimelineEvent } from '../draft/mutate';
 import { getServerPayload } from '../parse/getServerPayload';
+
 
 export default Vue.extend({
   components: {
@@ -37,7 +38,7 @@ export default Vue.extend({
         pool: seat.player.picks.cards.concat(),
       });
     }
-    this.$tstore.commit('deckbuilder/initDecks', init);
+    store.initDecks(init);
   },
 
   methods: {

@@ -3,13 +3,13 @@
     <DeckBuilderSection
         class="sideboard"
         :columns="sideboard"
-        :deckIndex="state.selectedSeat"
+        :deckIndex="store.selectedSeat"
         :maindeck="false"
         />
     <DeckBuilderSection
         class="maindeck"
         :columns="maindeck"
-        :deckIndex="state.selectedSeat"
+        :deckIndex="store.selectedSeat"
         :maindeck="true"
         />
   </div>
@@ -17,8 +17,8 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import DeckBuilderSection from "./DeckBuilderSection.vue";
-import { CardColumn, Deck, DeckBuilderState } from '../../state/DeckBuilderModule.js';
+import DeckBuilderSection from './DeckBuilderSection.vue';
+import { deckBuilderStore as store, CardColumn, Deck, DeckBuilderStore } from '../../state/DeckBuilderModule';
 
 export default Vue.extend({
   components: {
@@ -26,12 +26,12 @@ export default Vue.extend({
   },
 
   computed: {
-    state(): DeckBuilderState {
-      return this.$tstore.state.deckbuilder;
+    store(): DeckBuilderStore {
+      return store;
     },
 
     deck(): Deck | undefined {
-      return this.state.decks[this.state.selectedSeat];
+      return store.decks[store.selectedSeat];
     },
 
     sideboard(): CardColumn[] {

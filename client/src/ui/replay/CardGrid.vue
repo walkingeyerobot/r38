@@ -47,8 +47,10 @@ import { SelectedView } from '../../state/selection';
 import { checkNotNil } from '../../util/checkNotNil';
 import { navTo } from '../../router/url_manipulation';
 import { Store } from 'vuex';
-import { RootState } from '../../state/store';
 import CardView from './CardView.vue';
+
+import { replayStore as store, ReplayModule } from '../../state/ReplayModule';
+
 
 export default Vue.extend({
 
@@ -58,14 +60,14 @@ export default Vue.extend({
 
   computed: {
     selection(): SelectedView | null {
-      return this.$tstore.state.selection;
+      return store.selection;
     },
 
     selectedSeat(): DraftSeat | null  {
       if (this.selection == null || this.selection.type == 'pack') {
         return null;
       } else {
-        return this.$tstore.state.draft.seats[this.selection.id]
+        return store.draft.seats[this.selection.id]
       }
       return null;
     },
@@ -76,10 +78,9 @@ export default Vue.extend({
       if (this.selection == null) {
         return null;
       } else if (this.selection.type == 'pack') {
-        pack =
-            checkNotNil(this.$tstore.state.draft.packs.get(this.selection.id));
+        pack = checkNotNil(store.draft.packs.get(this.selection.id));
       } else {
-        const player = this.$tstore.state.draft.seats[this.selection.id];
+        const player = store.draft.seats[this.selection.id];
         if (player.queuedPacks.length > 0) {
           pack = player.queuedPacks[0];
         }
@@ -98,8 +99,8 @@ export default Vue.extend({
       if (this.selectedSeat == null) {
         return null;
       }
-      const eventPos = this.$tstore.state.eventPos;
-      const events = this.$tstore.state.events;
+      const eventPos = store.eventPos;
+      const events = store.events;
       for (let i = eventPos; i < events.length; i++) {
         const event = events[i];
         if (event.associatedSeat == this.selectedSeat.position) {
@@ -140,14 +141,13 @@ export default Vue.extend({
       const pick =
           findPick(
               cardId,
-              this.$tstore.state.eventPos,
-              this.$tstore.state.events,
+              store.eventPos,
+              store.events,
               direction);
       if (pick != null) {
-        const adjustedIndex =
-            maybeAdjustToStartOfEpoch(this.$tstore, pick.index);
+        const adjustedIndex = maybeAdjustToStartOfEpoch(store, pick.index);
 
-        navTo(this.$tstore, this.$route, this.$router, {
+        navTo(store, this.$route, this.$router, {
           eventIndex: adjustedIndex,
           selection: {
             type: 'seat',
@@ -159,12 +159,12 @@ export default Vue.extend({
   },
 });
 
-function maybeAdjustToStartOfEpoch(store: Store<RootState>, index: number) {
+function maybeAdjustToStartOfEpoch(store: ReplayModule, index: number) {
   let newIndex = index;
-  const event = store.state.events[index];
-  if (event != undefined && store.state.timeMode == 'synchronized') {
+  const event = store.events[index];
+  if (event != undefined && store.timeMode == 'synchronized') {
     for (let i = index; i >= 0; i--) {
-      if (store.state.events[i].roundEpoch != event.roundEpoch) {
+      if (store.events[i].roundEpoch != event.roundEpoch) {
         break;
       }
       newIndex = i;
