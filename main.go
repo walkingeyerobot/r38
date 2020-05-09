@@ -901,7 +901,8 @@ func ServeJoin(w http.ResponseWriter, r *http.Request, userId int64) {
 		return
 	}
 
-	http.Redirect(w, r, fmt.Sprintf("/draft/%s", draftId), http.StatusTemporaryRedirect)
+	viewParam := GetViewParam(r, userId)
+	http.Redirect(w, r, fmt.Sprintf("/draft/%d%s", draftId, viewParam), http.StatusTemporaryRedirect)
 }
 
 func ServePick(w http.ResponseWriter, r *http.Request, userId int64) {
