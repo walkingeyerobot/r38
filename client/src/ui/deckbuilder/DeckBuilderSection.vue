@@ -1,5 +1,9 @@
 <template>
   <div class="_deck-builder-section">
+    <DeckBuilderSectionControls
+        :deckIndex="deckIndex"
+        :maindeck="maindeck"
+        />
     <div class="column-cnt"
          ref="columnContent"
          @mousedown="mouseDown"
@@ -32,7 +36,8 @@
 <script lang="ts">
 import Vue, { VueConstructor } from 'vue'
 import DeckBuilderColumn from "./DeckBuilderColumn.vue";
-import { deckBuilderStore as store, CardColumn, CardLocation } from '../../state/DeckBuilderModule';
+import DeckBuilderSectionControls from "./DeckBuilderSectionControls.vue";
+import { CardColumn, CardLocation, deckBuilderStore as store } from '../../state/DeckBuilderModule';
 import { Point, Rectangle } from "../../util/rectangle";
 
 export default (Vue as VueConstructor<Vue & {
@@ -82,7 +87,8 @@ export default (Vue as VueConstructor<Vue & {
   },
 
   components: {
-    DeckBuilderColumn
+    DeckBuilderColumn,
+    DeckBuilderSectionControls,
   },
 
   props: {
@@ -100,7 +106,7 @@ export default (Vue as VueConstructor<Vue & {
   methods: {
 
     relativePoint(clientX: number, clientY: number): Point {
-      const rect = this.$el.getBoundingClientRect();
+      const rect = this.$refs.columnContent.getBoundingClientRect();
       return {
         x: clientX - rect.left,
         y: clientY - rect.top,

@@ -84,6 +84,27 @@ export const deckBuilderStore = vuexModule(rootStore, 'deckbuilder', {
     selectCards(state: DeckBuilderState, selection: CardLocation[]) {
       state.selection = selection;
     },
+
+    sortByCmc(state: DeckBuilderState, payload: {seat: number, maindeck: boolean}) {
+      const section = payload.maindeck ? state.decks[payload.seat].maindeck : state.decks[payload.seat].sideboard;
+      const cards = section.flat();
+      const newSection: CardColumn[] =
+          (<DraftCard[][]>Array(NUM_COLUMNS)).fill([]).map(() => []);
+      for (let i = 0; i < NUM_COLUMNS; i++) {
+        newSection[i] = cards.filter(card => {
+          if (i === NUM_COLUMNS - 1) {
+            return card.definition.cmc >= i;
+          } else {
+            return card.definition.cmc === i;
+          }
+        });
+      }
+      if (payload.maindeck) {
+        state.decks[payload.seat].maindeck = newSection;
+      } else {
+        state.decks[payload.seat].sideboard = newSection;
+      }
+    },
   },
 
   getters: {},
