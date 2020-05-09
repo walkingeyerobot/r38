@@ -5,6 +5,17 @@ import { rootStore } from './store';
 
 const NUM_COLUMNS = 7;
 
+function sort(state: DeckBuilderState, seat: number, maindeck: boolean, sort: (cards: DraftCard[]) => CardColumn[]) {
+  const section = maindeck ? state.decks[seat].maindeck : state.decks[seat].sideboard;
+  const cards = section.flat();
+
+  const newSection = sort(cards);
+  if (maindeck) {
+    state.decks[seat].maindeck = newSection;
+  } else {
+    state.decks[seat].sideboard = newSection;
+  }
+}
 
 /**
  * Vuex module for storing state related to the deck builder.
@@ -19,8 +30,8 @@ export const deckBuilderStore = vuexModule(rootStore, 'deckbuilder', {
 
   mutations: {
     initDecks(
-      state: DeckBuilderState,
-      init: DeckInitializer[],
+        state: DeckBuilderState,
+        init: DeckInitializer[],
     ) {
       state.decks = [];
       for (let initializer of init) {
@@ -85,25 +96,47 @@ export const deckBuilderStore = vuexModule(rootStore, 'deckbuilder', {
       state.selection = selection;
     },
 
-    sortByCmc(state: DeckBuilderState, payload: {seat: number, maindeck: boolean}) {
-      const section = payload.maindeck ? state.decks[payload.seat].maindeck : state.decks[payload.seat].sideboard;
-      const cards = section.flat();
-      const newSection: CardColumn[] =
-          (<DraftCard[][]>Array(NUM_COLUMNS)).fill([]).map(() => []);
-      for (let i = 0; i < NUM_COLUMNS; i++) {
-        newSection[i] = cards.filter(card => {
-          if (i === NUM_COLUMNS - 1) {
-            return card.definition.cmc >= i;
-          } else {
-            return card.definition.cmc === i;
-          }
-        });
-      }
-      if (payload.maindeck) {
-        state.decks[payload.seat].maindeck = newSection;
-      } else {
-        state.decks[payload.seat].sideboard = newSection;
-      }
+    sortByCmc(state: DeckBuilderState, payload: { seat: number, maindeck: boolean }) {
+      sort(state, payload.seat, payload.maindeck,
+          (cards: DraftCard[]) => {
+            const newSection: CardColumn[] =
+                (<DraftCard[][]>Array(NUM_COLUMNS)).fill([]).map(() => []);
+            for (let i = 0; i < NUM_COLUMNS; i++) {
+              newSection[i] = cards.filter(card => {
+                if (i === NUM_COLUMNS - 1) {
+                  return card.definition.cmc >= i;
+                } else {
+                  return card.definition.cmc === i;
+                }
+              });
+            }
+            return newSection;
+          });
+    },
+
+    sortByColor(state: DeckBuilderState, payload: { seat: number, maindeck: boolean }) {
+      sort(state, payload.seat, payload.maindeck,
+          (cards: DraftCard[]) => {
+            const newSection: CardColumn[] =
+                (<DraftCard[][]>Array(NUM_COLUMNS)).fill([]).map(() => []);
+            for (const card of cards) {
+              if (card.definition.color.length === 1) {
+                newSection[["W", "U", "B", "R", "G"].indexOf(card.definition.color)].push(card);
+              } else if (card.definition.color.length === 0) {
+                newSection[Math.min(5, NUM_COLUMNS)].push(card);
+              } else {
+                newSection[Math.min(6, NUM_COLUMNS)].push(card);
+              }
+            }
+            for (let i = 0; i < newSection.length - 1; i++) {
+              let movedCols = 0;
+              while (newSection[i].length === 0 && movedCols < newSection.length - i) {
+                newSection.push(newSection.splice(i, 1)[0]);
+                movedCols++;
+              }
+            }
+            return newSection;
+          });
     },
   },
 

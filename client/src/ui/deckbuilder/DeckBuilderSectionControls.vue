@@ -2,6 +2,7 @@
   <div class="_deck-builder-section-controls">
     <label class="sortLabel">Sort:</label>
     <button class="sortButton" @click="sortCmc">CMC</button>
+    <button class="sortButton" @click="sortColor">Color</button>
   </div>
 </template>
 
@@ -25,6 +26,9 @@ export default Vue.extend({
     sortCmc() {
       store.sortByCmc({seat: this.deckIndex, maindeck: this.maindeck});
     },
+    sortColor() {
+      store.sortByColor({seat: this.deckIndex, maindeck: this.maindeck});
+    },
   },
 });
 </script>
@@ -46,6 +50,7 @@ export default Vue.extend({
   border: 1px solid #bbb;
   border-radius: 1.5em;
   padding: 2px 1em;
+  margin-right: 1em;
 }
 
 .sortButton:hover {
