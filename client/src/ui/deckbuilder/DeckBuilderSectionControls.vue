@@ -1,5 +1,9 @@
 <template>
   <div class="_deck-builder-section-controls">
+    <p class="cardsCount"
+       :class="{tooFewCards}">
+      {{ numCards }} cards
+    </p>
     <label class="sortLabel">Sort:</label>
     <button class="sortButton" @click="sortCmc">CMC</button>
     <button class="sortButton" @click="sortColor">Color</button>
@@ -8,7 +12,7 @@
 
 <script lang="ts">
 import Vue from "vue";
-import { deckBuilderStore as store } from '../../state/DeckBuilderModule';
+import { deckBuilderStore, deckBuilderStore as store } from '../../state/DeckBuilderModule';
 
 export default Vue.extend({
   name: "DeckBuilderSectionControls",
@@ -20,6 +24,18 @@ export default Vue.extend({
     maindeck: {
       type: Boolean
     },
+  },
+
+  computed: {
+    numCards(): number {
+      return (this.maindeck
+          ? deckBuilderStore.decks[this.deckIndex].maindeck
+          : deckBuilderStore.decks[this.deckIndex].sideboard)
+          .flat().length;
+    },
+    tooFewCards(): boolean {
+      return this.maindeck && this.numCards < 40;
+    }
   },
 
   methods: {
@@ -37,7 +53,15 @@ export default Vue.extend({
 ._deck-builder-section-controls {
   display: flex;
   align-items: center;
-  padding: 20px;
+  padding: 20px 20px 0;
+}
+
+.cardsCount {
+  width: 5em;
+}
+
+.tooFewCards {
+  color: #aa2222
 }
 
 .sortLabel {

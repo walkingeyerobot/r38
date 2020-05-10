@@ -1,10 +1,18 @@
 <template>
   <div class="_deck-builder-main">
+    <DeckBuilderSectionControls
+        :deckIndex="store.selectedSeat"
+        :maindeck="false"
+        />
     <DeckBuilderSection
         class="sideboard"
         :columns="sideboard"
         :deckIndex="store.selectedSeat"
         :maindeck="false"
+        />
+    <DeckBuilderSectionControls
+        :deckIndex="store.selectedSeat"
+        :maindeck="true"
         />
     <DeckBuilderSection
         class="maindeck"
@@ -27,11 +35,13 @@
 <script lang="ts">
 import Vue from 'vue';
 import DeckBuilderSection from './DeckBuilderSection.vue';
+import DeckBuilderSectionControls from "./DeckBuilderSectionControls.vue";
 import { CardColumn, Deck, deckBuilderStore as store, DeckBuilderStore } from '../../state/DeckBuilderModule';
 
 export default Vue.extend({
   components: {
     DeckBuilderSection,
+    DeckBuilderSectionControls,
   },
 
   computed: {
