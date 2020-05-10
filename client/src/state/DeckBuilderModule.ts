@@ -5,18 +5,6 @@ import { rootStore } from './store';
 
 const NUM_COLUMNS = 7;
 
-function sort(state: DeckBuilderState, seat: number, maindeck: boolean, sort: (cards: DraftCard[]) => CardColumn[]) {
-  const section = maindeck ? state.decks[seat].maindeck : state.decks[seat].sideboard;
-  const cards = section.flat();
-
-  const newSection = sort(cards);
-  if (maindeck) {
-    state.decks[seat].maindeck = newSection;
-  } else {
-    state.decks[seat].sideboard = newSection;
-  }
-}
-
 /**
  * Vuex module for storing state related to the deck builder.
  */
@@ -144,6 +132,21 @@ export const deckBuilderStore = vuexModule(rootStore, 'deckbuilder', {
 
   actions: {},
 });
+
+function sort(state: DeckBuilderState,
+              seat: number,
+              maindeck: boolean,
+              sort: (cards: DraftCard[]) => CardColumn[]) {
+  const section = maindeck ? state.decks[seat].maindeck : state.decks[seat].sideboard;
+  const cards = section.flat();
+
+  const newSection = sort(cards);
+  if (maindeck) {
+    state.decks[seat].maindeck = newSection;
+  } else {
+    state.decks[seat].sideboard = newSection;
+  }
+}
 
 export type DeckBuilderStore = typeof deckBuilderStore;
 
