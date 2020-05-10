@@ -24,6 +24,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"185",
                   "edition":"c19",
                   "cmc": 5,
+                  "color": "G",
                 },
                 {
                   "name":"Ophiomancer",
@@ -31,6 +32,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"84",
                   "edition":"c13",
                   "cmc": 3,
+                  "color": "B",
                 },
                 {
                   "name":"Damnation",
@@ -38,6 +40,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"63",
                   "edition":"mm3",
                   "cmc": 4,
+                  "color": "B",
                 },
                 {
                   "name":"Umezawa's Jitte",
@@ -45,6 +48,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"14",
                   "edition":"v16",
                   "cmc": 2,
+                  "color": "",
                 },
                 {
                   "name":"Gifts Ungiven",
@@ -52,6 +56,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"5",
                   "edition":"ss1",
                   "cmc": 4,
+                  "color": "U",
                 },
                 {
                   "name":"Dack Fayden",
@@ -59,6 +64,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"RA6",
                   "edition":"med",
                   "cmc": 3,
+                  "color": "UR",
                 },
                 {
                   "name":"Primeval Titan",
@@ -66,6 +72,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"183",
                   "edition":"ima",
                   "cmc": 6,
+                  "color": "G",
                 },
                 {
                   "name":"Faith's Fetters",
@@ -73,6 +80,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"105",
                   "edition":"mb1",
                   "cmc": 4,
+                  "color": "W",
                 },
                 {
                   "name":"Seething Song",
@@ -80,6 +88,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"70",
                   "edition":"ddg",
                   "cmc": 2,
+                  "color": "R",
                 },
                 {
                   "name":"Lingering Souls",
@@ -87,6 +96,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"162",
                   "edition":"mb1",
                   "cmc": 3,
+                  "color": "W",
                 },
                 {
                   "name":"Spectral Procession",
@@ -94,6 +104,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"33",
                   "edition":"mm2",
                   "cmc": 3,
+                  "color": "W",
                 },
                 {
                   "name":"Mox Diamond",
@@ -101,6 +112,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"10",
                   "edition":"v10",
                   "cmc": 0,
+                  "color": "",
                 },
                 {
                   "name":"Knight of Autumn",
@@ -108,6 +120,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"183",
                   "edition":"grn",
                   "cmc": 3,
+                  "color": "WG",
                 },
                 {
                   "name":"Emrakul, the Promised End",
@@ -115,6 +128,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"6",
                   "edition":"emn",
                   "cmc": 13,
+                  "color": "",
                 },
                 {
                   "name":"Burning of Xinye",
@@ -122,6 +136,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"2",
                   "edition":"v14",
                   "cmc": 6,
+                  "color": "R",
                 }
               ]
             }
@@ -138,6 +153,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"159",
                   "edition":"c16",
                   "cmc": 2,
+                  "color": "G",
                 },
                 {
                   "name":"Goblin Rabblemaster",
@@ -145,6 +161,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"46",
                   "edition":"ddt",
                   "cmc": 3,
+                  "color": "R",
                 },
                 {
                   "name":"Monastery Swiftspear",
@@ -152,6 +169,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"1017",
                   "edition":"mb1",
                   "cmc": 1,
+                  "color": "R",
                 },
                 {
                   "name":"Black Lotus",
@@ -159,6 +177,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"233",
                   "edition":"cei",
                   "cmc": 0,
+                  "color": "",
                 },
                 {
                   "name":"Crucible of Worlds",
@@ -166,6 +185,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"229",
                   "edition":"m19",
                   "cmc": 3,
+                  "color": "",
                 },
                 {
                   "name":"Sweltering Suns",
@@ -173,6 +193,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"149",
                   "edition":"akh",
                   "cmc": 3,
+                  "color": "R",
                 },
                 {
                   "name":"Nicol Bolas, Dragon-God",
@@ -180,6 +201,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"WS6",
                   "edition":"med",
                   "cmc": 5,
+                  "color": "UBR",
                 },
                 {
                   "name":"Phyrexian Revoker",
@@ -187,6 +209,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"225",
                   "edition":"m15",
                   "cmc": 2,
+                  "color": "",
                 },
                 {
                   "name":"Garruk, Primal Hunter",
@@ -194,6 +217,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"167",
                   "edition":"c19",
                   "cmc": 5,
+                  "color": "G",
                 },
                 {
                   "name":"Garruk Wildspeaker",
@@ -201,6 +225,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"1",
                   "edition":"gvl",
                   "cmc": 4,
+                  "color": "G",
                 },
                 {
                   "name":"Dimir Signet",
@@ -208,6 +233,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"22",
                   "edition":"gk1",
                   "cmc": 2,
+                  "color": "",
                 },
                 {
                   "name":"Eternal Witness",
@@ -215,6 +241,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"1200",
                   "edition":"mb1",
                   "cmc": 3,
+                  "color": "G",
                 },
                 {
                   "name":"Shardless Agent",
@@ -222,6 +249,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"1484",
                   "edition":"mb1",
                   "cmc": 3,
+                  "color": "UG",
                 },
                 {
                   "name":"Brainstorm",
@@ -229,6 +257,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"301",
                   "edition":"mb1",
                   "cmc": 1,
+                  "color": "U",
                 },
                 {
                   "name":"Mizzium Mortars",
@@ -236,6 +265,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"32",
                   "edition":"gk1",
                   "cmc": 2,
+                  "color": "R",
                 }
               ]
             }
@@ -252,6 +282,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"2",
                   "edition":"e02",
                   "cmc": 4,
+                  "color": "W",
                 },
                 {
                   "name":"Biogenic Ooze",
@@ -259,6 +290,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"122",
                   "edition":"rna",
                   "cmc": 5,
+                  "color": "G",
                 },
                 {
                   "name":"Teferi, Hero of Dominaria",
@@ -266,6 +298,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"GR6",
                   "edition":"med",
                   "cmc": 5,
+                  "color": "WU",
                 },
                 {
                   "name":"Sakura-Tribe Elder",
@@ -273,6 +306,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"1322",
                   "edition":"mb1",
                   "cmc": 2,
+                  "color": "G",
                 },
                 {
                   "name":"Tendrils of Agony",
@@ -280,6 +314,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"75",
                   "edition":"scg",
                   "cmc": 4,
+                  "color": "B",
                 },
                 {
                   "name":"Control Magic",
@@ -287,6 +322,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"34",
                   "edition":"cma",
                   "cmc": 4,
+                  "color": "U",
                 },
                 {
                   "name":"Raging Ravine",
@@ -294,6 +330,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"249",
                   "edition":"uma",
                   "cmc": 0,
+                  "color": "",
                 },
                 {
                   "name":"Eidolon of the Great Revel",
@@ -301,6 +338,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"128",
                   "edition":"a25",
                   "cmc": 2,
+                  "color": "R",
                 },
                 {
                   "name":"Pernicious Deed",
@@ -308,6 +346,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"212",
                   "edition":"a25",
                   "cmc": 3,
+                  "color": "BG",
                 },
                 {
                   "name":"Avalanche Riders",
@@ -315,6 +354,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"844",
                   "edition":"mb1",
                   "cmc": 4,
+                  "color": "R",
                 },
                 {
                   "name":"Arcane Artisan",
@@ -322,6 +362,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"33",
                   "edition":"bbd",
                   "cmc": 3,
+                  "color": "U",
                 },
                 {
                   "name":"Questing Beast",
@@ -329,6 +370,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"171",
                   "edition":"eld",
                   "cmc": 4,
+                  "color": "G",
                 },
                 {
                   "name":"Darkslick Shores",
@@ -336,6 +378,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"226",
                   "edition":"som",
                   "cmc": 0,
+                  "color": "",
                 },
                 {
                   "name":"Gideon, Ally of Zendikar",
@@ -343,6 +386,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"29",
                   "edition":"bfz",
                   "cmc": 4,
+                  "color": "W",
                 },
                 {
                   "name":"Wasteland",
@@ -350,6 +394,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"248",
                   "edition":"ema",
                   "cmc": 0,
+                  "color": "",
                 }
               ]
             }
@@ -381,6 +426,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"33",
                   "edition":"ths",
                   "cmc": 3,
+                  "color": "W",
                 },
                 {
                   "name":"Restoration Angel",
@@ -388,6 +434,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"28",
                   "edition":"ima",
                   "cmc": 4,
+                  "color": "W",
                 },
                 {
                   "name":"Hellrider",
@@ -395,6 +442,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"98",
                   "edition":"mm3",
                   "cmc": 4,
+                  "color": "R",
                 },
                 {
                   "name":"Flooded Strand",
@@ -402,6 +450,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"233",
                   "edition":"ktk",
                   "cmc": 0,
+                  "color": "",
                 },
                 {
                   "name":"Baleful Strix",
@@ -409,6 +458,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"1395",
                   "edition":"mb1",
                   "cmc": 2,
+                  "color": "UB",
                 },
                 {
                   "name":"Creeping Tar Pit",
@@ -416,6 +466,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"239",
                   "edition":"uma",
                   "cmc": 0,
+                  "color": "",
                 },
                 {
                   "name":"Finale of Devastation",
@@ -423,6 +474,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"160",
                   "edition":"war",
                   "cmc": 2,
+                  "color": "G",
                 },
                 {
                   "name":"Ancestral Recall",
@@ -430,6 +482,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"48",
                   "edition":"cei",
                   "cmc": 1,
+                  "color": "U",
                 },
                 {
                   "name":"Grave Titan",
@@ -437,6 +490,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"676",
                   "edition":"mb1",
                   "cmc": 6,
+                  "color": "B",
                 },
                 {
                   "name":"Imperial Recruiter",
@@ -444,6 +498,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"136",
                   "edition":"a25",
                   "cmc": 3,
+                  "color": "R",
                 },
                 {
                   "name":"Batterskull",
@@ -451,6 +506,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"130",
                   "edition":"nph",
                   "cmc": 5,
+                  "color": "",
                 },
                 {
                   "name":"Snapcaster Mage",
@@ -458,6 +514,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"71",
                   "edition":"uma",
                   "cmc": 2,
+                  "color": "U",
                 },
                 {
                   "name":"Lotus Cobra",
@@ -465,6 +522,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"174",
                   "edition":"ima",
                   "cmc": 2,
+                  "color": "G",
                 },
                 {
                   "name":"Sword of Feast and Famine",
@@ -472,6 +530,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"10",
                   "edition":"md1",
                   "cmc": 3,
+                  "color": "",
                 },
                 {
                   "name":"Giver of Runes",
@@ -479,6 +538,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"13",
                   "edition":"mh1",
                   "cmc": 1,
+                  "color": "W",
                 }
               ]
             }
@@ -495,6 +555,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"130",
                   "edition":"m19",
                   "cmc": 1,
+                  "color": "R",
                 },
                 {
                   "name":"Banishing Light",
@@ -502,6 +563,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"4",
                   "edition":"thb",
                   "cmc": 3,
+                  "color": "W",
                 },
                 {
                   "name":"Elspeth, Sun's Champion",
@@ -509,6 +571,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"1",
                   "edition":"ddo",
                   "cmc": 6,
+                  "color": "W",
                 },
                 {
                   "name":"Corpse Dance",
@@ -516,6 +579,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"116",
                   "edition":"tmp",
                   "cmc": 2,
+                  "color": "B",
                 },
                 {
                   "name":"Liliana, Death's Majesty",
@@ -523,6 +587,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"701",
                   "edition":"mb1",
                   "cmc": 5,
+                  "color": "B",
                 },
                 {
                   "name":"Rakdos Signet",
@@ -530,6 +595,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"76",
                   "edition":"gk2",
                   "cmc": 2,
+                  "color": "",
                 },
                 {
                   "name":"High Tide",
@@ -537,6 +603,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"18c",
                   "edition":"fem",
                   "cmc": 1,
+                  "color": "U",
                 },
                 {
                   "name":"Impulse",
@@ -544,6 +611,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"404",
                   "edition":"mb1",
                   "cmc": 2,
+                  "color": "U",
                 },
                 {
                   "name":"Inferno Titan",
@@ -551,6 +619,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"109",
                   "edition":"cm2",
                   "cmc": 6,
+                  "color": "R",
                 },
                 {
                   "name":"Toxic Deluge",
@@ -558,6 +627,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"108",
                   "edition":"ema",
                   "cmc": 3,
+                  "color": "B",
                 },
                 {
                   "name":"Animate Dead",
@@ -565,6 +635,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"566",
                   "edition":"mb1",
                   "cmc": 2,
+                  "color": "B",
                 },
                 {
                   "name":"Heartbeat of Spring",
@@ -572,6 +643,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"212",
                   "edition":"chk",
                   "cmc": 3,
+                  "color": "G",
                 },
                 {
                   "name":"Mishra's Factory",
@@ -579,6 +651,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"1680",
                   "edition":"mb1",
                   "cmc": 0,
+                  "color": "",
                 },
                 {
                   "name":"Brimaz, King of Oreskos",
@@ -586,6 +659,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"5",
                   "edition":"bng",
                   "cmc": 3,
+                  "color": "W",
                 },
                 {
                   "name":"Hero's Downfall",
@@ -593,6 +667,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"2",
                   "edition":"cp2",
                   "cmc": 3,
+                  "color": "B",
                 }
               ]
             }
@@ -609,6 +684,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"181",
                   "edition":"a25",
                   "cmc": 4,
+                  "color": "G",
                 },
                 {
                   "name":"Vendilion Clique",
@@ -616,6 +692,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"76",
                   "edition":"a25",
                   "cmc": 3,
+                  "color": "U",
                 },
                 {
                   "name":"Fyndhorn Elves",
@@ -623,6 +700,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"4",
                   "edition":"v13",
                   "cmc": 1,
+                  "color": "G",
                 },
                 {
                   "name":"Leonin Relic-Warder",
@@ -630,6 +708,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"158",
                   "edition":"mb1",
                   "cmc": 2,
+                  "color": "W",
                 },
                 {
                   "name":"Tireless Tracker",
@@ -637,6 +716,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"1361",
                   "edition":"mb1",
                   "cmc": 3,
+                  "color": "G",
                 },
                 {
                   "name":"Natural Order",
@@ -644,6 +724,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"177",
                   "edition":"ema",
                   "cmc": 4,
+                  "color": "G",
                 },
                 {
                   "name":"Murderous Rider",
@@ -651,6 +732,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"97",
                   "edition":"eld",
                   "cmc": 3,
+                  "color": "B",
                 },
                 {
                   "name":"The Scarab God",
@@ -658,6 +740,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"145",
                   "edition":"hou",
                   "cmc": 5,
+                  "color": "UB",
                 },
                 {
                   "name":"Ashiok, Nightmare Weaver",
@@ -665,6 +748,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"188",
                   "edition":"ths",
                   "cmc": 3,
+                  "color": "UB",
                 },
                 {
                   "name":"Daretti, Ingenious Iconoclast",
@@ -672,6 +756,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"GR3",
                   "edition":"med",
                   "cmc": 4,
+                  "color": "R",
                 },
                 {
                   "name":"Gush",
@@ -679,6 +764,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"397",
                   "edition":"mb1",
                   "cmc": 4,
+                  "color": "U",
                 },
                 {
                   "name":"Bloodbraid Elf",
@@ -686,6 +772,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"1402",
                   "edition":"mb1",
                   "cmc": 4,
+                  "color": "RG",
                 },
                 {
                   "name":"Gonti, Lord of Luxury",
@@ -693,6 +780,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"671",
                   "edition":"mb1",
                   "cmc": 4,
+                  "color": "B",
                 },
                 {
                   "name":"Vampire Nighthawk",
@@ -700,6 +788,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"813",
                   "edition":"mb1",
                   "cmc": 3,
+                  "color": "B",
                 },
                 {
                   "name":"Dismember",
@@ -707,6 +796,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"629",
                   "edition":"mb1",
                   "cmc": 3,
+                  "color": "B",
                 }
               ]
             }
@@ -738,6 +828,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"307",
                   "edition":"mir",
                   "cmc": 0,
+                  "color": "",
                 },
                 {
                   "name":"Force of Will",
@@ -745,6 +836,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"49",
                   "edition":"ema",
                   "cmc": 5,
+                  "color": "U",
                 },
                 {
                   "name":"Grim Lavamancer",
@@ -752,6 +844,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"50",
                   "edition":"e01",
                   "cmc": 1,
+                  "color": "R",
                 },
                 {
                   "name":"Blooming Marsh",
@@ -759,6 +852,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"243",
                   "edition":"kld",
                   "cmc": 0,
+                  "color": "",
                 },
                 {
                   "name":"Huntmaster of the Fells",
@@ -766,6 +860,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"11",
                   "edition":"v17",
                   "cmc": 4,
+                  "color": "G",
                 },
                 {
                   "name":"Disenchant",
@@ -773,6 +868,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"77",
                   "edition":"mb1",
                   "cmc": 2,
+                  "color": "W",
                 },
                 {
                   "name":"Demonic Tutor",
@@ -780,6 +876,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"620",
                   "edition":"mb1",
                   "cmc": 2,
+                  "color": "B",
                 },
                 {
                   "name":"Char",
@@ -787,6 +884,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"28",
                   "edition":"gk1",
                   "cmc": 3,
+                  "color": "R",
                 },
                 {
                   "name":"Oona's Prowler",
@@ -794,6 +892,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"133",
                   "edition":"lrw",
                   "cmc": 2,
+                  "color": "B",
                 },
                 {
                   "name":"Pia and Kiran Nalaar",
@@ -801,6 +900,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"47",
                   "edition":"ddu",
                   "cmc": 4,
+                  "color": "R",
                 },
                 {
                   "name":"Mox Ruby",
@@ -808,6 +908,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"265",
                   "edition":"cei",
                   "cmc": 0,
+                  "color": "",
                 },
                 {
                   "name":"Griselbrand",
@@ -815,6 +916,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"72",
                   "edition":"mm3",
                   "cmc": 7,
+                  "color": "B",
                 },
                 {
                   "name":"Sylvan Library",
@@ -822,6 +924,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"187",
                   "edition":"ema",
                   "cmc": 2,
+                  "color": "G",
                 },
                 {
                   "name":"Carnage Tyrant",
@@ -829,6 +932,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"179",
                   "edition":"xln",
                   "cmc": 6,
+                  "color": "G",
                 },
                 {
                   "name":"Spell Pierce",
@@ -836,6 +940,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"81",
                   "edition":"xln",
                   "cmc": 1,
+                  "color": "U",
                 }
               ]
             }
@@ -852,6 +957,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"919",
                   "edition":"mb1",
                   "cmc": 1,
+                  "color": "R",
                 },
                 {
                   "name":"Knight of the Reliquary",
@@ -859,6 +965,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"203",
                   "edition":"ima",
                   "cmc": 3,
+                  "color": "WG",
                 },
                 {
                   "name":"Mana Crypt",
@@ -866,6 +973,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"1603",
                   "edition":"mb1",
                   "cmc": 0,
+                  "color": "",
                 },
                 {
                   "name":"Legion's Landing",
@@ -873,6 +981,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"22",
                   "edition":"xln",
                   "cmc": 1,
+                  "color": "W",
                 },
                 {
                   "name":"Unexpectedly Absent",
@@ -880,6 +989,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"27",
                   "edition":"cma",
                   "cmc": 2,
+                  "color": "W",
                 },
                 {
                   "name":"Bomat Courier",
@@ -887,6 +997,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"199",
                   "edition":"kld",
                   "cmc": 1,
+                  "color": "",
                 },
                 {
                   "name":"Library of Alexandria",
@@ -894,6 +1005,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"76",
                   "edition":"arn",
                   "cmc": 0,
+                  "color": "",
                 },
                 {
                   "name":"Kodama's Reach",
@@ -901,6 +1013,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"171",
                   "edition":"uma",
                   "cmc": 3,
+                  "color": "G",
                 },
                 {
                   "name":"Verdant Catacombs",
@@ -908,6 +1021,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"249",
                   "edition":"mm3",
                   "cmc": 0,
+                  "color": "",
                 },
                 {
                   "name":"Botanical Sanctum",
@@ -915,6 +1029,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"244",
                   "edition":"kld",
                   "cmc": 0,
+                  "color": "",
                 },
                 {
                   "name":"Prismatic Vista",
@@ -922,6 +1037,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"244",
                   "edition":"mh1",
                   "cmc": 0,
+                  "color": "",
                 },
                 {
                   "name":"Arid Mesa",
@@ -929,6 +1045,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"229",
                   "edition":"mm3",
                   "cmc": 0,
+                  "color": "",
                 },
                 {
                   "name":"Tasigur, the Golden Fang",
@@ -936,6 +1053,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"117",
                   "edition":"uma",
                   "cmc": 6,
+                  "color": "B",
                 },
                 {
                   "name":"Kuldotha Forgemaster",
@@ -943,6 +1061,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"169",
                   "edition":"som",
                   "cmc": 5,
+                  "color": "",
                 },
                 {
                   "name":"Steam Vents",
@@ -950,6 +1069,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"257",
                   "edition":"grn",
                   "cmc": 0,
+                  "color": "",
                 }
               ]
             }
@@ -966,6 +1086,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"6",
                   "edition":"ss1",
                   "cmc": 1,
+                  "color": "U",
                 },
                 {
                   "name":"Tezzeret the Seeker",
@@ -973,6 +1094,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"WS4",
                   "edition":"med",
                   "cmc": 5,
+                  "color": "U",
                 },
                 {
                   "name":"Wheel of Fortune",
@@ -980,6 +1102,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"185",
                   "edition":"3ed",
                   "cmc": 3,
+                  "color": "R",
                 },
                 {
                   "name":"Shambling Vent",
@@ -987,6 +1110,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"244",
                   "edition":"bfz",
                   "cmc": 0,
+                  "color": "",
                 },
                 {
                   "name":"Sword of Light and Shadow",
@@ -994,6 +1118,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"217",
                   "edition":"mma",
                   "cmc": 3,
+                  "color": "",
                 },
                 {
                   "name":"Anguished Unmaking",
@@ -1001,6 +1126,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"242",
                   "edition":"soi",
                   "cmc": 3,
+                  "color": "WB",
                 },
                 {
                   "name":"Scrubland",
@@ -1008,6 +1134,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"286",
                   "edition":"3ed",
                   "cmc": 0,
+                  "color": "",
                 },
                 {
                   "name":"Mind Twist",
@@ -1015,6 +1142,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"147",
                   "edition":"4ed",
                   "cmc": 1,
+                  "color": "B",
                 },
                 {
                   "name":"Mox Pearl",
@@ -1022,6 +1150,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"264",
                   "edition":"cei",
                   "cmc": 0,
+                  "color": "",
                 },
                 {
                   "name":"Vivien, Champion of the Wilds",
@@ -1029,6 +1158,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"180",
                   "edition":"war",
                   "cmc": 3,
+                  "color": "G",
                 },
                 {
                   "name":"Shrine of Burning Rage",
@@ -1036,6 +1166,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"153",
                   "edition":"nph",
                   "cmc": 2,
+                  "color": "R",
                 },
                 {
                   "name":"Collective Brutality",
@@ -1043,6 +1174,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"600",
                   "edition":"mb1",
                   "cmc": 2,
+                  "color": "B",
                 },
                 {
                   "name":"Wrenn and Six",
@@ -1050,6 +1182,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"217",
                   "edition":"mh1",
                   "cmc": 2,
+                  "color": "RG",
                 },
                 {
                   "name":"Koth of the Hammer",
@@ -1057,6 +1190,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"44",
                   "edition":"ddi",
                   "cmc": 4,
+                  "color": "R",
                 },
                 {
                   "name":"Palinchron",
@@ -1064,6 +1198,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"38",
                   "edition":"ulg",
                   "cmc": 7,
+                  "color": "U",
                 }
               ]
             }
@@ -1095,6 +1230,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"1",
                   "edition":"ddq",
                   "cmc": 3,
+                  "color": "WU",
                 },
                 {
                   "name":"Mox Sapphire",
@@ -1102,6 +1238,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"266",
                   "edition":"cei",
                   "cmc": 0,
+                  "color": "",
                 },
                 {
                   "name":"Sylvan Caryatid",
@@ -1109,6 +1246,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"180",
                   "edition":"ths",
                   "cmc": 2,
+                  "color": "G",
                 },
                 {
                   "name":"Sulfuric Vortex",
@@ -1116,6 +1254,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"150",
                   "edition":"ema",
                   "cmc": 2,
+                  "color": "R",
                 },
                 {
                   "name":"Nekrataal",
@@ -1123,6 +1262,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"99",
                   "edition":"ema",
                   "cmc": 4,
+                  "color": "B",
                 },
                 {
                   "name":"Liliana of the Veil",
@@ -1130,6 +1270,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"104",
                   "edition":"uma",
                   "cmc": 3,
+                  "color": "B",
                 },
                 {
                   "name":"Narset, Parter of Veils",
@@ -1137,6 +1278,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"61",
                   "edition":"war",
                   "cmc": 3,
+                  "color": "U",
                 },
                 {
                   "name":"Sword of War and Peace",
@@ -1144,6 +1286,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"161",
                   "edition":"nph",
                   "cmc": 3,
+                  "color": "",
                 },
                 {
                   "name":"Turnabout",
@@ -1151,6 +1294,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"105",
                   "edition":"usg",
                   "cmc": 4,
+                  "color": "U",
                 },
                 {
                   "name":"Thief of Sanity",
@@ -1158,6 +1302,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"205",
                   "edition":"grn",
                   "cmc": 3,
+                  "color": "UB",
                 },
                 {
                   "name":"Angel of Invention",
@@ -1165,6 +1310,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"4",
                   "edition":"kld",
                   "cmc": 5,
+                  "color": "W",
                 },
                 {
                   "name":"Yawgmoth's Bargain",
@@ -1172,6 +1318,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"75",
                   "edition":"uds",
                   "cmc": 6,
+                  "color": "B",
                 },
                 {
                   "name":"Boros Signet",
@@ -1179,6 +1326,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"97",
                   "edition":"gk1",
                   "cmc": 2,
+                  "color": "",
                 },
                 {
                   "name":"Inkwell Leviathan",
@@ -1186,6 +1334,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"91",
                   "edition":"c18",
                   "cmc": 9,
+                  "color": "U",
                 },
                 {
                   "name":"Bolas's Citadel",
@@ -1193,6 +1342,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"79",
                   "edition":"war",
                   "cmc": 7,
+                  "color": "B",
                 }
               ]
             }
@@ -1209,6 +1359,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"72",
                   "edition":"exo",
                   "cmc": 3,
+                  "color": "B",
                 },
                 {
                   "name":"Kolaghan's Command",
@@ -1216,6 +1367,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"1445",
                   "edition":"mb1",
                   "cmc": 3,
+                  "color": "BR",
                 },
                 {
                   "name":"Academy Ruins",
@@ -1223,6 +1375,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"219",
                   "edition":"mma",
                   "cmc": 0,
+                  "color": "",
                 },
                 {
                   "name":"Emry, Lurker of the Loch",
@@ -1230,6 +1383,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"43",
                   "edition":"eld",
                   "cmc": 3,
+                  "color": "U",
                 },
                 {
                   "name":"Past in Flames",
@@ -1237,6 +1391,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"105",
                   "edition":"mm3",
                   "cmc": 4,
+                  "color": "R",
                 },
                 {
                   "name":"Blast Zone",
@@ -1244,6 +1399,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"244",
                   "edition":"war",
                   "cmc": 0,
+                  "color": "",
                 },
                 {
                   "name":"Fiery Confluence",
@@ -1251,6 +1407,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"98",
                   "edition":"cm2",
                   "cmc": 5,
+                  "color": "R",
                 },
                 {
                   "name":"Coalition Relic",
@@ -1258,6 +1415,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"223",
                   "edition":"a25",
                   "cmc": 3,
+                  "color": "",
                 },
                 {
                   "name":"Rekindling Phoenix",
@@ -1265,6 +1423,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"111",
                   "edition":"rix",
                   "cmc": 4,
+                  "color": "R",
                 },
                 {
                   "name":"Karn Liberated",
@@ -1272,6 +1431,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"5",
                   "edition":"uma",
                   "cmc": 7,
+                  "color": "",
                 },
                 {
                   "name":"Time Warp",
@@ -1279,6 +1439,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"12",
                   "edition":"e02",
                   "cmc": 5,
+                  "color": "U",
                 },
                 {
                   "name":"Dire Fleet Daredevil",
@@ -1286,6 +1447,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"99",
                   "edition":"rix",
                   "cmc": 2,
+                  "color": "R",
                 },
                 {
                   "name":"Wall of Omens",
@@ -1293,6 +1455,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"270",
                   "edition":"mb1",
                   "cmc": 2,
+                  "color": "W",
                 },
                 {
                   "name":"Den Protector",
@@ -1300,6 +1463,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"161",
                   "edition":"c19",
                   "cmc": 2,
+                  "color": "G",
                 },
                 {
                   "name":"Mox Jet",
@@ -1307,6 +1471,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"263",
                   "edition":"cei",
                   "cmc": 0,
+                  "color": "",
                 }
               ]
             }
@@ -1323,6 +1488,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"145",
                   "edition":"mh1",
                   "cmc": 3,
+                  "color": "R",
                 },
                 {
                   "name":"Living Death",
@@ -1330,6 +1496,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"702",
                   "edition":"mb1",
                   "cmc": 5,
+                  "color": "B",
                 },
                 {
                   "name":"Tithe Taker",
@@ -1337,6 +1504,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"27",
                   "edition":"rna",
                   "cmc": 2,
+                  "color": "W",
                 },
                 {
                   "name":"Inspiring Vantage",
@@ -1344,6 +1512,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"246",
                   "edition":"kld",
                   "cmc": 0,
+                  "color": "",
                 },
                 {
                   "name":"Rotting Regisaur",
@@ -1351,6 +1520,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"111",
                   "edition":"m20",
                   "cmc": 3,
+                  "color": "B",
                 },
                 {
                   "name":"Lightning Bolt",
@@ -1358,6 +1528,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"1001",
                   "edition":"mb1",
                   "cmc": 1,
+                  "color": "R",
                 },
                 {
                   "name":"Ulamog, the Ceaseless Hunger",
@@ -1365,6 +1536,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"15",
                   "edition":"bfz",
                   "cmc": 10,
+                  "color": "",
                 },
                 {
                   "name":"Parallax Wave",
@@ -1372,6 +1544,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"17",
                   "edition":"nem",
                   "cmc": 4,
+                  "color": "W",
                 },
                 {
                   "name":"Avenger of Zendikar",
@@ -1379,6 +1552,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"129",
                   "edition":"c18",
                   "cmc": 7,
+                  "color": "G",
                 },
                 {
                   "name":"Mana Drain",
@@ -1386,6 +1560,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"65",
                   "edition":"ima",
                   "cmc": 2,
+                  "color": "U",
                 },
                 {
                   "name":"Copperline Gorge",
@@ -1393,6 +1568,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"225",
                   "edition":"som",
                   "cmc": 0,
+                  "color": "",
                 },
                 {
                   "name":"Vampire Hexmage",
@@ -1400,6 +1576,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"811",
                   "edition":"mb1",
                   "cmc": 2,
+                  "color": "B",
                 },
                 {
                   "name":"Fastbond",
@@ -1407,6 +1584,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"194",
                   "edition":"3ed",
                   "cmc": 1,
+                  "color": "G",
                 },
                 {
                   "name":"Reclamation Sage",
@@ -1414,6 +1592,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"159",
                   "edition":"c18",
                   "cmc": 3,
+                  "color": "G",
                 },
                 {
                   "name":"Brightling",
@@ -1421,6 +1600,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"25",
                   "edition":"bbd",
                   "cmc": 5,
+                  "color": "W",
                 }
               ]
             }
@@ -1452,6 +1632,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"232",
                   "edition":"ema",
                   "cmc": 1,
+                  "color": "",
                 },
                 {
                   "name":"Yavimaya Elder",
@@ -1459,6 +1640,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"1379",
                   "edition":"mb1",
                   "cmc": 3,
+                  "color": "G",
                 },
                 {
                   "name":"Jackal Pup",
@@ -1466,6 +1648,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"985",
                   "edition":"mb1",
                   "cmc": 1,
+                  "color": "R",
                 },
                 {
                   "name":"Wildfire",
@@ -1473,6 +1656,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"134",
                   "edition":"mm2",
                   "cmc": 6,
+                  "color": "R",
                 },
                 {
                   "name":"Elves of Deep Shadow",
@@ -1480,6 +1664,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"1193",
                   "edition":"mb1",
                   "cmc": 1,
+                  "color": "G",
                 },
                 {
                   "name":"Thundermaw Hellkite",
@@ -1487,6 +1672,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"149",
                   "edition":"ima",
                   "cmc": 5,
+                  "color": "R",
                 },
                 {
                   "name":"Lotus Bloom",
@@ -1494,6 +1680,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"208",
                   "edition":"mma",
                   "cmc": 0,
+                  "color": "",
                 },
                 {
                   "name":"Mishra's Workshop",
@@ -1501,6 +1688,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"81",
                   "edition":"atq",
                   "cmc": 0,
+                  "color": "",
                 },
                 {
                   "name":"Vivien Reid",
@@ -1508,6 +1696,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"208",
                   "edition":"m19",
                   "cmc": 5,
+                  "color": "G",
                 },
                 {
                   "name":"Deranged Hermit",
@@ -1515,6 +1704,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"101",
                   "edition":"ulg",
                   "cmc": 5,
+                  "color": "G",
                 },
                 {
                   "name":"Exhume",
@@ -1522,6 +1712,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"17",
                   "edition":"pd3",
                   "cmc": 2,
+                  "color": "B",
                 },
                 {
                   "name":"Stirring Wildwood",
@@ -1529,6 +1720,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"251",
                   "edition":"uma",
                   "cmc": 0,
+                  "color": "",
                 },
                 {
                   "name":"Dragonlord Atarka",
@@ -1536,6 +1728,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"216",
                   "edition":"dtk",
                   "cmc": 7,
+                  "color": "RG",
                 },
                 {
                   "name":"Pestermite",
@@ -1543,6 +1736,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"59",
                   "edition":"mma",
                   "cmc": 3,
+                  "color": "U",
                 },
                 {
                   "name":"Wandering Fumarole",
@@ -1550,6 +1744,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"182",
                   "edition":"ogw",
                   "cmc": 0,
+                  "color": "",
                 }
               ]
             }
@@ -1566,6 +1761,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"670",
                   "edition":"mb1",
                   "cmc": 3,
+                  "color": "B",
                 },
                 {
                   "name":"Repeal",
@@ -1573,6 +1769,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"70",
                   "edition":"ima",
                   "cmc": 1,
+                  "color": "U",
                 },
                 {
                   "name":"Adanto Vanguard",
@@ -1580,6 +1777,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"10",
                   "edition":"mb1",
                   "cmc": 2,
+                  "color": "W",
                 },
                 {
                   "name":"Mana Flare",
@@ -1587,6 +1785,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"249",
                   "edition":"5ed",
                   "cmc": 3,
+                  "color": "R",
                 },
                 {
                   "name":"Time Spiral",
@@ -1594,6 +1793,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"103",
                   "edition":"usg",
                   "cmc": 6,
+                  "color": "U",
                 },
                 {
                   "name":"Pyroclasm",
@@ -1601,6 +1801,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"146",
                   "edition":"a25",
                   "cmc": 3,
+                  "color": "R",
                 },
                 {
                   "name":"Riftwing Cloudskate",
@@ -1608,6 +1809,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"469",
                   "edition":"mb1",
                   "cmc": 4,
+                  "color": "U",
                 },
                 {
                   "name":"Dreadhorde Arcanist",
@@ -1615,6 +1817,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"125",
                   "edition":"war",
                   "cmc": 2,
+                  "color": "R",
                 },
                 {
                   "name":"Urza, Lord High Artificer",
@@ -1622,6 +1825,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"75",
                   "edition":"mh1",
                   "cmc": 4,
+                  "color": "U",
                 },
                 {
                   "name":"Plow Under",
@@ -1629,6 +1833,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"272",
                   "edition":"8ed",
                   "cmc": 5,
+                  "color": "G",
                 },
                 {
                   "name":"Winds of Abandon",
@@ -1636,6 +1841,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"37",
                   "edition":"mh1",
                   "cmc": 2,
+                  "color": "W",
                 },
                 {
                   "name":"Survival of the Fittest",
@@ -1643,6 +1849,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"129",
                   "edition":"exo",
                   "cmc": 2,
+                  "color": "G",
                 },
                 {
                   "name":"Abbot of Keral Keep",
@@ -1650,6 +1857,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"127",
                   "edition":"ori",
                   "cmc": 2,
+                  "color": "R",
                 },
                 {
                   "name":"Condemn",
@@ -1657,6 +1865,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"58",
                   "edition":"c17",
                   "cmc": 1,
+                  "color": "W",
                 },
                 {
                   "name":"Channel",
@@ -1664,6 +1873,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"157",
                   "edition":"ima",
                   "cmc": 1,
+                  "color": "G",
                 }
               ]
             }
@@ -1680,6 +1890,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"64",
                   "edition":"vis",
                   "cmc": 3,
+                  "color": "B",
                 },
                 {
                   "name":"Emrakul, the Aeons Torn",
@@ -1687,6 +1898,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"4",
                   "edition":"uma",
                   "cmc": 15,
+                  "color": "",
                 },
                 {
                   "name":"Kiki-Jiki, Mirror Breaker",
@@ -1694,6 +1906,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"991",
                   "edition":"mb1",
                   "cmc": 5,
+                  "color": "R",
                 },
                 {
                   "name":"Consecrated Sphinx",
@@ -1701,6 +1914,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"47",
                   "edition":"ima",
                   "cmc": 6,
+                  "color": "U",
                 },
                 {
                   "name":"Mana Vault",
@@ -1708,6 +1922,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"229",
                   "edition":"uma",
                   "cmc": 1,
+                  "color": "",
                 },
                 {
                   "name":"Tidehollow Sculler",
@@ -1715,6 +1930,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"2",
                   "edition":"md1",
                   "cmc": 2,
+                  "color": "WB",
                 },
                 {
                   "name":"Solemn Simulacrum",
@@ -1722,6 +1938,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"1632",
                   "edition":"mb1",
                   "cmc": 4,
+                  "color": "",
                 },
                 {
                   "name":"Wear // Tear",
@@ -1729,6 +1946,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"135",
                   "edition":"dgm",
                   "cmc": 2,
+                  "color": "WR",
                 },
                 {
                   "name":"Bone Shredder",
@@ -1736,6 +1954,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"5",
                   "edition":"dde",
                   "cmc": 3,
+                  "color": "B",
                 },
                 {
                   "name":"Embereth Shieldbreaker",
@@ -1743,6 +1962,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"122",
                   "edition":"eld",
                   "cmc": 2,
+                  "color": "R",
                 },
                 {
                   "name":"Field of Ruin",
@@ -1750,6 +1970,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"242",
                   "edition":"thb",
                   "cmc": 0,
+                  "color": "",
                 },
                 {
                   "name":"Overgrown Tomb",
@@ -1757,6 +1978,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"253",
                   "edition":"grn",
                   "cmc": 0,
+                  "color": "",
                 },
                 {
                   "name":"Breeding Pool",
@@ -1764,6 +1986,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"246",
                   "edition":"rna",
                   "cmc": 0,
+                  "color": "",
                 },
                 {
                   "name":"Spirebluff Canal",
@@ -1771,6 +1994,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"249",
                   "edition":"kld",
                   "cmc": 0,
+                  "color": "",
                 },
                 {
                   "name":"Courser of Kruphix",
@@ -1778,6 +2002,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"1169",
                   "edition":"mb1",
                   "cmc": 3,
+                  "color": "G",
                 }
               ]
             }
@@ -1809,6 +2034,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"219",
                   "edition":"ema",
                   "cmc": 0,
+                  "color": "",
                 },
                 {
                   "name":"Angel of Serenity",
@@ -1816,6 +2042,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"16",
                   "edition":"cm2",
                   "cmc": 7,
+                  "color": "W",
                 },
                 {
                   "name":"Badlands",
@@ -1823,6 +2050,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"282",
                   "edition":"3ed",
                   "cmc": 0,
+                  "color": "",
                 },
                 {
                   "name":"Bonfire of the Damned",
@@ -1830,6 +2058,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"91",
                   "edition":"mm3",
                   "cmc": 2,
+                  "color": "R",
                 },
                 {
                   "name":"Incubation Druid",
@@ -1837,6 +2066,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"131",
                   "edition":"rna",
                   "cmc": 2,
+                  "color": "G",
                 },
                 {
                   "name":"Llanowar Elves",
@@ -1844,6 +2074,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"1262",
                   "edition":"mb1",
                   "cmc": 1,
+                  "color": "G",
                 },
                 {
                   "name":"Recruiter of the Guard",
@@ -1851,6 +2082,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"206",
                   "edition":"mb1",
                   "cmc": 3,
+                  "color": "W",
                 },
                 {
                   "name":"Ancient Tomb",
@@ -1858,6 +2090,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"236",
                   "edition":"uma",
                   "cmc": 0,
+                  "color": "",
                 },
                 {
                   "name":"Elspeth, Knight-Errant",
@@ -1865,6 +2098,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"GR1",
                   "edition":"med",
                   "cmc": 4,
+                  "color": "W",
                 },
                 {
                   "name":"Nissa, Who Shakes the World",
@@ -1872,6 +2106,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"169",
                   "edition":"war",
                   "cmc": 5,
+                  "color": "G",
                 },
                 {
                   "name":"Mana Tithe",
@@ -1879,6 +2114,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"171",
                   "edition":"mb1",
                   "cmc": 1,
+                  "color": "W",
                 },
                 {
                   "name":"Grim Monolith",
@@ -1886,6 +2122,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"126",
                   "edition":"ulg",
                   "cmc": 2,
+                  "color": "",
                 },
                 {
                   "name":"Lightning Strike",
@@ -1893,6 +2130,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"152",
                   "edition":"m19",
                   "cmc": 2,
+                  "color": "R",
                 },
                 {
                   "name":"Imperial Seal",
@@ -1900,6 +2138,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"78",
                   "edition":"ptk",
                   "cmc": 1,
+                  "color": "B",
                 },
                 {
                   "name":"Siege-Gang Commander",
@@ -1907,6 +2146,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"42",
                   "edition":"gnt",
                   "cmc": 5,
+                  "color": "R",
                 }
               ]
             }
@@ -1923,6 +2163,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"40",
                   "edition":"emn",
                   "cmc": 2,
+                  "color": "W",
                 },
                 {
                   "name":"Force of Negation",
@@ -1930,6 +2171,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"52",
                   "edition":"mh1",
                   "cmc": 3,
+                  "color": "U",
                 },
                 {
                   "name":"Shriekmaw",
@@ -1937,6 +2179,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"771",
                   "edition":"mb1",
                   "cmc": 5,
+                  "color": "B",
                 },
                 {
                   "name":"Volcanic Island",
@@ -1944,6 +2187,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"291",
                   "edition":"3ed",
                   "cmc": 0,
+                  "color": "",
                 },
                 {
                   "name":"Stonecoil Serpent",
@@ -1951,6 +2195,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"235",
                   "edition":"eld",
                   "cmc": 0,
+                  "color": "",
                 },
                 {
                   "name":"Wilderness Reclamation",
@@ -1958,6 +2203,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"149",
                   "edition":"rna",
                   "cmc": 4,
+                  "color": "G",
                 },
                 {
                   "name":"Council's Judgment",
@@ -1965,6 +2211,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"16",
                   "edition":"cns",
                   "cmc": 3,
+                  "color": "W",
                 },
                 {
                   "name":"Reveillark",
@@ -1972,6 +2219,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"31",
                   "edition":"uma",
                   "cmc": 5,
+                  "color": "W",
                 },
                 {
                   "name":"Golos, Tireless Pilgrim",
@@ -1979,6 +2227,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"226",
                   "edition":"m20",
                   "cmc": 5,
+                  "color": "",
                 },
                 {
                   "name":"Tolarian Academy",
@@ -1986,6 +2235,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"330",
                   "edition":"usg",
                   "cmc": 0,
+                  "color": "",
                 },
                 {
                   "name":"Karn, Scion of Urza",
@@ -1993,6 +2243,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"RA1",
                   "edition":"med",
                   "cmc": 4,
+                  "color": "",
                 },
                 {
                   "name":"Lodestone Golem",
@@ -2000,6 +2251,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"219",
                   "edition":"mm2",
                   "cmc": 5,
+                  "color": "",
                 },
                 {
                   "name":"Mastermind's Acquisition",
@@ -2007,6 +2259,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"77",
                   "edition":"rix",
                   "cmc": 4,
+                  "color": "B",
                 },
                 {
                   "name":"Fact or Fiction",
@@ -2014,6 +2267,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"371",
                   "edition":"mb1",
                   "cmc": 4,
+                  "color": "U",
                 },
                 {
                   "name":"Flametongue Kavu",
@@ -2021,6 +2275,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"932",
                   "edition":"mb1",
                   "cmc": 4,
+                  "color": "R",
                 }
               ]
             }
@@ -2037,6 +2292,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"190",
                   "edition":"mh1",
                   "cmc": 2,
+                  "color": "G",
                 },
                 {
                   "name":"Terminate",
@@ -2044,6 +2300,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"1495",
                   "edition":"mb1",
                   "cmc": 2,
+                  "color": "BR",
                 },
                 {
                   "name":"Ajani Vengeant",
@@ -2051,6 +2308,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"1",
                   "edition":"ddh",
                   "cmc": 4,
+                  "color": "WR",
                 },
                 {
                   "name":"Avacyn's Pilgrim",
@@ -2058,6 +2316,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"1127",
                   "edition":"mb1",
                   "cmc": 1,
+                  "color": "G",
                 },
                 {
                   "name":"Daretti, Scrap Savant",
@@ -2065,6 +2324,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"898",
                   "edition":"mb1",
                   "cmc": 4,
+                  "color": "R",
                 },
                 {
                   "name":"Ravages of War",
@@ -2072,6 +2332,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"17",
                   "edition":"ptk",
                   "cmc": 6,
+                  "color": "W",
                 },
                 {
                   "name":"Golgari Signet",
@@ -2079,6 +2340,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"73",
                   "edition":"gk1",
                   "cmc": 2,
+                  "color": "",
                 },
                 {
                   "name":"Firebolt",
@@ -2086,6 +2348,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"927",
                   "edition":"mb1",
                   "cmc": 1,
+                  "color": "R",
                 },
                 {
                   "name":"Maelstrom Pulse",
@@ -2093,6 +2356,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"204",
                   "edition":"uma",
                   "cmc": 3,
+                  "color": "BG",
                 },
                 {
                   "name":"Incinerate",
@@ -2100,6 +2364,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"51",
                   "edition":"jvc",
                   "cmc": 1,
+                  "color": "R",
                 },
                 {
                   "name":"Zealous Conscripts",
@@ -2107,6 +2372,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"116",
                   "edition":"mm3",
                   "cmc": 5,
+                  "color": "R",
                 },
                 {
                   "name":"Oko, Thief of Crowns",
@@ -2114,6 +2380,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"197",
                   "edition":"eld",
                   "cmc": 3,
+                  "color": "UG",
                 },
                 {
                   "name":"Thirst for Knowledge",
@@ -2121,6 +2388,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"106",
                   "edition":"c18",
                   "cmc": 3,
+                  "color": "U",
                 },
                 {
                   "name":"Jace, the Mind Sculptor",
@@ -2128,6 +2396,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"WS3",
                   "edition":"med",
                   "cmc": 4,
+                  "color": "U",
                 },
                 {
                   "name":"Hissing Quagmire",
@@ -2135,6 +2404,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"171",
                   "edition":"ogw",
                   "cmc": 0,
+                  "color": "",
                 }
               ]
             }
@@ -2166,6 +2436,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"216",
                   "edition":"uma",
                   "cmc": 3,
+                  "color": "WG",
                 },
                 {
                   "name":"Scavenging Ooze",
@@ -2173,6 +2444,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"143",
                   "edition":"cm2",
                   "cmc": 2,
+                  "color": "G",
                 },
                 {
                   "name":"Scalding Tarn",
@@ -2180,6 +2452,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"244",
                   "edition":"mm3",
                   "cmc": 0,
+                  "color": "",
                 },
                 {
                   "name":"Gruul Signet",
@@ -2187,6 +2460,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"1589",
                   "edition":"mb1",
                   "cmc": 2,
+                  "color": "",
                 },
                 {
                   "name":"Lumbering Falls",
@@ -2194,6 +2468,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"239",
                   "edition":"bfz",
                   "cmc": 0,
+                  "color": "",
                 },
                 {
                   "name":"Buried Alive",
@@ -2201,6 +2476,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"88",
                   "edition":"uma",
                   "cmc": 3,
+                  "color": "B",
                 },
                 {
                   "name":"Simic Signet",
@@ -2208,6 +2484,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"130",
                   "edition":"gk2",
                   "cmc": 2,
+                  "color": "",
                 },
                 {
                   "name":"Glorybringer",
@@ -2215,6 +2492,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"134",
                   "edition":"akh",
                   "cmc": 5,
+                  "color": "R",
                 },
                 {
                   "name":"Blightsteel Colossus",
@@ -2222,6 +2500,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"99",
                   "edition":"mbs",
                   "cmc": 11,
+                  "color": "",
                 },
                 {
                   "name":"Oracle of Mul Daya",
@@ -2229,6 +2508,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"172",
                   "edition":"zen",
                   "cmc": 4,
+                  "color": "G",
                 },
                 {
                   "name":"Arbor Elf",
@@ -2236,6 +2516,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"1124",
                   "edition":"mb1",
                   "cmc": 1,
+                  "color": "G",
                 },
                 {
                   "name":"Hangarback Walker",
@@ -2243,6 +2524,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"229",
                   "edition":"ori",
                   "cmc": 0,
+                  "color": "",
                 },
                 {
                   "name":"Gideon Blackblade",
@@ -2250,6 +2532,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"WS2",
                   "edition":"med",
                   "cmc": 3,
+                  "color": "W",
                 },
                 {
                   "name":"Walking Ballista",
@@ -2257,6 +2540,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"181",
                   "edition":"aer",
                   "cmc": 0,
+                  "color": "",
                 },
                 {
                   "name":"Tundra",
@@ -2264,6 +2548,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"289",
                   "edition":"3ed",
                   "cmc": 0,
+                  "color": "",
                 }
               ]
             }
@@ -2280,6 +2565,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"259",
                   "edition":"grn",
                   "cmc": 0,
+                  "color": "",
                 },
                 {
                   "name":"Lyra Dawnbringer",
@@ -2287,6 +2573,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"26",
                   "edition":"dom",
                   "cmc": 5,
+                  "color": "W",
                 },
                 {
                   "name":"Sneak Attack",
@@ -2294,6 +2581,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"148",
                   "edition":"ema",
                   "cmc": 4,
+                  "color": "R",
                 },
                 {
                   "name":"Sower of Temptation",
@@ -2301,6 +2589,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"131",
                   "edition":"bbd",
                   "cmc": 4,
+                  "color": "U",
                 },
                 {
                   "name":"Strip Mine",
@@ -2308,6 +2597,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"13",
                   "edition":"v09",
                   "cmc": 0,
+                  "color": "",
                 },
                 {
                   "name":"Celestial Colonnade",
@@ -2315,6 +2605,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"238",
                   "edition":"uma",
                   "cmc": 0,
+                  "color": "",
                 },
                 {
                   "name":"Night's Whisper",
@@ -2322,6 +2613,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"723",
                   "edition":"mb1",
                   "cmc": 3,
+                  "color": "B",
                 },
                 {
                   "name":"Ancient Grudge",
@@ -2329,6 +2621,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"838",
                   "edition":"mb1",
                   "cmc": 1,
+                  "color": "R",
                 },
                 {
                   "name":"Birds of Paradise",
@@ -2336,6 +2629,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"1138",
                   "edition":"mb1",
                   "cmc": 1,
+                  "color": "G",
                 },
                 {
                   "name":"Hero of Bladehold",
@@ -2343,6 +2637,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"8",
                   "edition":"mbs",
                   "cmc": 3,
+                  "color": "W",
                 },
                 {
                   "name":"Mindslaver",
@@ -2350,6 +2645,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"176",
                   "edition":"som",
                   "cmc": 7,
+                  "color": "",
                 },
                 {
                   "name":"Smuggler's Copter",
@@ -2357,6 +2653,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"235",
                   "edition":"kld",
                   "cmc": 2,
+                  "color": "",
                 },
                 {
                   "name":"Hydroid Krasis",
@@ -2364,6 +2661,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"183",
                   "edition":"rna",
                   "cmc": 2,
+                  "color": "UG",
                 },
                 {
                   "name":"Archangel Avacyn",
@@ -2371,6 +2669,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"1",
                   "edition":"v17",
                   "cmc": 5,
+                  "color": "W",
                 },
                 {
                   "name":"Mother of Runes",
@@ -2378,6 +2677,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"183",
                   "edition":"mb1",
                   "cmc": 1,
+                  "color": "W",
                 }
               ]
             }
@@ -2394,6 +2694,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"1600",
                   "edition":"mb1",
                   "cmc": 2,
+                  "color": "",
                 },
                 {
                   "name":"Woodfall Primus",
@@ -2401,6 +2702,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"195",
                   "edition":"uma",
                   "cmc": 8,
+                  "color": "G",
                 },
                 {
                   "name":"Fatal Push",
@@ -2408,6 +2710,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"655",
                   "edition":"mb1",
                   "cmc": 1,
+                  "color": "B",
                 },
                 {
                   "name":"Sword of Body and Mind",
@@ -2415,6 +2718,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"208",
                   "edition":"som",
                   "cmc": 3,
+                  "color": "",
                 },
                 {
                   "name":"Putrid Imp",
@@ -2422,6 +2726,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"1",
                   "edition":"pd3",
                   "cmc": 2,
+                  "color": "B",
                 },
                 {
                   "name":"Magus of the Moon",
@@ -2429,6 +2734,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"138",
                   "edition":"ima",
                   "cmc": 3,
+                  "color": "R",
                 },
                 {
                   "name":"Cabal Ritual",
@@ -2436,6 +2742,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"2",
                   "edition":"v16",
                   "cmc": 2,
+                  "color": "B",
                 },
                 {
                   "name":"Torrential Gearhulk",
@@ -2443,6 +2750,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"67",
                   "edition":"kld",
                   "cmc": 6,
+                  "color": "U",
                 },
                 {
                   "name":"Selesnya Signet",
@@ -2450,6 +2758,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"123",
                   "edition":"gk1",
                   "cmc": 2,
+                  "color": "",
                 },
                 {
                   "name":"Skullclamp",
@@ -2457,6 +2766,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"1630",
                   "edition":"mb1",
                   "cmc": 1,
+                  "color": "",
                 },
                 {
                   "name":"Lightning Helix",
@@ -2464,6 +2774,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"1448",
                   "edition":"mb1",
                   "cmc": 2,
+                  "color": "WR",
                 },
                 {
                   "name":"Chain Lightning",
@@ -2471,6 +2782,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"171",
                   "edition":"bbd",
                   "cmc": 1,
+                  "color": "R",
                 },
                 {
                   "name":"Blood Crypt",
@@ -2478,6 +2790,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"245",
                   "edition":"rna",
                   "cmc": 0,
+                  "color": "",
                 },
                 {
                   "name":"Beast Within",
@@ -2485,6 +2798,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"1134",
                   "edition":"mb1",
                   "cmc": 3,
+                  "color": "G",
                 },
                 {
                   "name":"Through the Breach",
@@ -2492,6 +2806,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"152",
                   "edition":"uma",
                   "cmc": 5,
+                  "color": "R",
                 }
               ]
             }
@@ -2523,6 +2838,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"694",
                   "edition":"mb1",
                   "cmc": 1,
+                  "color": "B",
                 },
                 {
                   "name":"Thoughtseize",
@@ -2530,6 +2846,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"110",
                   "edition":"ima",
                   "cmc": 1,
+                  "color": "B",
                 },
                 {
                   "name":"Bloodstained Mire",
@@ -2537,6 +2854,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"230",
                   "edition":"ktk",
                   "cmc": 0,
+                  "color": "",
                 },
                 {
                   "name":"Ravenous Chupacabra",
@@ -2544,6 +2862,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"745",
                   "edition":"mb1",
                   "cmc": 4,
+                  "color": "B",
                 },
                 {
                   "name":"Eureka",
@@ -2551,6 +2870,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"185",
                   "edition":"leg",
                   "cmc": 4,
+                  "color": "G",
                 },
                 {
                   "name":"Kaya, Orzhov Usurper",
@@ -2558,6 +2878,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"RA8",
                   "edition":"med",
                   "cmc": 3,
+                  "color": "WB",
                 },
                 {
                   "name":"Flickerwisp",
@@ -2565,6 +2886,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"9",
                   "edition":"e01",
                   "cmc": 4,
+                  "color": "W",
                 },
                 {
                   "name":"Upheaval",
@@ -2572,6 +2894,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"13",
                   "edition":"v14",
                   "cmc": 6,
+                  "color": "U",
                 },
                 {
                   "name":"Opposition",
@@ -2579,6 +2902,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"92",
                   "edition":"7ed",
                   "cmc": 4,
+                  "color": "U",
                 },
                 {
                   "name":"Nykthos, Shrine to Nyx",
@@ -2586,6 +2910,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"223",
                   "edition":"ths",
                   "cmc": 0,
+                  "color": "",
                 },
                 {
                   "name":"Green Sun's Zenith",
@@ -2593,6 +2918,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"169",
                   "edition":"ema",
                   "cmc": 1,
+                  "color": "G",
                 },
                 {
                   "name":"Plateau",
@@ -2600,6 +2926,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"284",
                   "edition":"3ed",
                   "cmc": 0,
+                  "color": "",
                 },
                 {
                   "name":"Light Up the Stage",
@@ -2607,6 +2934,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"107",
                   "edition":"rna",
                   "cmc": 3,
+                  "color": "R",
                 },
                 {
                   "name":"Taiga",
@@ -2614,6 +2942,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"287",
                   "edition":"3ed",
                   "cmc": 0,
+                  "color": "",
                 },
                 {
                   "name":"Ramunap Excavator",
@@ -2621,6 +2950,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"129",
                   "edition":"hou",
                   "cmc": 3,
+                  "color": "G",
                 }
               ]
             }
@@ -2637,6 +2967,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"240",
                   "edition":"mm3",
                   "cmc": 0,
+                  "color": "",
                 },
                 {
                   "name":"Basalt Monolith",
@@ -2644,6 +2975,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"173",
                   "edition":"cm2",
                   "cmc": 3,
+                  "color": "",
                 },
                 {
                   "name":"Phyrexian Metamorph",
@@ -2651,6 +2983,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"456",
                   "edition":"mb1",
                   "cmc": 3,
+                  "color": "U",
                 },
                 {
                   "name":"Frost Titan",
@@ -2658,6 +2991,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"112",
                   "edition":"c14",
                   "cmc": 6,
+                  "color": "U",
                 },
                 {
                   "name":"Oblivion Stone",
@@ -2665,6 +2999,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"205",
                   "edition":"cm2",
                   "cmc": 3,
+                  "color": "",
                 },
                 {
                   "name":"Expansion // Explosion",
@@ -2672,6 +3007,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"224",
                   "edition":"grn",
                   "cmc": 2,
+                  "color": "UR",
                 },
                 {
                   "name":"Teferi, Time Raveler",
@@ -2679,6 +3015,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"221",
                   "edition":"war",
                   "cmc": 3,
+                  "color": "WU",
                 },
                 {
                   "name":"Path to Exile",
@@ -2686,6 +3023,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"196",
                   "edition":"mb1",
                   "cmc": 1,
+                  "color": "W",
                 },
                 {
                   "name":"Mesmeric Fiend",
@@ -2693,6 +3031,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"97",
                   "edition":"a25",
                   "cmc": 2,
+                  "color": "B",
                 },
                 {
                   "name":"Memory Jar",
@@ -2700,6 +3039,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"8",
                   "edition":"v10",
                   "cmc": 5,
+                  "color": "",
                 },
                 {
                   "name":"Brain Freeze",
@@ -2707,6 +3047,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"29",
                   "edition":"scg",
                   "cmc": 2,
+                  "color": "U",
                 },
                 {
                   "name":"Edric, Spymaster of Trest",
@@ -2714,6 +3055,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"195",
                   "edition":"c16",
                   "cmc": 3,
+                  "color": "UG",
                 },
                 {
                   "name":"Tangle Wire",
@@ -2721,6 +3063,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"8",
                   "edition":"v13",
                   "cmc": 3,
+                  "color": "",
                 },
                 {
                   "name":"Orzhov Signet",
@@ -2728,6 +3071,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"48",
                   "edition":"gk2",
                   "cmc": 2,
+                  "color": "",
                 },
                 {
                   "name":"Ugin, the Spirit Dragon",
@@ -2735,6 +3079,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"WS1",
                   "edition":"med",
                   "cmc": 8,
+                  "color": "",
                 }
               ]
             }
@@ -2751,6 +3096,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"7",
                   "edition":"uma",
                   "cmc": 11,
+                  "color": "",
                 },
                 {
                   "name":"Ashen Rider",
@@ -2758,6 +3104,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"187",
                   "edition":"ths",
                   "cmc": 8,
+                  "color": "WB",
                 },
                 {
                   "name":"Coercive Portal",
@@ -2765,6 +3112,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"56",
                   "edition":"cns",
                   "cmc": 4,
+                  "color": "",
                 },
                 {
                   "name":"Vindicate",
@@ -2772,6 +3120,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"219",
                   "edition":"a25",
                   "cmc": 3,
+                  "color": "WB",
                 },
                 {
                   "name":"Seachrome Coast",
@@ -2779,6 +3128,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"229",
                   "edition":"som",
                   "cmc": 0,
+                  "color": "",
                 },
                 {
                   "name":"Thalia, Guardian of Thraben",
@@ -2786,6 +3136,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"36",
                   "edition":"a25",
                   "cmc": 2,
+                  "color": "W",
                 },
                 {
                   "name":"Time Walk",
@@ -2793,6 +3144,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"84",
                   "edition":"cei",
                   "cmc": 2,
+                  "color": "U",
                 },
                 {
                   "name":"Marsh Flats",
@@ -2800,6 +3152,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"239",
                   "edition":"mm3",
                   "cmc": 0,
+                  "color": "",
                 },
                 {
                   "name":"Ultimate Price",
@@ -2807,6 +3160,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"36",
                   "edition":"gk2",
                   "cmc": 2,
+                  "color": "B",
                 },
                 {
                   "name":"Treachery",
@@ -2814,6 +3168,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"50",
                   "edition":"uds",
                   "cmc": 5,
+                  "color": "U",
                 },
                 {
                   "name":"Silverblade Paladin",
@@ -2821,6 +3176,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"88",
                   "edition":"c14",
                   "cmc": 3,
+                  "color": "W",
                 },
                 {
                   "name":"Zurgo Bellstriker",
@@ -2828,6 +3184,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"169",
                   "edition":"dtk",
                   "cmc": 2,
+                  "color": "R",
                 },
                 {
                   "name":"Ponder",
@@ -2835,6 +3192,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"96",
                   "edition":"c18",
                   "cmc": 1,
+                  "color": "U",
                 },
                 {
                   "name":"Deceiver Exarch",
@@ -2842,6 +3200,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"36",
                   "edition":"cma",
                   "cmc": 3,
+                  "color": "U",
                 },
                 {
                   "name":"Underground Sea",
@@ -2849,6 +3208,7 @@ export const FAKE_DATA_03: SourceData = {
                   "number":"290",
                   "edition":"3ed",
                   "cmc": 0,
+                  "color": "",
                 }
               ]
             }
