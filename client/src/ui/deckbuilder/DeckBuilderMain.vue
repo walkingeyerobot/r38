@@ -1,7 +1,6 @@
 <template>
   <div class="_deck-builder-main">
     <DeckBuilderSectionControls
-        :deckIndex="store.selectedSeat"
         :maindeck="false"
         />
     <DeckBuilderSection
@@ -11,7 +10,6 @@
         :maindeck="false"
         />
     <DeckBuilderSectionControls
-        :deckIndex="store.selectedSeat"
         :maindeck="true"
         />
     <DeckBuilderSection

@@ -1,7 +1,9 @@
 <template>
   <div class="_deck-builder-section-controls">
-    <p class="cardsCount"
-       :class="{tooFewCards}">
+    <p
+        class="cardsCount"
+        :class="{tooFewCards}"
+        >
       {{ numCards }} cards
     </p>
     <label class="sortLabel">Sort:</label>
@@ -12,15 +14,12 @@
 
 <script lang="ts">
 import Vue from "vue";
-import { deckBuilderStore, deckBuilderStore as store } from '../../state/DeckBuilderModule';
+import { deckBuilderStore as store } from '../../state/DeckBuilderModule';
 
 export default Vue.extend({
-  name: "DeckBuilderSectionControls",
+  name: 'DeckBuilderSectionControls',
 
   props: {
-    deckIndex: {
-      type: Number
-    },
     maindeck: {
       type: Boolean
     },
@@ -29,8 +28,8 @@ export default Vue.extend({
   computed: {
     numCards(): number {
       return (this.maindeck
-          ? deckBuilderStore.decks[this.deckIndex].maindeck
-          : deckBuilderStore.decks[this.deckIndex].sideboard)
+          ? store.decks[store.selectedSeat].maindeck
+          : store.decks[store.selectedSeat].sideboard)
           .flat().length;
     },
     tooFewCards(): boolean {
@@ -40,10 +39,10 @@ export default Vue.extend({
 
   methods: {
     sortCmc() {
-      store.sortByCmc({seat: this.deckIndex, maindeck: this.maindeck});
+      store.sortByCmc({seat: store.selectedSeat, maindeck: this.maindeck});
     },
     sortColor() {
-      store.sortByColor({seat: this.deckIndex, maindeck: this.maindeck});
+      store.sortByColor({seat: store.selectedSeat, maindeck: this.maindeck});
     },
   },
 });
