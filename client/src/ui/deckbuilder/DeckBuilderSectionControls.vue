@@ -163,6 +163,7 @@ export default Vue.extend({
 
 .landButton img {
   width: 16px;
+  height: 16px;
 }
 
 </style>
