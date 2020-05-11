@@ -1,9 +1,5 @@
 <template>
   <div class="_deck-builder-section">
-    <DeckBuilderSectionControls
-        :deckIndex="deckIndex"
-        :maindeck="maindeck"
-        />
     <div class="column-cnt"
          ref="columnContent"
          @mousedown="mouseDown"
@@ -36,7 +32,6 @@
 <script lang="ts">
 import Vue, { VueConstructor } from 'vue'
 import DeckBuilderColumn from "./DeckBuilderColumn.vue";
-import DeckBuilderSectionControls from "./DeckBuilderSectionControls.vue";
 import { CardColumn, CardLocation, deckBuilderStore as store } from '../../state/DeckBuilderModule';
 import { Point, Rectangle } from "../../util/rectangle";
 
@@ -88,7 +83,6 @@ export default (Vue as VueConstructor<Vue & {
 
   components: {
     DeckBuilderColumn,
-    DeckBuilderSectionControls,
   },
 
   props: {
@@ -183,6 +177,7 @@ export default (Vue as VueConstructor<Vue & {
   display: flex;
   flex-direction: row;
   position: relative;
+  padding-top: 20px;
 }
 
 .selection {
