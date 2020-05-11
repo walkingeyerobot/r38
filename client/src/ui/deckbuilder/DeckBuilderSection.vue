@@ -32,7 +32,7 @@
 <script lang="ts">
 import Vue, { VueConstructor } from 'vue'
 import DeckBuilderColumn from "./DeckBuilderColumn.vue";
-import { deckBuilderStore as store, CardColumn, CardLocation } from '../../state/DeckBuilderModule';
+import { CardColumn, CardLocation, deckBuilderStore as store } from '../../state/DeckBuilderModule';
 import { Point, Rectangle } from "../../util/rectangle";
 
 export default (Vue as VueConstructor<Vue & {
@@ -82,7 +82,7 @@ export default (Vue as VueConstructor<Vue & {
   },
 
   components: {
-    DeckBuilderColumn
+    DeckBuilderColumn,
   },
 
   props: {
@@ -100,7 +100,7 @@ export default (Vue as VueConstructor<Vue & {
   methods: {
 
     relativePoint(clientX: number, clientY: number): Point {
-      const rect = this.$el.getBoundingClientRect();
+      const rect = this.$refs.columnContent.getBoundingClientRect();
       return {
         x: clientX - rect.left,
         y: clientY - rect.top,
@@ -177,6 +177,7 @@ export default (Vue as VueConstructor<Vue & {
   display: flex;
   flex-direction: row;
   position: relative;
+  padding-top: 20px;
 }
 
 .selection {
