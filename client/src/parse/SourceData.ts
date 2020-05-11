@@ -27,6 +27,7 @@ export interface SourceCard {
   number: string;
   cmc: number;
   color: string;
+  mtgo?: string;
   edition: string;
 }
 
