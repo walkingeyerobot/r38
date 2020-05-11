@@ -50,6 +50,7 @@ export interface MtgCard {
   collector_number: string;
   cmc: number;
   color: string;
+  // MTGO CatID
   mtgo: string;
 
   // custom stuff
