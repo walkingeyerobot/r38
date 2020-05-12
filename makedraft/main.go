@@ -8,37 +8,48 @@ import (
 	"fmt"
 	_ "github.com/mattn/go-sqlite3"
 	"log"
-	"os"
-	"strconv"
-
 	"math"
 	"math/rand"
-	"time"
+	"os"
+	"sort"
+	"strconv"
+	_ "time"
 )
 
 var database *sql.DB
+var oM map[int]int
+var oR map[int]int
+var oU map[int]int
+var oC map[int]int
 
-const MAX_M = 2
-const MAX_R = 3
-const MAX_U = 7
-const MAX_C = 11
+const MAX_M = 20
+const MAX_R = 30
+const MAX_U = 60
+const MAX_C = 80
 const PACK_COLOR_STDEV = 1.55
-const RATING_STDEV = 1.1
+const RATING_MIN = 1.8
+const RATING_MAX = 3
 const POOL_COLOR_STDEV = 5.0
 
-type hopperRefill func(h *Hopper)
-
 func main() {
+	oM = make(map[int]int)
+	oR = make(map[int]int)
+	oU = make(map[int]int)
+	oC = make(map[int]int)
+
 	draftNamePtr := flag.String("name", "untitled draft", "string")
-	filenamePtr := flag.String("filename", "cube.csv", "string")
+	filenamePtr := flag.String("filename", "ktk.csv", "string")
 	databasePtr := flag.String("database", "draft.db", "string")
 	flag.Parse()
 
 	name := *draftNamePtr
 
-	rand.Seed(time.Now().UnixNano())
+	//rand.Seed(time.Now().UnixNano())
+	rand.Seed(1)
+	log.Printf("generating draft %s.", name)
 
 	var err error
+	var packIds [24]int64
 
 	database, err = sql.Open("sqlite3", *databasePtr)
 	if err != nil {
@@ -50,17 +61,20 @@ func main() {
 		log.Printf("error pinging database: %s", err)
 		return
 	}
+	/*
+		packIds, err = generateEmptyDraft(name)
+		if err != nil {
+			return
+		}
+	*/
+	err = generateStandardDraft(packIds, *filenamePtr)
 
-	packIds, err := generateEmptyDraft(name)
+	// err = generateCubeDraft(packIds, *filenamePtr)
 	if err != nil {
 		return
 	}
 
-	// err = generateStandardDraft(packIds, *filenamePtr)
-	err = generateCubeDraft(packIds, *filenamePtr)
-	if err != nil {
-		return
-	}
+	fmt.Printf("%v\n%v\n%v\n%v\n", oM, oR, oU, oC)
 }
 
 func generateEmptyDraft(name string) ([24]int64, error) {
@@ -225,9 +239,14 @@ func generateStandardDraft(packIds [24]int64, filename string) error {
 	resetHoppers := func() {
 		hoppers[0] = MakeNormalHopper(allCards.Mythics, allCards.Rares, allCards.Rares)
 
-		hoppers[1] = MakeNormalHopper(allCards.Uncommons, allCards.Uncommons)
-		hoppers[2] = MakeNormalHopper(allCards.Uncommons, allCards.Uncommons)
-		hoppers[3] = MakeNormalHopper(allCards.Uncommons, allCards.Uncommons)
+		/*
+			hoppers[1] = MakeNormalHopper(allCards.Uncommons, allCards.Uncommons)
+			hoppers[2] = MakeNormalHopper(allCards.Uncommons, allCards.Uncommons)
+			hoppers[3] = MakeNormalHopper(allCards.Uncommons, allCards.Uncommons)
+		*/
+		hoppers[1] = MakeUncommonHopper(allCards.Uncommons, allCards.Uncommons, allCards.Uncommons, allCards.Uncommons, allCards.Uncommons)
+		hoppers[2] = hoppers[1]
+		hoppers[3] = hoppers[1]
 
 		hoppers[4] = MakeNormalHopper(allCards.Commons, allCards.Commons)
 		hoppers[5] = hoppers[4]
@@ -288,19 +307,19 @@ func generateStandardDraft(packIds [24]int64, filename string) error {
 	log.Printf("pack attempts: %d", packAttempts)
 
 	log.Printf("inserting into db...")
-	query := `INSERT INTO cards (pack, original_pack, edition, number, tags, name, cmc, type, color, mtgo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-
-	for i, pack := range packs {
-		for _, card := range pack {
-			packId := packIds[i]
-			var tags string
-			if card.Foil {
-				tags = "foil"
+	//	query := `INSERT INTO cards (pack, original_pack, edition, number, tags, name, cmc, type, color, mtgo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	/*
+		for i, pack := range packs {
+			for _, card := range pack {
+				packId := packIds[i]
+				var tags string
+				if card.Foil {
+					tags = "foil"
+				}
+				database.Exec(query, packId, packId, "ktk", card.Number, tags, card.Name, card.Cmc, card.Type, card.ColorIdentity, card.Mtgo)
 			}
-			database.Exec(query, packId, packId, "ktk", card.Number, tags, card.Name, card.Cmc, card.Type, card.ColorIdentity, card.Mtgo)
 		}
-	}
-
+	*/
 	log.Printf("done!")
 	return nil
 }
@@ -309,6 +328,7 @@ func okPack(pack [15]Card) bool {
 	passes := true
 	cardHash := make(map[string]int)
 	colorHash := make(map[rune]float64)
+	uncommonColors := make(map[string]int)
 	var ratings []float64
 	totalCommons := 0
 	for _, card := range pack {
@@ -326,8 +346,18 @@ func okPack(pack [15]Card) bool {
 			}
 			ratings = append(ratings, card.Rating)
 			totalCommons++
+		} else if card.Rarity == "U" {
+			sortedColor := stringSort(card.ColorIdentity)
+			uncommonColors[sortedColor]++
+			if uncommonColors[sortedColor] > 1 && len(sortedColor) == 3 {
+				log.Printf("found more than one %s card", sortedColor)
+				passes = false
+			}
+			if uncommonColors[sortedColor] >= 3 {
+				log.Printf("all uncommons are %s", sortedColor)
+				passes = false
+			}
 		}
-		// TODO: analyize uncommon color distribution
 	}
 
 	// calculate stdev for color
@@ -337,7 +367,6 @@ func okPack(pack [15]Card) bool {
 	}
 
 	if len(colors) != 5 {
-		// a color is missing
 		log.Printf("a color is missing")
 		passes = false
 		for {
@@ -349,16 +378,19 @@ func okPack(pack [15]Card) bool {
 	}
 
 	colorStdev := stdev(colors)
-	ratingStdev := stdev(ratings)
+	ratingMean := mean(ratings)
 	log.Printf("color stdev:\t%f", colorStdev)
-	log.Printf("rating stdev:\t%f", ratingStdev)
+	log.Printf("rating mean:\t%f", ratingMean)
 
 	if colorStdev > PACK_COLOR_STDEV {
 		log.Printf("color stdev too high")
 		passes = false
 	}
-	if ratingStdev > RATING_STDEV {
-		log.Printf("rating stdev too high")
+	if ratingMean > RATING_MAX {
+		log.Printf("rating mean too high")
+		passes = false
+	} else if ratingMean < RATING_MIN {
+		log.Printf("rating mean too low")
 		passes = false
 	}
 
@@ -376,10 +408,14 @@ func okDraft(packs [24][15]Card) bool {
 
 	cardHash := make(map[string]int)
 	colorHash := make(map[rune]float64)
+	q := make(map[string]int)
 	for _, pack := range packs {
 		for _, card := range pack {
 			cardHash[card.Name]++
 			qty := cardHash[card.Name]
+			if card.Rarity != "B" && qty > q[card.Rarity] {
+				q[card.Rarity] = qty
+			}
 			switch card.Rarity {
 			case "M":
 				if qty > MAX_M {
@@ -427,6 +463,11 @@ func okDraft(packs [24][15]Card) bool {
 
 	if passes {
 		log.Printf("draft passes!")
+		oM[q["M"]]++
+		oR[q["R"]]++
+		oU[q["U"]]++
+		oC[q["C"]]++
+		fmt.Printf("%d, %d, %d, %d\n", q["M"], q["R"], q["U"], q["C"])
 	} else {
 		log.Printf("draft fails :(")
 	}
@@ -435,14 +476,41 @@ func okDraft(packs [24][15]Card) bool {
 }
 
 func stdev(list []float64) float64 {
+	avg := mean(list)
+
 	var sum float64
-	for _, val := range list {
-		sum += val
-	}
-	avg := sum / float64(len(list))
-	sum = 0
 	for _, val := range list {
 		sum += math.Pow(val-avg, 2)
 	}
 	return math.Sqrt(sum / float64(len(list)))
+}
+
+func mean(list []float64) float64 {
+	var sum float64
+	for _, val := range list {
+		sum += val
+	}
+	return sum / float64(len(list))
+}
+
+// from https://stackoverflow.com/questions/22688651/golang-how-to-sort-string-or-byte
+// go generics when
+type sortRunes []rune
+
+func (s sortRunes) Less(i, j int) bool {
+	return s[i] < s[j]
+}
+
+func (s sortRunes) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
+}
+
+func (s sortRunes) Len() int {
+	return len(s)
+}
+
+func stringSort(s string) string {
+	r := []rune(s)
+	sort.Sort(sortRunes(r))
+	return string(r)
 }
