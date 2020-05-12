@@ -1,6 +1,7 @@
-import { DraftState, CardContainer, CardPack } from "./DraftState";
+import { DraftState, CardContainer, CardPack, PackContainer } from "./DraftState";
 import { checkNotNil } from '../util/checkNotNil';
-import { TimelineEvent, TimelineAction, ActionMovePack, PackLocation, PACK_LOCATION_UNUSED, PACK_LOCATION_DEAD } from './TimelineEvent';
+import { TimelineEvent, TimelineAction, ActionMovePack, ActionAssignRound } from './TimelineEvent';
+import { MutationError } from './MutationError';
 
 const DEBUG = false;
 
@@ -43,6 +44,11 @@ function applyAction(action: TimelineAction, state: DraftState) {
     case 'announce':
       console.log('ANNOUNCEMENT:', action.message);
       break;
+    case 'assign-round':
+      assignRound(action, state);
+      break;
+    default:
+      throw new Error(`Unrecognized action ${action}`);
   }
 }
 
@@ -58,6 +64,11 @@ function rollbackAction(action: TimelineAction, state: DraftState) {
       break;
     case 'announce':
       break;
+    case 'assign-round':
+      unassignRound(action, state);
+      break;
+    default:
+      throw new Error(`Unrecognized action ${action}`);
   }
 }
 
@@ -69,7 +80,7 @@ function removeCard(id: number, container: CardContainer) {
       return card;
     }
   }
-  throw new Error(`Cannot find card ${id} in container ${container}.`);
+  throw new MutationError(`Cannot find card ${id} in container ${container}.`);
 }
 
 function movePack(
@@ -77,68 +88,65 @@ function movePack(
     state: DraftState,
     direction: 'forward' | 'reverse'
 ) {
-  const srcId = direction == 'forward' ? action.from : action.to;
-  const dstId = direction == 'forward' ? action.to : action.from;
+  const src = direction == 'forward' ? action.from : action.to;
+  const dst = direction == 'forward' ? action.to : action.from;
 
-  const src = getPackLocation(srcId, state);
-  const dst = getPackLocation(dstId, state);
+  const srcCnt = checkNotNil(state.locations.get(src));
+  const dstCnt = checkNotNil(state.locations.get(dst));
 
-  const pack = getPack(action.pack, state);
-  if (src != null) {
-    removePack(pack.id, src);
+  const pack = state.packs.get(action.pack);
+  if (pack == undefined || pack.type != 'pack') {
+    throw new MutationError(`Cannot find pack ${action.pack}`);
   }
-  if (dst != null) {
-    if (action.insertAction == 'enqueue' && direction == 'forward'
-        || action.insertAction == 'unshift' && direction == 'reverse') {
-      dst.push(pack);
-    } else if (action.insertAction == 'unshift' && direction == 'forward'
-        || action.insertAction == 'enqueue' && direction == 'reverse') {
-      dst.unshift(pack);
-    } else {
-      throw new Error(`Unrecognized insertActio n: ${action.insertAction}`);
+
+  // TODO: We can't store the specific index that the pack comes from/goes to
+  // because this information differs between timeline and synchronized modes.
+  // However, this means that we can't properly reverse the event -- we don't
+  // know what index position to return the pack to. So for now we require that
+  // all pack moves original from index position 0 (i.e. the front of the
+  // queue).
+
+  const srcIndex = srcCnt.packs.indexOf(pack);
+  const dstIndex = direction == 'forward'
+      ? getPackDestinationIndex(pack, dstCnt, action.queuePosition)
+      : 0;
+  if (direction == 'forward' && srcIndex != 0) {
+    throw new MutationError(`Can only move first pack in the container`);
+  }
+
+  srcCnt.packs.splice(srcIndex, 1);
+  dstCnt.packs.splice(dstIndex, 0, pack);
+}
+
+function getPackDestinationIndex(
+    pack: CardPack,
+    dst: PackContainer,
+    queuePosition: 'front' | 'end',
+): number {
+  let i = 0;
+  for (; i < dst.packs.length; i++) {
+    if (queuePosition == 'front' && pack.round <= dst.packs[i].round) {
+      return i;
+    }
+    if (queuePosition == 'end' && pack.round < dst.packs[i].round) {
+      return i;
     }
   }
+  return i;
 }
 
-function getPack(id: number, state: DraftState) {
-  const pack = state.packs.get(id);
-  if (pack == null) {
-    console.log('Pack map is', state.packs);
-    throw new Error(`Cannot find pack ${id}`);
+function assignRound(action: ActionAssignRound, state: DraftState) {
+  const pack = state.packs.get(action.pack);
+  if (pack == undefined || pack.type != 'pack') {
+    throw new MutationError(`Not a pack: ${action.pack}`);
   }
-
-  if (pack.type != 'pack') {
-    throw new Error(`CardContainer ${id} is not a pack`);
-  }
-  return pack;
+  pack.round = action.to;
 }
 
-function getPackLocation(location: PackLocation, state: DraftState) {
-  switch (location.seat) {
-    case PACK_LOCATION_UNUSED:
-      return state.unusedPacks;
-    case PACK_LOCATION_DEAD:
-      return null;
-    default:
-      const seat = state.seats[location.seat];
-      if (seat == null) {
-        throw new Error(`Unknown seat: ${location.seat}.`);
-      }
-      if (location.queue == 'unopened') {
-        return seat.unopenedPacks;
-      } else {
-        return seat.queuedPacks;
-      }
+function unassignRound(action: ActionAssignRound, state: DraftState) {
+  const pack = state.packs.get(action.pack);
+  if (pack == undefined || pack.type != 'pack') {
+    throw new MutationError(`Not a pack: ${action.pack}`);
   }
-}
-
-function removePack(id: number, packList: CardPack[]) {
-  for (let i = 0; i < packList.length; i++) {
-    const pack = packList[i];
-    if (pack.id == id) {
-      packList.splice(i, 1);
-      return pack;
-    }
-  }
-  throw new Error(`Cannot find pack ${id} to remove`);
+  pack.round = action.from;
 }

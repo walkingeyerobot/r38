@@ -1,17 +1,21 @@
-import { CardContainer, CardPack, DraftCard, DraftSeat, DraftState, PlayerPicks } from '../draft/DraftState';
+import { CardContainer, CardPack, DraftCard, DraftSeat, DraftState, PlayerPicks, PackContainer, PACK_LOCATION_UNUSED, PACK_LOCATION_DEAD } from '../draft/DraftState';
 import { SourceCard, SourceData } from './SourceData';
 
 // TODO: Make this something more than just a static global
 let nextCardId = 0;
+let nextLocationId = 0;
 
 export function parseInitialState(srcData: SourceData): DraftState {
   let nextPackId = 0;
   const packMap = new Map<number, CardContainer>();
+  const locationMap = new Map<number, PackContainer>();
 
   const state: DraftState = {
     seats: [],
-    unusedPacks: [],
+    unusedPacks: buildPackLocation(PACK_LOCATION_UNUSED, 'Unused packs'),
+    deadPacks: buildPackLocation(PACK_LOCATION_DEAD, 'Dead packs'),
     packs: packMap,
+    locations: locationMap,
   };
 
   for (const [i, srcSeat] of srcData.seats.entries()) {
@@ -30,8 +34,10 @@ export function parseInitialState(srcData: SourceData): DraftState {
         picks: playerPicks,
       },
       originalPacks: [],
-      queuedPacks: [],
-      unopenedPacks: [],
+      queuedPacks:
+          buildPackLocation(nextLocationId++, `queuedPacks for seat ${i}`),
+      unopenedPacks:
+          buildPackLocation(nextLocationId++, `unopenedPacks for seat ${i}`),
     };
     state.seats.push(seat);
   }
@@ -43,9 +49,10 @@ export function parseInitialState(srcData: SourceData): DraftState {
         id: nextPackId++,
         type: 'pack',
         cards: parsePack(srcSeat.rounds[j].packs[0].cards),
-        originalSeat: i
+        originalSeat: i,
+        round: j,
       };
-      seat.unopenedPacks.push(pack);
+      seat.unopenedPacks.packs.push(pack);
       seat.originalPacks.push(pack.id);
       packMap.set(pack.id, pack);
     }
@@ -57,8 +64,9 @@ export function parseInitialState(srcData: SourceData): DraftState {
     type: 'pack',
     cards: parsePack(srcData.extraPack || []),
     originalSeat: -1,
+    round: -1,
   };
-  state.unusedPacks.push(extraPack);
+  state.unusedPacks.packs.push(extraPack);
   state.packs.set(extraPack.id, extraPack);
 
   return state;
@@ -86,6 +94,14 @@ function parsePack(srcPack: SourceCard[]) {
   }
 
   return pack;
+}
+
+function buildPackLocation(id: number, label: string): PackContainer {
+  return {
+    id: id,
+    packs: [],
+    label: label,
+  };
 }
 
 const FAKE_PLAYER_NAMES = [

@@ -8,6 +8,7 @@ import { cloneDraftState } from '../draft/cloneDraftState';
 import { commitTimelineEvent, rollbackTimelineEvent } from '../draft/mutate';
 import { isPickEvent } from './util/isPickEvent';
 import { rootStore } from './store';
+import { printEvent } from './util/printEvent';
 
 // TODO: Remove the need for this
 let initialDraftState: DraftState = buildEmptyDraftState();
@@ -25,6 +26,7 @@ export const replayStore = vuexModule(rootStore, 'replay', {
   events: [],
   eventPos: 0,
   timeMode: 'original',
+  parseError: null,
 
 } as ReplayState, {
 
@@ -47,6 +49,7 @@ export const replayStore = vuexModule(rootStore, 'replay', {
         type: 'seat',
         id: 0,
       };
+      state.parseError = payload.parseError;
 
       console.log('Initialized draft with', state.events.length, 'events');
     },
@@ -59,7 +62,7 @@ export const replayStore = vuexModule(rootStore, 'replay', {
       state.draft = cloneDraftState(initialDraftState);
       let i = 0;
       for (; i < state.events.length && i < index; i++) {
-        commitTimelineEvent(state.events[i], state.draft);
+        commitEvent(state.events[i], state.draft);
       }
       state.eventPos = i;
     },
@@ -69,7 +72,7 @@ export const replayStore = vuexModule(rootStore, 'replay', {
         case 'original':
           if (state.eventPos < state.events.length) {
             const event = state.events[state.eventPos];
-            commitTimelineEvent(event, state.draft);
+            commitEvent(event, state.draft);
             state.eventPos++;
           }
           break;
@@ -83,7 +86,7 @@ export const replayStore = vuexModule(rootStore, 'replay', {
             if (event.roundEpoch == nextEvent.roundEpoch
                 // Always skip over roundEpoch 0, which is just opening packs
                 || event.roundEpoch == 0) {
-              commitTimelineEvent(event, state.draft);
+              commitEvent(event, state.draft);
               state.eventPos++;
             } else {
               break;
@@ -157,7 +160,7 @@ export const replayStore = vuexModule(rootStore, 'replay', {
                   && event.roundEpoch > currentEpoch)) {
             break;
           }
-          commitTimelineEvent(event, state.draft);
+          commitEvent(event, state.draft);
         }
         state.eventPos = i;
 
@@ -189,7 +192,7 @@ export const replayStore = vuexModule(rootStore, 'replay', {
             if (event.id == targetEvent.id) {
               break;
             }
-            commitTimelineEvent(event, state.draft);
+            commitEvent(event, state.draft);
           }
           state.eventPos = i;
         }
@@ -199,9 +202,6 @@ export const replayStore = vuexModule(rootStore, 'replay', {
   },
 
   getters: {
-    test(state: ReplayState): string {
-      return state.draftId + state.draftName;
-    },
   },
 
   actions: { },
@@ -238,6 +238,17 @@ function getCurrentEpoch(state: ReplayState): [number, number] {
   return [currentRound, currentEpoch];
 }
 
+const DEBUG = false;
+
+function commitEvent(event: TimelineEvent, state: DraftState) {
+  if (DEBUG) {
+    printEvent(event, state);
+  }
+  commitTimelineEvent(event, state);
+}
+
+
+
 export type ReplayModule = typeof replayStore;
 
 interface ReplayState {
@@ -248,6 +259,9 @@ interface ReplayState {
   events: TimelineEvent[],
   eventPos: number,
   timeMode: TimeMode,
+
+  /** Non-null if there was an error while parsing the event stream */
+  parseError: Error | null,
 }
 
 export type TimeMode = 'original' | 'synchronized';

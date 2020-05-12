@@ -8,7 +8,15 @@
       <button @click="onEndClick" class="playback-btn">End</button>
     </div>
     <div class="center">
-      <div class="draft-name">{{ store.draftName }}</div>
+      <div class="draft-name">
+        {{ store.draftName }}
+        <span
+            v-if="store.parseError != null"
+            class="parse-error-warning"
+            >
+          [parse error]
+        </span>
+      </div>
     </div>
     <div class="end">
       <SearchBox />
@@ -139,5 +147,9 @@ export default Vue.extend({
 
 .draft-name {
   font-size: 16px;
+}
+
+.parse-error-warning {
+  color: #F00;
 }
 </style>

@@ -42,10 +42,13 @@ export default Vue.extend({
     const draft = parseDraft(srcData);
 
     store.initDraft(draft);
-    store.setTimeMode('synchronized');
-    store.goTo(store.events.length);
 
     document.title = `Replay of ${store.draftName}`;
+
+    if (store.parseError == null) {
+      store.setTimeMode('synchronized');
+      store.goTo(store.events.length);
+    }
     applyReplayUrlState(store, this.$route);
   },
 

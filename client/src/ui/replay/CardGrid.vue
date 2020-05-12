@@ -81,8 +81,8 @@ export default Vue.extend({
         pack = checkNotNil(store.draft.packs.get(this.selection.id));
       } else {
         const player = store.draft.seats[this.selection.id];
-        if (player.queuedPacks.length > 0) {
-          pack = player.queuedPacks[0];
+        if (player.queuedPacks.packs.length > 0) {
+          pack = player.queuedPacks.packs[0];
         }
       }
 

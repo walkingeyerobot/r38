@@ -2,16 +2,24 @@ import { TimelineEvent } from './TimelineEvent';
 
 export interface DraftState {
   seats: DraftSeat[];
-  unusedPacks: CardPack[];
+  unusedPacks: PackContainer;
+  deadPacks: PackContainer;
   packs: Map<number, CardContainer>;
+  locations: Map<number, PackContainer>;
 }
 
 export interface DraftSeat {
   position: number;
   player: DraftPlayer;
-  queuedPacks: CardPack[];
-  unopenedPacks: CardPack[];
+  queuedPacks: PackContainer;
+  unopenedPacks: PackContainer;
   originalPacks: number[];
+}
+
+export interface PackContainer {
+  id: number;
+  packs: CardPack[];
+  label: string;
 }
 
 export type CardContainer = CardPack | PlayerPicks;
@@ -21,6 +29,7 @@ export interface CardPack {
   id: number;
   cards: DraftCard[];
   originalSeat: number;
+  round: number;
 }
 
 export interface PlayerPicks {
@@ -59,3 +68,6 @@ export interface MtgCard {
   // Post-processed name for quick string comparison
   searchName: string;
 }
+
+export const PACK_LOCATION_UNUSED = -1;
+export const PACK_LOCATION_DEAD = -2;

@@ -15,7 +15,7 @@
 
     <div class="card-cnt">
       <CardPack
-          v-for="pack in seat.queuedPacks"
+          v-for="pack in seat.queuedPacks.packs"
           :key="pack.id"
           :pack="pack"
           class="opened-pack"
@@ -24,7 +24,7 @@
       <div class="spacer"></div>
 
       <CardPack
-          v-for="pack in seat.unopenedPacks"
+          v-for="pack in seat.unopenedPacks.packs"
           :key="pack.id"
           :pack="pack"
           class="unopened-pack"
