@@ -1,6 +1,6 @@
 import { SourceData } from '../parse/SourceData';
 
-export const FAKE_DATA_03: SourceData = {
+export const DRAFT_11: SourceData = {
   "seats":[
     {
       "rounds":[

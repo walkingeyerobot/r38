@@ -10,6 +10,7 @@ export interface TimelineEvent {
 export type TimelineAction =
     | ActionMoveCard
     | ActionMovePack
+    | ActionAssignRound
     | ActionAnnounce
     ;
 
@@ -25,20 +26,19 @@ export interface ActionMoveCard {
 export interface ActionMovePack {
   type: 'move-pack';
   pack: number;
-  from: PackLocation;
-  to: PackLocation;
-  insertAction: 'enqueue' | 'unshift';
+  from: number;
+  to: number;
+  queuePosition: 'front' | 'end';
+}
+
+export interface ActionAssignRound {
+  type: 'assign-round';
+  pack: number;
+  from: number;
+  to: number;
 }
 
 export interface ActionAnnounce {
   type: 'announce';
   message: string;
 }
-
-export interface PackLocation {
-  seat: number;
-  queue: 'unopened' | 'opened';
-}
-
-export const PACK_LOCATION_UNUSED = -1;
-export const PACK_LOCATION_DEAD = -2;

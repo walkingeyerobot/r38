@@ -23,7 +23,6 @@ export default Vue.extend({
 
   computed: {
     draft(): DraftState {
-      console.log('Reading draft');
       return store.draft;
     },
   },

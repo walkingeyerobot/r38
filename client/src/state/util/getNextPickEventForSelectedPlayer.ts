@@ -20,7 +20,6 @@ export function getNextPickEventForSelectedPlayer(
 export function getNextPickEvent(
   store: ReplayModule,
 ): TimelineEvent | null {
-  console.log('STORE.events:', store.events, store);
   let pickEvent: TimelineEvent | null = null;
   for (let i = store.eventPos; i < store.events.length; i++) {
     const event = store.events[i];

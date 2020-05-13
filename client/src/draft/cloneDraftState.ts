@@ -1,24 +1,40 @@
-import { DraftState, CardContainer } from './DraftState';
+import { DraftState, CardContainer, PackContainer } from './DraftState';
 
 export function cloneDraftState(src: DraftState) {
   const clonedState: DraftState = JSON.parse(JSON.stringify(src));
 
-  const containers = [] as CardContainer[];
-  containers.push(...clonedState.unusedPacks);
+  clonedState.packs = new Map<number, CardContainer>();
+  clonedState.locations = new Map<number, PackContainer>();
+
+  registerLocation(clonedState, clonedState.unusedPacks);
+  registerLocation(clonedState, clonedState.deadPacks);
+
+  registerCardContainers(clonedState, clonedState.unusedPacks.packs);
+  registerCardContainers(clonedState, clonedState.deadPacks.packs);
   for (const seat of clonedState.seats) {
-    containers.push(seat.player.picks);
-    containers.push(...seat.queuedPacks);
-    containers.push(...seat.unopenedPacks);
+    registerCardContainers(clonedState, [seat.player.picks]);
+    registerCardContainers(clonedState, seat.queuedPacks.packs);
+    registerCardContainers(clonedState, seat.unopenedPacks.packs);
+
+    registerLocation(clonedState, seat.queuedPacks);
+    registerLocation(clonedState, seat.unopenedPacks);
   }
-
-  containers.sort((a, b) => a.id - b.id);
-
-  const newMap = new Map<number, CardContainer>();
-  for (const container of containers) {
-    newMap.set(container.id, container);
-  }
-
-  clonedState.packs = newMap;
 
   return clonedState;
+}
+
+function registerLocation(
+    state: DraftState,
+    location: PackContainer,
+) {
+  state.locations.set(location.id, location);
+}
+
+function registerCardContainers(
+  state: DraftState,
+  containers: CardContainer[]
+) {
+  for (const container of containers) {
+    state.packs.set(container.id, container);
+  }
 }

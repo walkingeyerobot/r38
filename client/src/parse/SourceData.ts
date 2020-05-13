@@ -28,6 +28,7 @@ export interface SourceCard {
   cmc: number;
   color: string;
   mtgo?: string;
+  type?: string;
   edition: string;
 }
 
@@ -36,7 +37,10 @@ export interface SourceEvent {
   announcements: string[];
   card1: string;
   card2: string;    // empty string if not a pick
+  cards?: string[];
   playerModified: number;
   draftModified: number;
   round: number;
+
+  librarian?: boolean;
 }

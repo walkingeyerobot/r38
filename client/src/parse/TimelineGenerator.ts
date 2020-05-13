@@ -1,42 +1,53 @@
 import { SourceEvent } from './SourceData';
 import { commitTimelineEvent } from '../draft/mutate';
 import { cloneDraftState } from '../draft/cloneDraftState';
-import { DraftState, CardContainer, CardPack, DraftSeat } from '../draft/DraftState';
-import { TimelineEvent, PACK_LOCATION_UNUSED, PACK_LOCATION_DEAD } from '../draft/TimelineEvent';
+import { DraftState, CardContainer, CardPack, DraftSeat, PackContainer } from '../draft/DraftState';
+import { TimelineEvent } from '../draft/TimelineEvent';
+import { ParseError } from './ParseError';
+import { MutationError } from '../draft/MutationError';
 
 export class TimelineGenerator {
   private _state!: DraftState;
-  private _srcEvents!: SourceEvent[];
 
   private _outEvents = [] as TimelineEvent[];
 
-  private _eventIndex = 0;
   private _nextTimelineId = 0;
   private _playerTrackers = [] as PlayerTracker[];
-  private _isComplete = false;
 
-  generate(state: DraftState, events: SourceEvent[]) {
+  generate(
+      state: DraftState,
+      events: SourceEvent[],
+  ): GeneratedTimeline {
     this.initialize(cloneDraftState(state), events);
-    while (this.next()) {}
-    return this._outEvents.concat();
-  }
 
-  manage(state: DraftState, events: SourceEvent[]) {
-    this.initialize(state, events);
-  }
+    let parseError: Error | null = null;
+    for (let i = 0; i < events.length; i++) {
+      const srcEvent = events[i];
+      try {
+        this.parseEvent(srcEvent);
+      } catch (e) {
+        if (e instanceof ParseError || e instanceof MutationError) {
+          console.error('Error while parsing event', srcEvent, e);
+          parseError = e;
+          break;
+        } else {
+          throw e;
+        }
+      }
+    }
 
-  isComplete() {
-    return this._isComplete;
+    return {
+      events: this._outEvents.concat(),
+      isComplete: this.isDraftComplete(),
+      parseError,
+    };
   }
 
   private initialize(state: DraftState, events: SourceEvent[]) {
     this._state = state;
-    this._srcEvents = events;
     this._outEvents = [];
-    this._eventIndex = 0;
     this._nextTimelineId = 0;
     this._playerTrackers = [];
-    this._isComplete = false;
 
     // Fill out our player trackers
     for (const seat of this._state.seats) {
@@ -51,35 +62,17 @@ export class TimelineGenerator {
     this.openFirstPacks();
   }
 
-  next(): boolean {
-    if (this._eventIndex >= this._srcEvents.length) {
-      this._isComplete = this.isDraftComplete();
-      return false;
-    }
-    const srcEvent = this._srcEvents[this._eventIndex];
-    this._eventIndex++;
-
-    try {
-      this.parseEvent(srcEvent);
-    } catch (e) {
-      console.log(
-          `Error parsing event ${this._eventIndex - 1}`,
-          this._srcEvents[this._eventIndex - 1]);
-      throw e;
-    }
-    return true;
-  }
-
   private parseEvent(srcEvent: SourceEvent) {
     const playerData = this._playerTrackers[srcEvent.player];
     if (srcEvent.round != playerData.currentRound) {
-      throw new Error(`Unexpected round: ${srcEvent.round}`);
+      throw new ParseError(`Unexpected round: ${srcEvent.round}`);
     }
     const seat = getSeat(srcEvent, this._state);
-    if (seat.queuedPacks.length == 0) {
-      throw new Error(`Seat ${seat.position} doesn't have any open packs!`);
+    if (seat.queuedPacks.packs.length == 0) {
+      throw new ParseError(
+          `Seat ${seat.position} doesn't have any open packs!`);
     }
-    const activePack = seat.queuedPacks[0];
+    const activePack = seat.queuedPacks.packs[0];
 
     const outEvent = this.createEvent(playerData);
 
@@ -100,19 +93,15 @@ export class TimelineGenerator {
     this.handleSecondPick(srcEvent, outEvent, seat, activePack);
 
     // Move the pack to the next seat
-    const nextSeat = getSeatToPassTo(activePack, seat, playerData, this._state);
+    const dstLocation =
+        getLocationToPassTo(activePack, seat, playerData, this._state);
+
     outEvent.actions.push({
       type: 'move-pack' as const,
       pack: activePack.id,
-      from: {
-        seat: seat.position,
-        queue: 'opened',
-      },
-      to: {
-        seat: nextSeat,
-        queue: 'opened',
-      },
-      insertAction: 'enqueue',
+      from: seat.queuedPacks.id,
+      to: dstLocation.id,
+      queuePosition: 'end',
     });
 
     // Sigh -____-
@@ -123,20 +112,27 @@ export class TimelineGenerator {
 
     // Finally, check to see if we should open a new pack
     // (and advance the round)
-    if (activePack.cards.length == 0 && seat.unopenedPacks.length > 0) {
+    // TODO: This check could be fooled by a lore seeker pack
+    if (activePack.cards.length == 0 && seat.unopenedPacks.packs.length > 0) {
       playerData.currentRound++;
       playerData.nextEpoch = 0;
       playerData.nextPick = 0;
 
-      const nextPack = seat.unopenedPacks[0];
+      const nextPack = seat.unopenedPacks.packs[0];
       const openPackEvent = this.createEvent(playerData);
+      openPackEvent.actions.push({
+        type: 'assign-round',
+        pack: nextPack.id,
+        from: nextPack.round,
+        to: playerData.currentRound,
+      });
       openPackEvent.actions.push({
         type: 'move-pack' as const,
         pack: nextPack.id,
-        from: { seat: seat.position, queue: 'unopened' },
-        to: { seat: seat.position, queue: 'opened' },
-        insertAction: 'unshift',
-      })
+        from: seat.unopenedPacks.id,
+        to: seat.queuedPacks.id,
+        queuePosition: 'front',
+      });
       this.commitEvent(openPackEvent);
     }
   }
@@ -181,48 +177,38 @@ export class TimelineGenerator {
     // If a player drafts Lore Seeker, we assume they chose to add a new pack
     // to the draft
     if (srcEvent.card1 == 'Lore Seeker' || srcEvent.card2 == 'Lore Seeker') {
-      if (this._state.unusedPacks.length == 0) {
-        throw new Error(`No more packs to add`);
+      if (this._state.unusedPacks.packs.length == 0) {
+        throw new ParseError(`No more packs to add`);
       }
+      const newPack = this._state.unusedPacks.packs[0];
 
       outEvent.actions.push({
         type: 'move-pack' as const,
-        pack: this._state.unusedPacks[0].id,
-        from: {
-          seat: PACK_LOCATION_UNUSED,
-          queue: 'unopened',
-        },
-        to: {
-          seat: seat.position,
-          queue: 'opened',
-        },
-        insertAction: 'unshift',
+        pack: newPack.id,
+        from: this._state.unusedPacks.id,
+        to: seat.queuedPacks.id,
+        queuePosition: 'front',
       });
     }
   }
 
   private openFirstPacks() {
     for (const seat of this._state.seats) {
-      if (seat.unopenedPacks.length == 0) {
+      if (seat.unopenedPacks.packs.length == 0) {
         console.warn(`Seat ${seat.position} doesn't have any packs!`);
         continue;
       }
+      const pack = seat.unopenedPacks.packs[0];
 
       const playerData = this._playerTrackers[seat.position];
       const event = this.createEvent(playerData);
 
       event.actions = [{
         type: 'move-pack' as const,
-        pack: seat.unopenedPacks[0].id,
-        from: {
-          seat: seat.position,
-          queue: 'unopened',
-        },
-        to: {
-          seat: seat.position,
-          queue: 'opened',
-        },
-        insertAction: 'enqueue',
+        pack: pack.id,
+        from: seat.unopenedPacks.id,
+        to: seat.queuedPacks.id,
+        queuePosition: 'front',
       }];
 
       this.commitEvent(event);
@@ -231,7 +217,8 @@ export class TimelineGenerator {
 
   private isDraftComplete() {
     for (let seat of this._state.seats) {
-      if (seat.unopenedPacks.length > 0 || seat.queuedPacks.length > 0) {
+      if (seat.unopenedPacks.packs.length > 0
+          || seat.queuedPacks.packs.length > 0) {
         return false;
       }
     }
@@ -250,21 +237,21 @@ export class TimelineGenerator {
   }
 
   private commitEvent(event: TimelineEvent) {
-    this._outEvents.push(event);
-
     // console.log('EVENT', event);
     // for (const action of event.actions){
     //   console.log('  ', action);
     // }
 
     commitTimelineEvent(event, this._state);
+
+    this._outEvents.push(event);
   }
 }
 
 function getSeat(srcEvent: SourceEvent, state: DraftState) {
   const seat = state.seats[srcEvent.player];
   if (seat == null) {
-    throw new Error(
+    throw new ParseError(
         `Unknown player "${srcEvent.player}" in event `
             + JSON.stringify(srcEvent));
   }
@@ -277,29 +264,30 @@ function findCard(cardName: string, container: CardContainer) {
       return card;
     }
   }
-  throw new Error(`Card "${cardName}" not found in container ${container.id}.`);
+  throw new ParseError(
+      `Card "${cardName}" not found in container ${container.id}.`);
 }
 
-function getSeatToPassTo(
+function getLocationToPassTo(
     pack: CardPack,
     seat: DraftSeat,
     playerData: PlayerTracker,
     state: DraftState,
-) {
+): PackContainer {
   if (pack.cards.length <= 1) {
-    return PACK_LOCATION_DEAD
+    return state.deadPacks;
   } else {
-    let nextSeatId = seat.position;
-    if (playerData.currentRound % 2 == 1) {
-      nextSeatId++;
-    } else {
-      nextSeatId--;
-    }
     const numSeats = state.seats.length;
+
+    let nextSeatId = playerData.currentRound % 2 == 1
+        ? seat.position + 1
+        : seat.position - 1;
 
     // This is essentially just (nextSeatId % numSeats), but also works for
     // negative numbers
-    return ((nextSeatId % numSeats) + numSeats) % numSeats;
+    nextSeatId = ((nextSeatId % numSeats) + numSeats) % numSeats;
+
+    return state.seats[nextSeatId].queuedPacks;
   }
 }
 
@@ -308,4 +296,10 @@ interface PlayerTracker {
   currentRound: number;
   nextEpoch: number;
   nextPick: number;
+}
+
+export interface GeneratedTimeline {
+  events: TimelineEvent[];
+  isComplete: boolean;
+  parseError: Error | null;
 }
