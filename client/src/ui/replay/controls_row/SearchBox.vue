@@ -185,10 +185,10 @@ export default Vue.extend({
               card: card.definition,
               picked: pickEvent != null ? {
                 playerName:
-                    store.draft.seats[pickEvent.associatedSeat]
+                    store.draft.seats[pickEvent.seat]
                         .player.name,
-                seatId: pickEvent.associatedSeat,
-                eventId: pickEvent.id,
+                seatId: pickEvent.seat,
+                eventId: pickEvent.eventId,
                 round: pickEvent.round,
                 pick: pickEvent.pick,
               } : null,

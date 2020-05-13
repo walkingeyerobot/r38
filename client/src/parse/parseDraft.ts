@@ -9,9 +9,8 @@ export function parseDraft(
   sourceData: SourceData
 ): ParsedDraft {
   const state = parseInitialState(sourceData);
-  const generator = new TimelineGenerator();
   const { events, isComplete, parseError } =
-      generator.generate(state, sourceData.events);
+      new TimelineGenerator().generate(state, sourceData.events);
 
   annotateCards(state, events);
 
@@ -47,9 +46,12 @@ function annotateCards(
     for (const action of event.actions) {
       if (action.type == 'move-card' && action.subtype == 'pick-card') {
         const card = checkNotNil(cardMap.get(action.card));
-        // TODO: When we clone draft states, this will become a copy rather
-        // than a reference
-        card.pickedIn.push(event);
+        card.pickedIn.push({
+          seat: event.associatedSeat,
+          round: event.round,
+          pick: event.pick,
+          eventId: event.id,
+        });
       }
     }
   }

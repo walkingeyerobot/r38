@@ -49,7 +49,14 @@ export interface DraftCard {
   definition: MtgCard;
   /** The index position of this card in its original pack */
   sourcePackIndex: number;
-  pickedIn: TimelineEvent[];
+  pickedIn: CardPick[];
+}
+
+export interface CardPick {
+  seat: number,
+  round: number,
+  pick: number,
+  eventId: number,
 }
 
 export interface MtgCard {
