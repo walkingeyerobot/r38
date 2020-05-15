@@ -13,6 +13,7 @@
         @mousedown="preventMouseDown"
         @dragstart="dragStart($event, index)"
         @click="select(index)"
+        @dblclick="switchSection(index)"
         class="card"
         :class="{
             cardDropAbove: dropTargetIndex !== null && index === 0 && dropTargetIndex === 0,
@@ -34,7 +35,7 @@
 <script lang="ts">
 import Vue from 'vue';
 import { MtgCard } from "../../draft/DraftState.js";
-import { deckBuilderStore as store, CardColumn, CardLocation, CardMove } from "../../state/DeckBuilderModule";
+import { CardColumn, CardLocation, CardMove, deckBuilderStore as store } from "../../state/DeckBuilderModule";
 import { intersects, Rectangle } from "../../util/rectangle";
 import DeckBuilderSection from "./DeckBuilderSection.vue";
 
@@ -195,6 +196,22 @@ export default Vue.extend({
         cardIndex,
         maindeck: this.maindeck,
       }]);
+    },
+
+    switchSection(cardIndex: number) {
+      store.moveCard({
+        deckIndex: this.deckIndex,
+        source: [{
+          columnIndex: this.columnIndex,
+          cardIndex,
+          maindeck: this.maindeck,
+        }],
+        target: {
+          columnIndex: this.columnIndex,
+          cardIndex: -1,
+          maindeck: !this.maindeck,
+        },
+      });
     },
 
     preventMouseDown(e: MouseEvent) {
