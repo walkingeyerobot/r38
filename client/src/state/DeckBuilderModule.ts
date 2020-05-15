@@ -48,12 +48,24 @@ export const deckBuilderStore = vuexModule(rootStore, 'deckbuilder', {
       if (move.source.length === 0) {
         return;
       }
+
       let sourceSection: CardColumn[];
       if (move.source[0].maindeck) {
         sourceSection = state.decks[move.deckIndex].maindeck;
       } else {
         sourceSection = state.decks[move.deckIndex].sideboard;
       }
+      let targetSection: CardColumn[];
+      if (move.target.maindeck) {
+        targetSection = state.decks[move.deckIndex].maindeck;
+      } else {
+        targetSection = state.decks[move.deckIndex].sideboard;
+      }
+
+      if (move.target.cardIndex < 0) {
+        move.target.cardIndex = targetSection[move.target.columnIndex].length;
+      }
+
       const cards: DraftCard[] = move.source.map(location =>
           sourceSection[location.columnIndex][location.cardIndex]);
       if (move.source.some(location =>
@@ -69,12 +81,6 @@ export const deckBuilderStore = vuexModule(rootStore, 'deckbuilder', {
         sourceSection[location.columnIndex].splice(
             sourceSection[location.columnIndex].indexOf(cards[index]), 1);
       });
-      let targetSection: CardColumn[];
-      if (move.target.maindeck) {
-        targetSection = state.decks[move.deckIndex].maindeck;
-      } else {
-        targetSection = state.decks[move.deckIndex].sideboard;
-      }
       targetSection[move.target.columnIndex]
           .splice(move.target.cardIndex, 0, ...cards);
       state.selection = [];
