@@ -12,7 +12,11 @@
     {{ range .Drafts }}
       <li>
         {{ if .Joined }}
-          <span><a href="/draft/{{ .Id }}{{ $ViewUrl }}">{{ .Name }}</a></span>
+          {{ if .Replayable }}
+            <span><a href="/deckbuilder/{{ .Id }}{{ $ViewUrl }}">{{ .Name }}</a></span>
+          {{ else }}
+            <span><a href="/draft/{{ .Id }}{{ $ViewUrl }}">{{ .Name }}</a></span>
+          {{ end }}
         {{ else }}
           <span>{{ .Name }}</span>
         {{ end }}
