@@ -4,11 +4,12 @@ import { rootStore } from './store';
 
 
 const NUM_COLUMNS = 7;
+const MODULE_NAME = 'deckbuilder';
 
 /**
  * Vuex module for storing state related to the deck builder.
  */
-export const deckBuilderStore = vuexModule(rootStore, 'deckbuilder', {
+export const deckBuilderStore = vuexModule(rootStore, MODULE_NAME, {
 
   selectedSeat: 0,
   decks: [],
@@ -23,20 +24,27 @@ export const deckBuilderStore = vuexModule(rootStore, 'deckbuilder', {
     ) {
       state.decks = [];
       for (let initializer of init) {
-        const sideboard: CardColumn[] =
-            (<DraftCard[][]>Array(NUM_COLUMNS)).fill([]).map(() => []);
-        for (const card of initializer.pool) {
-          sideboard[Math.min(card.definition.cmc, sideboard.length - 1)]
-              .push(card);
+        const stored = localStorage.getItem(
+            `draft|${initializer.draftName}|${initializer.player.seatPosition}`);
+        if (stored) {
+          state.decks.push(JSON.parse(stored));
+        } else {
+          const sideboard: CardColumn[] =
+              (<DraftCard[][]>Array(NUM_COLUMNS)).fill([]).map(() => []);
+          for (const card of initializer.pool) {
+            sideboard[Math.min(card.definition.cmc, sideboard.length - 1)]
+                .push(card);
+          }
+          state.decks.push({
+            draftName: initializer.draftName,
+            player: {
+              seatPosition: initializer.player.seatPosition,
+              name: initializer.player.name,
+            },
+            sideboard,
+            maindeck: (<DraftCard[][]>Array(NUM_COLUMNS)).fill([]).map(() => []),
+          });
         }
-        state.decks.push({
-          player: {
-            seatPosition: initializer.player.seatPosition,
-            name: initializer.player.name,
-          },
-          sideboard,
-          maindeck: (<DraftCard[][]>Array(NUM_COLUMNS)).fill([]).map(() => []),
-        });
       }
     },
 
@@ -133,6 +141,13 @@ export const deckBuilderStore = vuexModule(rootStore, 'deckbuilder', {
   actions: {},
 });
 
+deckBuilderStore.subscribe((mutation, state) => {
+  for (const deck of state.decks) {
+    localStorage.setItem(`draft|${deck.draftName}|${deck.player.seatPosition}`,
+        JSON.stringify(deck));
+  }
+});
+
 function sort(state: DeckBuilderState,
               seat: number,
               maindeck: boolean,
@@ -157,6 +172,7 @@ interface DeckBuilderState {
 }
 
 export interface Deck {
+  draftName: string;
   player: {
     seatPosition: number;
     name: string;
@@ -168,11 +184,12 @@ export interface Deck {
 export type CardColumn = DraftCard[];
 
 export interface DeckInitializer {
+  draftName: string;
   player: {
     seatPosition: number;
     name: string;
   },
-  pool: DraftCard[],
+  pool: DraftCard[];
 }
 
 export interface CardLocation {

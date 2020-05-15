@@ -1,4 +1,4 @@
-import { Store, Module, ActionTree } from 'vuex';
+import { ActionTree, Module, MutationPayload, Store } from 'vuex';
 
 // TODO: Rename this file to drop the '2' once everyone has synced the version
 // that deletes VuexModule.ts (the uppercase version)
@@ -45,6 +45,15 @@ export function vuexModule<S, D extends ModuleDef<S>>(
     }
   }
 
+  (publicModule as any).subscribe =
+      function<P extends MutationPayload>(fn: (mutation: P, state: S) => any) {
+        rootStore.subscribe<P>(((mutation, mutatedState) => {
+          if (mutation.type.startsWith(name)) {
+            fn(mutation, mutatedState[name]);
+          }
+        }));
+      };
+
   return publicModule;
 }
 
@@ -84,11 +93,16 @@ type TypedModule<S, D extends ModuleDef<S>> =
     & PublicGetterCollection<S, D['getters']>
     & PublicMutatorCollection<S, D['mutations']>
     & PublicActionCollection<S, D['actions']>
+    & Subscribe<S>
     ;
 
 type Getter<S> = (state: Readonly<S>) => any;
 type Mutation<S> = (state: S, payload?: any) => void;
 type Action<S> = (context: S, payload?: any) => any;
+
+interface Subscribe<S> {
+  subscribe<P extends MutationPayload>(fn: (mutation: P, state: S) => any): void;
+}
 
 type SimpleCollection<T> = {
   [key: string]: T,
