@@ -99,7 +99,7 @@ export default Vue.extend({
 
     addLand(name: string, collectorNumber: string, mtgo: string) {
       this.section[0].push({
-        id: 0,
+        id: performance.now(),
         sourcePackIndex: 0,
         pickedIn: [],
         definition: {
