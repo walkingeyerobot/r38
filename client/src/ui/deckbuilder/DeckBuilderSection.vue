@@ -16,6 +16,13 @@
           :columnIndex="index"
           :selectionRectangle="selectionRectangle"
           />
+      <DeckBuilderColumn
+          :column="[]"
+          :deckIndex="deckIndex"
+          :maindeck="maindeck"
+          :columnIndex="columns.length"
+          :selectionRectangle="selectionRectangle"
+          />
       <div
           class="selection"
           :hidden="selectionRectangle === null"
