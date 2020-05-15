@@ -13,7 +13,6 @@ import Vue from 'vue';
 import DeckBuilderMain from './deckbuilder/DeckBuilderMain.vue';
 import DeckBuilderPlayerSelector from './deckbuilder/DeckBuilderPlayerSelector.vue';
 import { parseDraft } from "../parse/parseDraft";
-import { MtgCard, DraftCard } from '../draft/DraftState';
 import { deckBuilderStore as store, DeckInitializer } from '../state/DeckBuilderModule';
 import { commitTimelineEvent } from '../draft/mutate';
 import { getServerPayload } from '../parse/getServerPayload';
@@ -26,11 +25,12 @@ export default Vue.extend({
   },
 
   created() {
-    const draftState = this.generateCurrentDraftState();
+    const draft = this.generateCurrentDraft();
 
     const init = [] as DeckInitializer[];
-    for (let seat of draftState.seats) {
+    for (let seat of draft.state.seats) {
       init.push({
+        draftName: draft.name,
         player: {
           seatPosition: seat.player.seatPosition,
           name: seat.player.name,
@@ -42,13 +42,13 @@ export default Vue.extend({
   },
 
   methods: {
-    generateCurrentDraftState() {
+    generateCurrentDraft() {
       const srcData = getServerPayload();
       const draft = parseDraft(srcData);
       for (let event of draft.events) {
         commitTimelineEvent(event, draft.state);
       }
-      return draft.state;
+      return draft;
     },
   }
 })
