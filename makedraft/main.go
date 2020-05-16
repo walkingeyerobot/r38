@@ -13,7 +13,7 @@ import (
 	"os"
 	"sort"
 	"strconv"
-	_ "time"
+	"time"
 )
 
 var database *sql.DB
@@ -22,10 +22,10 @@ var oR map[int]int
 var oU map[int]int
 var oC map[int]int
 
-const MAX_M = 20
-const MAX_R = 30
-const MAX_U = 60
-const MAX_C = 80
+const MAX_M = 2
+const MAX_R = 3
+const MAX_U = 4
+const MAX_C = 6
 const PACK_COLOR_STDEV = 1.55
 const RATING_MIN = 1.8
 const RATING_MAX = 3
@@ -38,14 +38,14 @@ func main() {
 	oC = make(map[int]int)
 
 	draftNamePtr := flag.String("name", "untitled draft", "string")
-	filenamePtr := flag.String("filename", "ktk.csv", "string")
+	filenamePtr := flag.String("filename", "cube.csv", "string")
 	databasePtr := flag.String("database", "draft.db", "string")
 	flag.Parse()
 
 	name := *draftNamePtr
 
-	//rand.Seed(time.Now().UnixNano())
-	rand.Seed(1)
+	rand.Seed(time.Now().UnixNano())
+	// rand.Seed(1)
 	log.Printf("generating draft %s.", name)
 
 	var err error
@@ -61,15 +61,14 @@ func main() {
 		log.Printf("error pinging database: %s", err)
 		return
 	}
-	/*
-		packIds, err = generateEmptyDraft(name)
-		if err != nil {
-			return
-		}
-	*/
-	err = generateStandardDraft(packIds, *filenamePtr)
 
-	// err = generateCubeDraft(packIds, *filenamePtr)
+	packIds, err = generateEmptyDraft(name)
+	if err != nil {
+		return
+	}
+
+	// err = generateStandardDraft(packIds, *filenamePtr)
+	err = generateCubeDraft(packIds, *filenamePtr)
 	if err != nil {
 		return
 	}
@@ -239,26 +238,22 @@ func generateStandardDraft(packIds [24]int64, filename string) error {
 	resetHoppers := func() {
 		hoppers[0] = MakeNormalHopper(allCards.Mythics, allCards.Rares, allCards.Rares)
 
-		/*
-			hoppers[1] = MakeNormalHopper(allCards.Uncommons, allCards.Uncommons)
-			hoppers[2] = MakeNormalHopper(allCards.Uncommons, allCards.Uncommons)
-			hoppers[3] = MakeNormalHopper(allCards.Uncommons, allCards.Uncommons)
-		*/
-		hoppers[1] = MakeUncommonHopper(allCards.Uncommons, allCards.Uncommons, allCards.Uncommons, allCards.Uncommons, allCards.Uncommons)
+		hoppers[1] = MakeNormalHopper(allCards.Uncommons, allCards.Uncommons)
 		hoppers[2] = hoppers[1]
 		hoppers[3] = hoppers[1]
 
 		hoppers[4] = MakeNormalHopper(allCards.Commons, allCards.Commons)
 		hoppers[5] = hoppers[4]
-		hoppers[6] = MakeNormalHopper(allCards.Commons, allCards.Commons)
-		hoppers[7] = hoppers[6]
-		hoppers[8] = MakeNormalHopper(allCards.Commons, allCards.Commons)
-		hoppers[9] = hoppers[8]
+		hoppers[6] = hoppers[4]
+		hoppers[7] = MakeNormalHopper(allCards.Commons, allCards.Commons)
+		hoppers[8] = hoppers[7]
+		hoppers[9] = hoppers[7]
 		hoppers[10] = MakeNormalHopper(allCards.Commons, allCards.Commons)
 		hoppers[11] = hoppers[10]
-		hoppers[12] = MakeNormalHopper(allCards.Commons, allCards.Commons)
-		hoppers[13] = MakeFoilHopper(&hoppers[12],
-			allCards.Mythics, allCards.Rares, allCards.Rares,
+		hoppers[12] = hoppers[10]
+		hoppers[13] = MakeFoilHopper(&hoppers[4], &hoppers[7], &hoppers[10],
+			allCards.Mythics,
+			allCards.Rares, allCards.Rares,
 			allCards.Uncommons, allCards.Uncommons, allCards.Uncommons,
 			allCards.Commons, allCards.Commons, allCards.Commons, allCards.Commons,
 			allCards.Basics, allCards.Basics, allCards.Basics, allCards.Basics)
@@ -307,19 +302,17 @@ func generateStandardDraft(packIds [24]int64, filename string) error {
 	log.Printf("pack attempts: %d", packAttempts)
 
 	log.Printf("inserting into db...")
-	//	query := `INSERT INTO cards (pack, original_pack, edition, number, tags, name, cmc, type, color, mtgo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-	/*
-		for i, pack := range packs {
-			for _, card := range pack {
-				packId := packIds[i]
-				var tags string
-				if card.Foil {
-					tags = "foil"
-				}
-				database.Exec(query, packId, packId, "ktk", card.Number, tags, card.Name, card.Cmc, card.Type, card.ColorIdentity, card.Mtgo)
+	query := `INSERT INTO cards (pack, original_pack, edition, number, tags, name, cmc, type, color, mtgo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	for i, pack := range packs {
+		for _, card := range pack {
+			packId := packIds[i]
+			var tags string
+			if card.Foil {
+				tags = "foil"
 			}
+			database.Exec(query, packId, packId, "ktk", card.Number, tags, card.Name, card.Cmc, card.Type, card.ColorIdentity, card.Mtgo)
 		}
-	*/
+	}
 	log.Printf("done!")
 	return nil
 }
@@ -404,6 +397,7 @@ func okPack(pack [15]Card) bool {
 }
 
 func okDraft(packs [24][15]Card) bool {
+	log.Printf("analyzing entire draft pool...")
 	passes := true
 
 	cardHash := make(map[string]int)
@@ -467,7 +461,7 @@ func okDraft(packs [24][15]Card) bool {
 		oR[q["R"]]++
 		oU[q["U"]]++
 		oC[q["C"]]++
-		fmt.Printf("%d, %d, %d, %d\n", q["M"], q["R"], q["U"], q["C"])
+		// fmt.Printf("%d, %d, %d, %d\n", q["M"], q["R"], q["U"], q["C"])
 	} else {
 		log.Printf("draft fails :(")
 	}

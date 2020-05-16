@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"math/rand"
 )
 
@@ -39,9 +38,9 @@ type NormalHopper struct {
 }
 
 type FoilHopper struct {
-	OtherHopper *Hopper
-	Cards       []Card
-	Source      []Card
+	OtherHoppers []*Hopper
+	Cards        []Card
+	Source       []Card
 }
 
 type BasicLandHopper struct {
@@ -59,12 +58,13 @@ func (h *FoilHopper) Pop() (Card, bool) {
 	var ret Card
 	var empty bool
 
-	if rand.Intn(4) == 0 {
+	r := rand.Intn(4)
+	if r == 3 {
 		ret = h.Cards[0]
 		h.Cards = h.Cards[1:]
 		empty = len(h.Cards) == 0
 	} else {
-		ret, empty = (*h.OtherHopper).Pop()
+		ret, empty = (*h.OtherHoppers[r]).Pop()
 	}
 
 	return ret, empty
@@ -123,22 +123,8 @@ func MakeNormalHopper(sources ...[]Card) *NormalHopper {
 	return &ret
 }
 
-func MakeUncommonHopper(sources ...[]Card) *NormalHopper {
-	ret := NormalHopper{}
-	for _, cardList := range sources {
-		for _, v := range cardList {
-			var copiedCard Card
-			copiedCard = v // this copies???
-			ret.Source = append(ret.Source, copiedCard)
-		}
-	}
-	ret.Refill()
-	Shuffle(ret.Cards)
-	return &ret
-}
-
-func MakeFoilHopper(other *Hopper, sources ...[]Card) *FoilHopper {
-	ret := FoilHopper{OtherHopper: other}
+func MakeFoilHopper(commonHopper1 *Hopper, commonHopper2 *Hopper, commonHopper3 *Hopper, sources ...[]Card) *FoilHopper {
+	ret := FoilHopper{OtherHoppers: []*Hopper{commonHopper1, commonHopper2, commonHopper3}}
 	for _, cardList := range sources {
 		for _, v := range cardList {
 			var copiedCard Card
@@ -162,102 +148,4 @@ func MakeBasicLandHopper(sources ...[]Card) *BasicLandHopper {
 	}
 	ret.Refill()
 	return &ret
-}
-
-func Shuffle(cards []Card) {
-	minDistance := 5
-	fmt.Printf("~~~~~~~~~~STARTING NEW SHUFFLE~~~~~~~~~~\n")
-	cardCount := len(cards)
-	passes := true
-	outerTries := 0
-	for {
-		passes = true
-		outerTries++
-		fmt.Printf("=====BEGINING ATTEMPT %d=====\n", outerTries)
-		for i := cardCount - 1; i >= 0; i-- {
-			fmt.Printf("------%d,%d\n", i, cardCount)
-			var j int
-			innerTries := 0
-			if i == 0 {
-				fmt.Printf("^^^^^^\n")
-				j = 0
-				fmt.Printf("%d<=>%d\t%s\n", i, j, cards[j].Name)
-				for k := i + 1; k <= i+minDistance; k++ {
-					fmt.Printf("\t%d", k)
-					if cards[j].Name == cards[k].Name {
-						fmt.Printf("\tfails!")
-						passes = false
-					} else {
-						fmt.Printf("\tpasses")
-					}
-					fmt.Printf("\t%s\n", cards[k].Name)
-					if !passes {
-						break
-					}
-				}
-			} else if i == 1 {
-				fmt.Printf("&&&&&&\n")
-				j = rand.Intn(i)
-				fmt.Printf("%d<=>%d\t%s\n", i, j, cards[j].Name)
-				for k := i + 1; k <= i+minDistance; k++ {
-					fmt.Printf("\t%d", k)
-					if cards[j].Name == cards[k].Name {
-						fmt.Printf("\tfails!")
-						passes = false
-					} else {
-						fmt.Printf("\tpasses")
-					}
-					fmt.Printf("\t%s\n", cards[k].Name)
-					if !passes {
-						break
-					}
-				}
-			} else if i != cardCount-1 {
-				fmt.Printf("******\n")
-				for {
-					passes = true
-					innerTries++
-					j = rand.Intn(i)
-					fmt.Printf("%d<=>%d\t%s\n", i, j, cards[j].Name)
-					for k := i + 1; k < cardCount && k <= i+minDistance; k++ {
-						fmt.Printf("\t%d", k)
-						if cards[j].Name == cards[k].Name {
-							fmt.Printf("\tfails!")
-							passes = false
-							// break
-						} else {
-							fmt.Printf("\tpasses")
-						}
-						fmt.Printf("\t%s\n", cards[k].Name)
-						if !passes {
-							break
-						}
-					}
-					if passes || innerTries > 100 {
-						break
-					}
-				}
-			} else {
-				j = rand.Intn(i)
-				fmt.Printf("$$$$$$\n")
-				fmt.Printf("%d<=>%d\t%s\n", i, j, cards[j].Name)
-			}
-			if !passes {
-				break
-			}
-			cards[i], cards[j] = cards[j], cards[i]
-		}
-		if passes || outerTries > 10000 {
-			break
-		}
-	}
-	if !passes {
-		fmt.Printf("panic after %d tries\n", outerTries)
-		panic("cannot shuffle")
-	}
-	/*
-		rand.Shuffle(len(cards), func(i, j int) {
-			cards[i], cards[j] = cards[j], cards[i]
-		})
-	*/
 }
