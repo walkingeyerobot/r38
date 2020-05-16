@@ -876,13 +876,18 @@ func ServeJoin(w http.ResponseWriter, r *http.Request, userId int64) {
 		return
 	}
 
-	draftId := parseResult[1]
+	draftIdInt, err := strconv.Atoi(parseResult[1])
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	draftId := int64(draftIdInt)
 
 	query := `select true from seats where draft=? and user=?`
 
 	row := database.QueryRow(query, draftId, userId)
 	var alreadyJoined bool
-	err := row.Scan(&alreadyJoined)
+	err = row.Scan(&alreadyJoined)
 
 	if err != nil && err != sql.ErrNoRows {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -893,7 +898,7 @@ func ServeJoin(w http.ResponseWriter, r *http.Request, userId int64) {
 	}
 
 	query = `update seats set user=? where id=(select id from seats where draft=? and user is null and position is not null order by random() limit 1)`
-	log.Printf("%s\t%s,%s", query, userId, draftId)
+	log.Printf("%s\t%d,%d", query, userId, draftId)
 
 	_, err = database.Exec(query, userId, draftId)
 	if err != nil {
