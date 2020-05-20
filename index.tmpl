@@ -27,6 +27,9 @@
         {{ if .Replayable }}
           <span><a href="/replay/{{ .Id }}{{ $ViewUrl }}">Replay</a></span>
         {{ end }}
+        {{ if eq $.UserId 1  }}
+          <span><a href="/bulk_mtgo/{{ .Id }}">[export]</a></span>
+        {{ end }}
       </li>
     {{ end }}
   </ul>

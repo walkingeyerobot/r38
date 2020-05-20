@@ -35,6 +35,7 @@ type Draft struct {
 type IndexPageData struct {
 	Drafts  []Draft
 	ViewUrl string
+	UserId  int64
 }
 
 type DraftPageData struct {
@@ -722,8 +723,7 @@ func ServeIndex(w http.ResponseWriter, r *http.Request, userId int64) {
 	}
 
 	viewParam := GetViewParam(r, userId)
-	data := IndexPageData{Drafts: Drafts, ViewUrl: viewParam}
-
+	data := IndexPageData{Drafts: Drafts, ViewUrl: viewParam, UserId: userId}
 	t := template.Must(template.ParseFiles("index.tmpl"))
 	t.Execute(w, data)
 }
