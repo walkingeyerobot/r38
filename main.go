@@ -307,6 +307,8 @@ func ServeBulkMTGO(w http.ResponseWriter, r *http.Request, userID int64) {
 	}
 	defer rows.Close()
 
+	re = regexp.MustCompile(`[/\\]`) // this could be more complete
+
 	// Generate the MTGO export for each player.
 	exports := []bulkMTGOExport{}
 	for rows.Next() {
@@ -322,7 +324,7 @@ func ServeBulkMTGO(w http.ResponseWriter, r *http.Request, userID int64) {
 			log.Printf("could not export to MTGO for player %s in draft %s: %s", playerID, draftID, err)
 			break
 		}
-		exports = append(exports, bulkMTGOExport{PlayerID: playerID, Username: username, Deck: export})
+		exports = append(exports, bulkMTGOExport{PlayerID: playerID, Username: re.ReplaceAllString(username, "_"), Deck: export})
 	}
 
 	// Generate the ZIP file for all exported decks.
