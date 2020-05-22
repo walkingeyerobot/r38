@@ -88,7 +88,7 @@ export default Vue.extend({
 }
 
 .maindeck {
-  flex: 3 0 0;
+  flex: 5 0 0;
   border-bottom: 1px solid #EAEAEA;
 }
 

@@ -4,7 +4,7 @@
         class="cardsCount"
         :class="{tooFewCards}"
         >
-      {{ numCards }} cards
+      {{ maindeck ? "Main" : "Sideboard" }} - {{ numCards }} cards
     </p>
     <label class="sortLabel">Sort:</label>
     <button class="sortButton" @click="sortCmc">CMC</button>
@@ -127,7 +127,7 @@ export default Vue.extend({
 }
 
 .cardsCount {
-  width: 5em;
+  width: 14em;
 }
 
 .tooFewCards {
