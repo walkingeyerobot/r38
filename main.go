@@ -1144,6 +1144,44 @@ func doPick(userId int64, cardId int64, pass bool) (int64, int64, []string, int6
 			if err != nil {
 				log.Printf("error with possibly updating round")
 			}
+
+			if roundsMatch == 0 {
+				query = `select count(1) from seats where draft=? group by round order by round desc limit 1`
+
+				row = database.QueryRow(query, draftId)
+				var nextRoundPlayers int64
+				err = row.Scan(&nextRoundPlayers)
+				if err != nil {
+					log.Printf("error counting players and rounds")
+				} else if nextRoundPlayers > 1 {
+					query = `select seats.position from seats left join packs on seats.id=packs.seat join v_packs on v_packs.id=packs.id where v_packs.count>0 and packs.round=seats.round and seats.draft=? group by seats.id`
+
+					rows, err := database.Query(query, draftId)
+					if err != nil {
+						log.Printf("error determining if there's a blocking player")
+					} else {
+						defer rows.Close()
+
+						rowCount := 0
+						var blockingPosition int64
+						for rows.Next() {
+							rowCount++
+							err = rows.Scan(&blockingPosition)
+							if err != nil {
+								log.Printf("some kind of error with scanning: %s", err.Error())
+								rowCount = 2
+								break
+							}
+						}
+						if rowCount == 1 {
+							err = NotifyByDraftAndPosition(draftId, blockingPosition)
+							if err != nil {
+								log.Printf("error with blocking notify")
+							}
+						}
+					}
+				}
+			}
 		}
 	} else {
 		query = `update cards set pack=?, modified=? where id=?`
