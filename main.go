@@ -104,6 +104,11 @@ type bulkMTGOExport struct {
 	Deck     string
 }
 
+type NameAndQuantity struct {
+	Name     string
+	Quantity int64
+}
+
 type r38handler func(w http.ResponseWriter, r *http.Request, userId int64)
 type viewingFunc func(r *http.Request, userId int64) (bool, error)
 
@@ -396,10 +401,18 @@ func exportToMTGO(userId int64, draftId int64) (string, error) {
 		return "", err
 	}
 	export := "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<Deck xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\n<NetDeckID>0</NetDeckID>\n<PreconstructedDeckID>0</PreconstructedDeckID>\n"
+	var nq map[string]NameAndQuantity
+	nq = make(map[string]NameAndQuantity)
 	for _, pick := range picks {
 		if pick.Mtgo != "" {
-			export = export + fmt.Sprintf("<Cards CatID=\"%s\" Quantity=\"1\" Sideboard=\"false\" Name=\"%s\" />\n", pick.Mtgo, pick.Name)
+			o := nq[pick.Mtgo]
+			o.Name = pick.Name
+			o.Quantity++
+			nq[pick.Mtgo] = o
 		}
+	}
+	for mtgo, info := range nq {
+		export = export + fmt.Sprintf("<Cards CatID=\"%s\" Quantity=\"%d\" Sideboard=\"false\" Name=\"%s\" />\n", mtgo, info.Quantity, info.Name)
 	}
 	export = export + "</Deck>"
 	return export, nil
