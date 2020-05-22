@@ -50,7 +50,7 @@ export const deckBuilderStore = vuexModule(rootStore, MODULE_NAME, {
         });
         for (const card of initializer.pool) {
           if (!cardsInDeck.has(card.id)) {
-            deck.sideboard[Math.min(card.definition.cmc, deck.sideboard.length - 1)]
+            deck.maindeck[Math.min(card.definition.cmc, deck.sideboard.length - 1)]
                 .push(card);
           }
         }
