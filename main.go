@@ -397,7 +397,9 @@ func exportToMTGO(userId int64, draftId int64) (string, error) {
 	}
 	export := "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<Deck xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\n<NetDeckID>0</NetDeckID>\n<PreconstructedDeckID>0</PreconstructedDeckID>\n"
 	for _, pick := range picks {
-		export = export + fmt.Sprintf("<Cards CatID=\"%s\" Quantity=\"1\" Sideboard=\"false\" Name=\"%s\" />\n", pick.Mtgo, pick.Name)
+		if pick.Mtgo != "" {
+			export = export + fmt.Sprintf("<Cards CatID=\"%s\" Quantity=\"1\" Sideboard=\"false\" Name=\"%s\" />\n", pick.Mtgo, pick.Name)
+		}
 	}
 	export = export + "</Deck>"
 	return export, nil
