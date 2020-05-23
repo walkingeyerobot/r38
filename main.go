@@ -95,7 +95,8 @@ type DraftEvent struct {
 }
 
 type ReplayPageData struct {
-	Json string
+	Json     string
+	UserJson string
 }
 
 type bulkMTGOExport struct {
@@ -126,6 +127,11 @@ type DraftListEntry struct {
 
 type PostedPick struct {
 	CardIds []int64 `json:"cards"`
+}
+
+type UserInfo struct {
+	Name    string `json:"name"`
+	Picture string `json:"picture"`
 }
 
 type r38handler func(w http.ResponseWriter, r *http.Request, userId int64)
@@ -614,15 +620,30 @@ func ServeVueApp(parseResult []string, w http.ResponseWriter, userId int64) {
 		return
 	}
 
-	json, err := GetJson(draftId)
+	draftJson, err := GetJson(draftId)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	t := template.Must(template.ParseFiles("replay.tmpl"))
+	query := `select discord_name,picture from users where id=?`
+	row := database.QueryRow(query, userId)
+	var userInfo UserInfo
+	err = row.Scan(&userInfo.Name, &userInfo.Picture)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
-	data := ReplayPageData{Json: json}
+	userInfoJson, err := json.Marshal(userInfo)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	data := ReplayPageData{Json: draftJson, UserJson: string(userInfoJson)}
+
+	t := template.Must(template.ParseFiles("replay.tmpl"))
 
 	t.Execute(w, data)
 }
