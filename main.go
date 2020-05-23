@@ -124,6 +124,10 @@ type DraftListEntry struct {
 	Status         string `json:"status"`
 }
 
+type PostedPick struct {
+	CardIds []int64 `json:"cards"`
+}
+
 type r38handler func(w http.ResponseWriter, r *http.Request, userId int64)
 type viewingFunc func(r *http.Request, userId int64) (bool, error)
 
@@ -242,6 +246,7 @@ func NewHandler(useAuth bool) http.Handler {
 
 	addHandler("/api/draft/", ServeApiDraft)
 	addHandler("/api/draftlist/", ServeApiDraftList)
+	addHandler("/api/pick/", ServeApiPick)
 
 	addHandler("/", ServeIndex)
 
@@ -266,7 +271,6 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		t := template.Must(template.ParseFiles("login.tmpl"))
 		t.Execute(w, nil)
 		return
-
 	})
 }
 
@@ -359,6 +363,53 @@ func ServeApiDraftList(w http.ResponseWriter, r *http.Request, userID int64) {
 	}
 
 	json.NewEncoder(w).Encode(drafts)
+}
+
+func ServeApiPick(w http.ResponseWriter, r *http.Request, userID int64) {
+	if r.Method != "POST" {
+		http.Error(w, "invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	bodyBytes, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		json.NewEncoder(w).Encode(JsonError{Error: fmt.Sprintf("error reading post body: %s", err.Error())})
+		return
+	}
+	var pick PostedPick
+	err = json.Unmarshal(bodyBytes, &pick)
+	if err != nil {
+		json.NewEncoder(w).Encode(JsonError{Error: fmt.Sprintf("error parsing post body: %s", err.Error())})
+		return
+	}
+	var draftID int64
+	if len(pick.CardIds) == 1 {
+		draftID, _, announcements, round, err := doPick(userID, pick.CardIds[0], true)
+		if err != nil {
+			json.NewEncoder(w).Encode(JsonError{Error: fmt.Sprintf("error making pick: %s", err.Error())})
+			return
+		}
+
+		err = DoEvent(draftID, userID, announcements, pick.CardIds[0], sql.NullInt64{Valid: false}, round)
+		if err != nil {
+			json.NewEncoder(w).Encode(JsonError{Error: fmt.Sprintf("error recording event: %s", err.Error())})
+			return
+		}
+	} else if len(pick.CardIds) == 2 {
+		json.NewEncoder(w).Encode(JsonError{Error: "cogwork librarian power not implemented yet"})
+		return
+	} else {
+		json.NewEncoder(w).Encode(JsonError{Error: fmt.Sprintf("invalid number of cards: %d", len(pick.CardIds))})
+		return
+	}
+
+	draftJson, err := GetFilteredJson(draftID, userID)
+	if err != nil {
+		json.NewEncoder(w).Encode(JsonError{Error: fmt.Sprintf("error getting json: %s", err.Error())})
+		return
+	}
+
+	fmt.Fprint(w, draftJson)
 }
 
 func ServeBulkMTGO(w http.ResponseWriter, r *http.Request, userID int64) {
