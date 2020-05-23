@@ -50,7 +50,7 @@ type DraftPageData struct {
 }
 
 type Card struct {
-	Id      int64  `json:"-"`
+	Id      int64  `json:"r38Id"`
 	Name    string `json:"name"`
 	Tags    string `json:"tags"`
 	Number  string `json:"number"`
@@ -87,7 +87,7 @@ type DraftEvent struct {
 	Announcements  []string `json:"announcements"`
 	Card1          string   `json:"card1"`
 	Card2          string   `json:"card2"`
-	Cards          []string `json:"cards"`
+	Cards          []int64  `json:"cards"`
 	PlayerModified int64    `json:"playerModified"`
 	DraftModified  int64    `json:"draftModified"`
 	Round          int64    `json:"round"`
@@ -1352,7 +1352,8 @@ func GetJsonObject(draftId int64) (DraftJson, error) {
                     cards.cmc,
                     cards.type,
                     cards.color,
-                    cards.mtgo
+                    cards.mtgo,
+                    cards.id
                   from seats
                   left join users on users.id=seats.user
                   join drafts on drafts.id=seats.draft
@@ -1384,7 +1385,7 @@ func GetJsonObject(draftId int64) (DraftJson, error) {
 		var nullableType sql.NullString
 		var nullableColor sql.NullString
 		var nullableMtgo sql.NullString
-		err = rows.Scan(&draft.Name, &nullablePosition, &packSeat, &nullableRound, &card.Name, &card.Edition, &card.Number, &card.Tags, &nullableDiscordId, &nullableCmc, &nullableType, &nullableColor, &nullableMtgo)
+		err = rows.Scan(&draft.Name, &nullablePosition, &packSeat, &nullableRound, &card.Name, &card.Edition, &card.Number, &card.Tags, &nullableDiscordId, &nullableCmc, &nullableType, &nullableColor, &nullableMtgo, &card.Id)
 		if err != nil {
 			return draft, err
 		}
@@ -1413,7 +1414,7 @@ func GetJsonObject(draftId int64) (DraftJson, error) {
 		draft.Seats[position].Name = nullableDiscordId.String
 	}
 
-	query = `select seats.position, events.announcement, cards1.name, cards2.name, events.id, events.modified, events.round from events join seats on events.draft=seats.draft and events.user=seats.user left join cards as cards1 on events.card1=cards1.id left join cards as cards2 on events.card2=cards2.id where events.draft=?`
+	query = `select seats.position, events.announcement, cards1.name, cards2.name, events.id, events.modified, events.round, cards1.id, cards2.id from events join seats on events.draft=seats.draft and events.user=seats.user left join cards as cards1 on events.card1=cards1.id left join cards as cards2 on events.card2=cards2.id where events.draft=?`
 	rows, err = database.Query(query, draftId)
 	if err != nil && err != sql.ErrNoRows {
 		return draft, err
@@ -1423,14 +1424,16 @@ func GetJsonObject(draftId int64) (DraftJson, error) {
 		var event DraftEvent
 		var announcements string
 		var card2 sql.NullString
-		err = rows.Scan(&event.Player, &announcements, &event.Card1, &card2, &event.DraftModified, &event.PlayerModified, &event.Round)
-		event.Cards = append(event.Cards, event.Card1)
+		var card1id int64
+		var card2id sql.NullInt64
+		err = rows.Scan(&event.Player, &announcements, &event.Card1, &card2, &event.DraftModified, &event.PlayerModified, &event.Round, &card1id, &card2id)
+		event.Cards = append(event.Cards, card1id)
 		if err != nil {
 			return draft, err
 		}
 		if card2.Valid {
 			event.Card2 = card2.String
-			event.Cards = append(event.Cards, card2.String)
+			event.Cards = append(event.Cards, card2id.Int64)
 			event.Librarian = true
 		}
 		if announcements != "" {
