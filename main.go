@@ -109,6 +109,21 @@ type NameAndQuantity struct {
 	Quantity int64
 }
 
+type JsonError struct {
+	Error string `json:"error"`
+}
+
+type DraftList struct {
+	Drafts []DraftListEntry `json:"drafts"`
+}
+
+type DraftListEntry struct {
+	Id             int64  `json:"id"`
+	Name           string `json:"name"`
+	AvailableSeats int64  `json:"availableSeats"`
+	Status         string `json:"status"`
+}
+
 type r38handler func(w http.ResponseWriter, r *http.Request, userId int64)
 type viewingFunc func(r *http.Request, userId int64) (bool, error)
 
@@ -224,6 +239,10 @@ func NewHandler(useAuth bool) http.Handler {
 	addHandler("/mtgo/", ServeMtgo)
 	addHandler("/bulk_mtgo/", ServeBulkMTGO)
 	addHandler("/index/", ServeIndex)
+
+	addHandler("/api/draft/", ServeApiDraft)
+	addHandler("/api/draftlist/", ServeApiDraftList)
+
 	addHandler("/", ServeIndex)
 
 	return mux
@@ -286,6 +305,60 @@ func GetViewParam(r *http.Request, userId int64) string {
 		param = fmt.Sprintf("?as=%d", userId)
 	}
 	return param
+}
+
+func ServeApiDraft(w http.ResponseWriter, r *http.Request, userID int64) {
+	re := regexp.MustCompile(`/api/draft/(\d+)`)
+	parseResult := re.FindStringSubmatch(r.URL.Path)
+	if parseResult == nil {
+		json.NewEncoder(w).Encode(JsonError{Error: "bad api url"})
+		return
+	}
+	draftID, err := strconv.ParseInt(parseResult[1], 10, 64)
+	if err != nil {
+		json.NewEncoder(w).Encode(JsonError{Error: fmt.Sprintf("bad api url: %s", err.Error())})
+		return
+	}
+
+	draftJson, err := GetFilteredJson(draftID, userID)
+	if err != nil {
+		json.NewEncoder(w).Encode(JsonError{Error: fmt.Sprintf("error getting json: %s", err.Error())})
+		return
+	}
+
+	fmt.Fprint(w, draftJson)
+}
+
+func ServeApiDraftList(w http.ResponseWriter, r *http.Request, userID int64) {
+	query := `select drafts.id, drafts.name, sum(seats.user is null and seats.position is not null) as empty_seats, coalesce(sum(seats.user = ?), 0) as joined from drafts left join seats on drafts.id = seats.draft group by drafts.id`
+
+	rows, err := database.Query(query, userID)
+	if err != nil {
+		json.NewEncoder(w).Encode(JsonError{Error: fmt.Sprintf("can't get draft list: %s", err.Error())})
+		return
+	}
+	defer rows.Close()
+	var drafts DraftList
+	for rows.Next() {
+		var d DraftListEntry
+		var joined int64
+		err = rows.Scan(&d.Id, &d.Name, &d.AvailableSeats, &joined)
+		if err != nil {
+			json.NewEncoder(w).Encode(JsonError{Error: fmt.Sprintf("can't get draft list: %s", err.Error())})
+			return
+		}
+		if joined == 1 {
+			d.Status = "member"
+		} else if d.AvailableSeats == 0 {
+			d.Status = "spectator"
+		} else {
+			d.Status = "joinable"
+		}
+
+		drafts.Drafts = append(drafts.Drafts, d)
+	}
+
+	json.NewEncoder(w).Encode(drafts)
 }
 
 func ServeBulkMTGO(w http.ResponseWriter, r *http.Request, userID int64) {
@@ -715,7 +788,7 @@ func ServePower(w http.ResponseWriter, r *http.Request, userId int64) {
 func ServeIndex(w http.ResponseWriter, r *http.Request, userId int64) {
 	query := `select drafts.id, drafts.name, sum(seats.user is null and seats.position is not null) as empty_seats, coalesce(sum(seats.user = ?), 0) as joined from drafts left join seats on drafts.id = seats.draft group by drafts.id`
 
-	rows, err := database.Query(query, userId, userId)
+	rows, err := database.Query(query, userId)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
