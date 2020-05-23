@@ -111,12 +111,10 @@ interface DeckEntry {
 }
 
 const XML_HEADER =
-`
-<?xml version="1.0" encoding="utf-8"?>
-  <Deck xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-  <NetDeckID>0</NetDeckID>
-  <PreconstructedDeckID>0</PreconstructedDeckID>
+`<?xml version="1.0" encoding="utf-8"?>
+<Deck xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<NetDeckID>0</NetDeckID>
+<PreconstructedDeckID>0</PreconstructedDeckID>
 `;
 
 </script>
