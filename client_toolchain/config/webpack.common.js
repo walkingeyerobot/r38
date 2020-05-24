@@ -9,17 +9,14 @@ const webpack = require('webpack');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const VueLoaderPlugin = require('vue-loader/lib/plugin')
 
-
-const PROJECT_ROOT = path.resolve(__dirname, '../../');
-const CLIENT_ROOT = path.resolve(__dirname, '../');
-const CLIENT_SRC_ROOT = path.join(CLIENT_ROOT, 'src');
+const { PROJECT_ROOT, CLIENT_ROOT, CLIENT_SRC_ROOT } = require('./paths')
 
 module.exports = mode => {
   return {
     // Our compilation targets. Each one will include all of its dependencies
     // Right now, we just have one, named "app"
     entry: {
-      app: path.resolve(CLIENT_SRC_ROOT, 'main.ts'),
+      app: [path.resolve(CLIENT_SRC_ROOT, 'main.ts')],
     },
 
     output: {
@@ -54,7 +51,7 @@ module.exports = mode => {
           loader: 'ts-loader',
           exclude: /node_modules/,
           options: {
-            configFile: path.resolve(PROJECT_ROOT, 'tsconfig.json'),
+            configFile: path.resolve(CLIENT_ROOT, 'tsconfig.json'),
             appendTsSuffixTo: [/\.vue$/],
           },
         },
@@ -76,8 +73,12 @@ module.exports = mode => {
           test: /\.(png|jpg|gif|svg)$/,
           loader: 'file-loader',
           options: {
-            name: '[name].[ext]?[hash]'
-          }
+            name: '[name].[ext]?[hash]',
+
+            // This is necessary due to how vue-loader consumes images.
+            // See https://github.com/vuejs/vue-loader/issues/1612
+            esModule: false,
+          },
         },
       ]
     },
