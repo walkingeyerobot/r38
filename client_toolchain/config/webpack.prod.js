@@ -4,9 +4,7 @@ const merge = require('webpack-merge');
 
 const common = require('./webpack.common')('production');
 
-const PROJECT_ROOT = path.resolve(__dirname, '../../');
-const CLIENT_ROOT = path.resolve(__dirname, '../');
-const CLIENT_SRC_ROOT = path.join(CLIENT_ROOT, 'src');
+const { PROJECT_ROOT, CLIENT_ROOT, CLIENT_SRC_ROOT } = require('./paths')
 
 module.exports = merge.smart(common, {
   mode: 'production',

@@ -1,52 +1,18 @@
 /*
 
-This file should be in /client, not here. However, we have to put it here due
-to a bug in the Vetur plugin for VS Code, which supplies Intellisense to .vue
-files. It only looks for `tsconfig.json` in the root of the project directory,
-so we have to put it here.
+This is a dummy config file. The real files are:
+
+  client/tsconfig.json
+  client_toolchain/dev_server/tsconfig.json
+
+This file exists to work around a bug in the Vetur plugin for VS Code, which
+supplies Intellisense to .vue files. It only looks for `tsconfig.json` in
+the root of the project directory, so we give it a fake one here so it can
+analyze our client code properly.
 
 See https://github.com/vuejs/vetur/issues/815.
 
 */
-
 {
-  "compilerOptions": {
-    "target": "es2018",
-    "module": "esnext",
-
-    "strict": true,
-    "noImplicitReturns": true,
-    "alwaysStrict": true,
-    "forceConsistentCasingInFileNames": true,
-
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-
-    "jsx": "preserve",
-    "importHelpers": true,
-    "moduleResolution": "node",
-    "sourceMap": true,
-
-    // Because this file is one level higher in folder structure than it should
-    // be, it can't see the node_modules folder, so we have to tell it where the
-    // typings live.
-    "typeRoots" : ["./client/node_modules/@types"],
-
-    "lib": [
-      "esnext",
-      "dom",
-      "dom.iterable",
-      "scripthost"
-    ]
-  },
-  "include": [
-    "client/src/**/*.ts",
-    "client/src/**/*.tsx",
-    "client/src/**/*.vue",
-    "client/tests/**/*.ts",
-    "client/tests/**/*.tsx"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
+  "extends": "./client/tsconfig.json",
 }

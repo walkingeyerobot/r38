@@ -1,0 +1,20 @@
+{
+  "name": "r38",
+  "version": "1.0.0",
+  "description": "Industrial strength insulation",
+  "private": true,
+  "scripts": {
+    "start": "cd client_toolchain && npx tsc -p dev_server/ && node dev_server/dist/dev_server/src/server.js",
+    "dev-deps": "(cd client && npm ci); (cd client_toolchain && npm ci);",
+    "prod-deps": "(cd client && npm ci --production); (cd client_toolchain && npm ci --production);",
+    "build": "cd client_toolchain && npx webpack --config config/webpack.prod.js --progress --hide-modules",
+    "build-stats": "cd client_toolchain && npx webpack --config build_config/webpack.prod.js --progress --profile --json > stats.json",
+    "deploy": "npm run prod-deps && npm run build",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "repository": "https://github.com/walkingeyerobot/r38",
+  "license": "ISC",
+  "dependencies": {
+  }
+}

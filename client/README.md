@@ -1,21 +1,36 @@
 # Client
 
-## Development setup
+## Setup
 
-First, install the "Current" version of [Node.js](https://nodejs.org/).
+Install the "Current" version of [Node.js](https://nodejs.org/).
 
-Then install dependencies:
+## Deploying
+
+To build the production version of the client, run:
 
 ```
-$ cd client
-$ npm ci
+$ npm run deploy
 ```
 
-Finally, run `$ npm start` to run the development server. Or run `$ npm run build` to build the production version (to be checked in).
+## Development
+
+First install dependencies:
+
+```
+$ npm run dev-deps
+```
+
+Then start the development server:
+
+```
+$ npm start
+```
+
+Then visit [http://localhost:8080] in your browser to see your local version.
 
 ## Recommended editor setup
 
 I strongly recommend using [VS Code](https://code.visualstudio.com/).
 
 Install the Vetur extension (View > Extensions). After installing, click the
-gear icon
+gear icon > Extension Settings.. > Enable "Template Interpolation Service".

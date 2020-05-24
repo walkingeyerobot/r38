@@ -6,7 +6,6 @@ export interface SourceData {
 }
 
 export interface SourceSeat {
-  // This one I add in manually
   name?: string,
   // The first one is the player's picks, following by packs 1-3 in their seat
   rounds: [SourceRound, SourceRound, SourceRound, SourceRound];
