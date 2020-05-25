@@ -4,6 +4,7 @@ import webpackDevMiddleware from 'webpack-dev-middleware';
 import webpackHotMiddleware from 'webpack-hot-middleware';
 import bodyParser from 'body-parser';
 import { serveIndex } from './route/serveIndex';
+import { configureApiRoutes } from './route/configureApiRoutes';
 
 const webpackConfig = require('../../config/webpack.dev');
 
@@ -12,9 +13,11 @@ function main() {
 
   configureExpress(app);
   configureRoutes(app);
+  configureApiRoutes(app);
 
   app.listen(8080, 'localhost', () => {
     console.log('Listening on http://localhost:8080');
+    console.log();
   });
 }
 
