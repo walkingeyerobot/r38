@@ -14,7 +14,6 @@ export function parseInitialState(srcData: SourceData): DraftState {
 class StateParser {
   private _nextLocationId = 0;
   private _nextPackId = 0;
-  private _nextCardId = 0;
 
   parse(srcData: SourceData): DraftState {
     const packMap = new Map<number, CardContainer>();
@@ -91,7 +90,7 @@ class StateParser {
     for (let i = 0; i < srcPack.length; i++) {
       const srcPick = srcPack[i];
       pack.push({
-        id: this._nextCardId++,
+        id: srcPick.r38Id,
         definition: {
           name: srcPick.name,
           set: srcPick.edition,
