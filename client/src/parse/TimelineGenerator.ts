@@ -76,21 +76,22 @@ export class TimelineGenerator {
 
     const outEvent = this.createEvent(playerData);
 
-    // Draft the selected card
-    const card = findCard(srcEvent.card1, activePack);
-    outEvent.actions.push({
-      type: 'move-card' as const,
-      subtype: 'pick-card',
-      cardName: card.definition.name,
-      card: card.id,
-      from: activePack.id,
-      to: seat.player.picks.id,
-    });
+    for (let cardId of srcEvent.cards) {
+      const card = findCard(cardId, activePack);
+      outEvent.actions.push({
+        type: 'move-card' as const,
+        subtype: 'pick-card',
+        cardName: card.definition.name,
+        card: card.id,
+        from: activePack.id,
+        to: seat.player.picks.id,
+      });
+    }
     playerData.nextPick++;
 
     // Check to see if the player used a power that allowed them to draft a
     // second card
-    this.handleSecondPick(srcEvent, outEvent, seat, activePack);
+    this.handleClockworkLibrarian(srcEvent, outEvent, seat, activePack);
 
     // Move the pack to the next seat
     const dstLocation =
@@ -137,27 +138,15 @@ export class TimelineGenerator {
     }
   }
 
-  private handleSecondPick(
+  private handleClockworkLibrarian(
     srcEvent: SourceEvent,
     outEvent: TimelineEvent,
     seat: DraftSeat,
     activePack: CardPack,
   ) {
-    if (srcEvent.card2 != "") {
-      // This means that someone used Cogwork Librarian's ability to draft
-      // multiple cards. There doesn't appear to be a better way to know that
-      // this happened
-      const card2 = findCard(srcEvent.card2, activePack);
-      outEvent.actions.push({
-        type: 'move-card' as const,
-        subtype: 'pick-card',
-        cardName: card2.definition.name,
-        card: card2.id,
-        from: activePack.id,
-        to: seat.player.picks.id,
-      });
-
-      const librarianCard = findCard('Cogwork Librarian', seat.player.picks);
+    if (srcEvent.cards.length > 1) {
+      const librarianCard =
+          findCardByName('Cogwork Librarian', seat.player.picks);
       outEvent.actions.push({
         type: 'move-card' as const,
         subtype: 'return-card',
@@ -258,7 +247,17 @@ function getSeat(srcEvent: SourceEvent, state: DraftState) {
   return seat;
 }
 
-function findCard(cardName: string, container: CardContainer) {
+function findCard(cardId: number, container: CardContainer) {
+  for (const card of container.cards) {
+    if (card.id == cardId) {
+      return card;
+    }
+  }
+  throw new ParseError(
+      `Card "${cardId}" not found in container ${container.id}.`);
+}
+
+function findCardByName(cardName: string, container: CardContainer) {
   for (const card of container.cards) {
     if (card.definition.name == cardName) {
       return card;
