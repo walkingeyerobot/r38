@@ -9,11 +9,23 @@ Vue.use(VueRouter);
 // looking at right now. That's what the webpackChunkName directive does below
 
 const routes = [
-  // login
-  // index
-  // draft
+  {
+    path: `/`,
+    component: () =>
+        import(/* webpackChunkName: 'home' */ '../ui/home/Home.vue'),
+  },
+  {
+    path: `/login`,
+    component: () =>
+        import(/* webpackChunkName: 'login' */ '../ui/login/Login.vue'),
+  },
   {
     path: `/replay/:draftId(\\d+)/:param*`,
+    component: () =>
+        import(/* webpackChunkName: 'replay' */ '../ui/Replay.vue'),
+  },
+  {
+    path: `/draft/:draftId(\\d+)/:param*`,
     component: () =>
         import(/* webpackChunkName: 'replay' */ '../ui/Replay.vue'),
   },
@@ -21,15 +33,8 @@ const routes = [
     path: '/deckbuilder/*',
     component: () =>
         import(/* webpackChunkName: 'deckbuilder' */ '../ui/DeckBuilder.vue'),
-  }
+  },
 ] as RouteConfig[];
-
-if (DEVELOPMENT) {
-  routes.push({
-    path: '/*',
-    redirect: '/replay/0',
-  })
-}
 
 const router = new VueRouter({
   mode: 'history',
