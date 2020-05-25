@@ -1,6 +1,7 @@
-import { SourceData } from '../parse/SourceData';
+import { stub } from '../../stub';
+import { routeDraft } from './draft';
 
-export const DRAFT_11: SourceData = {
+export const stubDraft_11 = stub(routeDraft, {
   "seats":[
     {
       "rounds":[
@@ -7183,4 +7184,4 @@ export const DRAFT_11: SourceData = {
       "round":3
     }
   ]
-};
+});
