@@ -2,7 +2,6 @@ import axios, { AxiosRequestConfig } from 'axios';
 
 import { RestEndpoint } from '../rest/RestEndpoint';
 import { MixedCollection } from '../util/MixedCollection';
-import { endpoint } from '../rest/endpoint';
 import { DefaultEmpty } from '../util/DefaultEmpty';
 
 export async function fetchEndpoint<T extends RestEndpoint>(
