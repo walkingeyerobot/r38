@@ -4,7 +4,7 @@
   "description": "Industrial strength insulation",
   "private": true,
   "scripts": {
-    "start": "cd client_toolchain && npx tsc -p dev_server/ && node dev_server/dist/dev_server/src/server.js",
+    "start": "cd client_toolchain && npx tsc -p dev_server/ && node dev_server/dist/client_toolchain/dev_server/src/server.js",
     "dev-deps": "(cd client && npm ci); (cd client_toolchain && npm ci);",
     "prod-deps": "(cd client && npm ci --production); (cd client_toolchain && npm ci --production);",
     "build": "cd client_toolchain && npx webpack --config config/webpack.prod.js --progress --hide-modules",
