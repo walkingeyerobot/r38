@@ -1460,7 +1460,7 @@ func GetJsonObject(draftId int64) (DraftJson, error) {
 		var nullableType sql.NullString
 		var nullableColor sql.NullString
 		var nullableMtgo sql.NullString
-		var draftUserId int64
+		var draftUserId sql.NullInt64
 		err = rows.Scan(&draft.Name, &nullablePosition, &packSeat, &nullableRound, &card.Name, &card.Edition, &card.Number, &card.Tags, &nullableDiscordId, &nullableCmc, &nullableType, &nullableColor, &nullableMtgo, &card.Id, &draftUserId)
 		if err != nil {
 			return draft, err
@@ -1488,7 +1488,7 @@ func GetJsonObject(draftId int64) (DraftJson, error) {
 
 		draft.Seats[position].Rounds[packRound].Packs[0].Cards = append(draft.Seats[position].Rounds[packRound].Packs[0].Cards, card)
 		draft.Seats[position].Name = nullableDiscordId.String
-		draft.Seats[position].Id = draftUserId
+		draft.Seats[position].Id = draftUserId.Int64
 	}
 
 	query = `select seats.position, events.announcement, cards1.name, cards2.name, events.id, events.modified, events.round, cards1.id, cards2.id from events join seats on events.draft=seats.draft and events.user=seats.user left join cards as cards1 on events.card1=cards1.id left join cards as cards2 on events.card2=cards2.id where events.draft=?`
