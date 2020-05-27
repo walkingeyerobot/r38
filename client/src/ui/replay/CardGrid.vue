@@ -2,11 +2,11 @@
   <div class="_card-grid">
 
     <div
-        v-if="selectedPack"
+        v-if="sortedPackCards"
         class="selected-pack"
         >
       <CardView
-          v-for="card in selectedPack"
+          v-for="card in sortedPackCards"
           :key="card.id"
           :card="card"
           :selectionStyle="getSelectionStyle(card.id)"
@@ -40,13 +40,11 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import { DraftCard, DraftPlayer, DraftSeat, CardPack, CardContainer } from '../../draft/DraftState'
+import Vue from 'vue';
+import { DraftCard, DraftPlayer, DraftSeat, CardPack, CardContainer } from '../../draft/DraftState';
 import { TimelineEvent } from '../../draft/TimelineEvent';
 import { SelectedView } from '../../state/selection';
-import { checkNotNil } from '../../util/checkNotNil';
 import { navTo } from '../../router/url_manipulation';
-import { Store } from 'vuex';
 import CardView from './CardView.vue';
 
 import { replayStore as store, ReplayModule } from '../../state/ReplayModule';
@@ -72,13 +70,13 @@ export default Vue.extend({
       return null;
     },
 
-    selectedPack(): DraftCard[] | null {
-      let pack: CardContainer | null = null;
+    selectedPack(): CardPack | null {
+      let pack: CardPack | null = null;
 
       if (this.selection == null) {
         return null;
       } else if (this.selection.type == 'pack') {
-        pack = checkNotNil(store.draft.packs.get(this.selection.id));
+        pack = requirePack(store.draft.packs.get(this.selection.id));
       } else {
         const player = store.draft.seats[this.selection.id];
         if (player.queuedPacks.packs.length > 0) {
@@ -86,47 +84,71 @@ export default Vue.extend({
         }
       }
 
-      if (pack != null) {
-        return pack.cards
+      return pack;
+    },
+
+    sortedPackCards(): DraftCard[] | null {
+      if (this.selectedPack == null) {
+        return null;
+      } else {
+        return this.selectedPack.cards
             .concat()
             .sort((a, b) => a.sourcePackIndex - b.sourcePackIndex);
-      } else {
-        return null;
       }
     },
 
-    nextEventForSeat(): TimelineEvent | null {
-      if (this.selectedSeat == null) {
+    nextEventForPack(): TimelineEvent | null {
+      const packId = this.selectedPack?.id;
+      if (packId == undefined) {
         return null;
       }
+
       const eventPos = store.eventPos;
       const events = store.events;
       for (let i = eventPos; i < events.length; i++) {
         const event = events[i];
-        if (event.associatedSeat == this.selectedSeat.position) {
-          return event;
+        for (let action of event.actions) {
+          if (action.type == 'move-card'
+              && (action.from == packId || action.to == packId)) {
+            return event;
+          }
         }
       }
       return null;
+    },
+
+    movedCards(): MovedCards {
+      const moved = {
+        picked: new Set<number>(),
+        returned: new Set<number>(),
+      }
+
+      if (this.selectedPack != null && this.nextEventForPack != null) {
+        for (let action of this.nextEventForPack.actions) {
+          if (action.type == 'move-card') {
+            if (action.from == this.selectedPack.id) {
+              moved.picked.add(action.card);
+            } else if (action.to = this.selectedPack.id) {
+              moved.returned.add(action.card);
+            }
+          }
+        }
+      }
+
+      return moved;
     },
 
   },
 
   methods: {
     getSelectionStyle(cardId: number) {
-      if (this.nextEventForSeat == null) {
+      if (this.movedCards.picked.has(cardId)) {
+        return 'picked';
+      } else if (this.movedCards.returned.has(cardId)) {
+        return 'returned'
+      } else {
         return undefined;
       }
-      for (const action of this.nextEventForSeat.actions) {
-        if (action.type == 'move-card' && action.card == cardId) {
-          if (action.to == this.selectedSeat!.player.picks.id) {
-            return 'picked'
-          } else {
-            return 'returned';
-          }
-        }
-      }
-      return undefined;
     },
 
     onPackCardClicked(cardId: number) {
@@ -213,6 +235,19 @@ function containsPick(event: TimelineEvent, cardId: number) {
   }
   return false;
 }
+
+function requirePack(container: CardContainer | undefined): CardPack {
+  if (container == undefined || container.type != 'pack') {
+    throw new Error(`Invalid container: ${container?.id}`);
+  }
+  return container;
+}
+
+interface MovedCards {
+  picked: Set<number>;
+  returned: Set<number>;
+}
+
 </script>
 
 <style scoped>
