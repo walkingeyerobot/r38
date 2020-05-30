@@ -50,16 +50,16 @@ type DraftPageData struct {
 }
 
 type Card struct {
-	Id      int64  `json:"r38Id"`
-	Name    string `json:"name"`
-	Tags    string `json:"tags"`
-	Number  string `json:"number"`
-	Edition string `json:"edition"`
-	Mtgo    string `json:"mtgo"`
-	Cmc     int64  `json:"cmc"`
-	Type    string `json:"type"`
-	Color   string `json:"color"`
-	Data    string `json:"data"`
+	Id      int64       `json:"r38Id"`
+	Name    string      `json:"name"`
+	Tags    string      `json:"tags"`
+	Number  string      `json:"number"`
+	Edition string      `json:"edition"`
+	Mtgo    string      `json:"mtgo"`
+	Cmc     int64       `json:"cmc"`
+	Type    string      `json:"type"`
+	Color   string      `json:"color"`
+	Data    interface{} `json:"data"`
 }
 
 type Seat struct {
@@ -1476,7 +1476,18 @@ func GetJsonObject(draftId int64) (DraftJson, error) {
 		}
 		card.Type = nullableType.String
 		card.Color = nullableColor.String
-		card.Data = nullableData.String
+		if !nullableData.Valid || nullableData.String == "" {
+			card.Data = nil
+		} else {
+			dataObj := make(map[string]interface{})
+			err = json.Unmarshal([]byte(nullableData.String), &dataObj)
+			if err != nil {
+				log.Printf("making nil card data because of error %s", err.Error())
+				card.Data = nil
+			} else {
+				card.Data = dataObj
+			}
+		}
 		if nullableMtgo.Valid {
 			card.Mtgo = nullableMtgo.String
 		} else {
