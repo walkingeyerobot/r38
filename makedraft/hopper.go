@@ -4,22 +4,37 @@ import (
 	"math/rand"
 )
 
+type DraftConfig struct {
+	Hoppers []HopperDefinition `json:"hoppers"`
+	Flags   []string           `json:"flags"`
+	Cards   []Card             `json:"cards"`
+}
+
+type HopperDefinition struct {
+	Type string  `json:"type"`
+	Refs []int64 `json:"refs"`
+}
+
 // DO NOT add a non-simple type to this struct.
 // if you do, copying cards with a simple assignment will break (I think).
 type Card struct {
-	Mtgo          string
-	Number        string
-	Rarity        string
-	Name          string
-	Color         string
-	ColorIdentity string
-	Cmc           int64
-	Type          string
-	Rating        float64
-	Foil          bool
+	Cmc             float64 `json:"cmc"` // temporary
+	CollectorNumber string  `json:"collector_number"`
+	Color           string  `json:"color"`
+	ColorIdentity   string  `json:"color_identity"`
+	Id              string  `json:"id"`
+	MtgoId          int64   `json:"mtgo_id"` // temporary
+	Name            string  `json:"name"`    // temporary
+	Rarity          string  `json:"rarity"`
+	Rating          float64 `json:"rating"`
+	Set             string  `json:"set"`       // temporary
+	TypeLine        string  `json:"type_line"` // temporary
+	Data            string  `json:"data"`
+	Foil            bool
 }
 
 type CardSet struct {
+	All       []Card
 	Mythics   []Card
 	Rares     []Card
 	Uncommons []Card

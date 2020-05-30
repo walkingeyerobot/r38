@@ -1,18 +1,17 @@
 package main
 
 import (
-	"bufio"
 	"database/sql"
-	"encoding/csv"
+	"encoding/json"
 	"flag"
-	"fmt"
 	_ "github.com/mattn/go-sqlite3"
+	"io/ioutil"
 	"log"
 	"math"
 	"math/rand"
 	"os"
+	"regexp"
 	"sort"
-	"strconv"
 	"time"
 )
 
@@ -31,6 +30,8 @@ const RATING_MIN = 1.8
 const RATING_MAX = 3
 const POOL_COLOR_STDEV = 5.0
 
+var CUBE_MODE bool
+
 func main() {
 	oM = make(map[int]int)
 	oR = make(map[int]int)
@@ -38,7 +39,7 @@ func main() {
 	oC = make(map[int]int)
 
 	draftNamePtr := flag.String("name", "untitled draft", "string")
-	filenamePtr := flag.String("filename", "cube.csv", "string")
+	filenamePtr := flag.String("filename", "makedraft/cube.json", "string")
 	databasePtr := flag.String("database", "draft.db", "string")
 	flag.Parse()
 
@@ -53,27 +54,159 @@ func main() {
 
 	database, err = sql.Open("sqlite3", *databasePtr)
 	if err != nil {
-		log.Printf("error opening database %s: %s", *databasePtr, err)
+		log.Printf("error opening database %s: %s", *databasePtr, err.Error())
 		return
 	}
 	err = database.Ping()
 	if err != nil {
-		log.Printf("error pinging database: %s", err)
+		log.Printf("error pinging database: %s", err.Error())
 		return
 	}
+
+	jsonFile, err := os.Open(*filenamePtr)
+	if err != nil {
+		log.Printf("error opening json file: %s", err.Error())
+		return
+	}
+	defer jsonFile.Close()
+
+	byteValue, err := ioutil.ReadAll(jsonFile)
+	if err != nil {
+		log.Printf("error readalling: %s", err.Error())
+		return
+	}
+
+	var cfg DraftConfig
+	err = json.Unmarshal(byteValue, &cfg)
+	if err != nil {
+		log.Printf("error unmarshalling: %s", err.Error())
+		return
+	}
+
+	for _, flag := range cfg.Flags {
+		if flag == "cube=false" {
+			CUBE_MODE = false
+		} else if flag == "cube=true" {
+			CUBE_MODE = true
+		}
+	}
+
+	var allCards CardSet
+
+	for _, card := range cfg.Cards {
+		allCards.All = append(allCards.All, card)
+		switch card.Rarity {
+		case "mythic":
+			allCards.Mythics = append(allCards.Mythics, card)
+		case "rare":
+			allCards.Rares = append(allCards.Rares, card)
+		case "uncommon":
+			allCards.Uncommons = append(allCards.Uncommons, card)
+		case "common":
+			allCards.Commons = append(allCards.Commons, card)
+		case "basic":
+			allCards.Basics = append(allCards.Basics, card)
+		default:
+			log.Printf("error with determining rarity for %v", card)
+			return
+		}
+	}
+
+	var hoppers [15]Hopper
+	resetHoppers := func() {
+		for i, hopdef := range cfg.Hoppers {
+			switch hopdef.Type {
+			case "RareHopper":
+				hoppers[i] = MakeNormalHopper(allCards.Mythics, allCards.Rares, allCards.Rares)
+			case "UncommonHopper":
+				hoppers[i] = MakeNormalHopper(allCards.Uncommons, allCards.Uncommons)
+			case "CommonHopper":
+				hoppers[i] = MakeNormalHopper(allCards.Commons, allCards.Commons)
+			case "BasicLandHopper":
+				hoppers[i] = MakeBasicLandHopper(allCards.Basics)
+			case "CubeHopper":
+				hoppers[i] = MakeNormalHopper(allCards.All)
+			case "Pointer":
+				hoppers[i] = hoppers[hopdef.Refs[0]]
+			case "FoilHopper":
+				hoppers[i] = MakeFoilHopper(&hoppers[hopdef.Refs[0]], &hoppers[hopdef.Refs[1]], &hoppers[hopdef.Refs[2]],
+					allCards.Mythics,
+					allCards.Rares, allCards.Rares,
+					allCards.Uncommons, allCards.Uncommons, allCards.Uncommons,
+					allCards.Commons, allCards.Commons, allCards.Commons, allCards.Commons,
+					allCards.Basics, allCards.Basics, allCards.Basics, allCards.Basics)
+			}
+		}
+	}
+
+	var packs [24][15]Card
+	packAttempts := 0
+	draftAttempts := 0
+
+	for {
+		resetHoppers()
+		resetDraft := false
+		draftAttempts++
+		for i := 0; i < 24; { // we'll manually increment i
+			packAttempts++
+			for j, hopper := range hoppers {
+				var empty bool
+				packs[i][j], empty = hopper.Pop()
+				if empty {
+					resetDraft = true
+					break
+				}
+			}
+
+			if resetDraft {
+				break
+			}
+
+			for _, card := range packs[i] {
+				log.Printf("%s\t%v\t%s", card.Rarity, card.Foil, card.Data)
+			}
+
+			if CUBE_MODE || okPack(packs[i]) {
+				i++
+			}
+		}
+		if !resetDraft && (CUBE_MODE || okDraft(packs)) {
+			break
+		}
+		log.Printf("RESETTING DRAFT")
+	}
+
+	log.Printf("draft attempts: %d", draftAttempts)
+	log.Printf("pack attempts: %d", packAttempts)
 
 	packIds, err = generateEmptyDraft(name)
 	if err != nil {
 		return
 	}
-
-	// err = generateStandardDraft(packIds, *filenamePtr)
-	err = generateCubeDraft(packIds, *filenamePtr)
-	if err != nil {
-		return
+	// \"FOIL_STATUS\"
+	re := regexp.MustCompile(`"FOIL_STATUS"`)
+	log.Printf("inserting into db...")
+	// query := `INSERT INTO cards (pack, original_pack, data) VALUES (?, ?, ?)`
+	query := `INSERT INTO cards (pack, original_pack, edition, number, tags, name, cmc, type, color, mtgo, data) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	for i, pack := range packs {
+		for _, card := range pack {
+			packId := packIds[i]
+			var data string
+			var tags string
+			if card.Foil {
+				data = re.ReplaceAllString(card.Data, "true")
+				tags = "foil"
+			} else {
+				data = re.ReplaceAllString(card.Data, "false")
+			}
+			// database.Exec(query, packId, packId, data)
+			database.Exec(query, packId, packId, card.Set, card.CollectorNumber, tags, card.Name, card.Cmc, card.TypeLine, card.ColorIdentity, card.MtgoId, data)
+		}
 	}
 
-	fmt.Printf("%v\n%v\n%v\n%v\n", oM, oR, oU, oC)
+	log.Printf("done!")
+
+	// fmt.Printf("%v\n%v\n%v\n%v\n", oM, oR, oU, oC)
 }
 
 func generateEmptyDraft(name string) ([24]int64, error) {
@@ -128,195 +261,6 @@ func generateEmptyDraft(name string) ([24]int64, error) {
 	return packIds, nil
 }
 
-func readCsv(filename string) ([][]string, error) {
-	var lines [][]string
-	file, err := os.Open(filename)
-	if err != nil {
-		log.Printf("could not open file %s: %s", filename, err)
-		return lines, err
-	}
-	defer file.Close()
-
-	// read the first line as a text file and throw it away
-	normalReader := bufio.NewReader(file)
-	_, _, err = normalReader.ReadLine()
-	if err != nil {
-		log.Printf("error discarding first line of file %s: %s", filename, err)
-		return lines, err
-	}
-
-	reader := csv.NewReader(normalReader)
-	if err != nil {
-		log.Printf("error processing CSV file %s: %s", filename, err)
-		return lines, err
-	}
-
-	lines, err = reader.ReadAll()
-	if err != nil {
-		log.Printf("error reading CSV file %s: %s", filename, err)
-		return lines, err
-	}
-
-	return lines, nil
-}
-
-func generateCubeDraft(packIds [24]int64, filename string) error {
-	lines, err := readCsv(filename)
-	if err != nil {
-		return err
-	}
-
-	query := `INSERT INTO cards (pack, original_pack, edition, number, tags, name, cmc, type, color, mtgo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-
-	for i := 539; i > 179; i-- {
-		j := rand.Intn(i)
-		lines[i], lines[j] = lines[j], lines[i]
-		packId := packIds[(539-i)/15]
-		finish := lines[i][7]
-		mtgoId := lines[i][12]
-		if finish == "Foil" {
-			// if a card is foil, increment the mtgo id
-			mtgoIdInt, err := strconv.Atoi(mtgoId)
-			if err != nil {
-				log.Printf("could not convert foil version %s: %s", mtgoId, err)
-				return err
-			}
-			mtgoIdInt++
-			mtgoId = fmt.Sprintf("%d", mtgoIdInt)
-		}
-		database.Exec(query, packId, packId, lines[i][4], lines[i][5], lines[i][10], lines[i][0], lines[i][1], lines[i][2], lines[i][3], mtgoId)
-	}
-	log.Printf("done generating new cube draft\n")
-	return nil
-}
-
-func generateStandardDraft(packIds [24]int64, filename string) error {
-	lines, err := readCsv(filename)
-	if err != nil {
-		return err
-	}
-
-	var allCards CardSet
-
-	for _, line := range lines {
-		cmc, err := strconv.ParseInt(line[6], 10, 64)
-		if err != nil {
-			return err
-		}
-		rating, err := strconv.ParseFloat(line[8], 64)
-		if err != nil {
-			return err
-		}
-		card := Card{
-			Mtgo:          line[0],
-			Number:        line[1],
-			Rarity:        line[2],
-			Name:          line[3],
-			Color:         line[4],
-			ColorIdentity: line[5],
-			Cmc:           cmc,
-			Type:          line[7],
-			Rating:        rating}
-		switch card.Rarity {
-		case "M":
-			allCards.Mythics = append(allCards.Mythics, card)
-		case "R":
-			allCards.Rares = append(allCards.Rares, card)
-		case "U":
-			allCards.Uncommons = append(allCards.Uncommons, card)
-		case "C":
-			allCards.Commons = append(allCards.Commons, card)
-		case "B":
-			allCards.Basics = append(allCards.Basics, card)
-		default:
-			return fmt.Errorf("Error determining rarity of %v", line)
-		}
-	}
-
-	var hoppers [15]Hopper
-
-	resetHoppers := func() {
-		hoppers[0] = MakeNormalHopper(allCards.Mythics, allCards.Rares, allCards.Rares)
-
-		hoppers[1] = MakeNormalHopper(allCards.Uncommons, allCards.Uncommons)
-		hoppers[2] = hoppers[1]
-		hoppers[3] = hoppers[1]
-
-		hoppers[4] = MakeNormalHopper(allCards.Commons, allCards.Commons)
-		hoppers[5] = hoppers[4]
-		hoppers[6] = hoppers[4]
-		hoppers[7] = MakeNormalHopper(allCards.Commons, allCards.Commons)
-		hoppers[8] = hoppers[7]
-		hoppers[9] = hoppers[7]
-		hoppers[10] = MakeNormalHopper(allCards.Commons, allCards.Commons)
-		hoppers[11] = hoppers[10]
-		hoppers[12] = hoppers[10]
-		hoppers[13] = MakeFoilHopper(&hoppers[4], &hoppers[7], &hoppers[10],
-			allCards.Mythics,
-			allCards.Rares, allCards.Rares,
-			allCards.Uncommons, allCards.Uncommons, allCards.Uncommons,
-			allCards.Commons, allCards.Commons, allCards.Commons, allCards.Commons,
-			allCards.Basics, allCards.Basics, allCards.Basics, allCards.Basics)
-
-		hoppers[14] = MakeBasicLandHopper(allCards.Basics)
-	}
-
-	var packs [24][15]Card
-	packAttempts := 0
-	draftAttempts := 0
-
-	for {
-		resetHoppers()
-		resetDraft := false
-		draftAttempts++
-		for i := 0; i < 24; { // we'll manually increment i
-			packAttempts++
-			for j, hopper := range hoppers {
-				var empty bool
-				packs[i][j], empty = hopper.Pop()
-				if empty {
-					resetDraft = true
-					break
-				}
-			}
-
-			if resetDraft {
-				break
-			}
-
-			for _, card := range packs[i] {
-				log.Printf("%s\t%v\t%s", card.Rarity, card.Foil, card.Name)
-			}
-
-			if okPack(packs[i]) {
-				i++
-			}
-		}
-		if !resetDraft && okDraft(packs) {
-			break
-		}
-		log.Printf("RESETTING DRAFT")
-	}
-
-	log.Printf("draft attempts: %d", draftAttempts)
-	log.Printf("pack attempts: %d", packAttempts)
-
-	log.Printf("inserting into db...")
-	query := `INSERT INTO cards (pack, original_pack, edition, number, tags, name, cmc, type, color, mtgo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-	for i, pack := range packs {
-		for _, card := range pack {
-			packId := packIds[i]
-			var tags string
-			if card.Foil {
-				tags = "foil"
-			}
-			database.Exec(query, packId, packId, "ktk", card.Number, tags, card.Name, card.Cmc, card.Type, card.ColorIdentity, card.Mtgo)
-		}
-	}
-	log.Printf("done!")
-	return nil
-}
-
 func okPack(pack [15]Card) bool {
 	passes := true
 	cardHash := make(map[string]int)
@@ -328,18 +272,18 @@ func okPack(pack [15]Card) bool {
 		if card.Foil {
 			continue
 		}
-		cardHash[card.Name]++
-		if cardHash[card.Name] > 1 {
-			log.Printf("found duplicated card %s", card.Name)
+		cardHash[card.Id]++
+		if cardHash[card.Id] > 1 {
+			log.Printf("found duplicated card %s", card.Id)
 			passes = false
 		}
-		if card.Rarity == "C" {
+		if card.Rarity == "common" {
 			for _, color := range card.ColorIdentity {
 				colorHash[color]++
 			}
 			ratings = append(ratings, card.Rating)
 			totalCommons++
-		} else if card.Rarity == "U" {
+		} else if card.Rarity == "uncommon" {
 			sortedColor := stringSort(card.ColorIdentity)
 			uncommonColors[sortedColor]++
 			if uncommonColors[sortedColor] > 1 && len(sortedColor) == 3 {
@@ -405,30 +349,30 @@ func okDraft(packs [24][15]Card) bool {
 	q := make(map[string]int)
 	for _, pack := range packs {
 		for _, card := range pack {
-			cardHash[card.Name]++
-			qty := cardHash[card.Name]
+			cardHash[card.Id]++
+			qty := cardHash[card.Id]
 			if card.Rarity != "B" && qty > q[card.Rarity] {
 				q[card.Rarity] = qty
 			}
 			switch card.Rarity {
-			case "M":
+			case "mythic":
 				if qty > MAX_M {
-					log.Printf("found %d %s, which is more than MAX_M %d", qty, card.Name, MAX_M)
+					log.Printf("found %d %s, which is more than MAX_M %d", qty, card.Id, MAX_M)
 					passes = false
 				}
-			case "R":
+			case "rare":
 				if qty > MAX_R {
-					log.Printf("found %d %s, which is more than MAX_R %d", qty, card.Name, MAX_R)
+					log.Printf("found %d %s, which is more than MAX_R %d", qty, card.Id, MAX_R)
 					passes = false
 				}
-			case "U":
+			case "uncommon":
 				if qty > MAX_U {
-					log.Printf("found %d %s, which is more than MAX_U %d", qty, card.Name, MAX_U)
+					log.Printf("found %d %s, which is more than MAX_U %d", qty, card.Id, MAX_U)
 					passes = false
 				}
-			case "C":
+			case "common":
 				if qty > MAX_C {
-					log.Printf("found %d %s, which is more than MAX_C %d", qty, card.Name, MAX_C)
+					log.Printf("found %d %s, which is more than MAX_C %d", qty, card.Id, MAX_C)
 					passes = false
 				}
 				if !card.Foil {
@@ -457,11 +401,11 @@ func okDraft(packs [24][15]Card) bool {
 
 	if passes {
 		log.Printf("draft passes!")
-		oM[q["M"]]++
-		oR[q["R"]]++
-		oU[q["U"]]++
-		oC[q["C"]]++
-		// fmt.Printf("%d, %d, %d, %d\n", q["M"], q["R"], q["U"], q["C"])
+		oM[q["mythic"]]++
+		oR[q["rare"]]++
+		oU[q["uncommon"]]++
+		oC[q["common"]]++
+		// fmt.Printf("%d, %d, %d, %d\n", q["mythic"], q["rare"], q["uncommon"], q["common"])
 	} else {
 		log.Printf("draft fails :(")
 	}
