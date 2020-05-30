@@ -1430,7 +1430,7 @@ func GetJsonObject(draftId int64) (DraftJson, error) {
                     cards.mtgo,
                     cards.id,
                     users.id,
-                    cards.data,
+                    cards.data
                   from seats
                   left join users on users.id=seats.user
                   join drafts on drafts.id=seats.draft
@@ -1523,6 +1523,10 @@ func GetJsonObject(draftId int64) (DraftJson, error) {
 			event.Announcements = []string{}
 		}
 		draft.Events = append(draft.Events, event)
+	}
+
+	if len(draft.Events) == 0 {
+		draft.Events = []DraftEvent{}
 	}
 
 	return draft, nil
