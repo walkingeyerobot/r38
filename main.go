@@ -59,6 +59,7 @@ type Card struct {
 	Cmc     int64  `json:"cmc"`
 	Type    string `json:"type"`
 	Color   string `json:"color"`
+	Data    string `json:"data"`
 }
 
 type Seat struct {
@@ -1428,7 +1429,8 @@ func GetJsonObject(draftId int64) (DraftJson, error) {
                     cards.color,
                     cards.mtgo,
                     cards.id,
-                    users.id
+                    users.id,
+                    cards.data,
                   from seats
                   left join users on users.id=seats.user
                   join drafts on drafts.id=seats.draft
@@ -1461,7 +1463,8 @@ func GetJsonObject(draftId int64) (DraftJson, error) {
 		var nullableColor sql.NullString
 		var nullableMtgo sql.NullString
 		var draftUserId sql.NullInt64
-		err = rows.Scan(&draft.Name, &nullablePosition, &packSeat, &nullableRound, &card.Name, &card.Edition, &card.Number, &card.Tags, &nullableDiscordId, &nullableCmc, &nullableType, &nullableColor, &nullableMtgo, &card.Id, &draftUserId)
+		var nullableData sql.NullString
+		err = rows.Scan(&draft.Name, &nullablePosition, &packSeat, &nullableRound, &card.Name, &card.Edition, &card.Number, &card.Tags, &nullableDiscordId, &nullableCmc, &nullableType, &nullableColor, &nullableMtgo, &card.Id, &draftUserId, &nullableData)
 		if err != nil {
 			return draft, err
 		}
@@ -1473,6 +1476,7 @@ func GetJsonObject(draftId int64) (DraftJson, error) {
 		}
 		card.Type = nullableType.String
 		card.Color = nullableColor.String
+		card.Data = nullableData.String
 		if nullableMtgo.Valid {
 			card.Mtgo = nullableMtgo.String
 		} else {
