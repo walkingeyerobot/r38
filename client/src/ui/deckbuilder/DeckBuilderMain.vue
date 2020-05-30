@@ -22,10 +22,17 @@
         :href="exportedDeck"
         download="r38export.dek"
         class="exportButton"
-        ref="exportButton"
         :hidden="!deck"
         >
-      Export to MTGO
+      Export deck
+    </a>
+    <a
+        :href="exportedBinder"
+        download="r38export.dek"
+        class="exportButton"
+        :hidden="!deck"
+        >
+      Export binder
     </a>
   </div>
 </template>
@@ -34,8 +41,8 @@
 import Vue from 'vue';
 import DeckBuilderSection from './DeckBuilderSection.vue';
 import DeckBuilderSectionControls from "./DeckBuilderSectionControls.vue";
-import { CardColumn, Deck, deckBuilderStore as store, DeckBuilderStore } from '../../state/DeckBuilderModule';
-import { DraftCard, MtgCard } from '../../draft/DraftState';
+import { BASICS, CardColumn, Deck, deckBuilderStore as store, DeckBuilderStore } from '../../state/DeckBuilderModule';
+import { MtgCard } from '../../draft/DraftState';
 
 export default Vue.extend({
   components: {
@@ -90,6 +97,33 @@ export default Vue.extend({
       } else {
         return '';
       }
+    },
+
+    exportedBinder(): string {
+      if (this.deck) {
+        let exportStr = XML_HEADER;
+        let map = new Map<string, DeckEntry>();
+        for (const card of this.deck.maindeck.flat()) {
+          if (!card.definition.mtgo || BASICS.includes(card.definition.mtgo)) {
+            continue;
+          }
+          incrementQuantity(map, card.definition);
+        }
+        for (const card of this.deck.sideboard.flat()) {
+          if (!card.definition.mtgo) {
+            continue;
+          }
+          incrementQuantity(map, card.definition);
+        }
+        for (const [mtgo, card] of map) {
+          exportStr += `<Cards CatID=\"${mtgo}\" Quantity=\"${card.quantity}\"`
+              + ` Sideboard=\"false\" Name=\"${card.name}\" />\n`;
+        }
+        exportStr += "</Deck>";
+        return `data:text/xml;charset=utf-8,${encodeURIComponent(exportStr)}`;
+      } else {
+        return '';
+      }
     }
   },
 
@@ -99,7 +133,7 @@ export default Vue.extend({
 function incrementQuantity(map: Map<string, DeckEntry>, card: MtgCard) {
   let entry = map.get(card.mtgo);
   if (entry == undefined) {
-    entry = { name: card.name, quantity: 0 };
+    entry = {name: card.name, quantity: 0};
     map.set(card.mtgo, entry);
   }
   entry.quantity++;
@@ -111,7 +145,7 @@ interface DeckEntry {
 }
 
 const XML_HEADER =
-`<?xml version="1.0" encoding="utf-8"?>
+    `<?xml version="1.0" encoding="utf-8"?>
 <Deck xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 <NetDeckID>0</NetDeckID>
 <PreconstructedDeckID>0</PreconstructedDeckID>
@@ -146,6 +180,10 @@ const XML_HEADER =
   border: 1px solid #bbb;
   border-radius: 5px;
   cursor: default;
+}
+
+.exportButton + .exportButton {
+  right: calc(7em + 20px);
 }
 
 .exportButton:hover {

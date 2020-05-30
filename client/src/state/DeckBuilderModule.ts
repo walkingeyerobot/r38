@@ -6,6 +6,8 @@ import { rootStore } from './store';
 const DEFAULT_NUM_COLUMNS = 7;
 const MODULE_NAME = 'deckbuilder';
 
+export const BASICS = ["27647", "27280", "27649", "27725", "27727"];
+
 /**
  * Vuex module for storing state related to the deck builder.
  */

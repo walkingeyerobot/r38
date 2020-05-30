@@ -44,7 +44,7 @@
 
 <script lang="ts">
 import Vue from "vue";
-import { CardColumn, deckBuilderStore as store } from '../../state/DeckBuilderModule';
+import { BASICS, CardColumn, deckBuilderStore as store } from '../../state/DeckBuilderModule';
 
 export default Vue.extend({
   name: 'DeckBuilderSectionControls',
@@ -78,23 +78,23 @@ export default Vue.extend({
     },
 
     addPlains() {
-      this.addLand("Plains", "364", "27647");
+      this.addLand("Plains", "364", BASICS[0]);
     },
 
     addIsland() {
-      this.addLand("Island", "368", "27280");
+      this.addLand("Island", "368", BASICS[1]);
     },
 
     addSwamp() {
-      this.addLand("Swamp", "372", "27649");
+      this.addLand("Swamp", "372", BASICS[2]);
     },
 
     addMountain() {
-      this.addLand("Mountain", "376", "27725");
+      this.addLand("Mountain", "376", BASICS[3]);
     },
 
     addForest() {
-      this.addLand("Forest", "380", "27727");
+      this.addLand("Forest", "380", BASICS[4]);
     },
 
     addLand(name: string, collectorNumber: string, mtgo: string) {
