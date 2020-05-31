@@ -78,9 +78,9 @@ type Pack struct {
 }
 
 type DraftJson struct {
-	Seats     []Seat       `json:"seats"`
-	Name      string       `json:"name"`
-	Events    []DraftEvent `json:"events"`
+	Seats  []Seat       `json:"seats"`
+	Name   string       `json:"name"`
+	Events []DraftEvent `json:"events"`
 }
 
 type DraftEvent struct {
@@ -1394,7 +1394,7 @@ func NotifyByDraftAndPosition(draftId int64, position int64) error {
 		return err
 	}
 
-	var jsonStr = []byte(fmt.Sprintf(`{"text": "<@%s> you have new picks <http://draft.thefoley.net/draft/%d>"}`, discordId, draftId))
+	var jsonStr = []byte(fmt.Sprintf(`{"content": "<@%s> you have new picks <http://draft.thefoley.net/draft/%d>"}`, discordId, draftId))
 	req, err := http.NewRequest("POST", os.Getenv("DISCORD_WEBHOOK_URL"), bytes.NewBuffer(jsonStr))
 	if err != nil {
 		return err
