@@ -12,31 +12,31 @@ const MODULE_NAME = 'deckbuilder';
 export const deckBuilderStore = vuexModule(rootStore, MODULE_NAME, {
 
   selectedSeat: 0,
+  names: [],
   decks: [],
   selection: [],
 
 } as DeckBuilderState, {
 
   mutations: {
+    initNames(state: DeckBuilderState, names: string[]) {
+      state.names = names;
+    },
+
     initDecks(
         state: DeckBuilderState,
         init: DeckInitializer[],
     ) {
       state.decks = [];
-      for (let initializer of init) {
+      for (let [index, initializer] of init.entries()) {
         const draftName = initializer.draftName;
-        const seatPosition = initializer.player.seatPosition;
-        const stored = localStorage.getItem(getLocalstorageKey(draftName, seatPosition));
+        const stored = localStorage.getItem(getLocalstorageKey(draftName, index));
         let deck: Deck;
         if (stored) {
           deck = JSON.parse(stored);
         } else {
           deck = {
             draftName: draftName,
-            player: {
-              seatPosition: seatPosition,
-              name: initializer.player.name,
-            },
             sideboard: (<DraftCard[][]>Array(DEFAULT_NUM_COLUMNS)).fill([]).map(() => []),
             maindeck: (<DraftCard[][]>Array(DEFAULT_NUM_COLUMNS)).fill([]).map(() => []),
           };
@@ -162,9 +162,9 @@ export const deckBuilderStore = vuexModule(rootStore, MODULE_NAME, {
 });
 
 deckBuilderStore.subscribe((mutation, state) => {
-  for (const deck of state.decks) {
+  for (const [index, deck] of state.decks.entries()) {
     localStorage.setItem(
-        getLocalstorageKey(deck.draftName, deck.player.seatPosition),
+        getLocalstorageKey(deck.draftName, index),
         JSON.stringify(deck));
   }
 });
@@ -192,16 +192,13 @@ export type DeckBuilderStore = typeof deckBuilderStore;
 
 interface DeckBuilderState {
   selectedSeat: number,
+  names: string[],
   decks: Deck[],
   selection: CardLocation[],
 }
 
 export interface Deck {
   draftName: string;
-  player: {
-    seatPosition: number;
-    name: string;
-  },
   maindeck: CardColumn[],
   sideboard: CardColumn[],
 }
@@ -210,10 +207,6 @@ export type CardColumn = DraftCard[];
 
 export interface DeckInitializer {
   draftName: string;
-  player: {
-    seatPosition: number;
-    name: string;
-  };
   pool: DraftCard[];
 }
 

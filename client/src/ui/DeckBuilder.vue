@@ -28,13 +28,10 @@ export default Vue.extend({
     const draft = this.generateCurrentDraft();
 
     const init = [] as DeckInitializer[];
+    store.initNames(draft.state.seats.map(seat => seat.player.name));
     for (let seat of draft.state.seats) {
       init.push({
         draftName: draft.name,
-        player: {
-          seatPosition: seat.player.seatPosition,
-          name: seat.player.name,
-        },
         pool: seat.player.picks.cards.concat(),
       });
     }

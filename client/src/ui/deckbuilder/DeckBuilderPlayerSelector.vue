@@ -1,15 +1,15 @@
 <template>
   <div class="_deckbuilder-player-selector">
     <div
-        v-for="(deck, index) in state.decks"
-        :key="deck.player.seatPosition"
+        v-for="(name, index) in state.names"
+        :key="index"
         class="player"
         :class="{
           selected: index == state.selectedSeat
         }"
         @click="onPlayerClick(index)"
         >
-      {{ deck.player.name }}
+      {{ name }}
     </div>
   </div>
 </template>
