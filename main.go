@@ -1492,6 +1492,7 @@ func GetJsonObject(draftId int64) (DraftJson, error) {
 			} else {
 				card.Data = dataObj
 			}
+			dataObj["r38_data"].(map[string]interface{})["id"] = card.Id
 		}
 		if nullableMtgo.Valid {
 			card.Mtgo = nullableMtgo.String
