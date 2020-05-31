@@ -168,8 +168,13 @@ func main() {
 		return
 	}
 
+	port, valid := os.LookupEnv("R38_PORT")
+	if !valid {
+		port = "12264"
+	}
+
 	server := &http.Server{
-		Addr:    fmt.Sprintf(":12264"),
+		Addr:    fmt.Sprintf(":%s", port),
 		Handler: NewHandler(*useAuthPtr),
 	}
 
