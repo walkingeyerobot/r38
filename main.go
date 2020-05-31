@@ -80,7 +80,6 @@ type Pack struct {
 type DraftJson struct {
 	Seats     []Seat       `json:"seats"`
 	Name      string       `json:"name"`
-	ExtraPack []Card       `json:"extraPack"`
 	Events    []DraftEvent `json:"events"`
 }
 
@@ -1501,7 +1500,6 @@ func GetJsonObject(draftId int64) (DraftJson, error) {
 		}
 
 		if !nullablePosition.Valid || !nullableRound.Valid {
-			draft.ExtraPack = append(draft.ExtraPack, card)
 			continue
 		}
 		position := nullablePosition.Int64
