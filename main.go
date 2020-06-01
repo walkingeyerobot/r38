@@ -83,11 +83,22 @@ type DraftJson struct {
 	Events []DraftEvent `json:"events"`
 }
 
-type DraftEvent struct {
-	Player         int64    `json:"player"`
+type DraftJson2 struct {
+	DraftId   int64         `json:"draftId"`
+	DraftName string        `json:"draftName"`
+	Seats     [8]Seat2      `json:"seats"`
+	Events    []DraftEvent2 `json:"events"`
+}
+
+type Seat2 struct {
+	Packs      [3][15]interface{} `json:"packs"`
+	PlayerName string             `json:"playerName"`
+	PlayerId   int64              `json:"playerId"`
+}
+
+type DraftEvent2 struct {
+	Position       int64    `json:"position"`
 	Announcements  []string `json:"announcements"`
-	Card1          string   `json:"card1"`
-	Card2          string   `json:"card2"`
 	Cards          []int64  `json:"cards"`
 	PlayerModified int64    `json:"playerModified"`
 	DraftModified  int64    `json:"draftModified"`
@@ -95,9 +106,22 @@ type DraftEvent struct {
 	Librarian      bool     `json:"librarian"`
 }
 
+type DraftEvent struct {
+	Player         int64    `json:"player"`
+	Announcements  []string `json:"announcements"`
+	Card1          string
+	Card2          string
+	Cards          []int64 `json:"cards"`
+	PlayerModified int64   `json:"playerModified"`
+	DraftModified  int64   `json:"draftModified"`
+	Round          int64   `json:"round"`
+	Librarian      bool    `json:"librarian"`
+}
+
 type ReplayPageData struct {
 	Json     string
 	UserJson string
+	Json2    string
 }
 
 type bulkMTGOExport struct {
@@ -648,7 +672,13 @@ func ServeVueApp(parseResult []string, w http.ResponseWriter, userId int64) {
 		return
 	}
 
-	data := ReplayPageData{Json: draftJson, UserJson: string(userInfoJson)}
+	draftJson2, err := GetJson2(draftId)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	data := ReplayPageData{Json: draftJson, UserJson: string(userInfoJson), Json2: draftJson2}
 
 	t := template.Must(template.ParseFiles("replay.tmpl"))
 
@@ -1547,8 +1577,137 @@ func GetJsonObject(draftId int64) (DraftJson, error) {
 	return draft, nil
 }
 
+func GetJsonObject2(draftId int64) (DraftJson2, error) {
+	var draft DraftJson2
+
+	query := `select
+                    drafts.id,
+                    drafts.name,
+                    seats.position,
+                    packs.round,
+                    users.discord_name,
+                    cards.id,
+                    users.id,
+                    cards.data
+                  from seats
+                  left join users on users.id=seats.user
+                  join drafts on drafts.id=seats.draft
+                  join packs on packs.original_seat=seats.id
+                  join cards on cards.original_pack=packs.id
+                  where drafts.id=?`
+
+	rows, err := database.Query(query, draftId)
+	if err != nil {
+		return draft, err
+	}
+	defer rows.Close()
+	var indices [8][3]int64
+	for rows.Next() {
+		var position int64
+		var packRound int64
+		var cardId int64
+		var nullableDiscordId sql.NullString
+		var draftUserId sql.NullInt64
+		var cardData string
+		err = rows.Scan(&draft.DraftId, &draft.DraftName, &position, &packRound, &nullableDiscordId, &cardId, &draftUserId, &cardData)
+		if err != nil {
+			return draft, err
+		}
+
+		dataObj := make(map[string]interface{})
+		err = json.Unmarshal([]byte(cardData), &dataObj)
+		if err != nil {
+			log.Printf("making nil card data because of error %s", err.Error())
+			dataObj = nil
+		}
+		dataObj["r38_data"].(map[string]interface{})["id"] = cardId
+
+		packRound--
+
+		nextIndex := indices[position][packRound]
+
+		draft.Seats[position].Packs[packRound][nextIndex] = dataObj
+		draft.Seats[position].PlayerName = nullableDiscordId.String
+		draft.Seats[position].PlayerId = draftUserId.Int64
+
+		indices[position][packRound]++
+	}
+
+	query = `select
+                   seats.position,
+                   events.announcement,
+                   cards1.name,
+                   cards2.name,
+                   events.id,
+                   events.modified,
+                   events.round,
+                   cards1.id,
+                   cards2.id
+                 from events
+                 join seats on events.draft=seats.draft and events.user=seats.user
+                 left join cards as cards1 on events.card1=cards1.id
+                 left join cards as cards2 on events.card2=cards2.id
+                 where events.draft=?`
+	query = `select
+                   seats.position,
+                   events.announcement,
+                   events.card1,
+                   events.card2,
+                   events.id,
+                   events.modified,
+                   events.round
+                 from events
+                 join seats on events.draft=seats.draft and events.user=seats.user
+                 where events.draft=?`
+	rows, err = database.Query(query, draftId)
+	if err != nil && err != sql.ErrNoRows {
+		return draft, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var event DraftEvent2
+		var announcements string
+		var card1id int64
+		var card2id sql.NullInt64
+		err = rows.Scan(&event.Position, &announcements, &card1id, &card2id, &event.DraftModified, &event.PlayerModified, &event.Round)
+		if err != nil {
+			return draft, err
+		}
+		event.Cards = append(event.Cards, card1id)
+		if card2id.Valid {
+			event.Cards = append(event.Cards, card2id.Int64)
+			event.Librarian = true
+		}
+		if announcements != "" {
+			event.Announcements = strings.Split(announcements, "\n")
+		} else {
+			event.Announcements = []string{}
+		}
+		draft.Events = append(draft.Events, event)
+	}
+
+	if len(draft.Events) == 0 {
+		draft.Events = []DraftEvent2{}
+	}
+
+	return draft, nil
+}
+
 func GetJson(draftId int64) (string, error) {
 	draft, err := GetJsonObject(draftId)
+	if err != nil {
+		return "", err
+	}
+	ret, err := json.Marshal(draft)
+	if err != nil {
+		return "", err
+	}
+
+	return string(ret), nil
+}
+
+func GetJson2(draftId int64) (string, error) {
+	draft, err := GetJsonObject2(draftId)
 	if err != nil {
 		return "", err
 	}
