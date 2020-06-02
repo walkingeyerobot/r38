@@ -6,8 +6,32 @@
 
 <script lang="ts">
 import Vue from 'vue'
+import { authStore } from './state/AuthStore';
+
 export default Vue.extend({
-})
+  created() {
+    this.loadAuthInfo();
+  },
+
+  methods: {
+    loadAuthInfo() {
+      if (window.UserInfo != undefined) {
+        const parsed = JSON.parse(window.UserInfo) as SourceUserInfo;
+        authStore.setUser({
+          id: parsed.userId,
+          name: parsed.name,
+          picture: parsed.picture,
+        });
+      }
+    },
+  },
+});
+
+interface SourceUserInfo {
+  name: string;
+  picture: string;
+  userId: number;
+}
 </script>
 
 <style>
