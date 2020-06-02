@@ -97,9 +97,10 @@ type DraftJson2 struct {
 }
 
 type Seat2 struct {
-	Packs      [3][15]interface{} `json:"packs"`
-	PlayerName string             `json:"playerName"`
-	PlayerId   int64              `json:"playerId"`
+	Packs       [3][15]interface{} `json:"packs"`
+	PlayerName  string             `json:"playerName"`
+	PlayerId    int64              `json:"playerId"`
+	PlayerImage string             `json:"playerImage"`
 }
 
 type DraftEvent2 struct {
@@ -1596,7 +1597,8 @@ func GetJsonObject2(draftId int64) (DraftJson2, error) {
                     users.discord_name,
                     cards.id,
                     users.id,
-                    cards.data
+                    cards.data,
+                    users.picture
                   from seats
                   left join users on users.id=seats.user
                   join drafts on drafts.id=seats.draft
@@ -1617,7 +1619,8 @@ func GetJsonObject2(draftId int64) (DraftJson2, error) {
 		var nullableDiscordId sql.NullString
 		var draftUserId sql.NullInt64
 		var cardData string
-		err = rows.Scan(&draft.DraftId, &draft.DraftName, &position, &packRound, &nullableDiscordId, &cardId, &draftUserId, &cardData)
+		var nullablePicture sql.NullString
+		err = rows.Scan(&draft.DraftId, &draft.DraftName, &position, &packRound, &nullableDiscordId, &cardId, &draftUserId, &cardData, &nullablePicture)
 		if err != nil {
 			return draft, err
 		}
@@ -1637,6 +1640,7 @@ func GetJsonObject2(draftId int64) (DraftJson2, error) {
 		draft.Seats[position].Packs[packRound][nextIndex] = dataObj
 		draft.Seats[position].PlayerName = nullableDiscordId.String
 		draft.Seats[position].PlayerId = draftUserId.Int64
+		draft.Seats[position].PlayerImage = nullablePicture.String
 
 		indices[position][packRound]++
 	}
