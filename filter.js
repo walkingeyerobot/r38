@@ -24,7 +24,7 @@ const server = net.createServer((c) => {
       }
     }
     if (matches) {
-      doParse2(c, allData.toString());
+      doParse(c, allData.toString());
     }
   });
 });
@@ -71,7 +71,7 @@ process.on('exit', stopServer);
 process.on('SIGINT', stopServer);
 process.on('SIGTERM', stopServer);
 
-function doParse2(client, objstr) {
+function doParse(client, objstr) {
   var obj = JSON.parse(objstr);
   var state = JSON.parse(objstr).draft.seats;
   var myPosition = obj.draft.seats.findIndex((elem) => elem.playerId === obj.user);
