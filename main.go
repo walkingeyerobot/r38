@@ -1734,6 +1734,24 @@ func GetFilteredJson(draftId int64, userId int64) (string, error) {
 		return "", err
 	}
 
+	query := `select (select round from seats where draft=? and user=?), (select count(1) from seats where draft=? and user is null)`
+	var myRound sql.NullInt64
+	var emptySeats int64
+	row := database.QueryRow(query, draftId, userId)
+	err = row.Scan(&myRound)
+	if err != nil {
+		return "", err
+	} else if (myRound.Valid && myRound.Int64 == 4) || (!myRound.Valid && emptySeats == 0) {
+		// either we're not in the draft, or the draft is over for us
+		// therefore, we can see the whole draft.
+		ret, err := json.Marshal(draft)
+		if err != nil {
+			return "", err
+		}
+		return string(ret), nil
+	}
+
+	// this is an ongoing draft that we're a member of. filter the json.
 	conn, err := net.Dial("unix", "./r38.sock")
 	if err != nil {
 		return "", err
