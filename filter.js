@@ -75,9 +75,6 @@ function doParse(client, objstr) {
   var obj = JSON.parse(objstr);
   var state = JSON.parse(objstr).draft.seats;
   var myPosition = obj.draft.seats.findIndex((elem) => elem.playerId === obj.user);
-  var oddPasser = myPosition === 0 ? 7 : myPosition - 1;
-  var evenPasser = myPosition === 7 ? 0 : myPosition + 1;
-  var passer = [undefined, oddPasser, evenPasser, oddPasser];
   var newEvents = [];
   var librarian;
 
