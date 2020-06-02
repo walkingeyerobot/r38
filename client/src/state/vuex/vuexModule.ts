@@ -1,4 +1,5 @@
 import { ActionTree, Module, MutationPayload, Store } from 'vuex';
+import { MixedCollection } from '../../util/MixedCollection';
 
 export function vuexModule<S, D extends ModuleDef<S>>(
   rootStore: Store<any>,
@@ -12,6 +13,19 @@ export function vuexModule<S, D extends ModuleDef<S>>(
   const getterKeys = Object.keys(module.getters) as (keyof D['getters'])[];
   const mutatorKeys = Object.keys(module.mutations) as (keyof D['mutations'])[];
   const actionKeys = Object.keys(module.actions) as (keyof D['actions'])[];
+
+  // Attempt to salvage state from pre-existing module
+  // If things have changed too much, this won't work
+  if (rootStore.hasModule(name)) {
+    const existingState = (rootStore.state as any)[name] as MixedCollection;
+    for (let key of stateKeys) {
+      const value = existingState[key as string];
+      if (value !== undefined) {
+        state[key] = value as any;
+      }
+    }
+    rootStore.unregisterModule(name);
+  }
 
   rootStore.registerModule(name, transformModuleDef(state, module));
   const moduleState = (rootStore.state as any)[name] as S;

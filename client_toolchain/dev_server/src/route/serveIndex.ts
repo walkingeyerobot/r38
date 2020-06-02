@@ -6,16 +6,21 @@ export function serveIndex(req: Request, res: Response) {
     if (err) {
       res.status(500).send(err.message);
     } else {
-      const payload = {
-        auth: {
-          id: 47,
-          name: 'Lilith',
-        },
-      };
-      const transformed =
-          data.replace(
-              `{{authInfo}}`,
-              `const PAYLOAD = ${JSON.stringify(payload)}`);
+      let replacementStr: string;
+      if (req.query['noAuth'] == '' || req.query['noAuth'] == 'true') {
+        replacementStr = '';
+      } else {
+        const userInfo = {
+          name: 'red_weather',
+          picture: `https://cdn.discordapp.com/avatars/117108584017428481/f91aadd54de1929aaad167cabc99bdb1.png`,
+          userId: 5,
+        };
+
+        replacementStr =
+            `window.UserInfo=${JSON.stringify(JSON.stringify(userInfo))};`;
+      }
+
+      const transformed = data.replace(`{{authInfo}}`, replacementStr);
       res.send(transformed);
     }
   });
