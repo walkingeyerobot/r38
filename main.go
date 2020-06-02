@@ -12,6 +12,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"regexp"
@@ -83,6 +84,11 @@ type DraftJson struct {
 	Events []DraftEvent `json:"events"`
 }
 
+type Perspective struct {
+	User  int64      `json:"user"`
+	Draft DraftJson2 `json:"draft"`
+}
+
 type DraftJson2 struct {
 	DraftId   int64         `json:"draftId"`
 	DraftName string        `json:"draftName"`
@@ -104,6 +110,7 @@ type DraftEvent2 struct {
 	DraftModified  int64    `json:"draftModified"`
 	Round          int64    `json:"round"`
 	Librarian      bool     `json:"librarian"`
+	Type           string   `json:"type"`
 }
 
 type DraftEvent struct {
@@ -182,6 +189,7 @@ func main() {
 	}
 
 	var err error
+
 	database, err = sql.Open("sqlite3", "draft.db")
 	if err != nil {
 		return
@@ -1683,6 +1691,7 @@ func GetJsonObject2(draftId int64) (DraftJson2, error) {
 		} else {
 			event.Announcements = []string{}
 		}
+		event.Type = "Pick"
 		draft.Events = append(draft.Events, event)
 	}
 
@@ -1720,19 +1729,31 @@ func GetJson2(draftId int64) (string, error) {
 }
 
 func GetFilteredJson(draftId int64, userId int64) (string, error) {
-	draft, err := GetJsonObject(draftId)
+	draft, err := GetJsonObject2(draftId)
 	if err != nil {
 		return "", err
 	}
 
-	// TODO: shell out to a node process that filters the draft.
+	conn, err := net.Dial("unix", "./r38.sock")
+	if err != nil {
+		return "", err
+	}
+	defer conn.Close()
 
-	ret, err := json.Marshal(draft)
+	ret, err := json.Marshal(Perspective{User: userId, Draft: draft})
 	if err != nil {
 		return "", err
 	}
 
-	return string(ret), nil
+	stop := "\r\n\r\n"
+
+	conn.Write([]byte(ret))
+	conn.Write([]byte(stop))
+
+	var buff bytes.Buffer
+	io.Copy(&buff, conn)
+
+	return buff.String(), nil
 }
 
 func DoEvent(draftId int64, userId int64, announcements []string, cardId1 int64, cardId2 sql.NullInt64, round int64) error {
