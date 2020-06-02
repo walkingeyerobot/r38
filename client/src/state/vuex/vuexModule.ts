@@ -1,8 +1,5 @@
 import { ActionTree, Module, MutationPayload, Store } from 'vuex';
 
-// TODO: Rename this file to drop the '2' once everyone has synced the version
-// that deletes VuexModule.ts (the uppercase version)
-
 export function vuexModule<S, D extends ModuleDef<S>>(
   rootStore: Store<any>,
   name: string,
