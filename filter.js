@@ -149,8 +149,6 @@ function doParse2(client, objstr) {
         delete shadowModified[shadowKey];
       }
 
-      // event.type should be set in go. I'll do it later.
-      event.type = 'Pick';
       newEvents.push(event);
     } else {
       // another player made a pick. just note that a card was picked and when
