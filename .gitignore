@@ -6,6 +6,6 @@ pkg/
 run.sh
 node_modules/
 /client/dist
-/stats.json
+/client_toolchain/stats.json
 /client_toolchain/dev_server/dist
 static/dist

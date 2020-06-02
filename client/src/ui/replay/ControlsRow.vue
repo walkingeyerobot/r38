@@ -20,6 +20,7 @@
     </div>
     <div class="end">
       <SearchBox />
+      <img v-if="authStore.user" class="user-img" :src="authStore.user.picture">
     </div>
   </div>
 </template>
@@ -35,7 +36,7 @@ import { TimelineEvent } from '../../draft/TimelineEvent';
 import { globalClickTracker, UnhandledClickListener } from '../infra/globalClickTracker';
 
 import { replayStore as store, ReplayModule } from '../../state/ReplayModule';
-
+import { authStore, AuthStore } from '../../state/AuthStore';
 
 export default Vue.extend({
   components: {
@@ -46,6 +47,10 @@ export default Vue.extend({
   computed: {
     store(): ReplayModule {
       return store;
+    },
+
+    authStore(): AuthStore {
+      return authStore;
     },
   },
 
@@ -151,5 +156,11 @@ export default Vue.extend({
 
 .parse-error-warning {
   color: #F00;
+}
+
+.user-img {
+  width: 28px;
+  margin-left: 10px;
+  border-radius: 20px;
 }
 </style>

@@ -1,5 +1,5 @@
 import { DraftCard } from '../draft/DraftState';
-import { vuexModule } from './vuex/vuexModule2';
+import { vuexModule } from './vuex/vuexModule';
 import { rootStore } from './store';
 
 

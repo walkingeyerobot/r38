@@ -2,7 +2,7 @@ import { TimelineEvent } from "../draft/TimelineEvent";
 import { SelectedView } from './selection';
 import { DraftState } from '../draft/DraftState';
 import { buildEmptyDraftState } from '../draft/buildEmptyDraftState';
-import { vuexModule } from './vuex/vuexModule2';
+import { vuexModule } from './vuex/vuexModule';
 import { ParsedDraft } from '../parse/parseDraft';
 import { cloneDraftState } from '../draft/cloneDraftState';
 import { commitTimelineEvent, rollbackTimelineEvent } from '../draft/mutate';

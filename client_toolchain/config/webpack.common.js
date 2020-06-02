@@ -101,13 +101,6 @@ module.exports = mode => {
       // Files with these extensions can be imported without specifying the
       // extension (e.g. './foo' vs. './foo.ts');
       extensions: [ '.tsx', '.ts', '.js', '.json' ],
-
-      alias: {
-        // Import alias. Causes `import vue from 'vue'` to point to precompiled
-        // vue distributable.
-        // The $ indicates an exact match is required.
-        'vue$': 'vue/dist/vue.runtime.esm.js',
-      },
     },
   };
 }
