@@ -1,14 +1,9 @@
 import { CardContainer, CardPack, DraftCard, DraftSeat, DraftState, PlayerPicks, PackContainer, PACK_LOCATION_UNUSED, PACK_LOCATION_DEAD } from '../draft/DraftState';
 import { SourceCard, SourceData } from './SourceData';
-import { fillDraftStateMaps } from './fillDraftStateMaps';
 
 
 export function parseInitialState(srcData: SourceData): DraftState {
-  const state = new StateParser().parse(srcData);
-
-  fillDraftStateMaps(state);
-
-  return state;
+  return new StateParser().parse(srcData);
 }
 
 class StateParser {
@@ -19,10 +14,22 @@ class StateParser {
     const packMap = new Map<number, CardContainer>();
     const locationMap = new Map<number, PackContainer>();
 
+    const unusedPacks =
+        this.buildPackLocation(
+            PACK_LOCATION_UNUSED,
+            'Unused packs',
+            locationMap);
+
+    const deadPacks =
+        this.buildPackLocation(
+            PACK_LOCATION_DEAD,
+            'Dead packs',
+            locationMap);
+
     const state: DraftState = {
       seats: [],
-      unusedPacks: this.buildPackLocation(PACK_LOCATION_UNUSED, 'Unused packs'),
-      deadPacks: this.buildPackLocation(PACK_LOCATION_DEAD, 'Dead packs'),
+      unusedPacks,
+      deadPacks,
       packs: packMap,
       locations: locationMap,
     };
@@ -46,11 +53,13 @@ class StateParser {
         queuedPacks:
             this.buildPackLocation(
                 this._nextLocationId++,
-                `queuedPacks for seat ${i}`),
+                `queuedPacks for seat ${i}`,
+                locationMap),
         unopenedPacks:
             this.buildPackLocation(
                 this._nextLocationId++,
-                `unopenedPacks for seat ${i}`),
+                `unopenedPacks for seat ${i}`,
+                locationMap),
       };
       state.seats.push(seat);
     }
@@ -80,7 +89,7 @@ class StateParser {
       round: -1,
     };
     state.unusedPacks.packs.push(extraPack);
-    state.packs.set(extraPack.id, extraPack);
+    packMap.set(extraPack.id, extraPack);
 
     return state;
   }
@@ -112,12 +121,15 @@ class StateParser {
   private buildPackLocation(
       id: number,
       label: string,
+      registrationMap: Map<number, PackContainer>,
   ): PackContainer {
-    return {
+    const packLocation = {
       id: id,
       packs: [],
       label: label,
     };
+    registrationMap.set(id, packLocation);
+    return packLocation;
   }
 }
 

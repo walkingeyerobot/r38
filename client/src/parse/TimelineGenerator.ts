@@ -1,10 +1,10 @@
 import { SourceEvent } from './SourceData';
 import { commitTimelineEvent } from '../draft/mutate';
-import { cloneDraftState } from '../draft/cloneDraftState';
 import { DraftState, CardContainer, CardPack, DraftSeat, PackContainer } from '../draft/DraftState';
 import { TimelineEvent } from '../draft/TimelineEvent';
 import { ParseError } from './ParseError';
 import { MutationError } from '../draft/MutationError';
+import { deepCopy } from '../util/deepCopy';
 
 export class TimelineGenerator {
   private _state!: DraftState;
@@ -18,7 +18,7 @@ export class TimelineGenerator {
       state: DraftState,
       events: SourceEvent[],
   ): GeneratedTimeline {
-    this.initialize(cloneDraftState(state), events);
+    this.initialize(deepCopy(state), events);
 
     let parseError: Error | null = null;
     for (let i = 0; i < events.length; i++) {
