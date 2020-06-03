@@ -1,5 +1,5 @@
 import { ActionTree, Module, MutationPayload, Store } from 'vuex';
-import { MixedCollection } from '../../util/MixedCollection';
+import { deepCopy } from '../../util/deepCopy';
 
 export function vuexModule<S, D extends ModuleDef<S>>(
   rootStore: Store<any>,
@@ -19,8 +19,9 @@ export function vuexModule<S, D extends ModuleDef<S>>(
   if (rootStore.hasModule(name)) {
     // Make a deep copy of the current state, erasing any of the property
     // proxies that Vue uses.
-    // At the moment, this will break for all Maps and Sets
-    const cleanedState = JSON.parse(JSON.stringify(rootStore.state));
+    const cleanedState = deepCopy((rootStore.state as any)[name]);
+
+    // Copy the existing state onto the new module's state definition
     for (let key of stateKeys) {
       const value = cleanedState[key];
       if (value !== undefined) {
