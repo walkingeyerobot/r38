@@ -17,22 +17,24 @@ export function vuexModule<S, D extends ModuleDef<S>>(
   // Attempt to salvage state from pre-existing module
   // If things have changed too much, this won't work
   if (rootStore.hasModule(name)) {
-    const existingState = (rootStore.state as any)[name] as MixedCollection;
+    // Make a deep copy of the current state, erasing any of the property
+    // proxies that Vue uses.
+    // At the moment, this will break for all Maps and Sets
+    const cleanedState = JSON.parse(JSON.stringify(rootStore.state));
     for (let key of stateKeys) {
-      const value = existingState[key as string];
+      const value = cleanedState[key];
       if (value !== undefined) {
-        state[key] = value as any;
+        state[key] = value;
       }
     }
     rootStore.unregisterModule(name);
   }
 
   rootStore.registerModule(name, transformModuleDef(state, module));
-  const moduleState = (rootStore.state as any)[name] as S;
 
   for (let stateKey of stateKeys) {
     Object.defineProperty(publicModule, stateKey, {
-      get: () => moduleState[stateKey],
+      get: () => (rootStore.state as any)[name][stateKey],
       enumerable: true,
     });
   }
