@@ -4,11 +4,11 @@ import { DraftState } from '../draft/DraftState';
 import { buildEmptyDraftState } from '../draft/buildEmptyDraftState';
 import { vuexModule } from './vuex/vuexModule';
 import { ParsedDraft } from '../parse/parseDraft';
-import { cloneDraftState } from '../draft/cloneDraftState';
 import { commitTimelineEvent, rollbackTimelineEvent } from '../draft/mutate';
 import { isPickEvent } from './util/isPickEvent';
 import { rootStore } from './store';
 import { printEvent } from './util/printEvent';
+import { deepCopy } from '../util/deepCopy';
 
 // TODO: Remove the need for this
 let initialDraftState: DraftState = buildEmptyDraftState();
@@ -39,10 +39,10 @@ export const replayStore = vuexModule(rootStore, 'replay', {
         state: ReplayState,
         payload: ParsedDraft,
     ) {
-      initialDraftState = cloneDraftState(payload.state);
+      initialDraftState = deepCopy(payload.state);
 
       state.draftName = payload.name,
-      state.draft = cloneDraftState(payload.state);
+      state.draft = deepCopy(payload.state);
       state.events = payload.events;
       state.eventPos = 0;
       state.selection = {
@@ -59,7 +59,7 @@ export const replayStore = vuexModule(rootStore, 'replay', {
     },
 
     goTo(state: ReplayState, index: number) {
-      state.draft = cloneDraftState(initialDraftState);
+      state.draft = deepCopy(initialDraftState);
       let i = 0;
       for (; i < state.events.length && i < index; i++) {
         commitEvent(state.events[i], state.draft);
@@ -149,7 +149,7 @@ export const replayStore = vuexModule(rootStore, 'replay', {
         const [currentRound, currentEpoch] = getCurrentEpoch(state);
 
         state.events.sort(sortEventsLockstep);
-        state.draft = cloneDraftState(initialDraftState);
+        state.draft = deepCopy(initialDraftState);
 
         state.eventPos = 0;
         let i = 0;
@@ -182,7 +182,7 @@ export const replayStore = vuexModule(rootStore, 'replay', {
 
         state.events.sort((a, b) => a.id - b.id);
 
-        state.draft = cloneDraftState(initialDraftState);
+        state.draft = deepCopy(initialDraftState);
         state.eventPos = 0;
 
         if (targetEvent != null) {
