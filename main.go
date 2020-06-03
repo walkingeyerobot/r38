@@ -1741,8 +1741,8 @@ func GetFilteredJson(draftId int64, userId int64) (string, error) {
 	query := `select (select round from seats where draft=? and user=?), (select count(1) from seats where draft=? and user is null)`
 	var myRound sql.NullInt64
 	var emptySeats int64
-	row := database.QueryRow(query, draftId, userId)
-	err = row.Scan(&myRound)
+	row := database.QueryRow(query, draftId, userId, draftId)
+	err = row.Scan(&myRound, &emptySeats)
 	if err != nil {
 		return "", err
 	} else if (myRound.Valid && myRound.Int64 == 4) || (!myRound.Valid && emptySeats == 0) {
