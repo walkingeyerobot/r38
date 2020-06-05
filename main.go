@@ -177,6 +177,7 @@ var store = sessions.NewCookieStore(secret_key_no_one_will_ever_guess)
 var database *sql.DB
 var useAuth bool
 var IsViewing viewingFunc
+var sock string
 
 func main() {
 	useAuthPtr := flag.Bool("auth", true, "bool")
@@ -199,6 +200,11 @@ func main() {
 	err = database.Ping()
 	if err != nil {
 		return
+	}
+
+	sock, valid := os.LookupEnv("R38_SOCK")
+	if !valid {
+		sock = "./r38.sock"
 	}
 
 	port, valid := os.LookupEnv("R38_PORT")
@@ -1758,7 +1764,7 @@ func GetFilteredJson(draftId int64, userId int64) (string, error) {
 	}
 
 	// this is an ongoing draft that we're a member of. filter the json.
-	conn, err := net.Dial("unix", "./r38.sock")
+	conn, err := net.Dial("unix", sock)
 	if err != nil {
 		return "", err
 	}

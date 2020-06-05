@@ -1,6 +1,6 @@
 const fs = require('fs');
 const net = require('net');
-const SOCK_ADDR = './r38.sock';
+const SOCK_ADDR = process.env.R38_SOCK || './r38.sock';
 const STOP_SEQ = new Uint8Array([13, 10, 13, 10]); //'\r\n\r\n'
 
 const server = net.createServer((c) => {
