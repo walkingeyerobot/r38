@@ -202,14 +202,14 @@ func main() {
 		return
 	}
 
-	sock, valid := os.LookupEnv("R38_SOCK")
-	if !valid {
-		sock = "./r38.sock"
-	}
-
 	port, valid := os.LookupEnv("R38_PORT")
 	if !valid {
 		port = "12264"
+	}
+
+	sock, valid = os.LookupEnv("R38_SOCK")
+	if !valid {
+		sock = "./r38.sock"
 	}
 
 	server := &http.Server{
