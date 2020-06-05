@@ -81,6 +81,7 @@ type Pack struct {
 type DraftJson struct {
 	Seats  []Seat       `json:"seats"`
 	Name   string       `json:"name"`
+	Id     int64        `json:id"`
 	Events []DraftEvent `json:"events"`
 }
 
@@ -1473,7 +1474,8 @@ func GetJsonObject(draftId int64) (DraftJson, error) {
                     cards.mtgo,
                     cards.id,
                     users.id,
-                    cards.data
+                    cards.data,
+                    drafts.id
                   from seats
                   left join users on users.id=seats.user
                   join drafts on drafts.id=seats.draft
@@ -1507,7 +1509,7 @@ func GetJsonObject(draftId int64) (DraftJson, error) {
 		var nullableMtgo sql.NullString
 		var draftUserId sql.NullInt64
 		var nullableData sql.NullString
-		err = rows.Scan(&draft.Name, &nullablePosition, &packSeat, &nullableRound, &card.Name, &card.Edition, &card.Number, &card.Tags, &nullableDiscordId, &nullableCmc, &nullableType, &nullableColor, &nullableMtgo, &card.Id, &draftUserId, &nullableData)
+		err = rows.Scan(&draft.Name, &nullablePosition, &packSeat, &nullableRound, &card.Name, &card.Edition, &card.Number, &card.Tags, &nullableDiscordId, &nullableCmc, &nullableType, &nullableColor, &nullableMtgo, &card.Id, &draftUserId, &nullableData, &draft.Id)
 		if err != nil {
 			return draft, err
 		}
