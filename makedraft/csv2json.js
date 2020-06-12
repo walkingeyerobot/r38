@@ -10,6 +10,7 @@ fs.readFile(filename, 'utf8', (err, data) => {
     return
   }
   fileType = filename.split('.')[0];
+  console.error('fileType: ' + fileType);
   if (fileType === 'cube') {
     var lines = data.split('\n');
     var rawCards = lines.map((e) => {
@@ -38,7 +39,7 @@ fs.readFile(filename, 'utf8', (err, data) => {
         rating: parseFloat(line[1])
       };
     });
-    GetEntireSet('https://api.scryfall.com/cards/search?order=set&q=e%3A' + fileType + '&unique=prints', ProcessAllCards.bind(null, rawCards));
+    GetEntireSet('https://api.scryfall.com/cards/search?order=set&q=e%3A' + fileType + '&unique=prints', ProcessStandardCards.bind(null, rawCards));
   }
 });
 
@@ -91,6 +92,16 @@ function GetIndividualCards(rawCards) {
     });
   }
   GetSingleCard(rawCards[idx++]);
+}
+
+function ProcessStandardCards(rawCards, scryfallCards) {
+  var x = rawCards.forEach((rawCard) => {
+    var scryfallCard = scryfallCards.find((elem) => {
+      return elem.collector_number === rawCard.collector_number;
+    });
+    ProcessIndividualCard(rawCard, scryfallCard);
+  });
+  ProcessAllCards();
 }
 
 function ProcessIndividualCard(rawCard, scryfallCard) {
@@ -195,7 +206,7 @@ function ProcessAllCards() {
         { type: 'Pointer', refs: [0] },
         { type: 'Pointer', refs: [0] },
       ],
-      flags: ["cube=true"],
+      flags: [],
     };
   } else {
     finalObject = {
@@ -212,11 +223,42 @@ function ProcessAllCards() {
         { type: 'Pointer', refs: [7] },
         { type: 'CommonHopper' },
         { type: 'Pointer', refs: [10] },
+        { type: 'DfcHopper' },
+        { type: 'FoilHopper', refs: [4, 7, 10] },
+        { type: 'BasicLandHopper' },
+      ],
+      flags: [
+        "-dfc-mode=true",
+        "-pack-common-color-stdev-max=1.5",
+        "-pack-common-rating-min=1.5",
+        "-pack-common-rating-max=3",
+        "-draft-common-color-stdev-max=4",
+      ],
+/*      hoppers: [
+        { type: 'RareHopper' },
+        { type: 'UncommonHopper' },
+        { type: 'Pointer', refs: [1] },
+        { type: 'Pointer', refs: [1] },
+        { type: 'CommonHopper' },
+        { type: 'Pointer', refs: [4] },
+        { type: 'Pointer', refs: [4] },
+        { type: 'CommonHopper' },
+        { type: 'Pointer', refs: [7] },
+        { type: 'Pointer', refs: [7] },
+        { type: 'CommonHopper' },
+        { type: 'Pointer', refs: [10] },
         { type: 'Pointer', refs: [10] },
         { type: 'FoilHopper', refs: [4, 7, 10] },
         { type: 'BasicLandHopper' },
       ],
-      flags: ["cube=false"],
+      flags: [
+        "-pack-common-color-identity-stdev-max=0.8",
+        "-pack-common-rating-min=1.8",
+        "-pack-common-rating-max=3",
+        "-draft-common-color-stdev-max=3",
+        "-abort-missing-common-color-identity=true",
+        "-abort-duplicate-three-color-identity-uncommons=true",
+      ],*/
     };
   }
   finalObject.cards = finalCards.map((card) => {
@@ -227,6 +269,7 @@ function ProcessAllCards() {
       collector_number: card.collector_number,
       color: card.colors ? card.colors.join('') : card.card_faces[0].colors.join(''),
       color_identity: card.color_identity.join(''),
+      dfc: card.layout === 'transform',
       id: id,
       mtgo_id: card.r38_data.mtgo_id, // temporary
       name: card.name, // temporary

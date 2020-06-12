@@ -22,6 +22,7 @@ type Card struct {
 	CollectorNumber string  `json:"collector_number"`
 	Color           string  `json:"color"`
 	ColorIdentity   string  `json:"color_identity"`
+	Dfc             bool    `json:"dfc"`
 	Id              string  `json:"id"`
 	MtgoId          int64   `json:"mtgo_id"` // temporary
 	Name            string  `json:"name"`    // temporary
@@ -48,8 +49,9 @@ type Hopper interface {
 }
 
 type NormalHopper struct {
-	Cards  []Card
-	Source []Card
+	Cards      []Card
+	Source     []Card
+	Refillable bool
 }
 
 type FoilHopper struct {
@@ -66,6 +68,9 @@ type BasicLandHopper struct {
 func (h *NormalHopper) Pop() (Card, bool) {
 	ret := h.Cards[0]
 	h.Cards = h.Cards[1:]
+	if h.Refillable && len(h.Cards) == 0 {
+		h.Refill()
+	}
 	return ret, len(h.Cards) == 0
 }
 
@@ -125,7 +130,7 @@ func (h *BasicLandHopper) Refill() {
 	// no need to shuffle
 }
 
-func MakeNormalHopper(sources ...[]Card) *NormalHopper {
+func MakeNormalHopper(refillable bool, sources ...[]Card) *NormalHopper {
 	ret := NormalHopper{}
 	for _, cardList := range sources {
 		for _, v := range cardList {
@@ -135,6 +140,7 @@ func MakeNormalHopper(sources ...[]Card) *NormalHopper {
 		}
 	}
 	ret.Refill()
+	ret.Refillable = refillable
 	return &ret
 }
 
