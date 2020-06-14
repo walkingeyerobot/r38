@@ -147,6 +147,9 @@ function ProcessIndividualCard(rawCard, scryfallCard) {
       myCard.r38_data.mtgo_id = rawCard.foil ? card.mtgo_foil_id : card.mtgo_id;
     } else if (card.mtgo_id) {
       myCard.r38_data.mtgo_id = card.mtgo_id;
+      if (rawCard.foil) {
+        myCard.r38_data.mtgo_id++;
+      }
     } else {
       throw Error('card is weird:\n' + JSON.stringify(card));
     }
@@ -280,5 +283,5 @@ function ProcessAllCards() {
       data: JSON.stringify(card)
     }
   });
-  console.log(JSON.stringify(finalObject));
+  console.log(JSON.stringify(finalObject, null, '  '));
 }
