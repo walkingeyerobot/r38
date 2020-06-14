@@ -3,6 +3,8 @@ import { vuexModule } from './vuex/vuexModule';
 import { rootStore } from './store';
 
 
+type DataVersion = 1;
+const DATA_VERSION = 1;
 const DEFAULT_NUM_COLUMNS = 7;
 const MODULE_NAME = 'deckbuilder';
 
@@ -32,17 +34,7 @@ export const deckBuilderStore = vuexModule(rootStore, MODULE_NAME, {
       state.decks = [];
       for (let [index, initializer] of init.entries()) {
         const draftName = initializer.draftName;
-        const stored = localStorage.getItem(getLocalstorageKey(draftName, index));
-        let deck: Deck;
-        if (stored) {
-          deck = JSON.parse(stored);
-        } else {
-          deck = {
-            draftName: draftName,
-            sideboard: (<DraftCard[][]>Array(DEFAULT_NUM_COLUMNS)).fill([]).map(() => []),
-            maindeck: (<DraftCard[][]>Array(DEFAULT_NUM_COLUMNS)).fill([]).map(() => []),
-          };
-        }
+        let deck = getStoredDeck(draftName, index);
         const cardsInDeck = new Set<number>();
         deck.sideboard.flat(2).forEach(card => {
           cardsInDeck.add(card.id);
@@ -166,7 +158,7 @@ export const deckBuilderStore = vuexModule(rootStore, MODULE_NAME, {
 deckBuilderStore.subscribe((mutation, state) => {
   for (const [index, deck] of state.decks.entries()) {
     localStorage.setItem(
-        getLocalstorageKey(deck.draftName, index),
+        getLocalstorageKey(deck.draftName, index, DATA_VERSION),
         JSON.stringify(deck));
   }
 });
@@ -186,8 +178,45 @@ function sort(state: DeckBuilderState,
   }
 }
 
-function getLocalstorageKey(draftName: string, seatPosition: number) {
-  return `draft|${draftName}|${seatPosition}`;
+function getStoredDeck(draftName: string, seatPosition: number): Deck {
+  let deck: Deck | null = null;
+  let version;
+  for (version = DATA_VERSION; version > 0 && !deck; version--) {
+    const stored = localStorage.getItem(getLocalstorageKey(draftName, seatPosition, DATA_VERSION));
+    if (stored) {
+      deck = JSON.parse(stored);
+    }
+  }
+  if (deck) {
+    for (; version < DATA_VERSION; version++) {
+      deck = migrateDeckVersion(deck, <DataVersion>(version + 1));
+    }
+  } else {
+    deck = {
+      draftName: draftName,
+      sideboard: (<DraftCard[][]>Array(DEFAULT_NUM_COLUMNS)).fill([]).map(() => []),
+      maindeck: (<DraftCard[][]>Array(DEFAULT_NUM_COLUMNS)).fill([]).map(() => []),
+    };
+  }
+
+  return deck;
+}
+
+function migrateDeckVersion(deck: Deck, newVersion: DataVersion): Deck {
+  function unreachable(x: never) {
+    return new Error(x);
+  }
+  switch (newVersion) {
+    case 1:
+      // no migration to version 1
+      return deck;
+    default:
+      throw unreachable(newVersion);
+  }
+}
+
+function getLocalstorageKey(draftName: string, seatPosition: number, dataVersion: number) {
+  return `draft|${draftName}|${seatPosition}|${dataVersion}`;
 }
 
 export type DeckBuilderStore = typeof deckBuilderStore;
