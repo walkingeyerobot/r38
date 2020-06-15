@@ -26,7 +26,7 @@ import (
 
 type Draft struct {
 	Name       string
-	Id         int64
+	ID         int64
 	Seats      int64
 	Joined     bool
 	Joinable   bool
@@ -922,13 +922,13 @@ func ServeIndex(w http.ResponseWriter, r *http.Request, userId int64) {
 	var Drafts []Draft
 	for rows.Next() {
 		var d Draft
-		err = rows.Scan(&d.Id, &d.Name, &d.Seats, &d.Joined)
+		err = rows.Scan(&d.ID, &d.Name, &d.Seats, &d.Joined)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		d.Joinable = d.Seats > 0 && !d.Joined
-		d.Replayable, err = CanViewReplay(d.Id, userId)
+		d.Replayable, err = CanViewReplay(d.ID, userId)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
