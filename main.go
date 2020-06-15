@@ -24,6 +24,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+// Draft describes a draft for the purposes of the index page.
 type Draft struct {
 	Name       string
 	ID         int64
@@ -33,25 +34,28 @@ type Draft struct {
 	Replayable bool
 }
 
+// IndexPageData is the input to index.tmpl.
 type IndexPageData struct {
 	Drafts  []Draft
-	ViewUrl string
-	UserId  int64
+	ViewURL string
+	UserID  int64
 }
 
+// DraftPageData is the input to draft.tmpl.
 type DraftPageData struct {
-	DraftId   int64
+	DraftID   int64
 	DraftName string
 	Picks     []Card
 	Pack      []Card
 	Powers    []Card
 	Position  int64
 	Revealed  []string
-	ViewUrl   string
+	ViewURL   string
 }
 
+// Card is exported to the client to describe cards.
 type Card struct {
-	Id      int64       `json:"r38Id"`
+	ID      int64       `json:"r38Id"`
 	Name    string      `json:"name"`
 	Tags    string      `json:"tags"`
 	Number  string      `json:"number"`
@@ -63,47 +67,55 @@ type Card struct {
 	Data    interface{} `json:"data"`
 }
 
+// Seat is exported to the client to help describe the draft.
 type Seat struct {
 	Rounds []Round `json:"rounds"`
 	Name   string  `json:"name"`
-	Id     int64   `json:"id"`
+	ID     int64   `json:"id"`
 }
 
+// Round is exported to the client to help describe the draft.
 type Round struct {
 	Packs []Pack `json:"packs"`
 	Round int64  `json:"round"`
 }
 
+// Pack is exported to the client to help describe the draft.
 type Pack struct {
 	Cards []Card `json:"cards"`
 }
 
-type DraftJson struct {
+// DraftJSON is the old shitty way to tell the replay client about the draft.
+type DraftJSON struct {
 	Seats  []Seat       `json:"seats"`
 	Name   string       `json:"name"`
-	Id     int64        `json:id"`
+	ID     int64        `json:id"`
 	Events []DraftEvent `json:"events"`
 }
 
+// Perspective tells the client from which user's perspective the replay data is from.
 type Perspective struct {
 	User  int64      `json:"user"`
-	Draft DraftJson2 `json:"draft"`
+	Draft DraftJSON2 `json:"draft"`
 }
 
-type DraftJson2 struct {
-	DraftId   int64         `json:"draftId"`
+// DraftJSON2 describes the draft to the replay viewer.
+type DraftJSON2 struct {
+	DraftID   int64         `json:"draftId"`
 	DraftName string        `json:"draftName"`
 	Seats     [8]Seat2      `json:"seats"`
 	Events    []DraftEvent2 `json:"events"`
 }
 
+// Seat2 is part of DraftJSON2.
 type Seat2 struct {
 	Packs       [3][15]interface{} `json:"packs"`
 	PlayerName  string             `json:"playerName"`
-	PlayerId    int64              `json:"playerId"`
+	PlayerID    int64              `json:"playerId"`
 	PlayerImage string             `json:"playerImage"`
 }
 
+// DraftEvent2 is part of DraftJSON2.
 type DraftEvent2 struct {
 	Position       int64    `json:"position"`
 	Announcements  []string `json:"announcements"`
@@ -115,6 +127,7 @@ type DraftEvent2 struct {
 	Type           string   `json:"type"`
 }
 
+// DraftEvent describes draft events to the replay viewer.
 type DraftEvent struct {
 	Player         int64    `json:"player"`
 	Announcements  []string `json:"announcements"`
@@ -127,56 +140,64 @@ type DraftEvent struct {
 	Librarian      bool    `json:"librarian"`
 }
 
+// ReplayPageData is the input to replay.tmpl.
 type ReplayPageData struct {
-	Json     string
-	UserJson string
-	Json2    string
+	JSON     string
+	UserJSON string
+	JSON2    string
 }
 
-type bulkMTGOExport struct {
+// BulkMTGOExport is used to bulk export .dek files for the admin.
+type BulkMTGOExport struct {
 	PlayerID int64
 	Username string
 	Deck     string
 }
 
+// NameAndQuantity is used in MTGO .dek exports.
 type NameAndQuantity struct {
 	Name     string
 	Quantity int64
 }
 
-type JsonError struct {
+// JSONError helps to pass an error to the client when something breaks.
+type JSONError struct {
 	Error string `json:"error"`
 }
 
+// DraftList is turned into JSON and used for the REST API.
 type DraftList struct {
 	Drafts []DraftListEntry `json:"drafts"`
 }
 
+// DraftListEntry is turned into JSON and used for the REST API.
 type DraftListEntry struct {
-	Id             int64  `json:"id"`
+	ID             int64  `json:"id"`
 	Name           string `json:"name"`
 	AvailableSeats int64  `json:"availableSeats"`
 	Status         string `json:"status"`
 }
 
+// PostedPick is JSON accepted from the client when a user makes a pick.
 type PostedPick struct {
 	CardIds []int64 `json:"cards"`
 }
 
+// UserInfo is JSON passed to the client.
 type UserInfo struct {
 	Name    string `json:"name"`
 	Picture string `json:"picture"`
-	Id      int64  `json:"userId"`
+	ID      int64  `json:"userId"`
 }
 
 type r38handler func(w http.ResponseWriter, r *http.Request, userId int64)
 type viewingFunc func(r *http.Request, userId int64) (bool, error)
 
-var secret_key_no_one_will_ever_guess = []byte(os.Getenv("SESSION_SECRET"))
-var store = sessions.NewCookieStore(secret_key_no_one_will_ever_guess)
+var secretKeyNoOneWillEverGuess = []byte(os.Getenv("SESSION_SECRET"))
+var store = sessions.NewCookieStore(secretKeyNoOneWillEverGuess)
 var database *sql.DB
 var useAuth bool
-var IsViewing viewingFunc
+var isViewing viewingFunc
 var sock string
 
 func main() {
@@ -186,9 +207,9 @@ func main() {
 	useAuth = *useAuthPtr
 
 	if useAuth {
-		IsViewing = AuthIsViewing
+		isViewing = AuthIsViewing
 	} else {
-		IsViewing = NonAuthIsViewing
+		isViewing = NonAuthIsViewing
 	}
 
 	var err error
@@ -225,6 +246,7 @@ func main() {
 	}
 }
 
+// NewHandler creates all server routes for serving the html.
 func NewHandler(useAuth bool) http.Handler {
 	mux := http.NewServeMux()
 
@@ -242,44 +264,37 @@ func NewHandler(useAuth bool) http.Handler {
 
 	addHandler := func(route string, serveFunc r38handler) {
 		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			var userId int64
+			var userID int64
 			if useAuth {
 				session, err := store.Get(r, "session-name")
 				if err != nil {
 					http.Error(w, err.Error(), http.StatusInternalServerError)
 					return
 				}
-				userIdInt, err := strconv.Atoi(session.Values["userid"].(string))
+				userIDInt, err := strconv.Atoi(session.Values["userid"].(string))
 				if err != nil {
 					http.Error(w, err.Error(), http.StatusInternalServerError)
 					return
 				}
-				userId = int64(userIdInt)
+				userID = int64(userIDInt)
 			} else {
-				userId = 1
+				userID = 1
 			}
 
-			/*
-				if userId != 1 {
-					http.Error(w, "server down for maintaince", http.StatusInternalServerError)
-					return
-				}
-			*/
-
-			if userId == 1 {
+			if userID == 1 {
 				q := r.URL.Query()
 				val := q.Get("as")
 				if val != "" {
-					userIdInt, err := strconv.Atoi(val)
+					userIDInt, err := strconv.Atoi(val)
 					if err != nil {
 						http.Error(w, err.Error(), http.StatusInternalServerError)
 						return
 					}
-					userId = int64(userIdInt)
+					userID = int64(userIDInt)
 				}
 			}
 
-			serveFunc(w, r, userId)
+			serveFunc(w, r, userID)
 		})
 		mux.Handle(route, middleware(handler))
 	}
@@ -290,22 +305,23 @@ func NewHandler(useAuth bool) http.Handler {
 	addHandler("/librarian/", ServeLibrarian)
 	addHandler("/power/", ServePower)
 	addHandler("/draft/", ServeDraft)
-	addHandler("/pdf/", ServePdf)
+	addHandler("/pdf/", ServePDF)
 	addHandler("/pick/", ServePick)
 	addHandler("/join/", ServeJoin)
-	addHandler("/mtgo/", ServeMtgo)
+	addHandler("/mtgo/", ServeMTGO)
 	addHandler("/bulk_mtgo/", ServeBulkMTGO)
 	addHandler("/index/", ServeIndex)
 
-	addHandler("/api/draft/", ServeApiDraft)
-	addHandler("/api/draftlist/", ServeApiDraftList)
-	addHandler("/api/pick/", ServeApiPick)
+	addHandler("/api/draft/", ServeAPIDraft)
+	addHandler("/api/draftlist/", ServeAPIDraftList)
+	addHandler("/api/pick/", ServeAPIPick)
 
 	addHandler("/", ServeIndex)
 
 	return mux
 }
 
+// AuthMiddleware makes sure users are logged in if auth is enabled.
 func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		session, err := store.Get(r, "session-name")
@@ -327,6 +343,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+// NonAuthMiddleware just passes the request along in non-auth mode.
 func NonAuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !strings.HasPrefix(r.URL.Path, "/proxy/") {
@@ -337,61 +354,66 @@ func NonAuthMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func AuthIsViewing(r *http.Request, userId int64) (bool, error) {
+// AuthIsViewing determines if ?as= is being used in auth mode.
+func AuthIsViewing(r *http.Request, userID int64) (bool, error) {
 	session, err := store.Get(r, "session-name")
 	if err != nil {
 		return false, err
 	}
-	realUserIdInt, err := strconv.Atoi(session.Values["userid"].(string))
+	realUserIDInt, err := strconv.Atoi(session.Values["userid"].(string))
 	if err != nil {
 		return false, err
 	}
-	realUserId := int64(realUserIdInt)
+	realUserID := int64(realUserIDInt)
 
-	return userId != realUserId, nil
+	return userID != realUserID, nil
 }
 
-func NonAuthIsViewing(r *http.Request, userId int64) (bool, error) {
-	return userId != 1, nil
+// NonAuthIsViewing determines if ?as= is being used in non-auth mode.
+func NonAuthIsViewing(r *http.Request, userID int64) (bool, error) {
+	return userID != 1, nil
 }
 
-func GetViewParam(r *http.Request, userId int64) string {
+// GetViewParam gets the view parameter that needs to be passed along if there is one.
+func GetViewParam(r *http.Request, userID int64) string {
 	param := ""
-	viewing, err := IsViewing(r, userId)
+	viewing, err := isViewing(r, userID)
 	if err == nil && viewing {
-		param = fmt.Sprintf("?as=%d", userId)
+		param = fmt.Sprintf("?as=%d", userID)
 	}
 	return param
 }
 
-func ServeApiDraft(w http.ResponseWriter, r *http.Request, userID int64) {
+// ServeAPIDraft serves the /api/draft endpoint.
+func ServeAPIDraft(w http.ResponseWriter, r *http.Request, userID int64) {
 	re := regexp.MustCompile(`/api/draft/(\d+)`)
 	parseResult := re.FindStringSubmatch(r.URL.Path)
 	if parseResult == nil {
-		json.NewEncoder(w).Encode(JsonError{Error: "bad api url"})
+		json.NewEncoder(w).Encode(JSONError{Error: "bad api url"})
 		return
 	}
 	draftID, err := strconv.ParseInt(parseResult[1], 10, 64)
 	if err != nil {
-		json.NewEncoder(w).Encode(JsonError{Error: fmt.Sprintf("bad api url: %s", err.Error())})
+		json.NewEncoder(w).Encode(JSONError{Error: fmt.Sprintf("bad api url: %s", err.Error())})
 		return
 	}
 
-	draftJson, err := GetFilteredJson(draftID, userID)
+	draftJSON, err := GetFilteredJSON(draftID, userID)
 	if err != nil {
-		json.NewEncoder(w).Encode(JsonError{Error: fmt.Sprintf("error getting json: %s", err.Error())})
+		json.NewEncoder(w).Encode(JSONError{Error: fmt.Sprintf("error getting json: %s", err.Error())})
 		return
 	}
 
-	fmt.Fprint(w, draftJson)
+	fmt.Fprint(w, draftJSON)
 }
 
-func ServeApiDraftList(w http.ResponseWriter, r *http.Request, userID int64) {
+// ServeAPIDraftList serves the /api/draftlist endpoint.
+func ServeAPIDraftList(w http.ResponseWriter, r *http.Request, userID int64) {
 	query := `select drafts.id, drafts.name, sum(seats.user is null and seats.position is not null) as empty_seats, coalesce(sum(seats.user = ?), 0) as joined from drafts left join seats on drafts.id = seats.draft group by drafts.id`
 
 	rows, err := database.Query(query, userID)
 	if err != nil {
-		json.NewEncoder(w).Encode(JsonError{Error: fmt.Sprintf("can't get draft list: %s", err.Error())})
+		json.NewEncoder(w).Encode(JSONError{Error: fmt.Sprintf("can't get draft list: %s", err.Error())})
 		return
 	}
 	defer rows.Close()
@@ -399,9 +421,9 @@ func ServeApiDraftList(w http.ResponseWriter, r *http.Request, userID int64) {
 	for rows.Next() {
 		var d DraftListEntry
 		var joined int64
-		err = rows.Scan(&d.Id, &d.Name, &d.AvailableSeats, &joined)
+		err = rows.Scan(&d.ID, &d.Name, &d.AvailableSeats, &joined)
 		if err != nil {
-			json.NewEncoder(w).Encode(JsonError{Error: fmt.Sprintf("can't get draft list: %s", err.Error())})
+			json.NewEncoder(w).Encode(JSONError{Error: fmt.Sprintf("can't get draft list: %s", err.Error())})
 			return
 		}
 		if joined == 1 {
@@ -418,7 +440,8 @@ func ServeApiDraftList(w http.ResponseWriter, r *http.Request, userID int64) {
 	json.NewEncoder(w).Encode(drafts)
 }
 
-func ServeApiPick(w http.ResponseWriter, r *http.Request, userID int64) {
+// ServeAPIPick serves the /api/pick endpoint.
+func ServeAPIPick(w http.ResponseWriter, r *http.Request, userID int64) {
 	if r.Method != "POST" {
 		http.Error(w, "invalid request method", http.StatusMethodNotAllowed)
 		return
@@ -426,45 +449,46 @@ func ServeApiPick(w http.ResponseWriter, r *http.Request, userID int64) {
 
 	bodyBytes, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		json.NewEncoder(w).Encode(JsonError{Error: fmt.Sprintf("error reading post body: %s", err.Error())})
+		json.NewEncoder(w).Encode(JSONError{Error: fmt.Sprintf("error reading post body: %s", err.Error())})
 		return
 	}
 	var pick PostedPick
 	err = json.Unmarshal(bodyBytes, &pick)
 	if err != nil {
-		json.NewEncoder(w).Encode(JsonError{Error: fmt.Sprintf("error parsing post body: %s", err.Error())})
+		json.NewEncoder(w).Encode(JSONError{Error: fmt.Sprintf("error parsing post body: %s", err.Error())})
 		return
 	}
 	var draftID int64
 	if len(pick.CardIds) == 1 {
 		draftID, _, announcements, round, err := doPick(userID, pick.CardIds[0], true)
 		if err != nil {
-			json.NewEncoder(w).Encode(JsonError{Error: fmt.Sprintf("error making pick: %s", err.Error())})
+			json.NewEncoder(w).Encode(JSONError{Error: fmt.Sprintf("error making pick: %s", err.Error())})
 			return
 		}
 
 		err = DoEvent(draftID, userID, announcements, pick.CardIds[0], sql.NullInt64{Valid: false}, round)
 		if err != nil {
-			json.NewEncoder(w).Encode(JsonError{Error: fmt.Sprintf("error recording event: %s", err.Error())})
+			json.NewEncoder(w).Encode(JSONError{Error: fmt.Sprintf("error recording event: %s", err.Error())})
 			return
 		}
 	} else if len(pick.CardIds) == 2 {
-		json.NewEncoder(w).Encode(JsonError{Error: "cogwork librarian power not implemented yet"})
+		json.NewEncoder(w).Encode(JSONError{Error: "cogwork librarian power not implemented yet"})
 		return
 	} else {
-		json.NewEncoder(w).Encode(JsonError{Error: fmt.Sprintf("invalid number of cards: %d", len(pick.CardIds))})
+		json.NewEncoder(w).Encode(JSONError{Error: fmt.Sprintf("invalid number of cards: %d", len(pick.CardIds))})
 		return
 	}
 
-	draftJson, err := GetFilteredJson(draftID, userID)
+	draftJSON, err := GetFilteredJSON(draftID, userID)
 	if err != nil {
-		json.NewEncoder(w).Encode(JsonError{Error: fmt.Sprintf("error getting json: %s", err.Error())})
+		json.NewEncoder(w).Encode(JSONError{Error: fmt.Sprintf("error getting json: %s", err.Error())})
 		return
 	}
 
-	fmt.Fprint(w, draftJson)
+	fmt.Fprint(w, draftJSON)
 }
 
+// ServeBulkMTGO serves a .zip file of all .dek files for a draft. Only useful to the admin.
 func ServeBulkMTGO(w http.ResponseWriter, r *http.Request, userID int64) {
 	if userID != 1 {
 		http.Error(w, "auth error in bulk export", http.StatusForbidden)
@@ -492,7 +516,7 @@ func ServeBulkMTGO(w http.ResponseWriter, r *http.Request, userID int64) {
 	re = regexp.MustCompile(`[/\\]`) // this could be more complete
 
 	// Generate the MTGO export for each player.
-	exports := []bulkMTGOExport{}
+	exports := []BulkMTGOExport{}
 	for rows.Next() {
 		var playerID int64
 		var username string
@@ -506,7 +530,7 @@ func ServeBulkMTGO(w http.ResponseWriter, r *http.Request, userID int64) {
 			log.Printf("could not export to MTGO for player %s in draft %s: %s", playerID, draftID, err)
 			break
 		}
-		exports = append(exports, bulkMTGOExport{PlayerID: playerID, Username: re.ReplaceAllString(username, "_"), Deck: export})
+		exports = append(exports, BulkMTGOExport{PlayerID: playerID, Username: re.ReplaceAllString(username, "_"), Deck: export})
 	}
 
 	// Generate the ZIP file for all exported decks.
@@ -520,7 +544,8 @@ func ServeBulkMTGO(w http.ResponseWriter, r *http.Request, userID int64) {
 	io.WriteString(w, string(archive))
 }
 
-func ServeMtgo(w http.ResponseWriter, r *http.Request, userId int64) {
+// ServeMTGO exports a draft to a .dek file for the user.
+func ServeMTGO(w http.ResponseWriter, r *http.Request, userID int64) {
 	re := regexp.MustCompile(`/mtgo/(\d+)`)
 	parseResult := re.FindStringSubmatch(r.URL.Path)
 
@@ -529,18 +554,14 @@ func ServeMtgo(w http.ResponseWriter, r *http.Request, userId int64) {
 		return
 	}
 
-	draftIdInt, err := strconv.Atoi(parseResult[1])
+	draftIDInt, err := strconv.Atoi(parseResult[1])
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	draftId := int64(draftIdInt)
+	draftID := int64(draftIDInt)
 
-	doServeMtgo(w, r, userId, draftId)
-}
-
-func doServeMtgo(w http.ResponseWriter, r *http.Request, userId int64, draftId int64) {
-	export, err := exportToMTGO(userId, draftId)
+	export, err := exportToMTGO(userID, draftID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -551,7 +572,7 @@ func doServeMtgo(w http.ResponseWriter, r *http.Request, userId int64, draftId i
 }
 
 // createZipExport creates a .zip file containing decks from a bulk MTGO export.
-func createZipExport(exports []bulkMTGOExport) ([]byte, error) {
+func createZipExport(exports []BulkMTGOExport) ([]byte, error) {
 	buf := new(bytes.Buffer)
 	zipWriter := zip.NewWriter(buf)
 	for _, export := range exports {
@@ -572,8 +593,8 @@ func createZipExport(exports []bulkMTGOExport) ([]byte, error) {
 }
 
 // exportToMTGO creates an MTGO compatible .dek string for given user and draft.
-func exportToMTGO(userId int64, draftId int64) (string, error) {
-	_, picks, _, err := getPackPicksAndPowers(draftId, userId)
+func exportToMTGO(userID int64, draftID int64) (string, error) {
+	_, picks, _, err := getPackPicksAndPowers(draftID, userID)
 	if err != nil {
 		return "", err
 	}
@@ -611,7 +632,7 @@ func proxyCard(edition, number string) ([]byte, error) {
 }
 
 // ServeProxy repackages proxied image content with a Cache-Control header.
-func ServeProxy(w http.ResponseWriter, r *http.Request, userId int64) {
+func ServeProxy(w http.ResponseWriter, r *http.Request, userID int64) {
 	re := regexp.MustCompile(`/proxy/([a-zA-Z0-9]+)/([a-zA-Z0-9]+)/?`)
 	parseResult := re.FindStringSubmatch(r.URL.Path)
 	if parseResult == nil {
@@ -629,35 +650,38 @@ func ServeProxy(w http.ResponseWriter, r *http.Request, userId int64) {
 	return
 }
 
-func ServeReplay(w http.ResponseWriter, r *http.Request, userId int64) {
+// ServeReplay serves the replay.
+func ServeReplay(w http.ResponseWriter, r *http.Request, userID int64) {
 	re := regexp.MustCompile(`/replay/(\d+)`)
 	parseResult := re.FindStringSubmatch(r.URL.Path)
 
-	ServeVueApp(parseResult, w, userId)
+	ServeVueApp(parseResult, w, userID)
 }
 
-func ServeDeckbuilder(w http.ResponseWriter, r *http.Request, userId int64) {
+// ServeDeckbuilder serves the deckbuilder.
+func ServeDeckbuilder(w http.ResponseWriter, r *http.Request, userID int64) {
 	re := regexp.MustCompile(`/deckbuilder/(\d+)`)
 	parseResult := re.FindStringSubmatch(r.URL.Path)
 
-	ServeVueApp(parseResult, w, userId)
+	ServeVueApp(parseResult, w, userID)
 }
 
-func ServeVueApp(parseResult []string, w http.ResponseWriter, userId int64) {
+// ServeVueApp serves to vue.
+func ServeVueApp(parseResult []string, w http.ResponseWriter, userID int64) {
 	if parseResult == nil {
 		http.Error(w, "bad url", http.StatusInternalServerError)
 		return
 	}
 
-	draftIdInt, err := strconv.Atoi(parseResult[1])
+	draftIDInt, err := strconv.Atoi(parseResult[1])
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	draftId := int64(draftIdInt)
+	draftID := int64(draftIDInt)
 
-	canViewReplay, err := CanViewReplay(draftId, userId)
+	canViewReplay, err := CanViewReplay(draftID, userID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -667,52 +691,53 @@ func ServeVueApp(parseResult []string, w http.ResponseWriter, userId int64) {
 		return
 	}
 
-	draftJson, err := GetJson(draftId)
+	draftJSON, err := GetJSON(draftID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	query := `select id,discord_name,picture from users where id=?`
-	row := database.QueryRow(query, userId)
+	row := database.QueryRow(query, userID)
 	var userInfo UserInfo
-	err = row.Scan(&userInfo.Id, &userInfo.Name, &userInfo.Picture)
+	err = row.Scan(&userInfo.ID, &userInfo.Name, &userInfo.Picture)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	userInfoJson, err := json.Marshal(userInfo)
+	userInfoJSON, err := json.Marshal(userInfo)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	draftJson2, err := GetJson2(draftId)
+	draftJSON2, err := GetJSON2(draftID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	data := ReplayPageData{Json: draftJson, UserJson: string(userInfoJson), Json2: draftJson2}
+	data := ReplayPageData{JSON: draftJSON, UserJSON: string(userInfoJSON), JSON2: draftJSON2}
 
 	t := template.Must(template.ParseFiles("replay.tmpl"))
 
 	t.Execute(w, data)
 }
 
-func CanViewReplay(draftId int64, userId int64) (bool, error) {
+// CanViewReplay returns true if the given user is able to view the full replay of the given draft.
+func CanViewReplay(draftID int64, userID int64) (bool, error) {
 	query := `select min(round) from seats where draft=?`
-	row := database.QueryRow(query, draftId)
+	row := database.QueryRow(query, draftID)
 	var round int64
 	err := row.Scan(&round)
 	if err != nil {
 		return false, err
 	}
 
-	if round != 4 && userId != 1 && draftId != 9 {
+	if round != 4 && userID != 1 && draftID != 9 {
 		query = `select user from seats where draft=? and position is not null`
-		rows, err := database.Query(query, draftId)
+		rows, err := database.Query(query, draftID)
 		if err != nil {
 			return false, err
 		}
@@ -720,12 +745,12 @@ func CanViewReplay(draftId int64, userId int64) (bool, error) {
 
 		valid := true
 		for rows.Next() {
-			var playerId sql.NullInt64
-			err = rows.Scan(&playerId)
+			var playerID sql.NullInt64
+			err = rows.Scan(&playerID)
 			if err != nil {
 				return false, err
 			}
-			if !playerId.Valid || playerId.Int64 == userId {
+			if !playerID.Valid || playerID.Int64 == userID {
 				valid = false
 				break
 			}
@@ -739,7 +764,8 @@ func CanViewReplay(draftId int64, userId int64) (bool, error) {
 	return true, nil
 }
 
-func ServeLibrarian(w http.ResponseWriter, r *http.Request, userId int64) {
+// ServeLibrarian handles cogwork librarian picks.
+func ServeLibrarian(w http.ResponseWriter, r *http.Request, userID int64) {
 	re := regexp.MustCompile(`/librarian/(\d+)/(\d+)`)
 	parseResult := re.FindStringSubmatch(r.URL.Path)
 
@@ -748,66 +774,66 @@ func ServeLibrarian(w http.ResponseWriter, r *http.Request, userId int64) {
 		return
 	}
 
-	cardId1Int, err := strconv.Atoi(parseResult[1])
+	cardID1Int, err := strconv.Atoi(parseResult[1])
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	cardId2Int, err := strconv.Atoi(parseResult[2])
+	cardID2Int, err := strconv.Atoi(parseResult[2])
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	cardId1 := int64(cardId1Int)
-	cardId2 := int64(cardId2Int)
+	cardID1 := int64(cardID1Int)
+	cardID2 := int64(cardID2Int)
 
 	query := `select seats.draft from cards join packs join seats where cards.pack=packs.id and packs.seat=seats.id and cards.id IN (?,?)`
 
-	rows, err := database.Query(query, cardId1, cardId2)
+	rows, err := database.Query(query, cardID1, cardID2)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
-	var checkId int64
-	checkId = 0
+	var checkID int64
+	checkID = 0
 	rowCount := 0
 	for rows.Next() {
 		rowCount++
-		var checkId2 int64
-		err = rows.Scan(&checkId2)
+		var checkID2 int64
+		err = rows.Scan(&checkID2)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		if checkId == 0 {
-			checkId = checkId2
-		} else if checkId != checkId2 {
+		if checkID == 0 {
+			checkID = checkID2
+		} else if checkID != checkID2 {
 			http.Error(w, "woah there!", http.StatusInternalServerError)
 			return
 		}
 	}
 
-	if checkId == 0 || rowCount != 2 {
+	if checkID == 0 || rowCount != 2 {
 		http.Error(w, "woah there", http.StatusInternalServerError)
 		return
 	}
 
-	draftId1, packId1, announcements1, round1, err := doPick(userId, cardId1, false)
+	draftID1, packID1, announcements1, round1, err := doPick(userID, cardID1, false)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	draftId2, packId2, announcements2, round2, err := doPick(userId, cardId2, true)
+	draftID2, packID2, announcements2, round2, err := doPick(userID, cardID2, true)
 
-	if packId1 != packId2 {
+	if packID1 != packID2 {
 		http.Error(w, "pack ids somehow don't match.", http.StatusInternalServerError)
 		return
 	}
 
-	if draftId1 != draftId2 {
+	if draftID1 != draftID2 {
 		http.Error(w, "draft ids somehow don't match.", http.StatusInternalServerError)
 		return
 	}
@@ -818,7 +844,7 @@ func ServeLibrarian(w http.ResponseWriter, r *http.Request, userId int64) {
 	}
 
 	query = `select position from seats where draft=? and user=?`
-	row := database.QueryRow(query, draftId1, userId)
+	row := database.QueryRow(query, draftID1, userID)
 	var position int64
 	err = row.Scan(&position)
 	if err != nil {
@@ -831,32 +857,33 @@ func ServeLibrarian(w http.ResponseWriter, r *http.Request, userId int64) {
 
 	query = `select cards.id from cards join packs join seats where cards.pack=packs.id and packs.seat=seats.id and seats.draft=? and cards.name="Cogwork Librarian" and seats.user=?`
 
-	row = database.QueryRow(query, draftId1, userId)
-	var librarianId int64
-	err = row.Scan(&librarianId)
+	row = database.QueryRow(query, draftID1, userID)
+	var librarianID int64
+	err = row.Scan(&librarianID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	query = `update cards set pack=?, faceup=false where id=?`
-	log.Printf("%s\t%d,%d", query, packId1, librarianId)
-	_, err = database.Exec(query, packId1, librarianId)
+	log.Printf("%s\t%d,%d", query, packID1, librarianID)
+	_, err = database.Exec(query, packID1, librarianID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	err = DoEvent(draftId1, userId, announcements, cardId1, sql.NullInt64{Int64: cardId2, Valid: true}, round1)
+	err = DoEvent(draftID1, userID, announcements, cardID1, sql.NullInt64{Int64: cardID2, Valid: true}, round1)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	http.Redirect(w, r, fmt.Sprintf("/draft/%d", draftId1), http.StatusTemporaryRedirect)
+	http.Redirect(w, r, fmt.Sprintf("/draft/%d", draftID1), http.StatusTemporaryRedirect)
 }
 
-func ServePower(w http.ResponseWriter, r *http.Request, userId int64) {
+// ServePower serves pages to the user when they try to use a power (right now just Cogwork Librarian).
+func ServePower(w http.ResponseWriter, r *http.Request, userID int64) {
 	re := regexp.MustCompile(`/power/(\d+)`)
 	parseResult := re.FindStringSubmatch(r.URL.Path)
 
@@ -865,20 +892,20 @@ func ServePower(w http.ResponseWriter, r *http.Request, userId int64) {
 		return
 	}
 
-	cardIdInt, err := strconv.Atoi(parseResult[1])
+	cardIDInt, err := strconv.Atoi(parseResult[1])
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	cardId := int64(cardIdInt)
+	cardID := int64(cardIDInt)
 
 	query := `select cards.name, seats.draft from cards join packs join seats where cards.pack=packs.id and packs.seat=seats.id and seats.user=? and cards.id=? and cards.faceup=true`
 
-	row := database.QueryRow(query, userId, cardId)
+	row := database.QueryRow(query, userID, cardID)
 	var cardName string
-	var draftId int64
-	err = row.Scan(&cardName, &draftId)
+	var draftID int64
+	err = row.Scan(&cardName, &draftID)
 	if err == sql.ErrNoRows {
 		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 		return
@@ -890,30 +917,31 @@ func ServePower(w http.ResponseWriter, r *http.Request, userId int64) {
 	switch cardName {
 	case "Cogwork Librarian":
 		// show the current pack and current picks
-		myPack, myPicks, _, err := getPackPicksAndPowers(draftId, userId)
+		myPack, myPicks, _, err := getPackPicksAndPowers(draftID, userID)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
 		if len(myPack) < 2 {
-			http.Redirect(w, r, fmt.Sprintf("/draft/%d", draftId), http.StatusTemporaryRedirect)
+			http.Redirect(w, r, fmt.Sprintf("/draft/%d", draftID), http.StatusTemporaryRedirect)
 			return
 		}
 
 		t := template.Must(template.ParseFiles("librarian.tmpl"))
 
-		data := DraftPageData{Pack: myPack, Picks: myPicks, DraftId: draftId}
+		data := DraftPageData{Pack: myPack, Picks: myPicks, DraftID: draftID}
 		t.Execute(w, data)
 		// use some js to construct the url /librarian/cogworklibrarianid/pick1id/pick2id
 		// redirect to the draft url
 	}
 }
 
-func ServeIndex(w http.ResponseWriter, r *http.Request, userId int64) {
+// ServeIndex serves the index page.
+func ServeIndex(w http.ResponseWriter, r *http.Request, userID int64) {
 	query := `select drafts.id, drafts.name, sum(seats.user is null and seats.position is not null) as empty_seats, coalesce(sum(seats.user = ?), 0) as joined from drafts left join seats on drafts.id = seats.draft group by drafts.id`
 
-	rows, err := database.Query(query, userId)
+	rows, err := database.Query(query, userID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -928,7 +956,7 @@ func ServeIndex(w http.ResponseWriter, r *http.Request, userId int64) {
 			return
 		}
 		d.Joinable = d.Seats > 0 && !d.Joined
-		d.Replayable, err = CanViewReplay(d.ID, userId)
+		d.Replayable, err = CanViewReplay(d.ID, userID)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -937,13 +965,14 @@ func ServeIndex(w http.ResponseWriter, r *http.Request, userId int64) {
 		Drafts = append(Drafts, d)
 	}
 
-	viewParam := GetViewParam(r, userId)
-	data := IndexPageData{Drafts: Drafts, ViewUrl: viewParam, UserId: userId}
+	viewParam := GetViewParam(r, userID)
+	data := IndexPageData{Drafts: Drafts, ViewURL: viewParam, UserID: userID}
 	t := template.Must(template.ParseFiles("index.tmpl"))
 	t.Execute(w, data)
 }
 
-func ServePdf(w http.ResponseWriter, r *http.Request, userId int64) {
+// ServePDF serves a pdf suitable for printing proxies.
+func ServePDF(w http.ResponseWriter, r *http.Request, userID int64) {
 	re := regexp.MustCompile(`/pdf/(\d+)`)
 	parseResult := re.FindStringSubmatch(r.URL.Path)
 
@@ -952,18 +981,14 @@ func ServePdf(w http.ResponseWriter, r *http.Request, userId int64) {
 		return
 	}
 
-	draftIdInt, err := strconv.Atoi(parseResult[1])
+	draftIDInt, err := strconv.Atoi(parseResult[1])
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	draftId := int64(draftIdInt)
+	draftID := int64(draftIDInt)
 
-	doServePdf(w, r, userId, draftId)
-}
-
-func doServePdf(w http.ResponseWriter, r *http.Request, userId int64, draftId int64) {
-	_, myPicks, _, err := getPackPicksAndPowers(draftId, userId)
+	_, myPicks, _, err := getPackPicksAndPowers(draftID, userID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -1024,7 +1049,8 @@ func doServePdf(w http.ResponseWriter, r *http.Request, userId int64, draftId in
 	}
 }
 
-func ServeDraft(w http.ResponseWriter, r *http.Request, userId int64) {
+// ServeDraft serves the draft page.
+func ServeDraft(w http.ResponseWriter, r *http.Request, userID int64) {
 	re := regexp.MustCompile(`/draft/(\d+)`)
 	parseResult := re.FindStringSubmatch(r.URL.Path)
 
@@ -1033,21 +1059,21 @@ func ServeDraft(w http.ResponseWriter, r *http.Request, userId int64) {
 		return
 	}
 
-	draftIdInt, err := strconv.Atoi(parseResult[1])
+	draftIDInt, err := strconv.Atoi(parseResult[1])
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	draftId := int64(draftIdInt)
+	draftID := int64(draftIDInt)
 
-	myPack, myPicks, powers2, err := getPackPicksAndPowers(draftId, userId)
+	myPack, myPicks, powers2, err := getPackPicksAndPowers(draftID, userID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	query := `select seats.position, drafts.name from seats join drafts where seats.draft=? and seats.user=? and seats.draft=drafts.id`
-	row := database.QueryRow(query, draftId, userId)
+	row := database.QueryRow(query, draftID, userID)
 	var position int64
 	var draftName string
 	err = row.Scan(&position, &draftName)
@@ -1057,7 +1083,7 @@ func ServeDraft(w http.ResponseWriter, r *http.Request, userId int64) {
 	}
 
 	query = `select message from revealed where draft=?`
-	rows, err := database.Query(query, draftId)
+	rows, err := database.Query(query, draftID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -1073,20 +1099,16 @@ func ServeDraft(w http.ResponseWriter, r *http.Request, userId int64) {
 		}
 		revealed = append(revealed, msg)
 	}
-	viewParam := GetViewParam(r, userId)
+	viewParam := GetViewParam(r, userID)
 	t := template.Must(template.ParseFiles("draft.tmpl"))
 
-	data := DraftPageData{Picks: myPicks, Pack: myPack, DraftId: draftId, DraftName: draftName, Powers: powers2, Position: position, Revealed: revealed, ViewUrl: viewParam}
+	data := DraftPageData{Picks: myPicks, Pack: myPack, DraftID: draftID, DraftName: draftName, Powers: powers2, Position: position, Revealed: revealed, ViewURL: viewParam}
 
 	t.Execute(w, data)
 }
 
-func ServeJoin(w http.ResponseWriter, r *http.Request, userId int64) {
-	if userId == 19 {
-		http.Error(w, "bad feinberg", http.StatusInternalServerError)
-		return
-	}
-
+// ServeJoin allows the user to join a draft, if possible.
+func ServeJoin(w http.ResponseWriter, r *http.Request, userID int64) {
 	re := regexp.MustCompile(`/join/(\d+)`)
 	parseResult := re.FindStringSubmatch(r.URL.Path)
 
@@ -1095,16 +1117,16 @@ func ServeJoin(w http.ResponseWriter, r *http.Request, userId int64) {
 		return
 	}
 
-	draftIdInt, err := strconv.Atoi(parseResult[1])
+	draftIDInt, err := strconv.Atoi(parseResult[1])
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	draftId := int64(draftIdInt)
+	draftID := int64(draftIDInt)
 
 	query := `select true from seats where draft=? and user=?`
 
-	row := database.QueryRow(query, draftId, userId)
+	row := database.QueryRow(query, draftID, userID)
 	var alreadyJoined bool
 	err = row.Scan(&alreadyJoined)
 
@@ -1112,24 +1134,25 @@ func ServeJoin(w http.ResponseWriter, r *http.Request, userId int64) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	} else if err != sql.ErrNoRows || alreadyJoined {
-		http.Redirect(w, r, fmt.Sprintf("/draft/%s", draftId), http.StatusTemporaryRedirect)
+		http.Redirect(w, r, fmt.Sprintf("/draft/%s", draftID), http.StatusTemporaryRedirect)
 		return
 	}
 
 	query = `update seats set user=? where id=(select id from seats where draft=? and user is null and position is not null order by random() limit 1)`
-	log.Printf("%s\t%d,%d", query, userId, draftId)
+	log.Printf("%s\t%d,%d", query, userID, draftID)
 
-	_, err = database.Exec(query, userId, draftId)
+	_, err = database.Exec(query, userID, draftID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	viewParam := GetViewParam(r, userId)
-	http.Redirect(w, r, fmt.Sprintf("/draft/%d%s", draftId, viewParam), http.StatusTemporaryRedirect)
+	viewParam := GetViewParam(r, userID)
+	http.Redirect(w, r, fmt.Sprintf("/draft/%d%s", draftID, viewParam), http.StatusTemporaryRedirect)
 }
 
-func ServePick(w http.ResponseWriter, r *http.Request, userId int64) {
+// ServePick handles the user picking cards.
+func ServePick(w http.ResponseWriter, r *http.Request, userID int64) {
 	re := regexp.MustCompile(`/pick/(\d+)`)
 	parseResult := re.FindStringSubmatch(r.URL.Path)
 
@@ -1138,29 +1161,30 @@ func ServePick(w http.ResponseWriter, r *http.Request, userId int64) {
 		return
 	}
 
-	cardIdInt, err := strconv.Atoi(parseResult[1])
+	cardIDInt, err := strconv.Atoi(parseResult[1])
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	cardId := int64(cardIdInt)
-	draftId, _, announcements, round, err := doPick(userId, cardId, true)
+	cardID := int64(cardIDInt)
+	draftID, _, announcements, round, err := doPick(userID, cardID, true)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	err = DoEvent(draftId, userId, announcements, cardId, sql.NullInt64{Valid: false}, round)
+	err = DoEvent(draftID, userID, announcements, cardID, sql.NullInt64{Valid: false}, round)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	viewParam := GetViewParam(r, userId)
-	http.Redirect(w, r, fmt.Sprintf("/draft/%d%s", draftId, viewParam), http.StatusTemporaryRedirect)
+	viewParam := GetViewParam(r, userID)
+	http.Redirect(w, r, fmt.Sprintf("/draft/%d%s", draftID, viewParam), http.StatusTemporaryRedirect)
 }
 
-func getPackPicksAndPowers(draftId int64, userId int64) ([]Card, []Card, []Card, error) {
+// getPackPicksAndPowers returns data useful to active drafters.
+func getPackPicksAndPowers(draftID int64, userID int64) ([]Card, []Card, []Card, error) {
 	query := `select
                     packs.round,
                     cards.id,
@@ -1189,7 +1213,7 @@ func getPackPicksAndPowers(draftId int64, userId int64) ([]Card, []Card, []Card,
                                 limit 1)))
                   order by cards.modified`
 
-	rows, err := database.Query(query, draftId, userId, draftId, userId)
+	rows, err := database.Query(query, draftID, userID, draftID, userID)
 	if err == sql.ErrNoRows {
 		return nil, nil, nil, errors.New("no cards")
 	} else if err != nil {
@@ -1220,15 +1244,15 @@ func getPackPicksAndPowers(draftId int64, userId int64) ([]Card, []Card, []Card,
 		}
 
 		if round == 0 {
-			myPicks = append(myPicks, Card{Name: name, Tags: tags, Number: number, Edition: edition, Id: id, Mtgo: mtgoString})
+			myPicks = append(myPicks, Card{Name: name, Tags: tags, Number: number, Edition: edition, ID: id, Mtgo: mtgoString})
 			if faceup == true {
 				switch name {
 				case "Cogwork Librarian":
-					powers = append(powers, Card{Name: name, Tags: tags, Number: number, Edition: edition, Id: id, Mtgo: mtgoString})
+					powers = append(powers, Card{Name: name, Tags: tags, Number: number, Edition: edition, ID: id, Mtgo: mtgoString})
 				}
 			}
 		} else {
-			myPack = append(myPack, Card{Name: name, Tags: tags, Number: number, Edition: edition, Id: id, Mtgo: mtgoString})
+			myPack = append(myPack, Card{Name: name, Tags: tags, Number: number, Edition: edition, ID: id, Mtgo: mtgoString})
 		}
 		count++
 	}
@@ -1250,39 +1274,40 @@ func getPackPicksAndPowers(draftId int64, userId int64) ([]Card, []Card, []Card,
 	return myPack, myPicks, powers2, nil
 }
 
-func doPick(userId int64, cardId int64, pass bool) (int64, int64, []string, int64, error) {
+// doPick actually performs a pick in the database.
+func doPick(userID int64, cardID int64, pass bool) (int64, int64, []string, int64, error) {
 	announcements := []string{}
 
 	query := `select drafts.id, seats.round, seats.position, cards.name from drafts join seats join packs join cards where drafts.id=seats.draft and seats.id=packs.seat and packs.id=cards.pack and cards.id=? and packs.round <> 0`
 
-	row := database.QueryRow(query, cardId)
-	var draftId int64
+	row := database.QueryRow(query, cardID)
+	var draftID int64
 	var round int64
 	var position int64
 	var cardName string
-	err := row.Scan(&draftId, &round, &position, &cardName)
+	err := row.Scan(&draftID, &round, &position, &cardName)
 	if err != nil {
 		return -1, -1, announcements, -1, err
 	}
 
 	query = `select packs.id, packs.modified from drafts join seats join packs join cards where cards.id=? and drafts.id=? and drafts.id=seats.draft and seats.id=packs.seat and packs.id=cards.pack and seats.user=? and (packs.round=0 or (packs.round=seats.round and packs.modified in (select min(packs.modified) from packs join seats join drafts where seats.draft=? and seats.user=? and seats.id=packs.seat and drafts.id=seats.draft and packs.round=seats.round)))`
 
-	row = database.QueryRow(query, cardId, draftId, userId, draftId, userId)
-	var oldPackId int64
+	row = database.QueryRow(query, cardID, draftID, userID, draftID, userID)
+	var oldPackID int64
 	var modified int64
-	err = row.Scan(&oldPackId, &modified)
+	err = row.Scan(&oldPackID, &modified)
 	if err != nil {
-		return draftId, -1, announcements, round, err
+		return draftID, -1, announcements, round, err
 	}
 
 	query = `select packs.id, seats.id from packs join seats where seats.user=? and seats.id=packs.seat and packs.round=0 and seats.draft=?`
 
-	row = database.QueryRow(query, userId, draftId)
-	var pickId int64
-	var seatId int64
-	err = row.Scan(&pickId, &seatId)
+	row = database.QueryRow(query, userID, draftID)
+	var pickID int64
+	var seatID int64
+	err = row.Scan(&pickID, &seatID)
 	if err != nil {
-		return draftId, oldPackId, announcements, round, err
+		return draftID, oldPackID, announcements, round, err
 	}
 
 	query = `select id from seats where draft=? and position=?`
@@ -1299,52 +1324,52 @@ func doPick(userId int64, cardId int64, pass bool) (int64, int64, []string, int6
 			newPosition = 0
 		}
 	}
-	row = database.QueryRow(query, draftId, newPosition)
-	var newPositionId int64
-	err = row.Scan(&newPositionId)
+	row = database.QueryRow(query, draftID, newPosition)
+	var newPositionID int64
+	err = row.Scan(&newPositionID)
 	if err != nil {
-		return draftId, oldPackId, announcements, round, err
+		return draftID, oldPackID, announcements, round, err
 	}
 
 	var cardModified int64
 	cardModified = 0
 	query = `select max(cards.modified) from cards join packs on cards.pack=packs.id join seats on seats.id=packs.seat where seats.draft=? and seats.user=?`
-	row = database.QueryRow(query, draftId, userId)
+	row = database.QueryRow(query, draftID, userID)
 
 	err = row.Scan(&cardModified)
 
 	if err != nil {
 		cardModified = 0
 	} else {
-		cardModified += 1
+		cardModified++
 	}
 
 	if pass {
 		query = `begin transaction;update cards set pack=?, modified=? where id=?;update packs set seat=?, modified=modified+10 where id=?;commit`
-		log.Printf("%s\t%d,%d,%d,%d,%d", query, pickId, cardModified, cardId, newPositionId, oldPackId)
+		log.Printf("%s\t%d,%d,%d,%d,%d", query, pickID, cardModified, cardID, newPositionID, oldPackID)
 
-		_, err = database.Exec(query, pickId, cardModified, cardId, newPositionId, oldPackId)
+		_, err = database.Exec(query, pickID, cardModified, cardID, newPositionID, oldPackID)
 		if err != nil {
-			return draftId, oldPackId, announcements, round, err
+			return draftID, oldPackID, announcements, round, err
 		}
 
 		query = `select count(1) from v_packs join seats where v_packs.seat=seats.id and seats.user=? and v_packs.round=? and v_packs.count>0 and seats.draft=?`
-		row = database.QueryRow(query, userId, round, draftId)
+		row = database.QueryRow(query, userID, round, draftID)
 		var packsLeftInSeat int64
 		err = row.Scan(&packsLeftInSeat)
 		if err != nil {
-			return draftId, oldPackId, announcements, round, err
+			return draftID, oldPackID, announcements, round, err
 		}
 
 		if packsLeftInSeat == 0 {
 			query = `select count(1) from seats a join seats b on a.draft=b.draft where a.user=? and b.position=? and a.draft=? and a.round=b.round`
-			row = database.QueryRow(query, userId, newPosition, draftId)
+			row = database.QueryRow(query, userID, newPosition, draftID)
 			var roundsMatch int64
 			err = row.Scan(&roundsMatch)
 			if err != nil {
 				log.Printf("cannot determine if rounds match for notify")
 			} else if roundsMatch == 1 {
-				err = NotifyByDraftAndPosition(draftId, newPosition)
+				err = NotifyByDraftAndPosition(draftID, newPosition)
 				if err != nil {
 					log.Printf("error with notify")
 				}
@@ -1352,8 +1377,8 @@ func doPick(userId int64, cardId int64, pass bool) (int64, int64, []string, int6
 
 			// WARNING: if you ever have a draft with anything other than 8 players, 15 cards per pack, and 3 rounds, this will break horribly.
 			query = `update seats set round=round+1 where user=? and draft=? and (select count(1) in (15, 30, 45) from packs join cards on cards.pack=packs.id join seats on seats.id=packs.seat where seats.draft=? and packs.round=0 and seats.user=?)`
-			log.Printf("%s\t%d,%d,%d,%d", query, userId, draftId, draftId, userId)
-			_, err = database.Exec(query, userId, draftId, draftId, userId)
+			log.Printf("%s\t%d,%d,%d,%d", query, userID, draftID, draftID, userID)
+			_, err = database.Exec(query, userID, draftID, draftID, userID)
 			if err != nil {
 				log.Printf("error with possibly updating round")
 			}
@@ -1361,7 +1386,7 @@ func doPick(userId int64, cardId int64, pass bool) (int64, int64, []string, int6
 			if roundsMatch == 0 {
 				query = `select count(1) from seats where draft=? group by round order by round desc limit 1`
 
-				row = database.QueryRow(query, draftId)
+				row = database.QueryRow(query, draftID)
 				var nextRoundPlayers int64
 				err = row.Scan(&nextRoundPlayers)
 				if err != nil {
@@ -1369,7 +1394,7 @@ func doPick(userId int64, cardId int64, pass bool) (int64, int64, []string, int6
 				} else if nextRoundPlayers > 1 {
 					query = `select seats.position from seats left join packs on seats.id=packs.seat join v_packs on v_packs.id=packs.id where v_packs.count>0 and packs.round=seats.round and seats.draft=? group by seats.id`
 
-					rows, err := database.Query(query, draftId)
+					rows, err := database.Query(query, draftID)
 					if err != nil {
 						log.Printf("error determining if there's a blocking player")
 					} else {
@@ -1387,7 +1412,7 @@ func doPick(userId int64, cardId int64, pass bool) (int64, int64, []string, int6
 							}
 						}
 						if rowCount == 1 {
-							err = NotifyByDraftAndPosition(draftId, blockingPosition)
+							err = NotifyByDraftAndPosition(draftID, blockingPosition)
 							if err != nil {
 								log.Printf("error with blocking notify")
 							}
@@ -1398,49 +1423,50 @@ func doPick(userId int64, cardId int64, pass bool) (int64, int64, []string, int6
 		}
 	} else {
 		query = `update cards set pack=?, modified=? where id=?`
-		log.Printf("%s\t%d,%s,%d,%d", query, pickId, cardModified, cardId)
+		log.Printf("%s\t%d,%s,%d,%d", query, pickID, cardModified, cardID)
 
-		_, err = database.Exec(query, pickId, cardModified, cardId)
+		_, err = database.Exec(query, pickID, cardModified, cardID)
 		if err != nil {
-			return draftId, oldPackId, announcements, round, err
+			return draftID, oldPackID, announcements, round, err
 		}
 	}
 
 	switch cardName {
 	case "Cogwork Librarian":
 		query = `update cards set faceup=true where id=?`
-		log.Printf("%s\t%d", query, cardId)
-		_, err = database.Exec(query, cardId)
+		log.Printf("%s\t%d", query, cardID)
+		_, err = database.Exec(query, cardID)
 		if err != nil {
-			return draftId, oldPackId, announcements, round, err
+			return draftID, oldPackID, announcements, round, err
 		}
 
 		query = `INSERT INTO revealed (draft, message) VALUES (?, "Seat " || ? || " revealed Cogwork Librarian.")`
-		log.Printf("%s\t%d,%d", query, draftId, position)
-		_, err = database.Exec(query, draftId, position)
+		log.Printf("%s\t%d,%d", query, draftID, position)
+		_, err = database.Exec(query, draftID, position)
 		if err != nil {
-			return draftId, oldPackId, announcements, round, err
+			return draftID, oldPackID, announcements, round, err
 		}
 
 		announcements = append(announcements, fmt.Sprintf("Seat %d revealed Cogwork Librarian", position))
 	}
 
-	return draftId, oldPackId, announcements, round, nil
+	return draftID, oldPackID, announcements, round, nil
 }
 
-func NotifyByDraftAndPosition(draftId int64, position int64) error {
-	log.Printf("Attempting to notify %d %d", draftId, position)
+// NotifyByDraftAndPosition sends a discord alert to a user.
+func NotifyByDraftAndPosition(draftID int64, position int64) error {
+	log.Printf("Attempting to notify %d %d", draftID, position)
 
 	query := `select users.discord_id from users join seats where users.id=seats.user and seats.draft=? and seats.position=?`
 
-	row := database.QueryRow(query, draftId, position)
-	var discordId string
-	err := row.Scan(&discordId)
+	row := database.QueryRow(query, draftID, position)
+	var discordID string
+	err := row.Scan(&discordID)
 	if err != nil {
 		return err
 	}
 
-	var jsonStr = []byte(fmt.Sprintf(`{"content": "<@%s> you have new picks <http://draft.thefoley.net/draft/%d>"}`, discordId, draftId))
+	var jsonStr = []byte(fmt.Sprintf(`{"content": "<@%s> you have new picks <http://draft.thefoley.net/draft/%d>"}`, discordID, draftID))
 	req, err := http.NewRequest("POST", os.Getenv("DISCORD_WEBHOOK_URL"), bytes.NewBuffer(jsonStr))
 	if err != nil {
 		return err
@@ -1461,8 +1487,9 @@ func NotifyByDraftAndPosition(draftId int64, position int64) error {
 	return nil
 }
 
-func GetJsonObject(draftId int64) (DraftJson, error) {
-	var draft DraftJson
+// GetJSONObject returns a DraftJSON object, which describes a draft replay.
+func GetJSONObject(draftID int64) (DraftJSON, error) {
+	var draft DraftJSON
 
 	query := `select
                     drafts.name,
@@ -1489,7 +1516,7 @@ func GetJsonObject(draftId int64) (DraftJson, error) {
                   join cards on cards.original_pack=packs.id
                   where drafts.id=?`
 
-	rows, err := database.Query(query, draftId)
+	rows, err := database.Query(query, draftID)
 	if err != nil {
 		return draft, err
 	}
@@ -1508,14 +1535,14 @@ func GetJsonObject(draftId int64) (DraftJson, error) {
 		var packSeat int64
 		var nullableRound sql.NullInt64
 		var card Card
-		var nullableDiscordId sql.NullString
+		var nullableDiscordID sql.NullString
 		var nullableCmc sql.NullInt64
 		var nullableType sql.NullString
 		var nullableColor sql.NullString
 		var nullableMtgo sql.NullString
-		var draftUserId sql.NullInt64
+		var draftUserID sql.NullInt64
 		var nullableData sql.NullString
-		err = rows.Scan(&draft.Name, &nullablePosition, &packSeat, &nullableRound, &card.Name, &card.Edition, &card.Number, &card.Tags, &nullableDiscordId, &nullableCmc, &nullableType, &nullableColor, &nullableMtgo, &card.Id, &draftUserId, &nullableData, &draft.Id)
+		err = rows.Scan(&draft.Name, &nullablePosition, &packSeat, &nullableRound, &card.Name, &card.Edition, &card.Number, &card.Tags, &nullableDiscordID, &nullableCmc, &nullableType, &nullableColor, &nullableMtgo, &card.ID, &draftUserID, &nullableData, &draft.ID)
 		if err != nil {
 			return draft, err
 		}
@@ -1538,7 +1565,7 @@ func GetJsonObject(draftId int64) (DraftJson, error) {
 			} else {
 				card.Data = dataObj
 			}
-			dataObj["r38_data"].(map[string]interface{})["id"] = card.Id
+			dataObj["r38_data"].(map[string]interface{})["id"] = card.ID
 		}
 		if nullableMtgo.Valid {
 			card.Mtgo = nullableMtgo.String
@@ -1553,12 +1580,12 @@ func GetJsonObject(draftId int64) (DraftJson, error) {
 		packRound := nullableRound.Int64
 
 		draft.Seats[position].Rounds[packRound].Packs[0].Cards = append(draft.Seats[position].Rounds[packRound].Packs[0].Cards, card)
-		draft.Seats[position].Name = nullableDiscordId.String
-		draft.Seats[position].Id = draftUserId.Int64
+		draft.Seats[position].Name = nullableDiscordID.String
+		draft.Seats[position].ID = draftUserID.Int64
 	}
 
 	query = `select seats.position, events.announcement, cards1.name, cards2.name, events.id, events.modified, events.round, cards1.id, cards2.id from events join seats on events.draft=seats.draft and events.user=seats.user left join cards as cards1 on events.card1=cards1.id left join cards as cards2 on events.card2=cards2.id where events.draft=?`
-	rows, err = database.Query(query, draftId)
+	rows, err = database.Query(query, draftID)
 	if err != nil && err != sql.ErrNoRows {
 		return draft, err
 	}
@@ -1594,8 +1621,9 @@ func GetJsonObject(draftId int64) (DraftJson, error) {
 	return draft, nil
 }
 
-func GetJsonObject2(draftId int64) (DraftJson2, error) {
-	var draft DraftJson2
+// GetJSONObject2 returns a better DraftJSON2 object. May be filtered.
+func GetJSONObject2(draftID int64) (DraftJSON2, error) {
+	var draft DraftJSON2
 
 	query := `select
                     drafts.id,
@@ -1614,7 +1642,7 @@ func GetJsonObject2(draftId int64) (DraftJson2, error) {
                   join cards on cards.original_pack=packs.id
                   where drafts.id=?`
 
-	rows, err := database.Query(query, draftId)
+	rows, err := database.Query(query, draftID)
 	if err != nil {
 		return draft, err
 	}
@@ -1623,12 +1651,12 @@ func GetJsonObject2(draftId int64) (DraftJson2, error) {
 	for rows.Next() {
 		var position int64
 		var packRound int64
-		var cardId int64
-		var nullableDiscordId sql.NullString
-		var draftUserId sql.NullInt64
+		var cardID int64
+		var nullableDiscordID sql.NullString
+		var draftUserID sql.NullInt64
 		var cardData string
 		var nullablePicture sql.NullString
-		err = rows.Scan(&draft.DraftId, &draft.DraftName, &position, &packRound, &nullableDiscordId, &cardId, &draftUserId, &cardData, &nullablePicture)
+		err = rows.Scan(&draft.DraftID, &draft.DraftName, &position, &packRound, &nullableDiscordID, &cardID, &draftUserID, &cardData, &nullablePicture)
 		if err != nil {
 			return draft, err
 		}
@@ -1639,35 +1667,20 @@ func GetJsonObject2(draftId int64) (DraftJson2, error) {
 			log.Printf("making nil card data because of error %s", err.Error())
 			dataObj = nil
 		}
-		dataObj["r38_data"].(map[string]interface{})["id"] = cardId
+		dataObj["r38_data"].(map[string]interface{})["id"] = cardID
 
 		packRound--
 
 		nextIndex := indices[position][packRound]
 
 		draft.Seats[position].Packs[packRound][nextIndex] = dataObj
-		draft.Seats[position].PlayerName = nullableDiscordId.String
-		draft.Seats[position].PlayerId = draftUserId.Int64
+		draft.Seats[position].PlayerName = nullableDiscordID.String
+		draft.Seats[position].PlayerID = draftUserID.Int64
 		draft.Seats[position].PlayerImage = nullablePicture.String
 
 		indices[position][packRound]++
 	}
 
-	query = `select
-                   seats.position,
-                   events.announcement,
-                   cards1.name,
-                   cards2.name,
-                   events.id,
-                   events.modified,
-                   events.round,
-                   cards1.id,
-                   cards2.id
-                 from events
-                 join seats on events.draft=seats.draft and events.user=seats.user
-                 left join cards as cards1 on events.card1=cards1.id
-                 left join cards as cards2 on events.card2=cards2.id
-                 where events.draft=?`
 	query = `select
                    seats.position,
                    events.announcement,
@@ -1679,7 +1692,7 @@ func GetJsonObject2(draftId int64) (DraftJson2, error) {
                  from events
                  join seats on events.draft=seats.draft and events.user=seats.user
                  where events.draft=?`
-	rows, err = database.Query(query, draftId)
+	rows, err = database.Query(query, draftID)
 	if err != nil && err != sql.ErrNoRows {
 		return draft, err
 	}
@@ -1714,8 +1727,9 @@ func GetJsonObject2(draftId int64) (DraftJson2, error) {
 	return draft, nil
 }
 
-func GetJson(draftId int64) (string, error) {
-	draft, err := GetJsonObject(draftId)
+// GetJSON returns a json string of replay data.
+func GetJSON(draftID int64) (string, error) {
+	draft, err := GetJSONObject(draftID)
 	if err != nil {
 		return "", err
 	}
@@ -1727,8 +1741,9 @@ func GetJson(draftId int64) (string, error) {
 	return string(ret), nil
 }
 
-func GetJson2(draftId int64) (string, error) {
-	draft, err := GetJsonObject2(draftId)
+// GetJSON2 returns a better json string of replay data. May be filtered.
+func GetJSON2(draftID int64) (string, error) {
+	draft, err := GetJSONObject2(draftID)
 	if err != nil {
 		return "", err
 	}
@@ -1740,8 +1755,9 @@ func GetJson2(draftId int64) (string, error) {
 	return string(ret), nil
 }
 
-func GetFilteredJson(draftId int64, userId int64) (string, error) {
-	draft, err := GetJsonObject2(draftId)
+// GetFilteredJSON returns a filtered json object of replay data.
+func GetFilteredJSON(draftID int64, userID int64) (string, error) {
+	draft, err := GetJSONObject2(draftID)
 	if err != nil {
 		return "", err
 	}
@@ -1749,7 +1765,7 @@ func GetFilteredJson(draftId int64, userId int64) (string, error) {
 	query := `select (select round from seats where draft=? and user=?), (select count(1) from seats where draft=? and user is null)`
 	var myRound sql.NullInt64
 	var emptySeats int64
-	row := database.QueryRow(query, draftId, userId, draftId)
+	row := database.QueryRow(query, draftID, userID, draftID)
 	err = row.Scan(&myRound, &emptySeats)
 	if err != nil {
 		return "", err
@@ -1770,7 +1786,7 @@ func GetFilteredJson(draftId int64, userId int64) (string, error) {
 	}
 	defer conn.Close()
 
-	ret, err := json.Marshal(Perspective{User: userId, Draft: draft})
+	ret, err := json.Marshal(Perspective{User: userID, Draft: draft})
 	if err != nil {
 		return "", err
 	}
@@ -1786,17 +1802,18 @@ func GetFilteredJson(draftId int64, userId int64) (string, error) {
 	return buff.String(), nil
 }
 
-func DoEvent(draftId int64, userId int64, announcements []string, cardId1 int64, cardId2 sql.NullInt64, round int64) error {
+// DoEvent records an event (pick) into the database.
+func DoEvent(draftID int64, userID int64, announcements []string, cardID1 int64, cardID2 sql.NullInt64, round int64) error {
 	var query string
 	var err error
-	if cardId2.Valid {
+	if cardID2.Valid {
 		query = `insert into events (round, draft, user, announcement, card1, card2, modified) VALUES (?, ?, ?, ?, ?, ?, (select count(1) from seats join packs join cards where seats.user=? and seats.draft=? and packs.seat=seats.id and cards.pack=packs.id and packs.round=0))`
-		log.Printf("%s\t%d,%d,%d,%s,%d,%d,%d,%d", query, round, draftId, userId, strings.Join(announcements, "\n"), cardId1, cardId2.Int64, userId, draftId)
-		_, err = database.Exec(query, round, draftId, userId, strings.Join(announcements, "\n"), cardId1, cardId2.Int64, userId, draftId)
+		log.Printf("%s\t%d,%d,%d,%s,%d,%d,%d,%d", query, round, draftID, userID, strings.Join(announcements, "\n"), cardID1, cardID2.Int64, userID, draftID)
+		_, err = database.Exec(query, round, draftID, userID, strings.Join(announcements, "\n"), cardID1, cardID2.Int64, userID, draftID)
 	} else {
 		query := `insert into events (round, draft, user, announcement, card1, card2, modified) VALUES (?, ?, ?, ?, ?, null, (select count(1) from seats join packs join cards where seats.user=? and seats.draft=? and packs.seat=seats.id and cards.pack=packs.id and packs.round=0))`
-		log.Printf("%s\t%d,%d,%d,%s,%d,%d,%d", query, round, draftId, userId, strings.Join(announcements, "\n"), cardId1, userId, draftId)
-		_, err = database.Exec(query, round, draftId, userId, strings.Join(announcements, "\n"), cardId1, userId, draftId)
+		log.Printf("%s\t%d,%d,%d,%s,%d,%d,%d", query, round, draftID, userID, strings.Join(announcements, "\n"), cardID1, userID, draftID)
+		_, err = database.Exec(query, round, draftID, userID, strings.Join(announcements, "\n"), cardID1, userID, draftID)
 	}
 
 	return err
