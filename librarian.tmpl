@@ -5,7 +5,7 @@
   <link href="/static/favicon.png" rel="icon">
 </head>
 <body>
-<div>draft id: {{ .DraftId }}</div>
+<div>draft id: {{ .DraftID }}</div>
   <div>
     {{ if not .Pack }}
       <div>no packs available</div>
@@ -13,7 +13,7 @@
       <div>current pack</div>
         {{ range .Pack }}
           <div class="card pick">
-            <img data-cardid="{{ .Id }}" src="/proxy/{{ .Edition }}/{{ .Number }}" height=300 />
+            <img data-cardid="{{ .ID }}" src="/proxy/{{ .Edition }}/{{ .Number }}" height=300 />
             <span>{{ .Name }}</span>
             {{ if .Tags }}
               <span>({{ .Tags }})</span>

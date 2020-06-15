@@ -8,27 +8,27 @@
 <div>
   <div>drafts</div>
   <ul>
-    {{ $ViewUrl := .ViewUrl}}
+    {{ $ViewURL := .ViewURL}}
     {{ range .Drafts }}
       <li>
         {{ if .Joined }}
           {{ if .Replayable }}
-            <span><a href="/deckbuilder/{{ .Id }}{{ $ViewUrl }}">{{ .Name }}</a></span>
+            <span><a href="/deckbuilder/{{ .ID }}{{ $ViewURL }}">{{ .Name }}</a></span>
           {{ else }}
-            <span><a href="/draft/{{ .Id }}{{ $ViewUrl }}">{{ .Name }}</a></span>
+            <span><a href="/draft/{{ .ID }}{{ $ViewURL }}">{{ .Name }}</a></span>
           {{ end }}
         {{ else }}
           <span>{{ .Name }}</span>
         {{ end }}
         <span>{{ .Seats }} seats available.</span>
         {{ if .Joinable }}
-          <span><a href="/join/{{ .Id }}{{ $ViewUrl }}">Join!</a></span>
+          <span><a href="/join/{{ .ID }}{{ $ViewURL }}">Join!</a></span>
         {{ end }}
         {{ if .Replayable }}
-          <span><a href="/replay/{{ .Id }}{{ $ViewUrl }}">Replay</a></span>
+          <span><a href="/replay/{{ .ID }}{{ $ViewURL }}">Replay</a></span>
         {{ end }}
-        {{ if eq $.UserId 1  }}
-          <span><a href="/bulk_mtgo/{{ .Id }}">[export]</a></span>
+        {{ if eq $.UserID 1  }}
+          <span><a href="/bulk_mtgo/{{ .ID }}">[export]</a></span>
         {{ end }}
       </li>
     {{ end }}
