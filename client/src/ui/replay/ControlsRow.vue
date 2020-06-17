@@ -9,9 +9,9 @@
     </div>
     <div class="center">
       <div class="draft-name">
-        {{ store.draftName }}
+        {{ draftStore.draftName }}
         <span
-            v-if="store.parseError != null"
+            v-if="draftStore.parseError != null"
             class="parse-error-warning"
             >
           [parse error]
@@ -19,7 +19,7 @@
       </div>
     </div>
     <div class="end">
-      <SearchBox />
+      <SearchBox v-if="!draftStore.isActiveDraft" />
       <img v-if="authStore.user" class="user-img" :src="authStore.user.picture">
     </div>
   </div>
@@ -31,12 +31,12 @@ import TimelineButton from './controls_row/TimelineButton.vue';
 import SearchBox from './controls_row/SearchBox.vue';
 
 import { navTo } from '../../router/url_manipulation';
-import { getNextPickEventForSelectedPlayer, getNextPickEvent } from '../../state/util/getNextPickEventForSelectedPlayer';
 import { TimelineEvent } from '../../draft/TimelineEvent';
 import { globalClickTracker, UnhandledClickListener } from '../infra/globalClickTracker';
 
-import { replayStore as store, ReplayModule } from '../../state/ReplayModule';
 import { authStore, AuthStore } from '../../state/AuthStore';
+import { draftStore, DraftStore } from '../../state/DraftStore';
+import { replayStore, ReplayStore } from '../../state/ReplayStore';
 
 export default Vue.extend({
   components: {
@@ -45,35 +45,39 @@ export default Vue.extend({
   },
 
   computed: {
-    store(): ReplayModule {
-      return store;
+    replayStore(): ReplayStore {
+      return replayStore;
     },
 
     authStore(): AuthStore {
       return authStore;
     },
+
+    draftStore(): DraftStore {
+      return draftStore;
+    }
   },
 
   methods: {
     onNextClick() {
-      store.goNext();
-      navTo(store, this.$route, this.$router, {});
+      replayStore.goNext();
+      navTo(draftStore, replayStore, this.$route, this.$router, {});
     },
 
     onPrevClick() {
-      store.goBack();
-      navTo(store, this.$route, this.$router, {});
+      replayStore.goBack();
+      navTo(draftStore, replayStore, this.$route, this.$router, {});
     },
 
     onStartClick() {
-      navTo(store, this.$route, this.$router, {
+      navTo(draftStore, replayStore, this.$route, this.$router, {
         eventIndex: 0,
       });
     },
 
     onEndClick() {
-      navTo(store, this.$route, this.$router, {
-        eventIndex: store.events.length,
+      navTo(draftStore, replayStore, this.$route, this.$router, {
+        eventIndex: replayStore.events.length,
       });
     },
   },

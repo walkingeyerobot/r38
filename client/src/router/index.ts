@@ -30,7 +30,7 @@ const routes = [
         import(/* webpackChunkName: 'replay' */ '../ui/Replay.vue'),
   },
   {
-    path: '/deckbuilder/*',
+    path: '/deckbuilder/:draftId(\\d+)',
     component: () =>
         import(/* webpackChunkName: 'deckbuilder' */ '../ui/DeckBuilder.vue'),
   },

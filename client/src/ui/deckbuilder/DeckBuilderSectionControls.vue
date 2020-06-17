@@ -97,20 +97,26 @@ export default Vue.extend({
       this.addLand("Forest", "380", BASICS[4]);
     },
 
-    addLand(name: string, collectorNumber: string, mtgo: string) {
+    addLand(name: string, collectorNumber: string, mtgo: number) {
       this.section[0].push({
         id: performance.now(),
         sourcePackIndex: 0,
         pickedIn: [],
         definition: {
           name,
-          set: "10e",
+          set: '10e',
           collector_number: collectorNumber,
+          mana_cost: '',
           cmc: 0,
-          color: "",
+          colors: [],
+          color_identity: [],
           mtgo: mtgo,
-          tags: [],
-          searchName: name,
+          rarity: 'common',
+          type_line: `Basic Land - ${name}`,
+          layout: 'normal',
+          card_faces: [],
+          foil: false,
+          searchName: name.toLocaleLowerCase(),
         }
       });
     },

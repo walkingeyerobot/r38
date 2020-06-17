@@ -42,7 +42,7 @@ const HTML_PATHS = [
   '/',
   '/login',
 
-  '/draft/:id',
+  '/draft/:id/*',
 
   '/replay/*',
   '/deckbuilder/*',

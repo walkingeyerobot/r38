@@ -1,6 +1,7 @@
 import VueRouter, { Route } from 'vue-router';
 import { SelectedView } from '../state/selection';
-import { ReplayModule, TimeMode } from '../state/ReplayModule';
+import { ReplayStore, TimeMode } from '../state/ReplayStore';
+import { DraftStore } from '../state/DraftStore';
 
 /**
  * Navigates the UI to a particular state, updating the URL to match.
@@ -16,12 +17,13 @@ import { ReplayModule, TimeMode } from '../state/ReplayModule';
  * @param to The desired UI state to move to
  */
 export function navTo(
-  state: ReplayModule,
+  draftStore: DraftStore,
+  replayStore: ReplayStore,
   route: Route,
   router: VueRouter,
   to: TargetState,
 ) {
-  const url = generateReplayUrl(state, to);
+  const url = generateReplayUrl(draftStore, replayStore, to);
   if (url != route.path) {
     router.push(url);
   }
@@ -34,17 +36,22 @@ export interface TargetState {
 }
 
 
-function generateReplayUrl(state: ReplayModule, to: TargetState): string {
-  const draftId = state.draftId;
+function generateReplayUrl(
+    draftStore: DraftStore,
+    replayStore: ReplayStore,
+    to: TargetState,
+): string {
+  const draftId = draftStore.draftId;
 
-  const timeMode = to.timeMode != undefined ? to.timeMode : state.timeMode;
+  const timeMode =
+      to.timeMode != undefined ? to.timeMode : replayStore.timeMode;
   const eventIndex =
-      to.eventIndex != undefined ? to.eventIndex : state.eventPos;
+      to.eventIndex != undefined ? to.eventIndex : replayStore.eventPos;
   const shortTimelineMode = timeMode == 'original' ? 't' : 's';
 
   const root = `/replay/${draftId}/${shortTimelineMode}/${eventIndex}`;
 
-  const selection = to.selection ? to.selection : state.selection;
+  const selection = to.selection ? to.selection : replayStore.selection;
   switch (selection?.type) {
     case 'seat':
       return `${root}/seat/${selection.id}`;
@@ -65,14 +72,22 @@ function generateReplayUrl(state: ReplayModule, to: TargetState): string {
  * @param params The URL params (`this.$route.params`)
  */
 export function applyReplayUrlState(
-  state: ReplayModule,
+  replayStore: ReplayStore,
   route: Route,
 ) {
-  const parsedUrl = parseUrl(route);
-  applyUrl(state, parsedUrl);
+  const parsedUrl = parseDraftUrl(route);
+
+  if (parsedUrl.eventIndex == undefined) {
+    parsedUrl.eventIndex = replayStore.events.length;
+  }
+  if (parsedUrl.timeMode == undefined) {
+    parsedUrl.timeMode = 'synchronized';
+  }
+
+  applyUrl(replayStore, parsedUrl);
 }
 
-function parseUrl(route: Route) {
+export function parseDraftUrl(route: Route) {
   const parsedUrl: ParsedUrl = {
     draftId: parseInt(route.params['draftId']),
   };
@@ -123,25 +138,25 @@ function parseUrl(route: Route) {
   return parsedUrl;
 }
 
-function applyUrl(state: ReplayModule, parse: ParsedUrl) {
-  if (state.draftId != parse.draftId) {
-    state.setDraftId(parse.draftId);
-  }
-
-  if (parse.timeMode != undefined && parse.timeMode != state.timeMode) {
-    state.setTimeMode(parse.timeMode);
+function applyUrl(
+    replayStore: ReplayStore,
+    parse: ParsedUrl,
+) {
+  if (parse.timeMode != undefined && parse.timeMode != replayStore.timeMode) {
+    replayStore.setTimeMode(parse.timeMode);
   }
 
   if (parse.eventIndex != undefined
+      && parse.eventIndex != replayStore.eventPos
       && parse.eventIndex >= 0
-      && parse.eventIndex <= state.events.length) {
-    state.goTo(parse.eventIndex);
+      && parse.eventIndex <= replayStore.events.length) {
+    replayStore.goTo(parse.eventIndex);
   }
 
   if (parse.selection != undefined
-      && (parse.selection.type != state.selection?.type
-          || parse.selection.id != state.selection.id)) {
-    state.setSelection(parse.selection);
+      && (parse.selection.type != replayStore.selection?.type
+          || parse.selection.id != replayStore.selection.id)) {
+    replayStore.setSelection(parse.selection);
   }
 }
 

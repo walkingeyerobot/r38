@@ -41,8 +41,8 @@ import { navTo } from '../../router/url_manipulation';
 
 import CardPack from './CardPack.vue';
 
-import { replayStore as store } from '../../state/ReplayModule';
-
+import { replayStore } from '../../state/ReplayStore';
+import { draftStore } from '../../state/DraftStore';
 
 export default Vue.extend({
   components: {
@@ -58,7 +58,7 @@ export default Vue.extend({
 
   computed: {
     isSelected(): boolean {
-      const selection = store.selection;
+      const selection = replayStore.selection;
       return selection != null
           && selection.type == 'seat'
           && selection.id == this.seat.position
@@ -67,7 +67,7 @@ export default Vue.extend({
 
   methods: {
     onHeaderClick() {
-      navTo(store, this.$route, this.$router, {
+      navTo(draftStore, replayStore, this.$route, this.$router, {
         selection: {
           type: 'seat',
           id: this.seat.position,

@@ -1,53 +1,27 @@
 import { SourceEvent } from './SourceData';
 import { commitTimelineEvent } from '../draft/mutate';
-import { DraftState, CardContainer, CardPack, DraftSeat, PackContainer } from '../draft/DraftState';
+import { DraftState, CardPack, DraftSeat, PackContainer, DraftCard } from '../draft/DraftState';
 import { TimelineEvent } from '../draft/TimelineEvent';
 import { ParseError } from './ParseError';
-import { MutationError } from '../draft/MutationError';
-import { deepCopy } from '../util/deepCopy';
+import { getSeat } from '../state/util/getters';
+import { checkUnreachable } from '../util/checkUnreachable';
 
 export class TimelineGenerator {
-  private _state!: DraftState;
-
-  private _outEvents = [] as TimelineEvent[];
+  private _state: DraftState;
+  private _outEvents: TimelineEvent[];
+  private _cards: Map<number, DraftCard>;
 
   private _nextTimelineId = 0;
   private _playerTrackers = [] as PlayerTracker[];
 
-  generate(
-      state: DraftState,
-      events: SourceEvent[],
-  ): GeneratedTimeline {
-    this.initialize(deepCopy(state), events);
-
-    let parseError: Error | null = null;
-    for (let i = 0; i < events.length; i++) {
-      const srcEvent = events[i];
-      try {
-        this.parseEvent(srcEvent);
-      } catch (e) {
-        if (e instanceof ParseError || e instanceof MutationError) {
-          console.error('Error while parsing event', srcEvent, e);
-          parseError = e;
-          break;
-        } else {
-          throw e;
-        }
-      }
-    }
-
-    return {
-      events: this._outEvents.concat(),
-      isComplete: this.isDraftComplete(),
-      parseError,
-    };
-  }
-
-  private initialize(state: DraftState, events: SourceEvent[]) {
+  constructor(
+    state: DraftState,
+    cards: Map<number, DraftCard>,
+    events: TimelineEvent[],
+  ) {
     this._state = state;
-    this._outEvents = [];
-    this._nextTimelineId = 0;
-    this._playerTrackers = [];
+    this._outEvents = events;
+    this._cards = cards;
 
     // Fill out our player trackers
     for (const seat of this._state.seats) {
@@ -58,16 +32,18 @@ export class TimelineGenerator {
         nextPick: 0,
       });
     }
+  }
 
+  init() {
     this.openFirstPacks();
   }
 
-  private parseEvent(srcEvent: SourceEvent) {
-    const playerData = this._playerTrackers[srcEvent.player];
+  parseEvent(srcEvent: SourceEvent) {
+    const playerData = this._playerTrackers[srcEvent.position];
     if (srcEvent.round != playerData.currentRound) {
       throw new ParseError(`Unexpected round: ${srcEvent.round}`);
     }
-    const seat = getSeat(srcEvent, this._state);
+    const seat = getSeat(this._state, srcEvent.position);
     if (seat.queuedPacks.packs.length == 0) {
       throw new ParseError(
           `Seat ${seat.position} doesn't have any open packs!`);
@@ -76,22 +52,7 @@ export class TimelineGenerator {
 
     const outEvent = this.createEvent(playerData);
 
-    for (let cardId of srcEvent.cards) {
-      const card = findCard(cardId, activePack);
-      outEvent.actions.push({
-        type: 'move-card' as const,
-        subtype: 'pick-card',
-        cardName: card.definition.name,
-        card: card.id,
-        from: activePack.id,
-        to: seat.player.picks.id,
-      });
-    }
-    playerData.nextPick++;
-
-    // Check to see if the player used a power that allowed them to draft a
-    // second card
-    this.handleClockworkLibrarian(srcEvent, outEvent, seat, activePack);
+    this.pickCardsForEvent(srcEvent, seat, activePack, playerData, outEvent);
 
     // Move the pack to the next seat
     const dstLocation =
@@ -105,16 +66,15 @@ export class TimelineGenerator {
       queuePosition: 'end',
     });
 
-    // Sigh -____-
-    this.handleLoreSeeker(srcEvent, outEvent, seat);
-
     // Commit this event
     this.commitEvent(outEvent);
 
     // Finally, check to see if we should open a new pack
     // (and advance the round)
     // TODO: This check could be fooled by a lore seeker pack
-    if (activePack.cards.length == 0 && seat.unopenedPacks.packs.length > 0) {
+    if (seat.position != -1
+        && activePack.cards.length == 0
+        && seat.unopenedPacks.packs.length > 0) {
       playerData.currentRound++;
       playerData.nextEpoch = 0;
       playerData.nextPick = 0;
@@ -138,47 +98,29 @@ export class TimelineGenerator {
     }
   }
 
-  private handleClockworkLibrarian(
-    srcEvent: SourceEvent,
-    outEvent: TimelineEvent,
-    seat: DraftSeat,
-    activePack: CardPack,
-  ) {
-    if (srcEvent.cards.length > 1) {
-      const librarianCard =
-          findCardByName('Cogwork Librarian', seat.player.picks);
-      outEvent.actions.push({
-        type: 'move-card' as const,
-        subtype: 'return-card',
-        cardName: librarianCard.definition.name,
-        card: librarianCard.id,
-        from: seat.player.picks.id,
-        to: activePack.id,
-      });
+  pickCard(seatId: number, cardId: number) {
+    const seat = this._state.seats[seatId];
+    const playerData = this._playerTrackers[seatId];
+    if (seat == undefined || playerData == undefined) {
+      throw new Error(`No seat with ID ${seatId}`);
     }
-  }
-
-  private handleLoreSeeker(
-    srcEvent: SourceEvent,
-    outEvent: TimelineEvent,
-    seat: DraftSeat,
-  ) {
-    // If a player drafts Lore Seeker, we assume they chose to add a new pack
-    // to the draft
-    if (srcEvent.card1 == 'Lore Seeker' || srcEvent.card2 == 'Lore Seeker') {
-      if (this._state.unusedPacks.packs.length == 0) {
-        throw new ParseError(`No more packs to add`);
-      }
-      const newPack = this._state.unusedPacks.packs[0];
-
-      outEvent.actions.push({
-        type: 'move-pack' as const,
-        pack: newPack.id,
-        from: this._state.unusedPacks.id,
-        to: seat.queuedPacks.id,
-        queuePosition: 'front',
-      });
+    const pack = seat.queuedPacks.packs[0];
+    if (pack == undefined) {
+      throw new Error(`Seat ${seatId} doesn't have any packs to pick from.`);
     }
+
+    const fakeEvent: SourceEvent = {
+      type: 'Pick',
+      cards: [cardId],
+      position: seatId,
+      round: pack.round,
+      announcements: [],
+      draftModified: -1,
+      playerModified: -1,
+      librarian: false,
+    };
+
+    this.parseEvent(fakeEvent);
   }
 
   private openFirstPacks() {
@@ -192,19 +134,19 @@ export class TimelineGenerator {
       const playerData = this._playerTrackers[seat.position];
       const event = this.createEvent(playerData);
 
-      event.actions = [{
+      event.actions.push({
         type: 'move-pack' as const,
         pack: pack.id,
         from: seat.unopenedPacks.id,
         to: seat.queuedPacks.id,
         queuePosition: 'front',
-      }];
+      });
 
       this.commitEvent(event);
     }
   }
 
-  private isDraftComplete() {
+  isDraftComplete() {
     for (let seat of this._state.seats) {
       if (seat.unopenedPacks.packs.length > 0
           || seat.queuedPacks.packs.length > 0) {
@@ -215,14 +157,14 @@ export class TimelineGenerator {
   }
 
   private createEvent(playerData: PlayerTracker): TimelineEvent {
-    return {
+    return Object.freeze({
       id: this._nextTimelineId++,
       associatedSeat: playerData.seatId,
       round: playerData.currentRound,
       roundEpoch: playerData.nextEpoch++,
       pick: playerData.nextPick,
       actions: [],
-    };
+    });
   }
 
   private commitEvent(event: TimelineEvent) {
@@ -231,40 +173,56 @@ export class TimelineGenerator {
     //   console.log('  ', action);
     // }
 
-    commitTimelineEvent(event, this._state);
+    commitTimelineEvent(this, event, this._state);
 
     this._outEvents.push(event);
   }
-}
 
-function getSeat(srcEvent: SourceEvent, state: DraftState) {
-  const seat = state.seats[srcEvent.player];
-  if (seat == null) {
-    throw new ParseError(
-        `Unknown player "${srcEvent.player}" in event `
-            + JSON.stringify(srcEvent));
+  getCard(id: number) {
+    const card = this._cards.get(id);
+    if (card == undefined) {
+      throw new Error(`Unknown card: ${id}`);
+    }
+    return card;
   }
-  return seat;
-}
 
-function findCard(cardId: number, container: CardContainer) {
-  for (const card of container.cards) {
-    if (card.id == cardId) {
-      return card;
+  pickCardsForEvent(
+      srcEvent: SourceEvent,
+      seat: DraftSeat,
+      activePack: CardPack,
+      playerData: PlayerTracker,
+      outEvent: TimelineEvent,
+  ) {
+    switch (srcEvent.type) {
+      case 'SecretPick':
+        // Nothing to actually pick here, we just pass the pack along
+        playerData.nextPick++;
+        break;
+      case 'Pick':
+      case 'ShadowPick':
+        for (let cardId of srcEvent.cards) {
+          const card = this.getCard(cardId);
+          outEvent.actions.push({
+            type: 'move-card' as const,
+            subtype: 'pick-card',
+            cardName: card.definition.name,
+            card: card.id,
+            from: activePack.id,
+            to: seat.player.picks.id,
+          });
+          card.pickedIn.push({
+            eventId: outEvent.id,
+            pick: playerData.nextPick,
+            round: playerData.currentRound,
+            seat: seat.position,
+          });
+        }
+        playerData.nextPick++;
+        break;
+      default:
+        checkUnreachable(srcEvent);
     }
   }
-  throw new ParseError(
-      `Card "${cardId}" not found in container ${container.id}.`);
-}
-
-function findCardByName(cardName: string, container: CardContainer) {
-  for (const card of container.cards) {
-    if (card.definition.name == cardName) {
-      return card;
-    }
-  }
-  throw new ParseError(
-      `Card "${cardName}" not found in container ${container.id}.`);
 }
 
 function getLocationToPassTo(

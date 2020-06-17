@@ -12,7 +12,7 @@ Displays a single card
     </div>
     <img
           class="card-img"
-          :title="card.definition.name"
+          :alt="card.definition.name"
           :src="getImageSrc(card)"
           >
   </div>
@@ -59,7 +59,7 @@ export default Vue.extend({
 
   methods: {
     getImageSrc(card: DraftCard): string {
-      if (process.env.NODE_ENV == 'development') {
+      if (DEVELOPMENT) {
         return `http://api.scryfall.com/cards/${card.definition.set}/`
             + `${card.definition.collector_number}?format=image&version=normal`;
       } else {
@@ -67,7 +67,7 @@ export default Vue.extend({
             + `${card.definition.collector_number}`;
       }
     },
-  }
+  },
 });
 </script>
 
@@ -108,7 +108,7 @@ export default Vue.extend({
   box-shadow: 0 1px 4px 1.2px rgba(0, 0, 0, 0.7);
   opacity: 0;
   transition: opacity 110ms cubic-bezier(0.33, 1, 0.68, 1);
-  border-radius: 9px;
+  border-radius: 9.5px;
 }
 
 .selected > .shadow {
@@ -144,7 +144,7 @@ export default Vue.extend({
   width: 200px;
   height: 279px;
   background: #AAA;
-  border-radius: 9px;
+  border-radius: 10px;
   overflow: hidden;
 }
 </style>

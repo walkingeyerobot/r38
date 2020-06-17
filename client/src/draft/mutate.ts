@@ -2,10 +2,16 @@ import { DraftState, CardContainer, CardPack, PackContainer } from "./DraftState
 import { checkNotNil } from '../util/checkNotNil';
 import { TimelineEvent, TimelineAction, ActionMovePack, ActionAssignRound } from './TimelineEvent';
 import { MutationError } from './MutationError';
+import { CardStore } from './CardStore';
+import { eventToString } from './util/eventToString';
 
 const DEBUG = false;
 
-export function commitTimelineEvent(event: TimelineEvent, state: DraftState) {
+export function commitTimelineEvent(
+    cardStore: CardStore,
+    event: TimelineEvent,
+    state: DraftState,
+) {
   if (DEBUG) {
     console.log(
         'APPLYING EVENT:',
@@ -17,26 +23,41 @@ export function commitTimelineEvent(event: TimelineEvent, state: DraftState) {
   }
   try {
     for (const action of event.actions) {
-      applyAction(action, state);
+      applyAction(cardStore, action, state);
     }
   } catch (e) {
-    console.log('Error while trying to commit event', event);
+    console.log('Error while trying to commit event:');
+    console.log(eventToString(event));
     throw e;
   }
 }
 
-export function rollbackTimelineEvent(event: TimelineEvent, state: DraftState) {
-  for (let i = event.actions.length - 1; i >= 0; i--) {
-    rollbackAction(event.actions[i], state);
+export function rollbackTimelineEvent(
+    cardStore: CardStore,
+    event: TimelineEvent,
+    state: DraftState,
+) {
+  try {
+    for (let i = event.actions.length - 1; i >= 0; i--) {
+      rollbackAction(cardStore, event.actions[i], state);
+    }
+  } catch (e) {
+    console.log('Error while trying to rollback event:');
+    console.log(eventToString(event));
+    throw e;
   }
 }
 
-function applyAction(action: TimelineAction, state: DraftState) {
+function applyAction(
+    cardStore: CardStore,
+    action: TimelineAction,
+    state: DraftState,
+) {
   switch (action.type) {
     case 'move-card':
       const srcContainer = checkNotNil(state.packs.get(action.from));
       const dstContainer = checkNotNil(state.packs.get(action.to));
-      dstContainer.cards.push(removeCard(action.card, srcContainer));
+      dstContainer.cards.push(removeCard(cardStore, action.card, srcContainer));
       break;
     case 'move-pack':
       movePack(action, state, 'forward');
@@ -52,12 +73,17 @@ function applyAction(action: TimelineAction, state: DraftState) {
   }
 }
 
-function rollbackAction(action: TimelineAction, state: DraftState) {
+function rollbackAction(
+    cardStore: CardStore,
+    action: TimelineAction,
+    state: DraftState,
+) {
   switch (action.type) {
     case 'move-card':
       const srcContainer = checkNotNil(state.packs.get(action.to));
       const destContainer = checkNotNil(state.packs.get(action.from));
-      destContainer.cards.push(removeCard(action.card, srcContainer));
+      destContainer.cards.push(
+          removeCard(cardStore, action.card, srcContainer));
       break;
     case 'move-pack':
       movePack(action, state, 'reverse');
@@ -72,15 +98,23 @@ function rollbackAction(action: TimelineAction, state: DraftState) {
   }
 }
 
-function removeCard(id: number, container: CardContainer) {
+function removeCard(
+    cardStore: CardStore,
+    id: number,
+    container: CardContainer,
+) {
   for (let i = 0; i < container.cards.length; i++) {
-    const card = container.cards[i];
-    if (card.id == id) {
+    const cardId = container.cards[i];
+    if (cardId == id) {
       container.cards.splice(i, 1);
-      return card;
+      return cardId;
     }
   }
-  throw new MutationError(`Cannot find card ${id} in container ${container}.`);
+  throw new MutationError(
+      `Cannot find card ${id} ${cardStore.getCard(id).definition.name} in `
+          + `container ${container.id} w/ contents `
+          +  container.cards.map(
+                id => id + ':' + cardStore.getCard(id).definition.name));
 }
 
 function movePack(

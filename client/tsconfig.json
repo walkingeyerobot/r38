@@ -29,9 +29,10 @@
     "src/**/*.vue",
     "test/**/*.ts",
     "test/**/*.tsx",
-    "test/**/*.vue",
+    "test/**/*.vue", "src/draft/util",
   ],
   "exclude": [
-    "node_modules"
-  ]
+    "node_modules",
+    "**/*.stub.ts",
+  ],
 }

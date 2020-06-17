@@ -14,7 +14,8 @@ export async function fetchEndpoint<T extends RestEndpoint>(
 
 export type EndpointParams<T extends RestEndpoint> =
     & DefaultEmpty<T['pathVars']>
-    & DefaultEmpty<T['queryVars']>;
+    & DefaultEmpty<T['queryVars']>
+    & DefaultEmpty<T['bodyVars']>;
 
 
 function buildFetchConfig<T extends RestEndpoint>(

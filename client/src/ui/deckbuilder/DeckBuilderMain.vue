@@ -70,8 +70,8 @@ export default Vue.extend({
     exportedDeck(): string {
       if (this.deck) {
         let exportStr = XML_HEADER;
-        let mainMap = new Map<string, DeckEntry>();
-        let sideMap = new Map<string, DeckEntry>();
+        let mainMap = new Map<number, DeckEntry>();
+        let sideMap = new Map<number, DeckEntry>();
         for (const card of this.deck.maindeck.flat()) {
           if (!card.definition.mtgo) {
             continue;
@@ -102,7 +102,7 @@ export default Vue.extend({
     exportedBinder(): string {
       if (this.deck) {
         let exportStr = XML_HEADER;
-        let map = new Map<string, DeckEntry>();
+        let map = new Map<number, DeckEntry>();
         for (const card of this.deck.maindeck.flat()) {
           if (!card.definition.mtgo || BASICS.includes(card.definition.mtgo)) {
             continue;
@@ -130,7 +130,7 @@ export default Vue.extend({
   methods: {},
 });
 
-function incrementQuantity(map: Map<string, DeckEntry>, card: MtgCard) {
+function incrementQuantity(map: Map<number, DeckEntry>, card: MtgCard) {
   let entry = map.get(card.mtgo);
   if (entry == undefined) {
     entry = {name: card.name, quantity: 0};

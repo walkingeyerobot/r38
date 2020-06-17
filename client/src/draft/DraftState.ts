@@ -1,7 +1,8 @@
-import { TimelineEvent } from './TimelineEvent';
+import { ScryfallColor, ScryfallRarity, ScryfallLayout } from './scryfall';
 
 export interface DraftState {
   seats: DraftSeat[];
+  shadowSeat: DraftSeat;
   unusedPacks: PackContainer;
   deadPacks: PackContainer;
   packs: Map<number, CardContainer>;
@@ -27,7 +28,8 @@ export type CardContainer = CardPack | PlayerPicks;
 export interface CardPack {
   type: 'pack';
   id: number;
-  cards: DraftCard[];
+  labelId: number;
+  cards: number[];
   originalSeat: number;
   round: number;
 }
@@ -35,12 +37,14 @@ export interface CardPack {
 export interface PlayerPicks {
   type: 'seat';
   id: number;
-  cards: DraftCard[];
+  cards: number[];
 }
 
 export interface DraftPlayer {
-  seatPosition: number;
+  id: number;
   name: string;
+  iconUrl: string;
+  seatPosition: number;
   picks: CardContainer;
 }
 
@@ -64,13 +68,27 @@ export interface MtgCard {
   name: string;
   set: string;
   collector_number: string;
+  mana_cost: string;
   cmc: number;
-  color: string;
-  // MTGO CatID
-  mtgo: string;
+  colors: ScryfallColor[];
+  color_identity: ScryfallColor[];
+  rarity: ScryfallRarity;
+  type_line: string;
+  layout: ScryfallLayout;
+
+  card_faces: Array<{
+    name: string;
+    colors: ScryfallColor[];
+    mana_cost: string;
+    type_line: string;
+  }> | null;
 
   // custom stuff
-  tags: string[];
+
+  // MTGO CatID
+  mtgo: number;
+
+  foil: boolean;
 
   // Post-processed name for quick string comparison
   searchName: string;

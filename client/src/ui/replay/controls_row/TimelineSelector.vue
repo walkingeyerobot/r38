@@ -85,27 +85,28 @@ gets its own entry.
 import Vue from 'vue';
 import { navTo } from '../../../router/url_manipulation';
 import { isPickEvent, getPickAction } from '../../../state/util/isPickEvent';
-import { find } from '../../../util/collection';
+import { indexOf } from '../../../util/collection';
 import { TimelineEvent } from '../../../draft/TimelineEvent';
 
-import { replayStore as store } from '../../../state/ReplayModule';
+import { replayStore } from '../../../state/ReplayStore';
+import { draftStore } from '../../../state/DraftStore';
 
 
 export default Vue.extend({
   computed: {
     synchronizeTimeline: {
       get() {
-        return store.timeMode == 'synchronized';
+        return replayStore.timeMode == 'synchronized';
       },
 
       set(value) {
-        store.setTimeMode(value ? 'synchronized' : 'original');
-        navTo(store, this.$route, this.$router, {});
+        replayStore.setTimeMode(value ? 'synchronized' : 'original');
+        navTo(draftStore, replayStore, this.$route, this.$router, {});
       }
     },
 
     listEntries(): ListEntry[] {
-      if (store.timeMode == 'synchronized') {
+      if (replayStore.timeMode == 'synchronized') {
         return this.computeSynchronizedList();
       } else {
         return this.computeTemporalList();
@@ -113,16 +114,16 @@ export default Vue.extend({
     },
 
     currentEventId(): number {
-      const event = store.events[store.eventPos];
+      const event = replayStore.events[replayStore.eventPos];
       return event != undefined ? event.id : -1;
     }
   },
 
   methods: {
     onSyncPickClicked(eventId: number) {
-      const index = find(store.events, { id: eventId });
+      const index = indexOf(replayStore.events, { id: eventId });
       if (index != -1) {
-        navTo(store, this.$route, this.$router, {
+        navTo(draftStore, replayStore, this.$route, this.$router, {
           eventIndex: index,
         });
       } else {
@@ -131,9 +132,9 @@ export default Vue.extend({
     },
 
     onTempPickClicked(eventId: number, seatId: number) {
-      const index = find(store.events, { id: eventId });
+      const index = indexOf(replayStore.events, { id: eventId });
       if (index != -1) {
-        navTo(store, this.$route, this.$router, {
+        navTo(draftStore, replayStore, this.$route, this.$router, {
           eventIndex: index,
           selection: {
             type: 'seat',
@@ -150,7 +151,7 @@ export default Vue.extend({
       let currentPick = -1;
       const entries = [] as ListEntry[];
 
-      for (let event of store.events) {
+      for (let event of replayStore.events) {
         if (event.round != currentRound) {
           entries.push({
             type: 'synchronized-header',
@@ -175,7 +176,7 @@ export default Vue.extend({
 
     computeTemporalList() {
       const entries = [] as ListEntry[];
-      for (let event of store.events) {
+      for (let event of replayStore.events) {
         const pickAction = getPickAction(event);
 
         if (pickAction != null) {
@@ -185,7 +186,8 @@ export default Vue.extend({
             seatId: event.associatedSeat,
             round: event.round,
             pick: event.pick,
-            playerName: store.draft.seats[event.associatedSeat].player.name,
+            playerName:
+                replayStore.draft.seats[event.associatedSeat].player.name,
             cardName: pickAction.cardName,
           });
         } else {

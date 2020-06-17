@@ -4,67 +4,158 @@
       @mousedown.capture="onCaptureMouseDown"
       @mousedown="onBubbleMouseDown"
       >
-    <ControlsRow />
-    <div class="main">
-      <PlayerSelector class="table" />
-      <CardGrid class="grid" />
-    </div>
+    <template v-if="status == 'loaded'">
+      <ControlsRow />
+      <div class="main">
+        <PlayerSelector v-if="!draftStore.isActiveDraft" class="table" />
+        <DraftPicker v-if="showDraftPicker" class="picker" />
+        <CardGrid v-else class="grid" />
+      </div>
+    </template>
   </div>
 </template>
 
 <script lang="ts">
 import Vue from 'vue';
-import { parseDraft } from '../parse/parseDraft';
-import { SourceData } from '../parse/SourceData';
-import { getServerPayload } from '../parse/getServerPayload';
-
 import ControlsRow from './replay/ControlsRow.vue';
 import PlayerSelector from './replay/PlayerSelector.vue';
 import CardGrid from './replay/CardGrid.vue';
-import { SelectedView } from '../state/selection';
-import { applyReplayUrlState } from '../router/url_manipulation';
-import { globalClickTracker } from './infra/globalClickTracker';
+import DraftPicker from './replay/DraftPicker.vue';
 
-import { replayStore as store } from '../state/ReplayModule';
+import { rootStore } from '../state/store';
+import { authStore } from '../state/AuthStore';
+import { replayStore } from '../state/ReplayStore';
+import { draftStore, DraftStore } from '../state/DraftStore';
+
+import { SourceData } from '../parse/SourceData';
+import { SelectedView } from '../state/selection';
+import { applyReplayUrlState, navTo, parseDraftUrl } from '../router/url_manipulation';
+import { globalClickTracker } from './infra/globalClickTracker';
+import { getUserPosition } from '../draft/util/userIsSeated';
+import { tuple } from '../util/tuple';
+import { fetchEndpoint } from '../fetch/fetchEndpoint';
+import { routeDraft } from '../rest/api/draft/draft';
+import { FetchStatus } from './infra/FetchStatus';
+import { DraftState } from '../draft/DraftState';
+import { TimelineEvent } from '../draft/TimelineEvent';
 
 
 export default Vue.extend({
-  name: 'Replay',
-
   components: {
     ControlsRow,
     PlayerSelector,
+    DraftPicker,
     CardGrid,
   },
 
+  data() {
+    return {
+      targetDraftId: -1,
+      status: 'missing' as FetchStatus,
+      isFreshBundle: false,
+      unwatchDraftStore: null as null | (() => void),
+    };
+  },
+
   created() {
-    const srcData = getServerPayload();
-    const draft = parseDraft(srcData);
+    this.unwatchDraftStore = rootStore.watch(
+      (state) => tuple(draftStore.initialState, draftStore.events),
+      (newProps, oldProps) => this.onDraftStoreChanged(),
+    );
 
-    store.initDraft(draft);
+    this.applyCurrentRoute();
+  },
 
-    document.title = `Replay of ${store.draftName}`;
-
-    if (store.parseError == null) {
-      store.setTimeMode('synchronized');
-      store.goTo(store.events.length);
+  destroyed() {
+    if (this.unwatchDraftStore) {
+      this.unwatchDraftStore();
     }
-    applyReplayUrlState(store, this.$route);
   },
 
   watch: {
     $route(to, from) {
-      applyReplayUrlState(store, this.$route);
+      this.applyCurrentRoute();
+    },
+  },
+
+  computed: {
+    draftStore(): DraftStore {
+      return draftStore;
+    },
+
+    showDraftPicker(): boolean {
+      return draftStore.isActiveDraft
+          && replayStore.eventPos == replayStore.events.length;
     },
   },
 
   methods: {
+    applyCurrentRoute() {
+      const parsedUrl = parseDraftUrl(this.$route);
+      if (parsedUrl.draftId != this.targetDraftId) {
+        this.fetchDraft(parsedUrl.draftId);
+      } else {
+        applyReplayUrlState(replayStore, this.$route);
+      }
+    },
+
+    async fetchDraft(draftId: number) {
+      this.status = 'fetching';
+      this.targetDraftId = draftId;
+
+      // TODO: Handle errors
+      const payload =
+          await fetchEndpoint(routeDraft, { id: draftId });
+
+      if (payload.draftId != this.targetDraftId) {
+        return;
+      }
+
+      draftStore.loadDraft(payload);
+
+      document.title = `${draftStore.draftName}`;
+
+      this.isFreshBundle = true;
+      this.status = 'loaded';
+
+      // onDraftStoreChanged will fire afterwards
+    },
+
+    onDraftStoreChanged() {
+      console.log('Draft state changed, resyncing replay');
+      replayStore.sync();
+
+      if (this.isFreshBundle) {
+        console.log('Syncing state to URL...');
+        if (replayStore.selection == null) {
+          replayStore.setSelection({
+            type: 'seat',
+            id: this.getDefaultSeatSelection(),
+          });
+        }
+        applyReplayUrlState(replayStore, this.$route);
+      } else {
+        console.log('Syncing URL to state...');
+        navTo(draftStore, replayStore, this.$route, this.$router, {});
+      }
+      this.isFreshBundle = false;
+    },
+
     onCaptureMouseDown() {
       globalClickTracker.onCaptureGlobalMouseDown();
     },
 
     onBubbleMouseDown(e: MouseEvent) {
       globalClickTracker.onBubbleGlobalMouseDown(e);
+    },
+
+    getDefaultSeatSelection() {
+      let position =
+          getUserPosition(authStore.user?.id, draftStore.currentState);
+      if (position == -1) {
+        position = 0;
+      }
+      return position;
     },
   },
 });
@@ -89,7 +180,7 @@ export default Vue.extend({
   flex: 0 0 auto;
 }
 
-.grid {
+.grid, .picker {
   flex: 1;
 }
 </style>

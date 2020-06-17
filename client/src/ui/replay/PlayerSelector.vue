@@ -13,7 +13,7 @@ import Vue from "vue";
 import DraftSeatComponent from "./DraftSeat.vue"
 import { DraftState } from "../../draft/DraftState";
 
-import { replayStore as store } from '../../state/ReplayModule';
+import { replayStore } from '../../state/ReplayStore';
 
 
 export default Vue.extend({
@@ -23,7 +23,7 @@ export default Vue.extend({
 
   computed: {
     draft(): DraftState {
-      return store.draft;
+      return replayStore.draft;
     },
   },
 });

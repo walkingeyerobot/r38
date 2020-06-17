@@ -5,4 +5,5 @@ Vue.use(Vuex);
 
 export const rootStore = new Vuex.Store({
   state: { },
+  // strict: DEVELOPMENT,
 });

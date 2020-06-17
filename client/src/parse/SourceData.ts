@@ -1,47 +1,75 @@
+import { ScryfallColor, ScryfallRarity, ScryfallLayout } from '../draft/scryfall';
+
 export interface SourceData {
-  name: string;
+  draftId: number;
+  draftName: string;
   seats: SourceSeat[];
   events: SourceEvent[];
-  extraPack: SourceCard[] | null;
 }
 
 export interface SourceSeat {
-  name: string;
-  id: number;
-  // The first one is the player's picks, following by packs 1-3 in their seat
-  rounds: [SourceRound, SourceRound, SourceRound, SourceRound];
+  playerId: number;
+  playerName: string;
+  playerImage: string;
+  packs: SourcePack[];
 }
 
-export interface SourceRound {
-  round: number;
-  packs: [SourcePack];
-}
-
-export interface SourcePack {
-  cards: SourceCard[];
-}
+export type SourcePack = SourceCard[];
 
 export interface SourceCard {
-  r38Id: number;
   name: string;
-  tags: string;
-  number: string;
+  set: string;
+  collector_number: string;
+  mana_cost?: string;
   cmc: number;
-  color: string;
-  mtgo: string;
-  type: string;
-  edition: string;
+  colors?: ScryfallColor[];
+  color_identity: ScryfallColor[];
+  rarity: ScryfallRarity;
+  type_line: string;
+  layout: ScryfallLayout;
+  r38_data: {
+    id: number;
+    foil: boolean;
+    mtgo_id: number;
+    image_uris?: string[];
+    rating?: number;
+  };
+  card_faces?: Array<{
+    name: string;
+    colors?: ScryfallColor[];
+    mana_cost: string;
+    type_line: string;
+  }>;
 }
 
-export interface SourceEvent {
-  player: number;
-  announcements: string[];
-  card1: string;
-  card2: string;    // empty string if not a pick
+// Notes:
+// - `mana_cost` is missing for lands
+// - `colors` is missing for cards with more than one face
+// - `card_faces.mana_cost` is NOT missing for faces
+// - `r38_data.image_uris` is only very rarely present
+
+export type SourceEvent = NormalPickEvent | SecretPickEvent | ShadowPickEvent;
+
+export interface NormalPickEvent extends BaseEvent {
+  type: 'Pick';
   cards: number[];
   playerModified: number;
-  draftModified: number;
-  round: number;
+}
 
-  librarian?: boolean;
+export interface SecretPickEvent extends BaseEvent {
+  type: 'SecretPick';
+  draftModified: number;
+}
+
+export interface ShadowPickEvent extends BaseEvent {
+  type: 'ShadowPick';
+  cards: number[];
+}
+
+export interface BaseEvent {
+  position: number;
+  round: number;
+  announcements: string[];
+  draftModified: number;
+  librarian: boolean;
 }
