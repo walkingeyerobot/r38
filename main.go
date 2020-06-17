@@ -1667,7 +1667,7 @@ func GetJSONObject2(draftID int64) (DraftJSON2, error) {
 			log.Printf("making nil card data because of error %s", err.Error())
 			dataObj = nil
 		}
-		dataObj["r38_data"].(map[string]interface{})["id"] = cardID
+		dataObj["id"] = cardID
 
 		packRound--
 
