@@ -2,16 +2,19 @@
   <div class="_controls-row">
     <div class="start">
       <TimelineButton class="timeline-btn" />
-      <button @click="onStartClick" class="playback-btn">Start</button>
-      <button @click="onPrevClick" class="prev-btn playback-btn">Prev</button>
-      <button @click="onNextClick" class="next-btn playback-btn">Next</button>
-      <button @click="onEndClick" class="playback-btn">End</button>
+      <button
+          v-if="showPicksButton"
+          @click="onPicksClick"
+          class="picks-btn playback-btn"
+          >
+        {{ numPicks }} {{ numPicks == 1 ? 'pick' : 'picks' }} available
+      </button>
     </div>
     <div class="center">
       <div class="draft-name">
-        {{ store.draftName }}
+        {{ draftStore.draftName }}
         <span
-            v-if="store.parseError != null"
+            v-if="draftStore.parseError != null"
             class="parse-error-warning"
             >
           [parse error]
@@ -30,13 +33,15 @@ import Vue from 'vue';
 import TimelineButton from './controls_row/TimelineButton.vue';
 import SearchBox from './controls_row/SearchBox.vue';
 
+import { authStore, AuthStore } from '../../state/AuthStore';
+import { draftStore, DraftStore } from '../../state/DraftStore';
+import { replayStore, ReplayStore } from '../../state/ReplayStore';
+
 import { navTo } from '../../router/url_manipulation';
-import { getNextPickEventForSelectedPlayer, getNextPickEvent } from '../../state/util/getNextPickEventForSelectedPlayer';
 import { TimelineEvent } from '../../draft/TimelineEvent';
 import { globalClickTracker, UnhandledClickListener } from '../infra/globalClickTracker';
-
-import { replayStore as store, ReplayModule } from '../../state/ReplayModule';
-import { authStore, AuthStore } from '../../state/AuthStore';
+import { isAuthedUserSelected } from './isAuthedUserSelected';
+import { getUserPosition } from '../../state/util/userIsSeated';
 
 export default Vue.extend({
   components: {
@@ -45,35 +50,47 @@ export default Vue.extend({
   },
 
   computed: {
-    store(): ReplayModule {
-      return store;
+    replayStore(): ReplayStore {
+      return replayStore;
     },
 
     authStore(): AuthStore {
       return authStore;
     },
+
+    draftStore(): DraftStore {
+      return draftStore;
+    },
+
+    showPicksButton(): boolean {
+      const showDraftPicker =
+          replayStore.eventPos == replayStore.events.length
+          && isAuthedUserSelected(authStore, draftStore, replayStore);
+
+      return draftStore.isFilteredDraft && !showDraftPicker;
+    },
+
+    numPicks(): number {
+      const seatId =
+          getUserPosition(authStore.user?.id, draftStore.currentState);
+      if (seatId == -1) {
+        return 0;
+      } else {
+        return draftStore.currentState.seats[seatId].queuedPacks.packs.length;
+      }
+    },
   },
 
   methods: {
-    onNextClick() {
-      store.goNext();
-      navTo(store, this.$route, this.$router, {});
-    },
-
-    onPrevClick() {
-      store.goBack();
-      navTo(store, this.$route, this.$router, {});
-    },
-
-    onStartClick() {
-      navTo(store, this.$route, this.$router, {
-        eventIndex: 0,
-      });
-    },
-
-    onEndClick() {
-      navTo(store, this.$route, this.$router, {
-        eventIndex: store.events.length,
+    onPicksClick() {
+      const seatId =
+          getUserPosition(authStore.user?.id, draftStore.currentState);
+      navTo(draftStore, replayStore, this.$route, this.$router, {
+        eventIndex: replayStore.events.length,
+        selection: {
+          type: 'seat',
+          id: seatId
+        },
       });
     },
   },
@@ -118,32 +135,8 @@ export default Vue.extend({
   margin-right: 4px;
 }
 
-.playback-btn {
-  margin: 0 4px;
-  width: 55px;
-  height: 28px;
-
-  font-family: inherit;
-  font-size: 14px;
-
-  border: 1px solid #dcdcdc;
-  border-radius: 5px;
-
-  color: #444;
-  -webkit-appearance: none;
-}
-
-.playback-btn:focus {
-  outline: none;
-  border-color: #aaa;
-}
-
-.playback-btn:active {
-  border-color: #777;
-}
-
-.prev-btn, .next-btn {
-  width: 70px;
+.picks-btn {
+  width: auto;
 }
 
 .synchronize-label {
@@ -162,5 +155,31 @@ export default Vue.extend({
   width: 28px;
   margin-left: 10px;
   border-radius: 20px;
+}
+
+.playback-btn {
+  margin: 0 4px;
+  height: 28px;
+  min-width: 100px;
+  padding: 0 10px;
+
+  font-family: inherit;
+  font-size: 14px;
+
+  border: 1px solid #dcdcdc;
+  border-radius: 5px;
+
+  color: #444;
+  -webkit-appearance: none;
+
+}
+
+.playback-btn:focus {
+  outline: none;
+  border-color: #aaa;
+}
+
+.playback-btn:active {
+  border-color: #777;
 }
 </style>

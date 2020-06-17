@@ -1,7 +1,8 @@
-import { TimelineEvent } from './TimelineEvent';
+import { ScryfallColor, ScryfallRarity, ScryfallLayout } from './scryfall';
 
 export interface DraftState {
   seats: DraftSeat[];
+  shadowPool: CardContainer;
   unusedPacks: PackContainer;
   deadPacks: PackContainer;
   packs: Map<number, CardContainer>;
@@ -27,20 +28,26 @@ export type CardContainer = CardPack | PlayerPicks;
 export interface CardPack {
   type: 'pack';
   id: number;
-  cards: DraftCard[];
+  labelId: number;
+  cards: number[];
   originalSeat: number;
   round: number;
+  numDraftableCards: number;
+  epoch: number;
 }
 
 export interface PlayerPicks {
-  type: 'seat';
+  type: 'seat' | 'shadow-realm';
   id: number;
-  cards: DraftCard[];
+  owningSeat: number;
+  cards: number[];
 }
 
 export interface DraftPlayer {
-  seatPosition: number;
+  id: number;
   name: string;
+  iconUrl: string;
+  seatPosition: number;
   picks: CardContainer;
 }
 
@@ -49,11 +56,20 @@ export interface DraftCard {
   definition: MtgCard;
   /** The index position of this card in its original pack */
   sourcePackIndex: number;
+  hidden: boolean;
   pickedIn: CardPick[];
 }
 
 export interface CardPick {
-  seat: number,
+  /** The seat from whose packs the card was picked. */
+  fromSeat: number,
+
+  /**
+   * The seat that did the picking. If the shadow player is picking, this will
+   * be -1, otherwise it will match fromSeat.
+   */
+  bySeat: number,
+
   round: number,
   pick: number,
   eventId: number,
@@ -64,13 +80,27 @@ export interface MtgCard {
   name: string;
   set: string;
   collector_number: string;
+  mana_cost: string;
   cmc: number;
-  color: string;
-  // MTGO CatID
-  mtgo: string;
+  colors: ScryfallColor[];
+  color_identity: ScryfallColor[];
+  rarity: ScryfallRarity;
+  type_line: string;
+  layout: ScryfallLayout;
+
+  card_faces: Array<{
+    name: string;
+    colors: ScryfallColor[];
+    mana_cost: string;
+    type_line: string;
+  }> | null;
 
   // custom stuff
-  tags: string[];
+
+  // MTGO CatID
+  mtgo: number;
+
+  foil: boolean;
 
   // Post-processed name for quick string comparison
   searchName: string;
@@ -78,3 +108,5 @@ export interface MtgCard {
 
 export const PACK_LOCATION_UNUSED = -1;
 export const PACK_LOCATION_DEAD = -2;
+
+export const CONTAINER_SHADOW = -1;

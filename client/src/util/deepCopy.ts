@@ -31,7 +31,7 @@ function dc<T>(src: T, seen: Map<object, object>): T {
 
   let dst: object;
 
-  if (src instanceof Array) {
+  if (Array.isArray(src)) {
     const arr: any[] = [];
     seen.set(src, arr);
     for (let child of src) {

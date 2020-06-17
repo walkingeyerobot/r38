@@ -107,14 +107,14 @@ type TypedModule<S, D extends ModuleDef<S>> =
     & PublicGetterCollection<S, D['getters']>
     & PublicMutatorCollection<S, D['mutations']>
     & PublicActionCollection<S, D['actions']>
-    & Subscribe<S>
+    & ModuleFuncs<S>
     ;
 
 type Getter<S> = (state: Readonly<S>) => any;
 type Mutation<S> = (state: S, payload?: any) => void;
 type Action<S> = (context: S, payload?: any) => any;
 
-interface Subscribe<S> {
+interface ModuleFuncs<S> {
   subscribe<P extends MutationPayload>(fn: (mutation: P, state: S) => any): void;
 }
 

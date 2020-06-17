@@ -1,6 +1,6 @@
 <template>
   <div class="_deck-builder-screen">
-    <div class="main">
+    <div class="main" v-if="status == 'loaded'">
       <DeckBuilderPlayerSelector class="player-selector" />
       <DeckBuilderMain class="deckbuilder" />
     </div>
@@ -12,10 +12,13 @@ import Vue from 'vue';
 
 import DeckBuilderMain from './deckbuilder/DeckBuilderMain.vue';
 import DeckBuilderPlayerSelector from './deckbuilder/DeckBuilderPlayerSelector.vue';
-import { parseDraft } from "../parse/parseDraft";
-import { deckBuilderStore as store, DeckInitializer } from '../state/DeckBuilderModule';
-import { commitTimelineEvent } from '../draft/mutate';
-import { getServerPayload } from '../parse/getServerPayload';
+
+import { draftStore } from '../state/DraftStore';
+import { deckBuilderStore as deckStore, DeckInitializer } from '../state/DeckBuilderModule';
+
+import { fetchEndpoint } from '../fetch/fetchEndpoint';
+import { routeDraft } from '../rest/api/draft/draft';
+import { FetchStatus } from './infra/FetchStatus';
 
 
 export default Vue.extend({
@@ -24,31 +27,43 @@ export default Vue.extend({
     DeckBuilderPlayerSelector,
   },
 
-  created() {
-    const draft = this.generateCurrentDraft();
+  data() {
+    return {
+      status: 'missing' as FetchStatus,
+    };
+  },
 
-    const init = [] as DeckInitializer[];
-    store.initNames(draft.state.seats.map(seat => seat.player.name));
-    for (let seat of draft.state.seats) {
-      init.push({
-        draftName: draft.name,
-        pool: seat.player.picks.cards.concat(),
-      });
-    }
-    store.initDecks(init);
+  created() {
+    const draftId = parseInt(this.$route.params['draftId']);
+    this.fetchDraft(draftId);
   },
 
   methods: {
-    generateCurrentDraft() {
-      const srcData = getServerPayload();
-      const draft = parseDraft(srcData);
-      for (let event of draft.events) {
-        commitTimelineEvent(event, draft.state);
+    async fetchDraft(draftId: number) {
+      const payload =
+          await fetchEndpoint(routeDraft, { id: draftId });
+      this.status = 'loaded';
+
+      // TODO: Handle fetch error
+
+      draftStore.loadDraft(payload);
+      document.title = `${draftStore.draftName}`;
+
+      const state = draftStore.currentState;
+      const init = [] as DeckInitializer[];
+      deckStore.initNames(state.seats.map(seat => seat.player.name));
+      for (let seat of state.seats) {
+        init.push({
+          draftName: draftStore.draftName,
+          pool: seat.player.picks.cards
+              .map(cardId => draftStore.getCard(cardId)),
+        });
       }
-      return draft;
+      deckStore.initDecks(init);
     },
-  }
-})
+  },
+
+});
 </script>
 
 <style scoped>

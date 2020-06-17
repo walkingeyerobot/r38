@@ -14,7 +14,8 @@ export async function fetchEndpoint<T extends RestEndpoint>(
 
 export type EndpointParams<T extends RestEndpoint> =
     & DefaultEmpty<T['pathVars']>
-    & DefaultEmpty<T['queryVars']>;
+    & DefaultEmpty<T['queryVars']>
+    & DefaultEmpty<T['bodyVars']>;
 
 
 function buildFetchConfig<T extends RestEndpoint>(
@@ -31,13 +32,17 @@ function buildFetchConfig<T extends RestEndpoint>(
   };
 
   for (let v in endpoint.queryVars) {
+    if (config.params == undefined) {
+      config.params = {};
+    }
     config.params[v] = (params as MixedCollection)[v];
   }
 
   let hasBodyVars = false;
   const body = {} as MixedCollection;
   for (let v in endpoint.bodyVars) {
-    body[v] = (endpoint.bodyVars as MixedCollection)[v];
+    body[v] = (params as MixedCollection)[v];
+    hasBodyVars = true;
   }
   if (hasBodyVars) {
     config.data = body;

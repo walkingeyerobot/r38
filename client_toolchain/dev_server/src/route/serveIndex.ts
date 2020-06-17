@@ -13,7 +13,7 @@ export function serveIndex(req: Request, res: Response) {
         const userInfo = {
           name: 'red_weather',
           picture: `https://cdn.discordapp.com/avatars/117108584017428481/f91aadd54de1929aaad167cabc99bdb1.png`,
-          userId: 5,
+          userId: 1,
         };
 
         replacementStr =

@@ -16,9 +16,9 @@ the timeline.
         class="button"
         @click="onButtonClick"
         >
-      <div class="location-p1">{{ firstLocationLabel }}</div>
-      <div v-if="secondLocationLabel" class="location-p2">
-        {{ secondLocationLabel }}
+      <div class="location-p1">{{ labels[0] }}</div>
+      <div v-if="labels[1]" class="location-p2">
+        {{ labels[1] }}
       </div>
     </button>
     <TimelineSelector
@@ -32,10 +32,16 @@ the timeline.
 import Vue from 'vue';
 import TimelineSelector from './TimelineSelector.vue';
 import { globalClickTracker, UnhandledClickListener } from '../../infra/globalClickTracker';
-import { getNextPickEventForSelectedPlayer, getNextPickEvent } from '../../../state/util/getNextPickEventForSelectedPlayer';
 import { TimelineEvent } from '../../../draft/TimelineEvent';
 
-import { replayStore as store, ReplayModule } from '../../../state/ReplayModule';
+import { replayStore as store, ReplayStore, replayStore } from '../../../state/ReplayStore';
+import { CardPack, DraftSeat, DraftState } from '../../../draft/DraftState';
+import { draftStore } from '../../../state/DraftStore';
+import { find } from '../../../util/collection';
+import { isPickEvent } from '../../../state/util/isPickEvent';
+import { getPack, getSeat } from '../../../state/util/getters';
+import { checkNotNil } from '../../../util/checkNotNil';
+import { eventToString } from '../../../state/util/eventToString';
 
 
 export default Vue.extend({
@@ -51,30 +57,47 @@ export default Vue.extend({
   },
 
   computed: {
-    nextPickEvent(): TimelineEvent | null {
-      if (store.selection?.type == 'seat') {
-        return getNextPickEventForSelectedPlayer(store);
-      } else {
-        return getNextPickEvent(store);
-      }
-    },
+    labels(): [string, string | null] {
+      // If at the end of the draft, say that
+      // If a pack is selected, say what that pack is
+      // If a player is selected and has a pack, say what that pack is
+      // If a player is selected and doesn't have a pack, say what their most
+      //    recent pack and pick was
+      // If nothing is selected, just show the event number I guess
 
-    firstLocationLabel(): string {
-      const pickEvent = this.nextPickEvent;
-      if (pickEvent != null) {
-        return `Pack ${pickEvent.round}`;
-      } else if (store.eventPos >= store.events.length) {
-        return `End of draft`;
-      } else {
-        return `Event ${store.events[store.eventPos].id}`;
-      }
-    },
+      if (draftStore.isComplete
+          && replayStore.eventPos == replayStore.events.length) {
+        return ['End of draft', null];
 
-    secondLocationLabel(): string | null {
-      if (this.nextPickEvent != null) {
-        return `Pick ${this.nextPickEvent.pick + 1}`;
+      } else if (replayStore.selection?.type == 'pack') {
+        const pack = getPack(replayStore.draft, replayStore.selection.id);
+
+        // TODO: Don't hard-code pack size
+        return [`Pack ${pack.round}`, `Pick ${15 - pack.cards.length + 1}`];
+
+      } else if (replayStore.selection?.type == 'seat') {
+        const seat = getSeat(replayStore.draft, replayStore.selection.id);
+        const queuedPack = seat.queuedPacks.packs[0];
+        if (queuedPack != undefined) {
+          const pick =
+              getPickCountForPlayer(
+                  replayStore,
+                  seat.position,
+                  queuedPack.round);
+          return [`Pack ${queuedPack.round}`, `Pick ${pick + 1}`];
+        } else {
+          const event = getMostRecentPickEvent(replayStore, seat.position);
+          if (event != null) {
+            return [`Pack ${event.round}`, `Pick ${event.pick + 1}`];
+          } else {
+            // Player hasn't picked anything yet, so assume p1p1
+            return [`Pack 1`, `Pick 1`];
+          }
+        }
+
       } else {
-        return null;
+        return [`Event ${replayStore.eventPos}`, null];
+
       }
     },
   },
@@ -107,6 +130,34 @@ export default Vue.extend({
   },
 
 });
+
+function getPickCountForPlayer(
+    store: ReplayStore,
+    seat: number,
+    round: number,
+) {
+  let count = 0;
+  for (let i = store.eventPos - 1; i >= 0; i--) {
+    const event = store.events[i];
+    if (event.associatedSeat == seat && isPickEvent(event)) {
+      if (event.round != round) {
+        break;
+      }
+      count++;
+    }
+  }
+  return count;
+}
+
+function getMostRecentPickEvent(store: ReplayStore, seatId: number) {
+  for (let i = store.eventPos - 1; i >= 0; i--) {
+    const event = store.events[i];
+    if (event.associatedSeat == seatId && isPickEvent(event)) {
+      return event;
+    }
+  }
+  return null;
+}
 </script>
 
 <style scoped>

@@ -7,5 +7,8 @@ export const routeDraft = endpoint({
   pathVars: {} as {
     id: number;
   },
+  queryVars: {
+    as: 0,
+  } as { as?: number },
   response: {} as SourceData,
 });

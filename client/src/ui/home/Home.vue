@@ -19,7 +19,12 @@
               seats available
             </div>
           </div>
-          <button class="joinable-btn">Join</button>
+          <button
+              class="joinable-btn"
+              @click="onJoinClicked(draft.id)"
+              >
+            Join
+          </button>
         </div>
       </div>
 
@@ -75,6 +80,12 @@ export default Vue.extend({
       return this.drafts
           .filter(value => value.status != 'joinable')
           .sort((a, b) => b.id - a.id);
+    },
+  },
+
+  methods: {
+    onJoinClicked(draftId: number) {
+      console.log('Joining', draftId);
     },
   },
 });

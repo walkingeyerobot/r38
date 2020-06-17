@@ -83,29 +83,31 @@ gets its own entry.
 
 <script lang="ts">
 import Vue from 'vue';
-import { navTo } from '../../../router/url_manipulation';
-import { isPickEvent, getPickAction } from '../../../state/util/isPickEvent';
-import { find } from '../../../util/collection';
-import { TimelineEvent } from '../../../draft/TimelineEvent';
+import { replayStore } from '../../../state/ReplayStore';
+import { draftStore } from '../../../state/DraftStore';
 
-import { replayStore as store } from '../../../state/ReplayModule';
+import { navTo } from '../../../router/url_manipulation';
+import { isPickEvent } from '../../../state/util/isPickEvent';
+import { eventToString } from '../../../state/util/eventToString';
+import { indexOf } from '../../../util/collection';
+import { TimelineEvent, ActionMoveCard, ActionMovePack } from '../../../draft/TimelineEvent';
 
 
 export default Vue.extend({
   computed: {
     synchronizeTimeline: {
       get() {
-        return store.timeMode == 'synchronized';
+        return replayStore.timeMode == 'synchronized';
       },
 
       set(value) {
-        store.setTimeMode(value ? 'synchronized' : 'original');
-        navTo(store, this.$route, this.$router, {});
+        replayStore.setTimeMode(value ? 'synchronized' : 'original');
+        navTo(draftStore, replayStore, this.$route, this.$router, {});
       }
     },
 
     listEntries(): ListEntry[] {
-      if (store.timeMode == 'synchronized') {
+      if (replayStore.timeMode == 'synchronized') {
         return this.computeSynchronizedList();
       } else {
         return this.computeTemporalList();
@@ -113,16 +115,16 @@ export default Vue.extend({
     },
 
     currentEventId(): number {
-      const event = store.events[store.eventPos];
+      const event = replayStore.events[replayStore.eventPos];
       return event != undefined ? event.id : -1;
     }
   },
 
   methods: {
     onSyncPickClicked(eventId: number) {
-      const index = find(store.events, { id: eventId });
+      const index = indexOf(replayStore.events, { id: eventId });
       if (index != -1) {
-        navTo(store, this.$route, this.$router, {
+        navTo(draftStore, replayStore, this.$route, this.$router, {
           eventIndex: index,
         });
       } else {
@@ -131,9 +133,9 @@ export default Vue.extend({
     },
 
     onTempPickClicked(eventId: number, seatId: number) {
-      const index = find(store.events, { id: eventId });
+      const index = indexOf(replayStore.events, { id: eventId });
       if (index != -1) {
-        navTo(store, this.$route, this.$router, {
+        navTo(draftStore, replayStore, this.$route, this.$router, {
           eventIndex: index,
           selection: {
             type: 'seat',
@@ -150,7 +152,7 @@ export default Vue.extend({
       let currentPick = -1;
       const entries = [] as ListEntry[];
 
-      for (let event of store.events) {
+      for (let event of replayStore.events) {
         if (event.round != currentRound) {
           entries.push({
             type: 'synchronized-header',
@@ -174,31 +176,53 @@ export default Vue.extend({
     },
 
     computeTemporalList() {
-      const entries = [] as ListEntry[];
-      for (let event of store.events) {
-        const pickAction = getPickAction(event);
-
-        if (pickAction != null) {
-          entries.push({
-            type: 'temporal-pick',
-            eventId: event.id,
-            seatId: event.associatedSeat,
-            round: event.round,
-            pick: event.pick,
-            playerName: store.draft.seats[event.associatedSeat].player.name,
-            cardName: pickAction.cardName,
-          });
-        } else {
-          entries.push({
-            type: 'temporal-other',
-            eventId: event.id,
-          });
-        }
-      }
-      return entries;
+      return replayStore.events.map(event => eventToTemporalListEntry(event));
     },
   },
 });
+
+function eventToTemporalListEntry(event: TimelineEvent): ListEntry {
+  if (event.type == 'pick') {
+    // TODO: Support multi-pick and returned cards
+    const pickAction = getFirstPickAction(event);
+
+    return {
+      type: 'temporal-pick',
+      eventId: event.id,
+      round: event.round,
+      seatId: event.associatedSeat,
+      pick: event.pick,
+      playerName: replayStore.draft.seats[event.associatedSeat].player.name,
+      cardName: pickAction.cardName,
+    };
+
+  } else if (event.type == 'hidden-pick') {
+    return {
+      type: 'temporal-pick',
+      eventId: event.id,
+      round: event.round,
+      seatId: event.associatedSeat,
+      pick: event.pick,
+      playerName: replayStore.draft.seats[event.associatedSeat].player.name,
+      cardName: 'a card',
+    };
+
+  } else {
+    return {
+      type: 'temporal-other',
+      eventId: event.id,
+    };
+  }
+}
+
+function getFirstPickAction(event: TimelineEvent) {
+  for (let action of event.actions) {
+    if (action.type == 'move-card' && action.subtype == 'pick-card') {
+      return action;
+    }
+  }
+  throw new Error(`Event has ${eventToString(event)} no pick actions`);
+}
 
 type ListEntry =
     | SynchronizedHeaderEntry

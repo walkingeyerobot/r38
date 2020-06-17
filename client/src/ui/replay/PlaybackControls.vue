@@ -1,38 +1,20 @@
 <template>
-<div class="_player-selector">
-  <PlaybackControls class="playback-controls" />
-
-  <draft-seat-component
-      v-for="seat in draft.seats"
-      :key="seat.position"
-      :seat="seat"
-      />
+<div class="_playback-controls">
+  <button @click="onStartClick" class="playback-btn">Start</button>
+  <button @click="onPrevClick" class="prev-btn playback-btn">Prev</button>
+  <button @click="onNextClick" class="next-btn playback-btn">Next</button>
+  <button @click="onEndClick" class="playback-btn">End</button>
 </div>
 </template>
 
 <script lang="ts">
 import Vue from 'vue';
-import DraftSeatComponent from './DraftSeat.vue'
-import PlaybackControls from './PlaybackControls.vue';
 import { replayStore } from '../../state/ReplayStore';
 import { draftStore } from '../../state/DraftStore';
 
-import { DraftState } from '../../draft/DraftState';
 import { navTo } from '../../router/url_manipulation';
 
-
 export default Vue.extend({
-  components: {
-    DraftSeatComponent,
-    PlaybackControls,
-  },
-
-  computed: {
-    draft(): DraftState {
-      return replayStore.draft;
-    },
-  },
-
   methods: {
     onNextClick() {
       replayStore.goNext();
@@ -60,18 +42,38 @@ export default Vue.extend({
 </script>
 
 <style scoped>
-._player-selector {
-  user-select: none;
-  cursor: default;
 
+._playback-controls {
   display: flex;
-  flex-direction: column;
-  overflow-y: auto;
-
-  border-right: 1px solid #EAEAEA;
 }
 
-.playback-controls {
-  padding: 10px 5px;
+.playback-btn {
+  margin: 0 4px;
+  width: 55px;
+  height: 28px;
+
+  font-family: inherit;
+  font-size: 14px;
+
+  border: 1px solid #dcdcdc;
+  border-radius: 5px;
+
+  color: #444;
+  -webkit-appearance: none;
+
+  flex: 1;
+}
+
+.playback-btn:focus {
+  outline: none;
+  border-color: #aaa;
+}
+
+.playback-btn:active {
+  border-color: #777;
+}
+
+.prev-btn, .next-btn {
+  width: 70px;
 }
 </style>
