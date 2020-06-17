@@ -1,11 +1,19 @@
 export interface TimelineEvent {
   id: number;
+  type: TimelineEventType,
   associatedSeat: number;
   round: number;
   roundEpoch: number;
   pick: number;
   actions: TimelineAction[];
 }
+
+export type TimelineEventType =
+    | 'pick'
+    | 'hidden-pick'
+    | 'shadow-pick'
+    | 'open-pack'
+    ;
 
 export type TimelineAction =
     | ActionMoveCard
@@ -16,7 +24,7 @@ export type TimelineAction =
 
 export interface ActionMoveCard {
   type: 'move-card';
-  subtype: 'pick-card' | 'return-card',
+  subtype: 'pick-card' | 'return-card' | 'shadow-pick',
   cardName: string;
   card: number;
   from: number;
@@ -25,10 +33,11 @@ export interface ActionMoveCard {
 
 export interface ActionMovePack {
   type: 'move-pack';
+  subtype: 'open' | 'pass' | 'discard';
   pack: number;
   from: number;
   to: number;
-  queuePosition: 'front' | 'end';
+  epoch: 'increment' | number;
 }
 
 export interface ActionAssignRound {

@@ -12,8 +12,8 @@ Displays a single card
     </div>
     <img
           class="card-img"
-          :title="card.definition.name"
-          :src="getImageSrc(card)"
+          :alt="renderInfo.displayName"
+          :src="renderInfo.imageUrl"
           >
   </div>
 </template>
@@ -35,6 +35,14 @@ export default Vue.extend({
   },
 
   computed: {
+    renderInfo(): CardRenderInfo {
+      return {
+        displayName:
+            this.card.hidden ? 'Unknown card' : this.card.definition.name,
+        imageUrl: getImageSrc(this.card),
+      };
+    },
+
     underlayerClass() {
       switch (this.selectionStyle) {
         case 'picked':
@@ -58,17 +66,29 @@ export default Vue.extend({
   },
 
   methods: {
-    getImageSrc(card: DraftCard): string {
-      if (process.env.NODE_ENV == 'development') {
-        return `http://api.scryfall.com/cards/${card.definition.set}/`
-            + `${card.definition.collector_number}?format=image&version=normal`;
-      } else {
-        return `/proxy/${card.definition.set}/`
-            + `${card.definition.collector_number}`;
-      }
-    },
-  }
+
+  },
 });
+
+interface CardRenderInfo {
+  displayName: string;
+  imageUrl: string;
+}
+
+function getImageSrc(card: DraftCard): string {
+  if (card.hidden) {
+    // HACK HACK HACK
+    return `https://media.magic.wizards.com/image_legacy_migration/magic/`
+        + `images/mtgcom/fcpics/making/mr224_back.jpg`;
+  } else if (DEVELOPMENT) {
+    return `http://api.scryfall.com/cards/${card.definition.set}/`
+        + `${card.definition.collector_number}?format=image&version=normal`;
+  } else {
+    return `/proxy/${card.definition.set}/`
+        + `${card.definition.collector_number}`;
+  }
+}
+
 </script>
 
 <style scoped>
@@ -108,7 +128,7 @@ export default Vue.extend({
   box-shadow: 0 1px 4px 1.2px rgba(0, 0, 0, 0.7);
   opacity: 0;
   transition: opacity 110ms cubic-bezier(0.33, 1, 0.68, 1);
-  border-radius: 9px;
+  border-radius: 9.5px;
 }
 
 .selected > .shadow {
@@ -144,7 +164,7 @@ export default Vue.extend({
   width: 200px;
   height: 279px;
   background: #AAA;
-  border-radius: 9px;
+  border-radius: 10px;
   overflow: hidden;
 }
 </style>

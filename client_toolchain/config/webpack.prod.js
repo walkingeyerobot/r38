@@ -19,11 +19,4 @@ module.exports = merge.smart(common, {
     // from.
     path: path.resolve(PROJECT_ROOT, 'static/dist'),
   },
-
-  plugins: [
-    new webpack.NormalModuleReplacementPlugin(
-      /src\/fake_data\/devReplayData\.ts$/,
-      './devReplayData.stub.ts',
-    ),
-  ],
 });

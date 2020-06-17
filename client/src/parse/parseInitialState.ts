@@ -1,146 +1,191 @@
-import { CardContainer, CardPack, DraftCard, DraftSeat, DraftState, PlayerPicks, PackContainer, PACK_LOCATION_UNUSED, PACK_LOCATION_DEAD } from '../draft/DraftState';
-import { SourceCard, SourceData } from './SourceData';
+import { CardContainer, CardPack, DraftCard, DraftSeat, DraftState, PlayerPicks, PackContainer, PACK_LOCATION_UNUSED, PACK_LOCATION_DEAD, MtgCard, CONTAINER_SHADOW } from '../draft/DraftState';
+import { SourceCard, SourceData, SourceSeat } from './SourceData';
 
 
-export function parseInitialState(srcData: SourceData): DraftState {
+export function parseInitialState(srcData: SourceData): StateParseResult {
   return new StateParser().parse(srcData);
 }
 
 class StateParser {
   private _nextLocationId = 0;
-  private _nextPackId = 0;
+  private _nextContainerId = 0;
+  private _nextPackLabelId = 0;
+  private _packs = new Map<number, CardContainer>();
+  private _locations = new Map<number, PackContainer>();
+  private _cards = new Map<number, DraftCard>();
 
-  parse(srcData: SourceData): DraftState {
-    const packMap = new Map<number, CardContainer>();
-    const locationMap = new Map<number, PackContainer>();
-
+  parse(srcData: SourceData): StateParseResult {
     const unusedPacks =
-        this.buildPackLocation(
-            PACK_LOCATION_UNUSED,
-            'Unused packs',
-            locationMap);
+        this.buildPackLocation(PACK_LOCATION_UNUSED, 'Unused packs');
 
     const deadPacks =
-        this.buildPackLocation(
-            PACK_LOCATION_DEAD,
-            'Dead packs',
-            locationMap);
+        this.buildPackLocation(PACK_LOCATION_DEAD, 'Dead packs');
 
-    const state: DraftState = {
-      seats: [],
-      unusedPacks,
-      deadPacks,
-      packs: packMap,
-      locations: locationMap,
+    const shadowPool: PlayerPicks = {
+      type: 'shadow-realm',
+      id: CONTAINER_SHADOW,
+      owningSeat: -1,
+      cards: [],
     };
+    this._packs.set(shadowPool.id, shadowPool);
 
+    const seats = [] as DraftSeat[];
     for (const [i, srcSeat] of srcData.seats.entries()) {
-      const playerPicks: PlayerPicks = {
-        id: this._nextPackId++,
-        type: 'seat',
-        cards: []
-      };
-      packMap.set(playerPicks.id, playerPicks);
-
-      const seat: DraftSeat = {
-        position: i,
-        player: {
-          name: srcSeat.name || FAKE_PLAYER_NAMES[i],
-          seatPosition: i,
-          picks: playerPicks,
-        },
-        originalPacks: [],
-        queuedPacks:
-            this.buildPackLocation(
-                this._nextLocationId++,
-                `queuedPacks for seat ${i}`,
-                locationMap),
-        unopenedPacks:
-            this.buildPackLocation(
-                this._nextLocationId++,
-                `unopenedPacks for seat ${i}`,
-                locationMap),
-      };
-      state.seats.push(seat);
+      seats.push(this.buildSeat(i, srcSeat));
     }
 
-    for (const [i, srcSeat] of srcData.seats.entries()) {
-      const seat = state.seats[i];
-      for (let j = 1; j < srcSeat.rounds.length; j++) {
-        const pack: CardPack = {
-          id: this._nextPackId++,
-          type: 'pack',
-          cards: this.parsePack(srcSeat.rounds[j].packs[0].cards),
-          originalSeat: i,
-          round: j,
-        };
-        seat.unopenedPacks.packs.push(pack);
-        seat.originalPacks.push(pack.id);
-        packMap.set(pack.id, pack);
-      }
-    }
-
-    // Add the extra pack to the unused packs area
-    const extraPack: CardPack = {
-      id: this._nextPackId++,
-      type: 'pack',
-      cards: this.parsePack(srcData.extraPack || []),
-      originalSeat: -1,
-      round: -1,
+    return {
+      state: {
+        seats,
+        shadowPool,
+        unusedPacks,
+        deadPacks,
+        packs: this._packs,
+        locations: this._locations
+      },
+      cards: this._cards,
     };
-    state.unusedPacks.packs.push(extraPack);
-    packMap.set(extraPack.id, extraPack);
-
-    return state;
   }
 
-  private parsePack(srcPack: SourceCard[]) {
-    const pack = [] as DraftCard[];
+  private buildSeat(position: number, src: SourceSeat) {
+    const playerPicks: PlayerPicks = {
+      type: 'seat',
+      id: this._nextContainerId++,
+      owningSeat: position,
+      cards: [],
+    };
+    this._packs.set(playerPicks.id, playerPicks);
+
+    const seat: DraftSeat = {
+      position: position,
+      player: {
+        id: src.playerId,
+        name: src.playerName || 'Unknown player',
+        iconUrl: src.playerImage,
+        seatPosition: position,
+        picks: playerPicks,
+      },
+      originalPacks: [],
+      queuedPacks:
+          this.buildPackLocation(
+              this._nextLocationId++,
+              `queuedPacks for seat ${position}`),
+      unopenedPacks:
+          this.buildPackLocation(
+              this._nextLocationId++,
+              `unopenedPacks for seat ${position}`),
+    };
+
+    this.parsePacks(seat, src);
+
+    return seat;
+  }
+
+  private parsePacks(seat: DraftSeat, src: SourceSeat) {
+    for (let i = 0; i < src.packs.length; i++) {
+      const srcPack = src.packs[i];
+      const cards = this.parseCards(srcPack);
+      const pack: CardPack = {
+        type: 'pack',
+        id: this._nextContainerId++,
+        round: i + 1,
+        epoch: 0,
+        cards: cards,
+        numDraftableCards: cards.length,
+        labelId: this._nextPackLabelId,
+        originalSeat: seat.position,
+      };
+      seat.unopenedPacks.packs.push(pack);
+      seat.originalPacks.push(pack.id);
+      this._packs.set(pack.id, pack);
+    }
+  }
+
+  private parseCards(srcPack: SourceCard[]) {
+    const cards = [] as number[];
     for (let i = 0; i < srcPack.length; i++) {
-      const srcPick = srcPack[i];
-      pack.push({
-        id: srcPick.r38Id,
-        definition: {
-          name: srcPick.name,
-          set: srcPick.edition,
-          collector_number: srcPick.number,
-          cmc: srcPick.cmc,
-          color: srcPick.color,
-          mtgo: srcPick.mtgo || "",
-          tags: srcPick.tags.split(", "),
-          searchName: srcPick.name.toLocaleLowerCase().normalize(),
-        },
+      const srcCard = srcPack[i];
+      const card: DraftCard = {
+        id: srcCard.id,
         sourcePackIndex: i,
         pickedIn: [],
-      });
+        hidden: srcCard.hidden || false,
+        // TODO: We should freeze the entire DraftCard, but pickedIn is still
+        // mutable at the moment.
+        definition: Object.freeze(parseCardDefinition(srcCard)),
+      };
+      if (this._cards.has(card.id)) {
+        throw new Error(`Duplicate card ${card.id}`);
+      }
+      this._cards.set(card.id, card);
+
+      cards.push(card.id);
     }
 
-    return pack;
+    return cards;
   }
 
   private buildPackLocation(
       id: number,
       label: string,
-      registrationMap: Map<number, PackContainer>,
   ): PackContainer {
     const packLocation = {
       id: id,
       packs: [],
       label: label,
     };
-    registrationMap.set(id, packLocation);
+    this._locations.set(id, packLocation);
     return packLocation;
   }
 }
 
+function parseCardDefinition(src: SourceCard): MtgCard {
+  if (src.hidden) {
+    return {
+      name: 'Hidden card',
+      mana_cost: '',
+      cmc: 0,
+      collector_number: '-1',
+      card_faces: [],
+      colors: [],
+      color_identity: [],
+      foil: false,
+      layout: 'normal',
+      mtgo: -1,
+      rarity: 'common',
+      set: '',
+      type_line: '',
+      searchName: '',
+    };
+  } else {
+    return {
+      name: src.scryfall.name,
 
-const FAKE_PLAYER_NAMES = [
-  'Tamanna',
-  'Anna-Marie',
-  'Abbigail',
-  'Riley',
-  'Matas',
-  'Clive',
-  'Axl',
-  'Isobel',
-];
+      cmc: src.scryfall.cmc,
+      collector_number: src.scryfall.collector_number,
+      card_faces: (src.scryfall.card_faces || [])
+          .map(face => ({
+            name: face.name,
+            colors: face.colors || [],
+            mana_cost: face.mana_cost,
+            type_line: face.type_line,
+          })),
+      color_identity: src.scryfall.color_identity,
+      colors: src.scryfall.colors || [],
+      foil: src.foil,
+      layout: src.scryfall.layout,
+      mana_cost: src.scryfall.mana_cost || '',
+      mtgo: src.mtgo_id,
+      rarity: src.scryfall.rarity,
+      set: src.scryfall.set,
+      type_line: src.scryfall.type_line,
+
+      searchName: src.scryfall.name.toLocaleLowerCase().normalize(),
+    };
+  }
+}
+
+interface StateParseResult {
+  state: DraftState,
+  cards: Map<number, DraftCard>,
+}

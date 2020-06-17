@@ -13,7 +13,7 @@ function main() {
 
   configureExpress(app);
   configureRoutes(app);
-  configureApiRoutes(app);
+  configureApiRoutes(app, true);
 
   app.listen(8080, 'localhost', () => {
     console.log('Listening on http://localhost:8080');
@@ -22,7 +22,9 @@ function main() {
 }
 
 function configureExpress(app: express.Express) {
-  app.use(bodyParser.json());
+  // TODO: Re-enable this if we need it and if we can figure out how to let the
+  // proxy have higher priority
+  // app.use(bodyParser.json());
 
   const compiler = webpack(webpackConfig);
   app.use(webpackDevMiddleware(compiler, {
@@ -43,6 +45,7 @@ const HTML_PATHS = [
   '/login',
 
   '/draft/:id',
+  '/draft/:id/*',
 
   '/replay/*',
   '/deckbuilder/*',

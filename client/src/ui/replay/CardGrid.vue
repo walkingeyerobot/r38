@@ -27,12 +27,12 @@
         >
 
       <CardView
-          v-for="card in selectedSeat.player.picks.cards"
-          :key="card.id"
-          :card="card"
-          :selectionStyle="getSelectionStyle(card.id)"
+          v-for="cardId in selectedSeat.player.picks.cards"
+          :key="cardId"
+          :card="draftStore.getCard(cardId)"
+          :selectionStyle="getSelectionStyle(cardId)"
           class="card"
-          @click.native="onPoolCardClicked(card.id)"
+          @click.native="onPoolCardClicked(cardId)"
           />
     </div>
 
@@ -47,7 +47,9 @@ import { SelectedView } from '../../state/selection';
 import { navTo } from '../../router/url_manipulation';
 import CardView from './CardView.vue';
 
-import { replayStore as store, ReplayModule } from '../../state/ReplayModule';
+import { draftStore, DraftStore } from '../../state/DraftStore';
+import { replayStore, ReplayStore } from '../../state/ReplayStore';
+import { checkNotNil } from '../../util/checkNotNil';
 
 
 export default Vue.extend({
@@ -57,15 +59,19 @@ export default Vue.extend({
   },
 
   computed: {
+    draftStore(): DraftStore {
+      return draftStore;
+    },
+
     selection(): SelectedView | null {
-      return store.selection;
+      return replayStore.selection;
     },
 
     selectedSeat(): DraftSeat | null  {
       if (this.selection == null || this.selection.type == 'pack') {
         return null;
       } else {
-        return store.draft.seats[this.selection.id]
+        return replayStore.draft.seats[this.selection.id]
       }
       return null;
     },
@@ -76,9 +82,9 @@ export default Vue.extend({
       if (this.selection == null) {
         return null;
       } else if (this.selection.type == 'pack') {
-        pack = requirePack(store.draft.packs.get(this.selection.id));
+        pack = requirePack(replayStore.draft.packs.get(this.selection.id));
       } else {
-        const player = store.draft.seats[this.selection.id];
+        const player = replayStore.draft.seats[this.selection.id];
         if (player.queuedPacks.packs.length > 0) {
           pack = player.queuedPacks.packs[0];
         }
@@ -92,7 +98,7 @@ export default Vue.extend({
         return null;
       } else {
         return this.selectedPack.cards
-            .concat()
+            .map(id => checkNotNil(draftStore.cards.get(id)))
             .sort((a, b) => a.sourcePackIndex - b.sourcePackIndex);
       }
     },
@@ -103,8 +109,8 @@ export default Vue.extend({
         return null;
       }
 
-      const eventPos = store.eventPos;
-      const events = store.events;
+      const eventPos = replayStore.eventPos;
+      const events = replayStore.events;
       for (let i = eventPos; i < events.length; i++) {
         const event = events[i];
         for (let action of event.actions) {
@@ -152,7 +158,9 @@ export default Vue.extend({
     },
 
     onPackCardClicked(cardId: number) {
-      this.jumpToPick(cardId, 'future');
+      if (!draftStore.isFilteredDraft) {
+        this.jumpToPick(cardId, 'future');
+      }
     },
 
     onPoolCardClicked(cardId: number) {
@@ -163,13 +171,14 @@ export default Vue.extend({
       const pick =
           findPick(
               cardId,
-              store.eventPos,
-              store.events,
+              replayStore.eventPos,
+              replayStore.events,
               direction);
       if (pick != null) {
-        const adjustedIndex = maybeAdjustToStartOfEpoch(store, pick.index);
+        const adjustedIndex =
+            maybeAdjustToStartOfEpoch(replayStore, pick.index);
 
-        navTo(store, this.$route, this.$router, {
+        navTo(draftStore, replayStore, this.$route, this.$router, {
           eventIndex: adjustedIndex,
           selection: {
             type: 'seat',
@@ -181,7 +190,7 @@ export default Vue.extend({
   },
 });
 
-function maybeAdjustToStartOfEpoch(store: ReplayModule, index: number) {
+function maybeAdjustToStartOfEpoch(store: ReplayStore, index: number) {
   let newIndex = index;
   const event = store.events[index];
   if (event != undefined && store.timeMode == 'synchronized') {

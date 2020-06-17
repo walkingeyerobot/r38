@@ -75,12 +75,13 @@ import Vue from 'vue';
 import { CardContainer, MtgCard } from '../../../draft/DraftState';
 import { navTo } from '../../../router/url_manipulation';
 import { SelectedView } from '../../../state/selection';
-import { find } from '../../../util/collection';
+import { indexOf } from '../../../util/collection';
 import { TimelineEvent, TimelineAction } from '../../../draft/TimelineEvent';
 import { globalClickTracker, UnhandledClickListener } from '../../infra/globalClickTracker';
 
-import { replayStore as store } from '../../../state/ReplayModule';
-
+import { replayStore } from '../../../state/ReplayStore';
+import { draftStore } from '../../../state/DraftStore';
+import { CardLocation } from '../../../state/DeckBuilderModule';
 
 export default Vue.extend({
   data() {
@@ -140,22 +141,24 @@ export default Vue.extend({
     },
 
     onCardNameClick(result: CardSearchResult) {
-      navTo(store, this.$route, this.$router, {
-        selection: {
-          id: result.packId,
-          type: result.packType,
-        },
-      });
+      if (result.packType != 'shadow-realm') {
+        navTo(draftStore, replayStore, this.$route, this.$router, {
+          selection: {
+            id: result.packId,
+            type: result.packType,
+          },
+        });
+      }
     },
 
     onPickTimeClick(pick: CardSearchResult['picked']) {
       if (pick != null) {
-        const index = find(store.events, { id: pick.eventId });
+        const index = indexOf(replayStore.events, { id: pick.eventId });
         if (index != -1) {
-          navTo(store, this.$route, this.$router, {
+          navTo(draftStore, replayStore, this.$route, this.$router, {
             eventIndex: index,
             selection: {
-              id: pick.seatId,
+              id: pick.fromSeat,
               type: 'seat',
             },
           });
@@ -172,27 +175,36 @@ export default Vue.extend({
 
       const finalQuery = query.toLocaleLowerCase().normalize();
       const results = [] as CardSearchResult[];
-      for (let pack of store.draft.packs.values()) {
-        for (let card of pack.cards) {
+      for (let pack of replayStore.draft.packs.values()) {
+        for (let cardId of pack.cards) {
+          const card = draftStore.getCard(cardId);
 
           if (card.definition.searchName.indexOf(query) != -1) {
-            const pickEvent = card.pickedIn[card.pickedIn.length - 1];
+            const packId = pack.type == 'seat' ? pack.owningSeat : pack.id;
 
-            results.push({
+            const result: CardSearchResult = {
               type: 'card',
-              packId: pack.id,
               packType: pack.type,
+              packId: packId,
               card: card.definition,
-              picked: pickEvent != null ? {
-                playerName:
-                    store.draft.seats[pickEvent.seat]
-                        .player.name,
-                seatId: pickEvent.seat,
-                eventId: pickEvent.eventId,
-                round: pickEvent.round,
-                pick: pickEvent.pick,
-              } : null,
-            });
+              picked: null,
+            };
+
+            const pick = card.pickedIn[card.pickedIn.length - 1];
+            if (pick != null) {
+              const playerName = pick.bySeat == -1
+                  ? 'someone'
+                  : replayStore.draft.seats[pick.bySeat].player.name;
+              result.picked = {
+                playerName,
+                fromSeat: pick.fromSeat,
+                eventId: pick.eventId,
+                round: pick.round,
+                pick: pick.pick,
+              };
+            }
+
+            results.push(Object.freeze(result));
           }
         }
       }
@@ -211,11 +223,11 @@ type SearchResult = CardSearchResult;
 interface CardSearchResult {
   type: 'card',
   packId: number,
-  packType: SelectedView['type'],
+  packType: CardContainer['type'],
   card: MtgCard,
   picked: {
     playerName: string,
-    seatId: number,
+    fromSeat: number,
     eventId: number,
     round: number,
     pick: number,

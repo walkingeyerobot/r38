@@ -8,7 +8,7 @@ const DATA_VERSION = 1;
 const DEFAULT_NUM_COLUMNS = 7;
 const MODULE_NAME = 'deckbuilder';
 
-export const BASICS = ["27647", "27280", "27649", "27725", "27727"];
+export const BASICS = [27647, 27280, 27649, 27725, 27727];
 
 /**
  * Vuex module for storing state related to the deck builder.
@@ -127,12 +127,13 @@ export const deckBuilderStore = vuexModule(rootStore, MODULE_NAME, {
     sortByColor(state: DeckBuilderState, payload: { seat: number, maindeck: boolean }) {
       sort(state, payload.seat, payload.maindeck,
           (cards, numColumns) => {
-            const newSection: CardColumn[] =
-                (<DraftCard[][]>Array(numColumns)).fill([]).map(() => []);
+            const newSection: CardColumn[] = fillArray(numColumns, () => []);
+
             for (const card of cards) {
-              if (card.definition.color.length === 1) {
-                newSection[["W", "U", "B", "R", "G"].indexOf(card.definition.color)].push(card);
-              } else if (card.definition.color.length === 0) {
+              if (card.definition.colors.length === 1) {
+                const index = getColorIndex(card.definition.colors[0]);
+                newSection[index].push(card);
+              } else if (card.definition.colors.length === 0) {
                 newSection[Math.min(5, numColumns)].push(card);
               } else {
                 newSection[Math.min(6, numColumns)].push(card);
@@ -217,6 +218,31 @@ function migrateDeckVersion(deck: Deck, newVersion: DataVersion): Deck {
 
 function getLocalstorageKey(draftName: string, seatPosition: number, dataVersion: number) {
   return `draft|${draftName}|${seatPosition}|${dataVersion}`;
+}
+
+/**
+ * Creates an array of [length] the contents of which are filled from repeated
+ * calls to [entryGenerator].
+ */
+function fillArray<T>(
+    length: number,
+    entryGenerator: (index: number) => T,
+): T[] {
+  const arr = [] as T[];
+  for (let i = 0; i < length; i++) {
+    arr.push(entryGenerator(i));
+  }
+  return arr;
+}
+
+const COLOR_ORDER = ['W', 'U', 'B', 'G', 'R'];
+
+function getColorIndex(color: string) {
+  const index = COLOR_ORDER.indexOf(color);
+  if (index == -1) {
+    throw new Error(`Unknown color ${color}`);
+  }
+  return index;
 }
 
 export type DeckBuilderStore = typeof deckBuilderStore;
