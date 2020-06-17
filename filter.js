@@ -85,13 +85,13 @@ function doParse(client, objstr) {
   var cardToPackAndIndex = {};
   for (var i = 0; i < state.length; i++) {
     state[i].round = 1;
-    var packs = state[i].packs
+    var packs = state[i].packs;
     for (var j = 0; j < packs.length; j++) {
       var pack = packs[j];
       pack.startSeat = i;
       for (var k = 0; k < pack.length; k++) {
-        cardToPackAndIndex[pack[k].r38_data.id] = { pack: pack, index: k };
-        if (pack[k].name === 'Cogwork Librarian') {
+        cardToPackAndIndex[pack[k].id] = { pack: pack, index: k };
+        if (pack[k].scryfall.name === 'Cogwork Librarian') {
           if (librarian) {
             throw Error('Cannot have multiple Cogwork Librarians in a draft without rewriting this logic.');
           }
@@ -219,8 +219,11 @@ function doParse(client, objstr) {
       var oldPack = obj.draft.seats[startSeat].packs[event.round - 1];
       var oldCard = oldPack[pi.index];
       oldPack[pi.index] = {
-        name: 'Forever Unknown Card',
-        r38_data: {id: oldCard.r38_data.id, hidden: true}
+        id: oldCard.id,
+        hidden: true,
+        scryfall: {
+          name: 'Forever Unknown Card',
+        }
       };
     }
 
@@ -260,12 +263,15 @@ function doParse(client, objstr) {
     for (var j = 0; j < packSeen[i].length; j++) {
       if (!packSeen[i][j]) {
         obj.draft.seats[i].packs[j] = obj.draft.seats[i].packs[j].map((card) => {
-          if (card.r38_data.hidden) {
+          if (card.hidden) {
             return card;
           }
           return {
-            name: 'Currently Unknown Card',
-            r38_data: {id: card.r38_data.id, hidden: true}
+            id: card.id,
+            hidden: true,
+            scryfall: {
+              name: 'Currently Unknown Card',
+            }
           };
         });
       }
