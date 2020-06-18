@@ -19,7 +19,7 @@ type HopperDefinition struct {
 // if you do, copying cards with a simple assignment will break (I think).
 type Card struct {
 	Cmc             float64 `json:"cmc"` // temporary
-	CollectorNumber string  `json:"collector_number"`
+	CollectorNumber string  `json:"collector_number"` // temporary
 	Color           string  `json:"color"`
 	ColorIdentity   string  `json:"color_identity"`
 	Dfc             bool    `json:"dfc"`

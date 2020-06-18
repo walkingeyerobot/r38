@@ -105,66 +105,65 @@ function ProcessStandardCards(rawCards, scryfallCards) {
 }
 
 function ProcessIndividualCard(rawCard, scryfallCard) {
-  var card = scryfallCard;
-  if (!card) {
+  if (!scryfallCard) {
     throw Error('couldn\'t find card "' + JSON.stringify(rawCard) + '"');
   }
-  var myCard = {
-    r38_data: {
-      foil: rawCard.foil,
+
+  var r38Card = {
+    foil: rawCard.foil,
+    scryfall: {
+      id: scryfallCard.id, // this gets deleted later
+
+      cmc: scryfallCard.cmc,
+      color_identity: scryfallCard.color_identity,
+      layout: scryfallCard.layout,
+      name: scryfallCard.name,
+      type_line: scryfallCard.type_line,
+
+      collector_number: scryfallCard.collector_number,
+      rarity: scryfallCard.rarity,
+      set: scryfallCard.set,
     },
-
-    id: card.id, // this gets deleted later
-
-    cmc: card.cmc,
-    color_identity: card.color_identity,
-    layout: card.layout,
-    name: card.name,
-    type_line: card.type_line,
-
-    collector_number: card.collector_number,
-    rarity: card.rarity,
-    set: card.set,
   };
 
-  if (card.image_uris) {
-    myCard.r38_data.image_uris = [card.image_uris.normal];
-  } else if (card.card_faces && card.card_faces.length === 2) {
-    myCard.r38_data.image_uris = [
-      card.card_faces[0].image_uris.normal,
-      card.card_faces[1].image_uris.normal
+  if (scryfallCard.image_uris) {
+    r38Card.image_uris = [scryfallCard.image_uris.normal];
+  } else if (scryfallCard.card_faces && scryfallCard.card_faces.length === 2) {
+    r38Card.image_uris = [
+      scryfallCard.card_faces[0].image_uris.normal,
+      scryfallCard.card_faces[1].image_uris.normal
     ];
   } else {
-    throw Error('no face? no image? what?\n' + JSON.stringify(card));
+    throw Error('no face? no image? what?\n' + JSON.stringify(scryfallCard));
   }
 
   if (rawCard.rating != null) {
-    myCard.r38_data.rating = rawCard.rating;
+    r38Card.rating = rawCard.rating;
   }
 
   if (fileType === 'cube') {
-    if (card.mtgo_id && card.mtgo_foil_id) {
-      myCard.r38_data.mtgo_id = rawCard.foil ? card.mtgo_foil_id : card.mtgo_id;
-    } else if (card.mtgo_id) {
-      myCard.r38_data.mtgo_id = card.mtgo_id;
+    if (scryfallCard.mtgo_id && scryfallCard.mtgo_foil_id) {
+      r38Card.mtgo_id = rawCard.foil ? scryfallCard.mtgo_foil_id : scryfallCard.mtgo_id;
+    } else if (scryfallCard.mtgo_id) {
+      r38Card.mtgo_id = scryfallCard.mtgo_id;
       if (rawCard.foil) {
-        myCard.r38_data.mtgo_id++;
+        r38Card.mtgo_id++;
       }
     } else {
-      throw Error('card is weird:\n' + JSON.stringify(card));
+      throw Error('card is weird:\n' + JSON.stringify(scryfallCard));
     }
   } else {
-    myCard.r38_data.mtgo_id = card.mtgo_id;
+    r38Card.mtgo_id = scryfallCard.mtgo_id;
   }
 
-  if (!myCard.r38_data.mtgo_id) {
+  if (!r38Card.mtgo_id) {
     throw Error('no mtgo id set!');
   }
 
-  if (card.card_faces) {
-    myCard.card_faces = [];
-    for (var i = 0; i < card.card_faces.length; i++) {
-      var face = card.card_faces[i];
+  if (scryfallCard.card_faces) {
+    r38Card.scryfall.card_faces = [];
+    for (var i = 0; i < scryfallCard.card_faces.length; i++) {
+      var face = scryfallCard.card_faces[i];
       var myFace = {
         mana_cost: face.mana_cost,
         name: face.name,
@@ -173,19 +172,19 @@ function ProcessIndividualCard(rawCard, scryfallCard) {
       if (face.colors != null) {
         myFace.colors = face.colors;
       }
-      myCard.card_faces.push(myFace);
+      r38Card.scryfall.card_faces.push(myFace);
     }
   }
 
-  if (card.colors) {
-    myCard.colors = card.colors;
+  if (scryfallCard.colors) {
+    r38Card.scryfall.colors = scryfallCard.colors;
   }
 
-  if (card.mana_cost) {
-    myCard.mana_cost = card.mana_cost;
+  if (scryfallCard.mana_cost) {
+    r38Card.scryfall.mana_cost = scryfallCard.mana_cost;
   }
 
-  finalCards.push(myCard);
+  finalCards.push(r38Card);
 }
 
 function ProcessAllCards() {
@@ -213,7 +212,7 @@ function ProcessAllCards() {
     };
   } else {
     finalObject = {
-      hoppers: [
+      /*hoppers: [
         { type: 'RareHopper' },
         { type: 'UncommonHopper' },
         { type: 'Pointer', refs: [1] },
@@ -236,8 +235,8 @@ function ProcessAllCards() {
         "-pack-common-rating-min=1.5",
         "-pack-common-rating-max=3",
         "-draft-common-color-stdev-max=4",
-      ],
-/*      hoppers: [
+      ],*/
+      hoppers: [
         { type: 'RareHopper' },
         { type: 'UncommonHopper' },
         { type: 'Pointer', refs: [1] },
@@ -261,25 +260,25 @@ function ProcessAllCards() {
         "-draft-common-color-stdev-max=3",
         "-abort-missing-common-color-identity=true",
         "-abort-duplicate-three-color-identity-uncommons=true",
-      ],*/
+      ],
     };
   }
   finalObject.cards = finalCards.map((card) => {
-    var id = card.id;
-    delete card.id;
+    var id = card.scryfall.id;
+    delete card.scryfall.id;
     return {
-      cmc: card.cmc, // temporary
-      collector_number: card.collector_number,
-      color: card.colors ? card.colors.join('') : card.card_faces[0].colors.join(''),
-      color_identity: card.color_identity.join(''),
-      dfc: card.layout === 'transform',
+      cmc: card.scryfall.cmc, // temporary
+      collector_number: card.scryfall.collector_number, // temporary
+      color: card.scryfall.colors ? card.scryfall.colors.join('') : card.scryfall.card_faces[0].colors.join(''),
+      color_identity: card.scryfall.color_identity.join(''),
+      dfc: card.scryfall.layout === 'transform',
       id: id,
-      mtgo_id: card.r38_data.mtgo_id, // temporary
-      name: card.name, // temporary
-      rarity: card.type_line.includes('Basic Land') ? 'basic' : card.rarity,
-      rating: card.r38_data.rating,
-      set: card.set, // temporary
-      type_line: card.type_line, // temporary
+      mtgo_id: card.mtgo_id, // temporary
+      name: card.scryfall.name, // temporary
+      rarity: card.scryfall.type_line.includes('Basic Land') ? 'basic' : card.scryfall.rarity,
+      rating: card.rating,
+      set: card.scryfall.set, // temporary
+      type_line: card.scryfall.type_line, // temporary
       data: JSON.stringify(card)
     }
   });

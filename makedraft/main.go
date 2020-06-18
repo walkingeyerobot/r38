@@ -73,7 +73,7 @@ func main() {
 	flagSet := flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
 
 	settings.Set = flagSet.String(
-		"set", "sets/isd.json",
+		"set", "sets/cube.json",
 		"A .json file containing relevant set data.")
 	settings.Database = flagSet.String(
 		"database", "draft.db",

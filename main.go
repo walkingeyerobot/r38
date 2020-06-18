@@ -1565,7 +1565,7 @@ func GetJSONObject(draftID int64) (DraftJSON, error) {
 			} else {
 				card.Data = dataObj
 			}
-			dataObj["r38_data"].(map[string]interface{})["id"] = card.ID
+			dataObj["id"] = card.ID
 		}
 		if nullableMtgo.Valid {
 			card.Mtgo = nullableMtgo.String
@@ -1667,7 +1667,7 @@ func GetJSONObject2(draftID int64) (DraftJSON2, error) {
 			log.Printf("making nil card data because of error %s", err.Error())
 			dataObj = nil
 		}
-		dataObj["r38_data"].(map[string]interface{})["id"] = cardID
+		dataObj["id"] = cardID
 
 		packRound--
 
