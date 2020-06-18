@@ -89,7 +89,7 @@ type Pack struct {
 type DraftJSON struct {
 	Seats  []Seat       `json:"seats"`
 	Name   string       `json:"name"`
-	ID     int64        `json:id"`
+	ID     int64        `json:"id"`
 	Events []DraftEvent `json:"events"`
 }
 
@@ -522,12 +522,12 @@ func ServeBulkMTGO(w http.ResponseWriter, r *http.Request, userID int64) {
 		var username string
 		err := rows.Scan(&playerID, &username)
 		if err != nil {
-			log.Printf("error reading player in draft %s, skipping: %s", draftID, err)
+			log.Printf("error reading player in draft %d, skipping: %s", draftID, err)
 			break
 		}
 		export, err := exportToMTGO(playerID, draftID)
 		if err != nil {
-			log.Printf("could not export to MTGO for player %s in draft %s: %s", playerID, draftID, err)
+			log.Printf("could not export to MTGO for player %d in draft %d: %s", playerID, draftID, err)
 			break
 		}
 		exports = append(exports, BulkMTGOExport{PlayerID: playerID, Username: re.ReplaceAllString(username, "_"), Deck: export})
@@ -1134,7 +1134,7 @@ func ServeJoin(w http.ResponseWriter, r *http.Request, userID int64) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	} else if err != sql.ErrNoRows || alreadyJoined {
-		http.Redirect(w, r, fmt.Sprintf("/draft/%s", draftID), http.StatusTemporaryRedirect)
+		http.Redirect(w, r, fmt.Sprintf("/draft/%d", draftID), http.StatusTemporaryRedirect)
 		return
 	}
 
@@ -1423,7 +1423,7 @@ func doPick(userID int64, cardID int64, pass bool) (int64, int64, []string, int6
 		}
 	} else {
 		query = `update cards set pack=?, modified=? where id=?`
-		log.Printf("%s\t%d,%s,%d,%d", query, pickID, cardModified, cardID)
+		log.Printf("%s\t%d,%d,%d", query, pickID, cardModified, cardID)
 
 		_, err = database.Exec(query, pickID, cardModified, cardID)
 		if err != nil {
@@ -1526,7 +1526,7 @@ func GetJSONObject(draftID int64) (DraftJSON, error) {
 	for i = 0; i < 8; i++ {
 		draft.Seats = append(draft.Seats, Seat{Rounds: []Round{}})
 		for j = 0; j < 4; j++ {
-			draft.Seats[i].Rounds = append(draft.Seats[i].Rounds, Round{Round: j, Packs: []Pack{Pack{Cards: []Card{}}}})
+			draft.Seats[i].Rounds = append(draft.Seats[i].Rounds, Round{Round: j, Packs: []Pack{{Cards: []Card{}}}})
 		}
 	}
 
