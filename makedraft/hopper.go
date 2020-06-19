@@ -4,27 +4,30 @@ import (
 	"math/rand"
 )
 
+// DraftConfig stores is directly imported from the set json file.
 type DraftConfig struct {
 	Hoppers []HopperDefinition `json:"hoppers"`
 	Flags   []string           `json:"flags"`
 	Cards   []Card             `json:"cards"`
 }
 
+// HopperDefinition is part of DraftConfig and describes hoppers.
 type HopperDefinition struct {
 	Type string  `json:"type"`
 	Refs []int64 `json:"refs"`
 }
 
+// Card is part of DraftConfig and describes cards.
 // DO NOT add a non-simple type to this struct.
 // if you do, copying cards with a simple assignment will break (I think).
 type Card struct {
-	Cmc             float64 `json:"cmc"` // temporary
+	Cmc             float64 `json:"cmc"`              // temporary
 	CollectorNumber string  `json:"collector_number"` // temporary
 	Color           string  `json:"color"`
 	ColorIdentity   string  `json:"color_identity"`
 	Dfc             bool    `json:"dfc"`
-	Id              string  `json:"id"`
-	MtgoId          int64   `json:"mtgo_id"` // temporary
+	ID              string  `json:"id"`
+	MtgoID          int64   `json:"mtgo_id"` // temporary
 	Name            string  `json:"name"`    // temporary
 	Rarity          string  `json:"rarity"`
 	Rating          float64 `json:"rating"`
@@ -34,6 +37,7 @@ type Card struct {
 	Foil            bool
 }
 
+// CardSet helps us lookup cards by rarity.
 type CardSet struct {
 	All       []Card
 	Mythics   []Card
@@ -43,28 +47,33 @@ type CardSet struct {
 	Basics    []Card
 }
 
+// Hopper is effectively a stack of cards waiting to be put into packs.
 type Hopper interface {
 	Refill()
 	Pop() (Card, bool)
 }
 
+// NormalHopper is a hopper with no special logic.
 type NormalHopper struct {
 	Cards      []Card
 	Source     []Card
 	Refillable bool
 }
 
+// FoilHopper has a 1/4 chance to return a foil card from its own cards and 3/4 chance to return a non-foil card from OtherHoppers[].
 type FoilHopper struct {
 	OtherHoppers []*Hopper
 	Cards        []Card
 	Source       []Card
 }
 
+// BasicLandHopper is never empty and always returns a random basic.
 type BasicLandHopper struct {
 	Cards  []Card
 	Source []Card
 }
 
+// Pop returns a card from the hopper and reports if the hopper is now empty.
 func (h *NormalHopper) Pop() (Card, bool) {
 	ret := h.Cards[0]
 	h.Cards = h.Cards[1:]
@@ -74,6 +83,7 @@ func (h *NormalHopper) Pop() (Card, bool) {
 	return ret, len(h.Cards) == 0
 }
 
+// Pop returns a card from the hopper and reports if the hopper is now empty.
 func (h *FoilHopper) Pop() (Card, bool) {
 	var ret Card
 	var empty bool
@@ -90,6 +100,7 @@ func (h *FoilHopper) Pop() (Card, bool) {
 	return ret, empty
 }
 
+// Pop returns a card from the hopper and reports if the hopper is now empty.
 func (h *BasicLandHopper) Pop() (Card, bool) {
 	ret := h.Cards[0]
 	h.Cards = h.Cards[1:]
@@ -99,6 +110,7 @@ func (h *BasicLandHopper) Pop() (Card, bool) {
 	return ret, false
 }
 
+// Refill refills the hopper from its source cards.
 func (h *NormalHopper) Refill() {
 	for _, v := range h.Source {
 		var copiedCard Card
@@ -110,6 +122,7 @@ func (h *NormalHopper) Refill() {
 	})
 }
 
+// Refill refills the hopper from its source cards.
 func (h *FoilHopper) Refill() {
 	for _, v := range h.Source {
 		var copiedCard Card
@@ -121,6 +134,7 @@ func (h *FoilHopper) Refill() {
 	})
 }
 
+// Refill refills the hopper from its source cards.
 func (h *BasicLandHopper) Refill() {
 	for _, v := range h.Source {
 		var copiedCard Card
@@ -130,6 +144,7 @@ func (h *BasicLandHopper) Refill() {
 	// no need to shuffle
 }
 
+// MakeNormalHopper creates a NormalHopper.
 func MakeNormalHopper(refillable bool, sources ...[]Card) *NormalHopper {
 	ret := NormalHopper{}
 	for _, cardList := range sources {
@@ -144,6 +159,7 @@ func MakeNormalHopper(refillable bool, sources ...[]Card) *NormalHopper {
 	return &ret
 }
 
+// MakeFoilHopper creates a FoilHopper.
 func MakeFoilHopper(commonHopper1 *Hopper, commonHopper2 *Hopper, commonHopper3 *Hopper, sources ...[]Card) *FoilHopper {
 	ret := FoilHopper{OtherHoppers: []*Hopper{commonHopper1, commonHopper2, commonHopper3}}
 	for _, cardList := range sources {
@@ -158,6 +174,7 @@ func MakeFoilHopper(commonHopper1 *Hopper, commonHopper2 *Hopper, commonHopper3 
 	return &ret
 }
 
+// MakeBasicLandHopper creates a BasicLandHopper.
 func MakeBasicLandHopper(sources ...[]Card) *BasicLandHopper {
 	ret := BasicLandHopper{}
 	for _, cardList := range sources {

@@ -5,7 +5,6 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"flag"
-	_ "github.com/mattn/go-sqlite3"
 	"io/ioutil"
 	"log"
 	"math"
@@ -15,6 +14,8 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 var database *sql.DB
@@ -23,6 +24,7 @@ var oR map[int]int
 var oU map[int]int
 var oC map[int]int
 
+// Settings stores all the settings that can be passed in.
 type Settings struct {
 	Set                                       *string
 	Database                                  *string
@@ -44,18 +46,6 @@ type Settings struct {
 }
 
 var settings Settings
-
-const MAX_M = 2
-const MAX_R = 3
-const MAX_U = 4
-const MAX_C = 6
-const PACK_COLOR_STDEV = 0.8
-const RATING_MIN = 1.8
-const RATING_MAX = 3
-const POOL_COLOR_STDEV = 3.0
-
-var CUBE_MODE bool
-var DFC_MODE bool
 
 var packReasons map[int]int
 var draftReasons map[int]int
@@ -177,7 +167,7 @@ func main() {
 	// rand.Seed(1)
 	log.Printf("generating draft %s.", *settings.Name)
 
-	var packIds [24]int64
+	var packIDs [24]int64
 
 	database, err = sql.Open("sqlite3", *settings.Database)
 	if err != nil {
@@ -301,11 +291,11 @@ func main() {
 				log.Printf("%s\t%v\t%s", card.Rarity, card.Foil, card.Data)
 			}
 
-			if CUBE_MODE || okPack(packs[i]) {
+			if okPack(packs[i]) {
 				i++
 			}
 		}
-		if !resetDraft && (CUBE_MODE || okDraft(packs)) {
+		if !resetDraft && (okDraft(packs)) {
 			break
 		}
 		log.Printf("RESETTING DRAFT")
@@ -314,7 +304,7 @@ func main() {
 	log.Printf("draft attempts: %d", draftAttempts)
 	log.Printf("pack attempts: %d", packAttempts)
 
-	packIds, err = generateEmptyDraft(*settings.Name)
+	packIDs, err = generateEmptyDraft(*settings.Name)
 	if err != nil {
 		return
 	}
@@ -325,7 +315,7 @@ func main() {
 	query := `INSERT INTO cards (pack, original_pack, edition, number, tags, name, cmc, type, color, mtgo, data) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 	for i, pack := range packs {
 		for _, card := range pack {
-			packId := packIds[i]
+			packID := packIDs[i]
 			var data string
 			var tags string
 			if card.Foil {
@@ -335,7 +325,7 @@ func main() {
 				data = re.ReplaceAllString(card.Data, "false")
 			}
 			// database.Exec(query, packId, packId, data)
-			database.Exec(query, packId, packId, card.Set, card.CollectorNumber, tags, card.Name, card.Cmc, card.TypeLine, card.ColorIdentity, card.MtgoId, data)
+			database.Exec(query, packID, packID, card.Set, card.CollectorNumber, tags, card.Name, card.Cmc, card.TypeLine, card.ColorIdentity, card.MtgoID, data)
 		}
 	}
 
@@ -354,7 +344,7 @@ func generateEmptyDraft(name string) ([24]int64, error) {
 		return packIds, err
 	}
 
-	draftId, err := res.LastInsertId()
+	draftID, err := res.LastInsertId()
 	if err != nil {
 		log.Printf("could not get draft ID: %s", err)
 		return packIds, err
@@ -363,7 +353,7 @@ func generateEmptyDraft(name string) ([24]int64, error) {
 	query = `INSERT INTO seats (position, draft) VALUES (?, ?)`
 	var seatIds [8]int64
 	for i := 0; i < 8; i++ {
-		res, err = database.Exec(query, i, draftId)
+		res, err = database.Exec(query, i, draftID)
 		if err != nil {
 			log.Printf("could not create seats in draft: %s", err)
 			return packIds, err
@@ -408,9 +398,9 @@ func okPack(pack [15]Card) bool {
 		if card.Foil || (*settings.DfcMode && card.Dfc) {
 			continue
 		}
-		cardHash[card.Id]++
-		if cardHash[card.Id] > 1 {
-			log.Printf("found duplicated card %s", card.Id)
+		cardHash[card.ID]++
+		if cardHash[card.ID] > 1 {
+			log.Printf("found duplicated card %s", card.ID)
 			passes = false
 			packReasons[1]++
 		}
@@ -525,33 +515,33 @@ func okDraft(packs [24][15]Card) bool {
 	q := make(map[string]int)
 	for _, pack := range packs {
 		for _, card := range pack {
-			cardHash[card.Id]++
-			qty := cardHash[card.Id]
+			cardHash[card.ID]++
+			qty := cardHash[card.ID]
 			if card.Rarity != "B" && qty > q[card.Rarity] {
 				q[card.Rarity] = qty
 			}
 			switch card.Rarity {
 			case "mythic":
 				if *settings.MaxMythic != 0 && qty > *settings.MaxMythic {
-					log.Printf("found %d %s, which is more than MAX_M %d", qty, card.Id, MAX_M)
+					log.Printf("found %d %s, which is more than %d", qty, card.ID, *settings.MaxMythic)
 					draftReasons[1]++
 					passes = false
 				}
 			case "rare":
 				if *settings.MaxRare != 0 && qty > *settings.MaxRare {
-					log.Printf("found %d %s, which is more than MAX_R %d", qty, card.Id, MAX_R)
+					log.Printf("found %d %s, which is more than %d", qty, card.ID, *settings.MaxRare)
 					draftReasons[2]++
 					passes = false
 				}
 			case "uncommon":
 				if *settings.MaxUncommon != 0 && qty > *settings.MaxUncommon {
-					log.Printf("found %d %s, which is more than MAX_U %d", qty, card.Id, MAX_U)
+					log.Printf("found %d %s, which is more than %d", qty, card.ID, *settings.MaxUncommon)
 					draftReasons[3]++
 					passes = false
 				}
 			case "common":
 				if *settings.MaxCommon != 0 && qty > *settings.MaxCommon {
-					log.Printf("found %d %s, which is more than MAX_C %d", qty, card.Id, MAX_C)
+					log.Printf("found %d %s, which is more than %d", qty, card.ID, *settings.MaxCommon)
 					draftReasons[4]++
 					passes = false
 				}
