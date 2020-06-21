@@ -78,6 +78,8 @@ function doParse(client, objstr) {
   var newEvents = [];
   var librarian;
 
+  obj.draft.playerId = obj.user;
+
   // create a map of which pack ever card lives in.
   // this isn't strictly necessary as we can limit our card searches to the pack
   // that the player has available, but it's good to have to verify all events
