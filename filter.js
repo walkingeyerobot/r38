@@ -232,6 +232,23 @@ function doParse(client, objstr) {
     // if the whole pack is empty, increment the round for that player
     if (passedPack.every((x) => !x)) {
       state[event.position].round++;
+
+      // because the whole pack is empty, we need to add the cards that have
+      // been picked from that pack to a shadow pick event only if the focused
+      // player is not the one that took the last card.
+      if (event.position !== myPosition && shadowCards[shadowKey]) {
+        newEvents.push({
+          announcements: [],
+          cards: shadowCards[shadowKey],
+          draftModified: shadowModified[shadowKey] + 0.5,
+          librarian: false,
+          position: -1,
+          round: event.round,
+          type: 'ShadowPick',
+        });
+        delete shadowCards[shadowKey];
+        delete shadowModified[shadowKey];
+      }
     }
   }
 
