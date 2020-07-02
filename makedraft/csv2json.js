@@ -16,9 +16,9 @@ fs.readFile(filename, 'utf8', (err, data) => {
     var rawCards = lines.map((e) => {
       var line = e.split(',');
       var foilStatus = false;
-      if (line[2] === 'Foil') {
+      if (line[2] === 'Foil' || line[2] === 'Foil\r') {
         foilStatus = true;
-      } else if (line[2] !== 'Non-foil') {
+      } else if (line[2] !== 'Non-foil' && line[2] !== 'Non-foil\r') {
         throw Error('cannot determine foil status of: "' + line + '"');
       }
       return {
