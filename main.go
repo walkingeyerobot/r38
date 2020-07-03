@@ -460,7 +460,9 @@ func ServeAPIPick(w http.ResponseWriter, r *http.Request, userID int64) {
 	}
 	var draftID int64
 	if len(pick.CardIds) == 1 {
-		draftID, _, announcements, round, err := doPick(userID, pick.CardIds[0], true)
+		var announcements []string
+		var round int64
+		draftID, _, announcements, round, err = doPick(userID, pick.CardIds[0], true)
 		if err != nil {
 			json.NewEncoder(w).Encode(JSONError{Error: fmt.Sprintf("error making pick: %s", err.Error())})
 			return
