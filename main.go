@@ -183,6 +183,11 @@ type PostedPick struct {
 	CardIds []int64 `json:"cards"`
 }
 
+// PostedJoin is JSON accepted from the client when a user joins a draft.
+type PostedJoin struct {
+	ID int64 `json:"id"`
+}
+
 // UserInfo is JSON passed to the client.
 type UserInfo struct {
 	Name    string `json:"name"`
@@ -315,6 +320,7 @@ func NewHandler(useAuth bool) http.Handler {
 	addHandler("/api/draft/", ServeAPIDraft)
 	addHandler("/api/draftlist/", ServeAPIDraftList)
 	addHandler("/api/pick/", ServeAPIPick)
+	addHandler("/api/join/", ServeAPIJoin)
 
 	addHandler("/", ServeIndex)
 
@@ -478,6 +484,42 @@ func ServeAPIPick(w http.ResponseWriter, r *http.Request, userID int64) {
 		return
 	} else {
 		json.NewEncoder(w).Encode(JSONError{Error: fmt.Sprintf("invalid number of cards: %d", len(pick.CardIds))})
+		return
+	}
+
+	draftJSON, err := GetFilteredJSON(draftID, userID)
+	if err != nil {
+		json.NewEncoder(w).Encode(JSONError{Error: fmt.Sprintf("error getting json: %s", err.Error())})
+		return
+	}
+
+	fmt.Fprint(w, draftJSON)
+}
+
+// ServeAPIJoin serves the /api/join endpoint.
+func ServeAPIJoin(w http.ResponseWriter, r *http.Request, userID int64) {
+	if r.Method != "POST" {
+		http.Error(w, "invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	bodyBytes, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		json.NewEncoder(w).Encode(JSONError{Error: fmt.Sprintf("error reading post body: %s", err.Error())})
+		return
+	}
+	var toJoin PostedJoin
+	err = json.Unmarshal(bodyBytes, &toJoin)
+	if err != nil {
+		json.NewEncoder(w).Encode(JSONError{Error: fmt.Sprintf("error parsing post body: %s", err.Error())})
+		return
+	}
+
+	draftID := toJoin.ID
+
+	err = doJoin(userID, draftID)
+	if err != nil {
+		json.NewEncoder(w).Encode(JSONError{Error: fmt.Sprintf("error joining draft %d: %s", draftID, err.Error())})
 		return
 	}
 
@@ -737,7 +779,7 @@ func CanViewReplay(draftID int64, userID int64) (bool, error) {
 		return false, err
 	}
 
-	if round != 4 && userID != 1 && draftID != 9 {
+	if round < 4 && userID != 1 {
 		query = `select user from seats where draft=? and position is not null`
 		rows, err := database.Query(query, draftID)
 		if err != nil {
@@ -1126,24 +1168,7 @@ func ServeJoin(w http.ResponseWriter, r *http.Request, userID int64) {
 	}
 	draftID := int64(draftIDInt)
 
-	query := `select true from seats where draft=? and user=?`
-
-	row := database.QueryRow(query, draftID, userID)
-	var alreadyJoined bool
-	err = row.Scan(&alreadyJoined)
-
-	if err != nil && err != sql.ErrNoRows {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	} else if err != sql.ErrNoRows || alreadyJoined {
-		http.Redirect(w, r, fmt.Sprintf("/draft/%d", draftID), http.StatusTemporaryRedirect)
-		return
-	}
-
-	query = `update seats set user=? where id=(select id from seats where draft=? and user is null and position is not null order by random() limit 1)`
-	log.Printf("%s\t%d,%d", query, userID, draftID)
-
-	_, err = database.Exec(query, userID, draftID)
+	err = doJoin(userID, draftID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -1151,6 +1176,33 @@ func ServeJoin(w http.ResponseWriter, r *http.Request, userID int64) {
 
 	viewParam := GetViewParam(r, userID)
 	http.Redirect(w, r, fmt.Sprintf("/draft/%d%s", draftID, viewParam), http.StatusTemporaryRedirect)
+}
+
+// doJoin does the actual joining.
+func doJoin(userID int64, draftID int64) error {
+	query := `select true from seats where draft=? and user=?`
+
+	row := database.QueryRow(query, draftID, userID)
+	var alreadyJoined bool
+	err := row.Scan(&alreadyJoined)
+
+	if err != nil && err != sql.ErrNoRows {
+		return err
+	} else if err != sql.ErrNoRows {
+		return err
+	} else if alreadyJoined {
+		return fmt.Errorf("already joined %d", draftID)
+	}
+
+	query = `update seats set user=? where id=(select id from seats where draft=? and user is null and position is not null order by random() limit 1)`
+	log.Printf("%s\t%d,%d", query, userID, draftID)
+
+	_, err = database.Exec(query, userID, draftID)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // ServePick handles the user picking cards.
