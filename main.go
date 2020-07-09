@@ -20,7 +20,6 @@ import (
 	"strings"
 
 	"github.com/gorilla/sessions"
-	"github.com/jung-kurt/gofpdf"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -307,7 +306,6 @@ func NewHandler(useAuth bool) http.Handler {
 	addHandler("/proxy/", ServeProxy)
 	addHandler("/replay/", ServeReplay)
 	addHandler("/deckbuilder/", ServeDeckbuilder)
-	addHandler("/pdf/", ServePDF)
 	addHandler("/pick/", ServePick)
 	addHandler("/join/", ServeJoin)
 	addHandler("/bulk_mtgo/", ServeBulkMTGO)
@@ -756,84 +754,6 @@ func ServeIndex(w http.ResponseWriter, r *http.Request, userID int64) {
 	data := IndexPageData{Drafts: Drafts, ViewURL: viewParam, UserID: userID}
 	t := template.Must(template.ParseFiles("index.tmpl"))
 	t.Execute(w, data)
-}
-
-// ServePDF serves a pdf suitable for printing proxies.
-func ServePDF(w http.ResponseWriter, r *http.Request, userID int64) {
-	re := regexp.MustCompile(`/pdf/(\d+)`)
-	parseResult := re.FindStringSubmatch(r.URL.Path)
-
-	if parseResult == nil {
-		http.Error(w, "bad url", http.StatusInternalServerError)
-		return
-	}
-
-	draftIDInt, err := strconv.Atoi(parseResult[1])
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	draftID := int64(draftIDInt)
-
-	_, myPicks, _, err := getPackPicksAndPowers(draftID, userID)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/pdf")
-
-	pdf := gofpdf.New("P", "in", "Letter", "")
-	pdf.AddPage()
-	pdf.SetFont("Arial", "B", float64(12))
-	pdf.SetTextColor(255, 255, 0)
-	cardsOnLine := 0
-	linesOnPage := 0
-	options := gofpdf.ImageOptions{
-		ImageType:             "JPG",
-		ReadDpi:               false,
-		AllowNegativePosition: false,
-	}
-
-	for idx, pick := range myPicks {
-		imgResp, err := http.Get(
-			fmt.Sprintf("http://api.scryfall.com/cards/%s/%s?format=image&version=normal",
-				pick.Edition, pick.Number))
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		pdf.RegisterImageOptionsReader(strconv.Itoa(idx), options, imgResp.Body)
-		x := 0.25 + float64(cardsOnLine)*2.4
-		y := 0.25 + float64(linesOnPage)*3.35
-		pdf.ImageOptions(strconv.Itoa(idx), x, y, 2.4, 0, false, options, 0, "")
-
-		pdf.SetXY(x, y+3.15)
-		pdf.Cell(0.1, 0.1, pick.Tags)
-
-		cardsOnLine++
-		if cardsOnLine == 3 {
-			cardsOnLine = 0
-			linesOnPage++
-			if linesOnPage == 3 {
-				linesOnPage = 0
-				pdf.AddPage()
-			}
-		}
-
-		err = imgResp.Body.Close()
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-	}
-
-	err = pdf.Output(w)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
 }
 
 // ServeJoin allows the user to join a draft, if possible.
