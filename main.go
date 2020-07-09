@@ -303,7 +303,6 @@ func NewHandler(useAuth bool) http.Handler {
 	addHandler("/proxy/", ServeProxy)
 	addHandler("/replay/", ServeVueApp)
 	addHandler("/deckbuilder/", ServeVueApp)
-	addHandler("/pick/", ServePick)
 	addHandler("/join/", ServeJoin)
 	addHandler("/bulk_mtgo/", ServeBulkMTGO)
 	addHandler("/index/", ServeIndex)
@@ -781,38 +780,6 @@ func doJoin(userID int64, draftID int64) error {
 	}
 
 	return nil
-}
-
-// ServePick handles the user picking cards.
-func ServePick(w http.ResponseWriter, r *http.Request, userID int64) {
-	re := regexp.MustCompile(`/pick/(\d+)`)
-	parseResult := re.FindStringSubmatch(r.URL.Path)
-
-	if parseResult == nil {
-		http.Error(w, "bad url", http.StatusInternalServerError)
-		return
-	}
-
-	cardIDInt, err := strconv.Atoi(parseResult[1])
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	cardID := int64(cardIDInt)
-	draftID, _, announcements, round, err := doPick(userID, cardID, true)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	err = DoEvent(draftID, userID, announcements, cardID, sql.NullInt64{Valid: false}, round)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	viewParam := GetViewParam(r, userID)
-	http.Redirect(w, r, fmt.Sprintf("/draft/%d%s", draftID, viewParam), http.StatusTemporaryRedirect)
 }
 
 // doPick actually performs a pick in the database.
