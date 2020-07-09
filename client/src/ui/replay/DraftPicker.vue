@@ -14,7 +14,7 @@
       </div>
       <div v-else class="no-picks">You don't have any picks (yet)</div>
     </div>
-    <DeckBuilderMain class="pool" :horizontal="true" />
+    <DeckBuilderMain v-if="showDeckBuilder" class="pool" :horizontal="true" />
   </div>
 </template>
 
@@ -37,6 +37,13 @@ export default Vue.extend({
   components: {
     CardView,
     DeckBuilderMain,
+  },
+
+  props: {
+    showDeckBuilder: {
+      type: Boolean,
+      required: true,
+    },
   },
 
   created() {

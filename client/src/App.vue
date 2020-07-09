@@ -7,11 +7,13 @@
 <script lang="ts">
 import Vue from 'vue'
 import { authStore } from './state/AuthStore';
+import { formatStore, LayoutFormFactor } from './state/FormatStore';
 import { FALLBACK_USER_PICTURE } from './parse/fallbacks';
 
 export default Vue.extend({
   created() {
     this.loadAuthInfo();
+    this.initFormat();
   },
 
   methods: {
@@ -25,8 +27,27 @@ export default Vue.extend({
         });
       }
     },
+
+    initFormat() {
+      this.updateFormFactor();
+
+      window.addEventListener('resize', () => {
+        this.updateFormFactor();
+      });
+    },
+
+    updateFormFactor() {
+      const layout = getLayoutFormFactor();
+      if (layout != formatStore.layout) {
+        formatStore.setLayout(layout);
+      }
+    },
   },
 });
+
+function getLayoutFormFactor(): LayoutFormFactor {
+  return window.innerWidth >= 768 ? 'desktop' : 'mobile';
+}
 
 interface SourceUserInfo {
   name: string;

@@ -14,6 +14,7 @@ the timeline.
       >
     <button
         class="button"
+        ref="button"
         @click="onButtonClick"
         >
       <div class="location-p1">{{ labels[0] }}</div>
@@ -24,12 +25,13 @@ the timeline.
     <TimelineSelector
         v-if="timelineOpen"
         class="popover"
+        :class="popoverClasses"
         />
   </div>
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
+import Vue, { VueConstructor } from 'vue';
 import TimelineSelector from './TimelineSelector.vue';
 import { globalClickTracker, UnhandledClickListener } from '../../infra/globalClickTracker';
 import { TimelineEvent } from '../../../draft/TimelineEvent';
@@ -44,9 +46,20 @@ import { checkNotNil } from '../../../util/checkNotNil';
 import { eventToString } from '../../../state/util/eventToString';
 
 
-export default Vue.extend({
+export default (Vue as VueConstructor<Vue & {
+  $refs: {
+    button: HTMLElement
+  },
+}>).extend({
   components: {
     TimelineSelector,
+  },
+
+  props: {
+    popoverAlignment: {
+      type: String,
+      required: true,
+    },
   },
 
   data() {
@@ -98,6 +111,17 @@ export default Vue.extend({
       } else {
         return [`Event ${replayStore.eventPos}`, null];
 
+      }
+    },
+
+    popoverClasses(): string[] {
+      if (this.popoverAlignment == 'left below') {
+        return ['left-below'];
+      } else if (this.popoverAlignment == 'center above') {
+        return ['center-above'];
+      } else {
+        throw new Error(
+            `Unrecognized popoverAlignment: ${this.popoverAlignment}`);
       }
     },
   },
@@ -200,14 +224,22 @@ function getMostRecentPickEvent(store: ReplayStore, seatId: number) {
 
 .popover {
   position: absolute;
-  top: calc(100% + 5px);
-  left: 0;
   width: 300px;
-  height: calc(100vh - 70px);
+  height: calc(100vh - 100px);
   background-color: #FFF;
   border-radius: 5px;
   box-shadow: 0px 1px 4px rgba(0, 0, 0, 0.3);
   border: 1px solid #ccc;
+}
+
+.center-above {
+  bottom: calc(100% + 5px);
+  left: calc(50% - 150px);
+}
+
+.left-below {
+  left: 0;
+  top: calc(100% + 5px);
 }
 
 </style>

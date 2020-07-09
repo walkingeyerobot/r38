@@ -1,0 +1,70 @@
+<!--
+
+Root component for desktop layout
+
+-->
+
+<template>
+  <div class="_replay-desktop">
+    <ControlsRow />
+    <div class="main">
+      <PlayerSelector class="table" />
+      <DraftPicker
+          v-if="showDraftPicker"
+          class="picker"
+          :showDeckBuilder="true"
+          />
+      <CardGrid v-else class="grid" />
+    </div>
+  </div>
+</template>
+
+<script lang="ts">
+import Vue from 'vue'
+import ControlsRow from './ControlsRow.vue';
+import PlayerSelector from './player_selector/PlayerSelector.vue';
+import CardGrid from './CardGrid.vue';
+import DraftPicker from './DraftPicker.vue';
+
+export default Vue.extend({
+  components: {
+    DraftPicker,
+    CardGrid,
+    ControlsRow,
+    PlayerSelector,
+  },
+
+  props: {
+    showDraftPicker: {
+      type: Boolean,
+      required: true,
+    },
+  },
+})
+
+</script>
+
+<style scoped>
+._replay-desktop {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.main {
+  display: flex;
+  flex: 1;
+  flex-direction: row;
+  overflow: hidden;
+}
+
+.table {
+  width: 300px;
+  flex: 0 0 auto;
+}
+
+.grid, .picker {
+  flex: 1;
+}
+</style>
+
