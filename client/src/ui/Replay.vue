@@ -5,25 +5,23 @@
       @mousedown="onBubbleMouseDown"
       >
     <template v-if="status == 'loaded'">
-      <ControlsRow />
-      <div class="main">
-        <PlayerSelector class="table" />
-        <DraftPicker v-if="showDraftPicker" class="picker" />
-        <CardGrid v-else class="grid" />
-      </div>
+      <ReplayMobile
+          v-if="formatStore.layout == 'mobile'"
+          :showDraftPicker="showDraftPicker"
+          />
+      <ReplayDesktop v-else :showDraftPicker="showDraftPicker" />
     </template>
   </div>
 </template>
 
 <script lang="ts">
 import Vue from 'vue';
-import ControlsRow from './replay/ControlsRow.vue';
-import PlayerSelector from './replay/player_selector/PlayerSelector.vue';
-import CardGrid from './replay/CardGrid.vue';
-import DraftPicker from './replay/DraftPicker.vue';
+import ReplayDesktop from './replay/ReplayDesktop.vue';
+import ReplayMobile from './replay/ReplayMobile.vue';
 
 import { rootStore } from '../state/store';
 import { authStore } from '../state/AuthStore';
+import { formatStore, FormatStore } from '../state/FormatStore';
 import { replayStore } from '../state/ReplayStore';
 import { draftStore, DraftStore } from '../state/DraftStore';
 import { applyReplayUrlState, parseDraftUrl, pushDraftUrlFromState } from '../router/url_manipulation';
@@ -38,10 +36,8 @@ import { isAuthedUserSelected } from './replay/isAuthedUserSelected';
 
 export default Vue.extend({
   components: {
-    ControlsRow,
-    PlayerSelector,
-    DraftPicker,
-    CardGrid,
+    ReplayMobile,
+    ReplayDesktop,
   },
 
   data() {
@@ -75,8 +71,8 @@ export default Vue.extend({
   },
 
   computed: {
-    draftStore(): DraftStore {
-      return draftStore;
+    formatStore(): FormatStore {
+      return formatStore;
     },
 
     showDraftPicker(): boolean {
@@ -160,23 +156,5 @@ export default Vue.extend({
 <style scoped>
 ._replay {
   height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-.main {
-  display: flex;
-  flex: 1;
-  flex-direction: row;
-  overflow: hidden;
-}
-
-.table {
-  width: 300px;
-  flex: 0 0 auto;
-}
-
-.grid, .picker {
-  flex: 1;
 }
 </style>

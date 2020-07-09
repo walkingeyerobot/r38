@@ -1,7 +1,7 @@
 <template>
   <div class="_controls-row">
     <div class="start">
-      <TimelineButton class="timeline-btn" />
+      <TimelineButton class="timeline-btn" popoverAlignment="left below" />
       <button
           v-if="draftStore.isFilteredDraft"
           @click="onPicksClick"
