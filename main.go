@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"database/sql"
 	"encoding/json"
-	"errors"
 	"flag"
 	"fmt"
 	"html/template"
@@ -605,19 +604,36 @@ func createZipExport(exports []BulkMTGOExport) ([]byte, error) {
 
 // exportToMTGO creates an MTGO compatible .dek string for given user and draft.
 func exportToMTGO(userID int64, draftID int64) (string, error) {
-	_, picks, _, err := getPackPicksAndPowers(draftID, userID)
+	query := `select
+                    cards.mtgo,
+                    cards.name
+                  from cards
+                  join packs on cards.pack=packs.id
+                  join seats on packs.seat=seats.id
+                  where seats.user=?
+                    and seats.draft=?
+                    and packs.round=0`
+	rows, err := database.Query(query, userID, draftID)
 	if err != nil {
 		return "", err
 	}
+	defer rows.Close()
+
 	export := "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<Deck xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\n<NetDeckID>0</NetDeckID>\n<PreconstructedDeckID>0</PreconstructedDeckID>\n"
 	var nq map[string]NameAndQuantity
 	nq = make(map[string]NameAndQuantity)
-	for _, pick := range picks {
-		if pick.Mtgo != "" {
-			o := nq[pick.Mtgo]
-			o.Name = pick.Name
+	for rows.Next() {
+		var name string
+		var mtgo string
+		err = rows.Scan(&mtgo, &name)
+		if err != nil {
+			return "", err
+		}
+		if mtgo != "" {
+			o := nq[mtgo]
+			o.Name = name
 			o.Quantity++
-			nq[pick.Mtgo] = o
+			nq[mtgo] = o
 		}
 	}
 	for mtgo, info := range nq {
@@ -840,97 +856,6 @@ func ServePick(w http.ResponseWriter, r *http.Request, userID int64) {
 	}
 	viewParam := GetViewParam(r, userID)
 	http.Redirect(w, r, fmt.Sprintf("/draft/%d%s", draftID, viewParam), http.StatusTemporaryRedirect)
-}
-
-// getPackPicksAndPowers returns data useful to active drafters.
-func getPackPicksAndPowers(draftID int64, userID int64) ([]Card, []Card, []Card, error) {
-	query := `select
-                    packs.round,
-                    cards.id,
-                    cards.name,
-                    cards.tags,
-                    cards.number,
-                    cards.edition,
-                    cards.faceup,
-                    cards.mtgo
-                  from drafts
-                  join seats on drafts.id=seats.draft
-                  join packs on seats.id=packs.seat
-                  join cards on packs.id=cards.pack
-                  where seats.draft=?
-                    and seats.user=?
-                    and (packs.round=0
-                         or (packs.round=seats.round
-                             and packs.id=
-                               (select v_packs.id
-                                from v_packs
-                                join seats on seats.id=v_packs.seat
-                                where seats.draft=?
-                                  and seats.user=?
-                                  and v_packs.round=seats.round
-                                order by v_packs.count desc
-                                limit 1)))
-                  order by cards.modified`
-
-	rows, err := database.Query(query, draftID, userID, draftID, userID)
-	if err == sql.ErrNoRows {
-		return nil, nil, nil, errors.New("no cards")
-	} else if err != nil {
-		return nil, nil, nil, err
-	}
-	defer rows.Close()
-	var count int
-	var myPicks []Card
-	var myPack []Card
-	var powers []Card
-	for rows.Next() {
-		var id int64
-		var round int64
-		var name string
-		var tags string
-		var number string
-		var edition string
-		var faceup bool
-		var mtgo sql.NullString
-		err = rows.Scan(&round, &id, &name, &tags, &number, &edition, &faceup, &mtgo)
-		if err != nil {
-			return nil, nil, nil, err
-		}
-
-		var mtgoString string
-		if mtgo.Valid {
-			mtgoString = mtgo.String
-		}
-
-		if round == 0 {
-			myPicks = append(myPicks, Card{Name: name, Tags: tags, Number: number, Edition: edition, ID: id, Mtgo: mtgoString})
-			if faceup == true {
-				switch name {
-				case "Cogwork Librarian":
-					powers = append(powers, Card{Name: name, Tags: tags, Number: number, Edition: edition, ID: id, Mtgo: mtgoString})
-				}
-			}
-		} else {
-			myPack = append(myPack, Card{Name: name, Tags: tags, Number: number, Edition: edition, ID: id, Mtgo: mtgoString})
-		}
-		count++
-	}
-
-	if count == 0 {
-		return nil, nil, nil, errors.New("no cards")
-	}
-
-	var powers2 []Card
-	for _, powerCard := range powers {
-		switch powerCard.Name {
-		case "Cogwork Librarian":
-			if len(myPack) >= 2 {
-				powers2 = append(powers2, powerCard)
-			}
-		}
-	}
-
-	return myPack, myPicks, powers2, nil
 }
 
 // doPick actually performs a pick in the database.
