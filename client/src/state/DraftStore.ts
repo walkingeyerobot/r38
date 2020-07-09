@@ -37,6 +37,9 @@ export const draftStore = vuexModule(
         state: State,
         payload: SourceData,
       ) {
+        // For debugging purposes
+        window.draftData = payload;
+
         const parsed = parseInitialState(payload);
 
         state.draftId = payload.draftId;
