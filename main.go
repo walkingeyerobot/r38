@@ -694,7 +694,7 @@ func ServeVueApp(w http.ResponseWriter, r *http.Request, userID int64) {
 
 	data := ReplayPageData{UserJSON: string(userInfoJSON)}
 
-	t := template.Must(template.ParseFiles("replay.tmpl"))
+	t := template.Must(template.ParseFiles("vue.tmpl"))
 
 	t.Execute(w, data)
 }
