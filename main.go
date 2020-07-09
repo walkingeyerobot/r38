@@ -307,13 +307,9 @@ func NewHandler(useAuth bool) http.Handler {
 	addHandler("/proxy/", ServeProxy)
 	addHandler("/replay/", ServeReplay)
 	addHandler("/deckbuilder/", ServeDeckbuilder)
-	addHandler("/librarian/", ServeLibrarian)
-	addHandler("/power/", ServePower)
-	addHandler("/draft/", ServeDraft)
 	addHandler("/pdf/", ServePDF)
 	addHandler("/pick/", ServePick)
 	addHandler("/join/", ServeJoin)
-	addHandler("/mtgo/", ServeMTGO)
 	addHandler("/bulk_mtgo/", ServeBulkMTGO)
 	addHandler("/index/", ServeIndex)
 
@@ -588,33 +584,6 @@ func ServeBulkMTGO(w http.ResponseWriter, r *http.Request, userID int64) {
 	io.WriteString(w, string(archive))
 }
 
-// ServeMTGO exports a draft to a .dek file for the user.
-func ServeMTGO(w http.ResponseWriter, r *http.Request, userID int64) {
-	re := regexp.MustCompile(`/mtgo/(\d+)`)
-	parseResult := re.FindStringSubmatch(r.URL.Path)
-
-	if parseResult == nil {
-		http.Error(w, "bad url", http.StatusInternalServerError)
-		return
-	}
-
-	draftIDInt, err := strconv.Atoi(parseResult[1])
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	draftID := int64(draftIDInt)
-
-	export, err := exportToMTGO(userID, draftID)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Disposition", "attachment; filename=r38export.dek")
-	w.Header().Set("Content-Type", r.Header.Get("Content-Type"))
-	io.WriteString(w, export)
-}
-
 // createZipExport creates a .zip file containing decks from a bulk MTGO export.
 func createZipExport(exports []BulkMTGOExport) ([]byte, error) {
 	buf := new(bytes.Buffer)
@@ -725,16 +694,6 @@ func ServeVueApp(parseResult []string, w http.ResponseWriter, userID int64) {
 
 	draftID := int64(draftIDInt)
 
-	canViewReplay, err := CanViewReplay(draftID, userID)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	if !canViewReplay {
-		http.Error(w, "lol no", http.StatusInternalServerError)
-		return
-	}
-
 	draftJSON, err := GetJSON(draftID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -769,218 +728,6 @@ func ServeVueApp(parseResult []string, w http.ResponseWriter, userID int64) {
 	t.Execute(w, data)
 }
 
-// CanViewReplay returns true if the given user is able to view the full replay of the given draft.
-func CanViewReplay(draftID int64, userID int64) (bool, error) {
-	query := `select min(round) from seats where draft=?`
-	row := database.QueryRow(query, draftID)
-	var round int64
-	err := row.Scan(&round)
-	if err != nil {
-		return false, err
-	}
-
-	if round < 4 && userID != 1 {
-		query = `select user from seats where draft=? and position is not null`
-		rows, err := database.Query(query, draftID)
-		if err != nil {
-			return false, err
-		}
-		defer rows.Close()
-
-		valid := true
-		for rows.Next() {
-			var playerID sql.NullInt64
-			err = rows.Scan(&playerID)
-			if err != nil {
-				return false, err
-			}
-			if !playerID.Valid || playerID.Int64 == userID {
-				valid = false
-				break
-			}
-		}
-
-		if !valid {
-			return false, nil
-		}
-	}
-
-	return true, nil
-}
-
-// ServeLibrarian handles cogwork librarian picks.
-func ServeLibrarian(w http.ResponseWriter, r *http.Request, userID int64) {
-	re := regexp.MustCompile(`/librarian/(\d+)/(\d+)`)
-	parseResult := re.FindStringSubmatch(r.URL.Path)
-
-	if parseResult == nil {
-		http.Error(w, "bad url", http.StatusInternalServerError)
-		return
-	}
-
-	cardID1Int, err := strconv.Atoi(parseResult[1])
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	cardID2Int, err := strconv.Atoi(parseResult[2])
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	cardID1 := int64(cardID1Int)
-	cardID2 := int64(cardID2Int)
-
-	query := `select seats.draft from cards join packs join seats where cards.pack=packs.id and packs.seat=seats.id and cards.id IN (?,?)`
-
-	rows, err := database.Query(query, cardID1, cardID2)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	defer rows.Close()
-	var checkID int64
-	checkID = 0
-	rowCount := 0
-	for rows.Next() {
-		rowCount++
-		var checkID2 int64
-		err = rows.Scan(&checkID2)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		if checkID == 0 {
-			checkID = checkID2
-		} else if checkID != checkID2 {
-			http.Error(w, "woah there!", http.StatusInternalServerError)
-			return
-		}
-	}
-
-	if checkID == 0 || rowCount != 2 {
-		http.Error(w, "woah there", http.StatusInternalServerError)
-		return
-	}
-
-	draftID1, packID1, announcements1, round1, err := doPick(userID, cardID1, false)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	draftID2, packID2, announcements2, round2, err := doPick(userID, cardID2, true)
-
-	if packID1 != packID2 {
-		http.Error(w, "pack ids somehow don't match.", http.StatusInternalServerError)
-		return
-	}
-
-	if draftID1 != draftID2 {
-		http.Error(w, "draft ids somehow don't match.", http.StatusInternalServerError)
-		return
-	}
-
-	if round1 != round2 {
-		http.Error(w, "rounds somehow don't match.", http.StatusInternalServerError)
-		return
-	}
-
-	query = `select position from seats where draft=? and user=?`
-	row := database.QueryRow(query, draftID1, userID)
-	var position int64
-	err = row.Scan(&position)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	announcements := append(announcements1, fmt.Sprintf("Seat %d used Cogwork Librarian's ability", position))
-	announcements = append(announcements, announcements2...)
-
-	query = `select cards.id from cards join packs join seats where cards.pack=packs.id and packs.seat=seats.id and seats.draft=? and cards.name="Cogwork Librarian" and seats.user=?`
-
-	row = database.QueryRow(query, draftID1, userID)
-	var librarianID int64
-	err = row.Scan(&librarianID)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	query = `update cards set pack=?, faceup=false where id=?`
-	log.Printf("%s\t%d,%d", query, packID1, librarianID)
-	_, err = database.Exec(query, packID1, librarianID)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	err = DoEvent(draftID1, userID, announcements, cardID1, sql.NullInt64{Int64: cardID2, Valid: true}, round1)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	http.Redirect(w, r, fmt.Sprintf("/draft/%d", draftID1), http.StatusTemporaryRedirect)
-}
-
-// ServePower serves pages to the user when they try to use a power (right now just Cogwork Librarian).
-func ServePower(w http.ResponseWriter, r *http.Request, userID int64) {
-	re := regexp.MustCompile(`/power/(\d+)`)
-	parseResult := re.FindStringSubmatch(r.URL.Path)
-
-	if parseResult == nil {
-		http.Error(w, "bad url", http.StatusInternalServerError)
-		return
-	}
-
-	cardIDInt, err := strconv.Atoi(parseResult[1])
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	cardID := int64(cardIDInt)
-
-	query := `select cards.name, seats.draft from cards join packs join seats where cards.pack=packs.id and packs.seat=seats.id and seats.user=? and cards.id=? and cards.faceup=true`
-
-	row := database.QueryRow(query, userID, cardID)
-	var cardName string
-	var draftID int64
-	err = row.Scan(&cardName, &draftID)
-	if err == sql.ErrNoRows {
-		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
-		return
-	} else if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	switch cardName {
-	case "Cogwork Librarian":
-		// show the current pack and current picks
-		myPack, myPicks, _, err := getPackPicksAndPowers(draftID, userID)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		if len(myPack) < 2 {
-			http.Redirect(w, r, fmt.Sprintf("/draft/%d", draftID), http.StatusTemporaryRedirect)
-			return
-		}
-
-		t := template.Must(template.ParseFiles("librarian.tmpl"))
-
-		data := DraftPageData{Pack: myPack, Picks: myPicks, DraftID: draftID}
-		t.Execute(w, data)
-		// use some js to construct the url /librarian/cogworklibrarianid/pick1id/pick2id
-		// redirect to the draft url
-	}
-}
-
 // ServeIndex serves the index page.
 func ServeIndex(w http.ResponseWriter, r *http.Request, userID int64) {
 	query := `select drafts.id, drafts.name, sum(seats.user is null and seats.position is not null) as empty_seats, coalesce(sum(seats.user = ?), 0) as joined from drafts left join seats on drafts.id = seats.draft group by drafts.id`
@@ -1000,11 +747,7 @@ func ServeIndex(w http.ResponseWriter, r *http.Request, userID int64) {
 			return
 		}
 		d.Joinable = d.Seats > 0 && !d.Joined
-		d.Replayable, err = CanViewReplay(d.ID, userID)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+		d.Replayable = true
 
 		Drafts = append(Drafts, d)
 	}
@@ -1091,64 +834,6 @@ func ServePDF(w http.ResponseWriter, r *http.Request, userID int64) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-}
-
-// ServeDraft serves the draft page.
-func ServeDraft(w http.ResponseWriter, r *http.Request, userID int64) {
-	re := regexp.MustCompile(`/draft/(\d+)`)
-	parseResult := re.FindStringSubmatch(r.URL.Path)
-
-	if parseResult == nil {
-		http.Error(w, "bad url", http.StatusInternalServerError)
-		return
-	}
-
-	draftIDInt, err := strconv.Atoi(parseResult[1])
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	draftID := int64(draftIDInt)
-
-	myPack, myPicks, powers2, err := getPackPicksAndPowers(draftID, userID)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	query := `select seats.position, drafts.name from seats join drafts where seats.draft=? and seats.user=? and seats.draft=drafts.id`
-	row := database.QueryRow(query, draftID, userID)
-	var position int64
-	var draftName string
-	err = row.Scan(&position, &draftName)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	query = `select message from revealed where draft=?`
-	rows, err := database.Query(query, draftID)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	defer rows.Close()
-	var revealed []string
-	for rows.Next() {
-		var msg string
-		err = rows.Scan(&msg)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		revealed = append(revealed, msg)
-	}
-	viewParam := GetViewParam(r, userID)
-	t := template.Must(template.ParseFiles("draft.tmpl"))
-
-	data := DraftPageData{Picks: myPicks, Pack: myPack, DraftID: draftID, DraftName: draftName, Powers: powers2, Position: position, Revealed: revealed, ViewURL: viewParam}
-
-	t.Execute(w, data)
 }
 
 // ServeJoin allows the user to join a draft, if possible.
