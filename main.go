@@ -787,7 +787,10 @@ func doPick(userID int64, cardID int64, pass bool) (int64, int64, []string, int6
 			// weirder formats.
 			query = `update seats set round = ? where user = ? and draft = ?`
 
-			row = database.QueryRow(query, (myCount+1)/15+1, userID, draftID)
+			_, err = database.Exec(query, (myCount+1)/15+1, userID, draftID)
+			if err != nil {
+				return draftID, myPackID, announcements, round, err
+			}
 
 			// If the rounds do NOT match from earlier, we have a situation where players are in different
 			// rounds. Look for a blocking player.
@@ -924,11 +927,11 @@ func GetJSONObject(draftID int64) (DraftJSON, error) {
                     cards.data,
                     users.picture
                   from seats
-                  left join users on users.id=seats.user
-                  join drafts on drafts.id=seats.draft
-                  join packs on packs.original_seat=seats.id
-                  join cards on cards.original_pack=packs.id
-                  where drafts.id=?`
+                  left join users on users.id = seats.user
+                  join drafts on drafts.id = seats.draft
+                  join packs on packs.original_seat = seats.id
+                  join cards on cards.original_pack = packs.id
+                  where drafts.id = ?`
 
 	rows, err := database.Query(query, draftID)
 	if err != nil {
