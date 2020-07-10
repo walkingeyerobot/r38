@@ -96,8 +96,6 @@ export default Vue.extend({
       this.submittingPick = true;
       this.pickedCardId = cardId;
 
-      const card = draftStore.getCard(cardId);
-
       const start = Date.now();
       // TODO: Error handling
       const response = await fetchEndpoint(routePick, {
@@ -107,11 +105,7 @@ export default Vue.extend({
       const elapsed = Date.now() - start;
       await delay(500 - elapsed);
 
-      // TODO: Should probably just apply the returned state instead
-      draftStore.pickCard({
-        seatId: this.currentSeat.position,
-        cardId: cardId,
-      });
+      draftStore.loadDraft(response);
 
       this.submittingPick = false;
       this.pickedCardId = null;
