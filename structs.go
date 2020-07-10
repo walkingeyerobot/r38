@@ -34,9 +34,9 @@ type Perspective struct {
 
 // DraftJSON describes the draft to the replay viewer.
 type DraftJSON struct {
-	DraftID   int64         `json:"draftId"`
-	DraftName string        `json:"draftName"`
-	Seats     [8]Seat       `json:"seats"`
+	DraftID   int64        `json:"draftId"`
+	DraftName string       `json:"draftName"`
+	Seats     [8]Seat      `json:"seats"`
 	Events    []DraftEvent `json:"events"`
 }
 
