@@ -130,8 +130,11 @@ export const deckBuilderStore = vuexModule(rootStore, MODULE_NAME, {
             const newSection: CardColumn[] = fillArray(numColumns, () => []);
 
             for (const card of cards) {
-              if (card.definition.colors.length === 1) {
-                const index = getColorIndex(card.definition.colors[0]);
+              const colors = (card.definition.card_faces?.length || 0) > 0
+                  ? card.definition.card_faces![0].colors
+                  : card.definition.colors;
+              if (colors.length === 1) {
+                const index = getColorIndex(colors[0]);
                 newSection[index].push(card);
               } else if (card.definition.colors.length === 0) {
                 newSection[Math.min(5, numColumns)].push(card);
@@ -207,6 +210,7 @@ function migrateDeckVersion(deck: Deck, newVersion: DataVersion): Deck {
   function unreachable(x: never) {
     return new Error(x);
   }
+
   switch (newVersion) {
     case 1:
       // no migration to version 1
