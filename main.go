@@ -22,99 +22,30 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-// Draft describes a draft for the purposes of the index page.
-type Draft struct {
-	Name       string
-	ID         int64
-	Seats      int64
-	Joined     bool
-	Joinable   bool
-	Replayable bool
-}
-
-// IndexPageData is the input to index.tmpl.
-type IndexPageData struct {
-	Drafts  []Draft
-	ViewURL string
-	UserID  int64
-}
-
-// DraftPageData is the input to draft.tmpl.
-type DraftPageData struct {
-	DraftID   int64
-	DraftName string
-	Picks     []Card
-	Pack      []Card
-	Powers    []Card
-	Position  int64
-	Revealed  []string
-	ViewURL   string
-}
-
-// Card is exported to the client to describe cards.
-type Card struct {
-	ID      int64       `json:"r38Id"`
-	Name    string      `json:"name"`
-	Tags    string      `json:"tags"`
-	Number  string      `json:"number"`
-	Edition string      `json:"edition"`
-	Mtgo    string      `json:"mtgo"`
-	Cmc     int64       `json:"cmc"`
-	Type    string      `json:"type"`
-	Color   string      `json:"color"`
-	Data    interface{} `json:"data"`
-}
-
-// Seat is exported to the client to help describe the draft.
-type Seat struct {
-	Rounds []Round `json:"rounds"`
-	Name   string  `json:"name"`
-	ID     int64   `json:"id"`
-}
-
-// Round is exported to the client to help describe the draft.
-type Round struct {
-	Packs []Pack `json:"packs"`
-	Round int64  `json:"round"`
-}
-
-// Pack is exported to the client to help describe the draft.
-type Pack struct {
-	Cards []Card `json:"cards"`
-}
-
-// DraftJSON is the old shitty way to tell the replay client about the draft.
-type DraftJSON struct {
-	Seats  []Seat       `json:"seats"`
-	Name   string       `json:"name"`
-	ID     int64        `json:"id"`
-	Events []DraftEvent `json:"events"`
-}
-
 // Perspective tells the client from which user's perspective the replay data is from.
 type Perspective struct {
-	User  int64      `json:"user"`
-	Draft DraftJSON2 `json:"draft"`
+	User  int64     `json:"user"`
+	Draft DraftJSON `json:"draft"`
 }
 
-// DraftJSON2 describes the draft to the replay viewer.
-type DraftJSON2 struct {
+// DraftJSON describes the draft to the replay viewer.
+type DraftJSON struct {
 	DraftID   int64         `json:"draftId"`
 	DraftName string        `json:"draftName"`
-	Seats     [8]Seat2      `json:"seats"`
-	Events    []DraftEvent2 `json:"events"`
+	Seats     [8]Seat       `json:"seats"`
+	Events    []DraftEvent `json:"events"`
 }
 
-// Seat2 is part of DraftJSON2.
-type Seat2 struct {
+// Seat is part of DraftJSON.
+type Seat struct {
 	Packs       [3][15]interface{} `json:"packs"`
 	PlayerName  string             `json:"playerName"`
 	PlayerID    int64              `json:"playerId"`
 	PlayerImage string             `json:"playerImage"`
 }
 
-// DraftEvent2 is part of DraftJSON2.
-type DraftEvent2 struct {
+// DraftEvent is part of DraftJSON.
+type DraftEvent struct {
 	Position       int64    `json:"position"`
 	Announcements  []string `json:"announcements"`
 	Cards          []int64  `json:"cards"`
@@ -123,24 +54,6 @@ type DraftEvent2 struct {
 	Round          int64    `json:"round"`
 	Librarian      bool     `json:"librarian"`
 	Type           string   `json:"type"`
-}
-
-// DraftEvent describes draft events to the replay viewer.
-type DraftEvent struct {
-	Player         int64    `json:"player"`
-	Announcements  []string `json:"announcements"`
-	Card1          string
-	Card2          string
-	Cards          []int64 `json:"cards"`
-	PlayerModified int64   `json:"playerModified"`
-	DraftModified  int64   `json:"draftModified"`
-	Round          int64   `json:"round"`
-	Librarian      bool    `json:"librarian"`
-}
-
-// ReplayPageData is the input to replay.tmpl.
-type ReplayPageData struct {
-	UserJSON string
 }
 
 // BulkMTGOExport is used to bulk export .dek files for the admin.
@@ -691,7 +604,7 @@ func ServeVueApp(w http.ResponseWriter, r *http.Request, userID int64) {
 		return
 	}
 
-	data := ReplayPageData{UserJSON: string(userInfoJSON)}
+	data := VuePageData{UserJSON: string(userInfoJSON)}
 
 	t := template.Must(template.ParseFiles("vue.tmpl"))
 
@@ -995,9 +908,9 @@ func NotifyByDraftAndPosition(draftID int64, position int64) error {
 	return nil
 }
 
-// GetJSONObject2 returns a better DraftJSON2 object. May be filtered.
-func GetJSONObject2(draftID int64) (DraftJSON2, error) {
-	var draft DraftJSON2
+// GetJSONObject returns a better DraftJSON object. May be filtered.
+func GetJSONObject(draftID int64) (DraftJSON, error) {
+	var draft DraftJSON
 
 	query := `select
                     drafts.id,
@@ -1072,7 +985,7 @@ func GetJSONObject2(draftID int64) (DraftJSON2, error) {
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var event DraftEvent2
+		var event DraftEvent
 		var announcements string
 		var card1id int64
 		var card2id sql.NullInt64
@@ -1095,29 +1008,15 @@ func GetJSONObject2(draftID int64) (DraftJSON2, error) {
 	}
 
 	if len(draft.Events) == 0 {
-		draft.Events = []DraftEvent2{}
+		draft.Events = []DraftEvent{}
 	}
 
 	return draft, nil
 }
 
-// GetJSON2 returns a better json string of replay data. May be filtered.
-func GetJSON2(draftID int64) (string, error) {
-	draft, err := GetJSONObject2(draftID)
-	if err != nil {
-		return "", err
-	}
-	ret, err := json.Marshal(draft)
-	if err != nil {
-		return "", err
-	}
-
-	return string(ret), nil
-}
-
 // GetFilteredJSON returns a filtered json object of replay data.
 func GetFilteredJSON(draftID int64, userID int64) (string, error) {
-	draft, err := GetJSONObject2(draftID)
+	draft, err := GetJSONObject(draftID)
 	if err != nil {
 		return "", err
 	}
