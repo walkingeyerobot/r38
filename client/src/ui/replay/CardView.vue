@@ -84,13 +84,6 @@ function getImageSrc(card: DraftCard): string {
   } else {
     return checkNotNil(card.definition.image_uris[0]);
   }
-  // } else if (DEVELOPMENT) {
-  //   return `http://api.scryfall.com/cards/${card.definition.set}/`
-  //       + `${card.definition.collector_number}?format=image&version=normal`;
-  // } else {
-  //   return `/proxy/${card.definition.set}/`
-  //       + `${card.definition.collector_number}`;
-  // }
 }
 
 </script>
