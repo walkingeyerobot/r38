@@ -1032,16 +1032,26 @@ func GetFilteredJSON(draftID int64, userID int64) (string, error) {
 
 // doEvent records an event (pick) into the database.
 func doEvent(draftID int64, userID int64, announcements []string, cardID1 int64, cardID2 sql.NullInt64, round int64) error {
-	var query string
-	var err error
+	query := `select
+                    v_packs.count
+                  from v_packs
+                  join seats on v_packs.seat = seats.id
+                  where v_packs.round = 0
+                    and seats.draft = ?
+                    and seats.user = ?`
+	row := database.QueryRow(query, draftID, userID)
+	var count int64
+	err := row.Scan(&count)
+	if err != nil {
+		return err
+	}
+
 	if cardID2.Valid {
-		query = `insert into events (round, draft, user, announcement, card1, card2, modified) VALUES (?, ?, ?, ?, ?, ?, (select count(1) from seats join packs join cards where seats.user=? and seats.draft=? and packs.seat=seats.id and cards.pack=packs.id and packs.round=0))`
-		log.Printf("%s\t%d,%d,%d,%s,%d,%d,%d,%d", query, round, draftID, userID, strings.Join(announcements, "\n"), cardID1, cardID2.Int64, userID, draftID)
-		_, err = database.Exec(query, round, draftID, userID, strings.Join(announcements, "\n"), cardID1, cardID2.Int64, userID, draftID)
+		query = `insert into events (round, draft, user, announcement, card1, card2, modified) VALUES (?, ?, ?, ?, ?, ?, ?)`
+		_, err = database.Exec(query, round, draftID, userID, strings.Join(announcements, "\n"), cardID1, cardID2.Int64, count)
 	} else {
-		query := `insert into events (round, draft, user, announcement, card1, card2, modified) VALUES (?, ?, ?, ?, ?, null, (select count(1) from seats join packs join cards where seats.user=? and seats.draft=? and packs.seat=seats.id and cards.pack=packs.id and packs.round=0))`
-		log.Printf("%s\t%d,%d,%d,%s,%d,%d,%d", query, round, draftID, userID, strings.Join(announcements, "\n"), cardID1, userID, draftID)
-		_, err = database.Exec(query, round, draftID, userID, strings.Join(announcements, "\n"), cardID1, userID, draftID)
+		query = `insert into events (round, draft, user, announcement, card1, card2, modified) VALUES (?, ?, ?, ?, ?, null, ?)`
+		_, err = database.Exec(query, round, draftID, userID, strings.Join(announcements, "\n"), cardID1, count)
 	}
 
 	return err
