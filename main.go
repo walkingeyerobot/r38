@@ -617,7 +617,17 @@ func doJoin(userID int64, draftID int64) error {
 func doPick(userID int64, cardID int64, pass bool) (int64, int64, []string, int64, error) {
 	announcements := []string{}
 
-	query := `select drafts.id, seats.round, seats.position, cards.name from drafts join seats join packs join cards where drafts.id=seats.draft and seats.id=packs.seat and packs.id=cards.pack and cards.id=? and packs.round <> 0`
+	query := `select
+                    drafts.id,
+                    seats.round,
+                    seats.position,
+                    cards.name
+                  from drafts
+                  join seats on drafts.id=seats.draft
+                  join packs on seats.id=packs.seat
+                  join cards on packs.id=cards.pack
+                  where cards.id=?
+                    and packs.round <> 0`
 
 	row := database.QueryRow(query, cardID)
 	var draftID int64
@@ -629,7 +639,29 @@ func doPick(userID int64, cardID int64, pass bool) (int64, int64, []string, int6
 		return -1, -1, announcements, -1, err
 	}
 
-	query = `select packs.id, packs.modified from drafts join seats join packs join cards where cards.id=? and drafts.id=? and drafts.id=seats.draft and seats.id=packs.seat and packs.id=cards.pack and seats.user=? and (packs.round=0 or (packs.round=seats.round and packs.modified in (select min(packs.modified) from packs join seats join drafts where seats.draft=? and seats.user=? and seats.id=packs.seat and drafts.id=seats.draft and packs.round=seats.round)))`
+	query = `select
+                   packs.id,
+                   packs.modified
+                 from drafts
+                 join seats on drafts.id=seats.draft
+                 join packs on seats.id=packs.seat
+                 join cards on packs.id=cards.pack
+                 where cards.id=?
+                   and drafts.id=?
+                   and seats.user=?
+                   and (
+                     packs.round=0
+                     or (
+                       packs.round=seats.round
+                         and packs.modified in (
+                           select
+                             min(packs.modified)
+                           from packs
+                           join seats on packs.seat=seats.id
+                           join drafts on seats.draft=drafts.id
+                           where seats.draft=?
+                             and seats.user=?
+                             and packs.round=seats.round)))`
 
 	row = database.QueryRow(query, cardID, draftID, userID, draftID, userID)
 	var oldPackID int64
