@@ -102,6 +102,7 @@ export default Vue.extend({
       // TODO: Error handling
       const response = await fetchEndpoint(routePick, {
         cards: [cardId],
+        as: authStore.user?.id,
       });
       const elapsed = Date.now() - start;
       await delay(500 - elapsed);

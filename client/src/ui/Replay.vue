@@ -106,8 +106,10 @@ export default Vue.extend({
       this.targetDraftId = draftId;
 
       // TODO: Handle errors
-      const payload =
-          await fetchEndpoint(routeDraft, { id: draftId });
+      const payload = await fetchEndpoint(routeDraft, {
+        id: draftId,
+        as: authStore.user?.id,
+      });
 
       if (payload.draftId != this.targetDraftId) {
         return;
