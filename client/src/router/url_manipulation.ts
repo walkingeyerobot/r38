@@ -25,7 +25,7 @@ export function navTo(
 ) {
   const url = generateReplayUrl(draftStore, replayStore, to);
   if (url != route.path) {
-    router.push(url);
+    router.push({ path: url, query: route.query });
   }
 }
 
