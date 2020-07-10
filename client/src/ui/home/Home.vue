@@ -52,6 +52,8 @@
 
 <script lang="ts">
 import Vue from 'vue';
+import { authStore } from '../../state/AuthStore';
+
 import { HomeDraftDescriptor, routeDraftlist } from '../../rest/api/draftlist/draftlist'
 import { fetchEndpoint } from '../../fetch/fetchEndpoint';
 
@@ -65,7 +67,10 @@ export default Vue.extend({
 
   async created() {
     this.fetchStatus = 'loading';
-    const response = await fetchEndpoint(routeDraftlist, {});
+    const response =
+        await fetchEndpoint(routeDraftlist, {
+          as: authStore.user?.id,
+        });
     this.fetchStatus = 'loaded';
     // TODO: catch and show error
     this.drafts = response.drafts;
