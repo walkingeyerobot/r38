@@ -671,7 +671,14 @@ func doPick(userID int64, cardID int64, pass bool) (int64, int64, []string, int6
 		return draftID, -1, announcements, round, err
 	}
 
-	query = `select packs.id, seats.id from packs join seats where seats.user=? and seats.id=packs.seat and packs.round=0 and seats.draft=?`
+	query = `select
+                   packs.id,
+                   seats.id
+                 from packs
+                 join seats on seats.id=packs.seat
+                 where seats.user=?
+                   and packs.round=0
+                   and seats.draft=?`
 
 	row = database.QueryRow(query, userID, draftID)
 	var pickID int64
@@ -704,7 +711,13 @@ func doPick(userID int64, cardID int64, pass bool) (int64, int64, []string, int6
 
 	var cardModified int64
 	cardModified = 0
-	query = `select max(cards.modified) from cards join packs on cards.pack=packs.id join seats on seats.id=packs.seat where seats.draft=? and seats.user=?`
+	query = `select
+                   max(cards.modified)
+                 from cards
+                 join packs on cards.pack=packs.id
+                 join seats on seats.id=packs.seat
+                 where seats.draft=?
+                   and seats.user=?`
 	row = database.QueryRow(query, draftID, userID)
 
 	err = row.Scan(&cardModified)
@@ -724,7 +737,14 @@ func doPick(userID int64, cardID int64, pass bool) (int64, int64, []string, int6
 			return draftID, oldPackID, announcements, round, err
 		}
 
-		query = `select count(1) from v_packs join seats where v_packs.seat=seats.id and seats.user=? and v_packs.round=? and v_packs.count>0 and seats.draft=?`
+		query = `select
+                           count(1)
+                         from v_packs
+                         join seats on v_packs.seat=seats.id
+                         where seats.user=?
+                           and v_packs.round=?
+                           and v_packs.count>0
+                           and seats.draft=?`
 		row = database.QueryRow(query, userID, round, draftID)
 		var packsLeftInSeat int64
 		err = row.Scan(&packsLeftInSeat)
@@ -733,7 +753,14 @@ func doPick(userID int64, cardID int64, pass bool) (int64, int64, []string, int6
 		}
 
 		if packsLeftInSeat == 0 {
-			query = `select count(1) from seats a join seats b on a.draft=b.draft where a.user=? and b.position=? and a.draft=? and a.round=b.round`
+			query = `select
+                                   count(1)
+                                 from seats a
+                                 join seats b on a.draft=b.draft
+                                 where a.user=?
+                                   and b.position=?
+                                   and a.draft=?
+                                   and a.round=b.round`
 			row = database.QueryRow(query, userID, newPosition, draftID)
 			var roundsMatch int64
 			err = row.Scan(&roundsMatch)
@@ -755,7 +782,13 @@ func doPick(userID int64, cardID int64, pass bool) (int64, int64, []string, int6
 			}
 
 			if roundsMatch == 0 {
-				query = `select count(1) from seats where draft=? group by round order by round desc limit 1`
+				query = `select
+                                           count(1)
+                                         from seats
+                                         where draft=?
+                                         group by round
+                                         order by round
+                                         desc limit 1`
 
 				row = database.QueryRow(query, draftID)
 				var nextRoundPlayers int64
@@ -763,7 +796,15 @@ func doPick(userID int64, cardID int64, pass bool) (int64, int64, []string, int6
 				if err != nil {
 					log.Printf("error counting players and rounds")
 				} else if nextRoundPlayers > 1 {
-					query = `select seats.position from seats left join packs on seats.id=packs.seat join v_packs on v_packs.id=packs.id where v_packs.count>0 and packs.round=seats.round and seats.draft=? group by seats.id`
+					query = `select
+                                                   seats.position
+                                                 from seats
+                                                 left join packs on seats.id=packs.seat
+                                                 join v_packs on v_packs.id=packs.id
+                                                 where v_packs.count>0
+                                                   and packs.round=seats.round
+                                                   and seats.draft=?
+                                                 group by seats.id`
 
 					rows, err := database.Query(query, draftID)
 					if err != nil {
