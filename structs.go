@@ -111,5 +111,19 @@ type BulkMTGOExport struct {
 // NameAndQuantity is used in MTGO .dek exports.
 type NameAndQuantity struct {
 	Name     string
+	MTGO     string
 	Quantity int64
+}
+
+// R38CardData is the JSON passed to the client for card data.
+// Note that this does not describe everything that is in the data, just what we need
+type R38CardData struct {
+	MTGO     int64            `json:"mtgo_id"`
+	Scryfall ScryfallCardData `json:"scryfall"`
+}
+
+// ScryfallCardData is more JSON passed to the client for card data.
+// Note that this does not describe everything that is in the data, just what we need
+type ScryfallCardData struct {
+	Name string `json:"name"`
 }

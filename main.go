@@ -286,14 +286,17 @@ func ServeAPIPick(w http.ResponseWriter, r *http.Request, userID int64) {
 	if len(pick.CardIds) == 1 {
 		draftID, err = doSinglePick(userID, pick.CardIds[0])
 		if err != nil {
-			json.NewEncoder(w).Encode(JSONError{Error: fmt.Sprintf("error making pick: %s", err.Error())})
+			// We can't send the actual error back to the client without leaking information about
+			// where the card they tried to pick actually is.
+			log.Printf("error making pick: %s", err.Error())
+			json.NewEncoder(w).Encode(JSONError{Error: fmt.Sprintf("error making pick")})
 			return
 		}
 	} else if len(pick.CardIds) == 2 {
 		json.NewEncoder(w).Encode(JSONError{Error: "cogwork librarian power not implemented yet"})
 		return
 	} else {
-		json.NewEncoder(w).Encode(JSONError{Error: fmt.Sprintf("invalid number of cards: %d", len(pick.CardIds))})
+		json.NewEncoder(w).Encode(JSONError{Error: fmt.Sprintf("invalid number of picked cards: %d", len(pick.CardIds))})
 		return
 	}
 
@@ -422,8 +425,7 @@ func createZipExport(exports []BulkMTGOExport) ([]byte, error) {
 // exportToMTGO creates an MTGO compatible .dek string for given user and draft.
 func exportToMTGO(userID int64, draftID int64) (string, error) {
 	query := `select
-                    cards.mtgo,
-                    cards.name
+                    cards.data
                   from cards
                   join packs on cards.pack=packs.id
                   join seats on packs.seat=seats.id
@@ -437,24 +439,28 @@ func exportToMTGO(userID int64, draftID int64) (string, error) {
 	defer rows.Close()
 
 	export := "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<Deck xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\n<NetDeckID>0</NetDeckID>\n<PreconstructedDeckID>0</PreconstructedDeckID>\n"
-	var nq map[string]NameAndQuantity
-	nq = make(map[string]NameAndQuantity)
+	var nq map[int64]NameAndQuantity
+	nq = make(map[int64]NameAndQuantity)
 	for rows.Next() {
-		var name string
-		var mtgo string
-		err = rows.Scan(&mtgo, &name)
+		var dataString string
+		var data R38CardData
+		err = rows.Scan(&dataString)
 		if err != nil {
 			return "", err
 		}
-		if mtgo != "" {
-			o := nq[mtgo]
-			o.Name = name
+		err = json.Unmarshal([]byte(dataString), &data)
+		if err != nil {
+			return "", err
+		}
+		if data.MTGO != 0 {
+			o := nq[data.MTGO]
+			o.Name = data.Scryfall.Name
 			o.Quantity++
-			nq[mtgo] = o
+			nq[data.MTGO] = o
 		}
 	}
 	for mtgo, info := range nq {
-		export = export + fmt.Sprintf("<Cards CatID=\"%s\" Quantity=\"%d\" Sideboard=\"false\" Name=\"%s\" />\n", mtgo, info.Quantity, info.Name)
+		export = export + fmt.Sprintf("<Cards CatID=\"%d\" Quantity=\"%d\" Sideboard=\"false\" Name=\"%s\" />\n", mtgo, info.Quantity, info.Name)
 	}
 	export = export + "</Deck>"
 	return export, nil
@@ -737,6 +743,7 @@ func doPick(userID int64, cardID int64, pass bool) (int64, int64, []string, int6
 			if err != nil {
 				log.Printf("cannot determine if rounds match for notify")
 			} else if roundsMatch == 1 {
+				log.Printf("attempting to notify position %d draft %d", newPosition, draftID)
 				err = NotifyByDraftAndPosition(draftID, newPosition)
 				if err != nil {
 					log.Printf("error with notify")
