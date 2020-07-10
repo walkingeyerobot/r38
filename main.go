@@ -289,15 +289,9 @@ func ServeAPIPick(w http.ResponseWriter, r *http.Request, userID int64) {
 	if len(pick.CardIds) == 1 {
 		var announcements []string
 		var round int64
-		draftID, _, announcements, round, err = doPick(userID, pick.CardIds[0], true)
+		draftID, err = doSinglePick(userID, pick.CardIds[0])
 		if err != nil {
 			json.NewEncoder(w).Encode(JSONError{Error: fmt.Sprintf("error making pick: %s", err.Error())})
-			return
-		}
-
-		err = DoEvent(draftID, userID, announcements, pick.CardIds[0], sql.NullInt64{Valid: false}, round)
-		if err != nil {
-			json.NewEncoder(w).Encode(JSONError{Error: fmt.Sprintf("error recording event: %s", err.Error())})
 			return
 		}
 	} else if len(pick.CardIds) == 2 {
@@ -613,146 +607,158 @@ func doJoin(userID int64, draftID int64) error {
 	return nil
 }
 
+// doSinglePick performs a normal pick based on a user id and a card id. It returns the draft id and an error.
+func doSinglePick(userID int64, cardID int64) (int64, error) {
+	draftID, _, announcements, round, err = doPick(userID, cardID, true)
+	if err != nil {
+		return draftID, err
+	}
+	err = doEvent(draftID, userID, announcements, cardID, sql.NullInt64{}, round)
+	if err != nil {
+		return draftID, err
+	}
+	return draftID, nil
+}
+
 // doPick actually performs a pick in the database.
 func doPick(userID int64, cardID int64, pass bool) (int64, int64, []string, int64, error) {
 	announcements := []string{}
 
+	// First we need information about the card. Determine which pack the card is in,
+	// where that pack is at the table, who sits at that position, which draft that
+	// pack is a part of, and which round that card is in.
 	query := `select
-                    drafts.id,
-                    seats.round,
-                    seats.position,
-                    cards.name
-                  from drafts
-                  join seats on drafts.id=seats.draft
-                  join packs on seats.id=packs.seat
-                  join cards on packs.id=cards.pack
-                  where cards.id=?
-                    and packs.round <> 0`
+                   packs.id,
+                   seats.position,
+                   seats.draft,
+                   seats.user,
+                   seats.round
+                 from cards
+                 join packs on cards.pack = packs.id
+                 join seats on packs.seat = seats.id
+                 where cards.id = ?`
 
 	row := database.QueryRow(query, cardID)
-	var draftID int64
-	var round int64
+	var myPackID int64
 	var position int64
-	var cardName string
-	err := row.Scan(&draftID, &round, &position, &cardName)
+	var draftID int64
+	var userID2 int64
+	var round int64
+	err := row.Scan(&myPackID, &position, &draftID, &userID2, &round)
+
 	if err != nil {
-		return -1, -1, announcements, -1, err
+		return draftID, myPackID, announcements, round, err
+	} else if userID != userID2 {
+		// fail
+		return draftID, myPackID, announcements, round, fmt.Errorf("card does not belong to the user.")
+	} else if round == 0 {
+		// fail
+		return draftID, myPackID, announcements, round, fmt.Errorf("card has already been picked.")
 	}
 
+	// Now get the pack id that the user is allowed to pick from in the draft that the
+	// card is from. Note that there might be no such pack.
 	query = `select
-                   packs.id,
-                   packs.modified
-                 from drafts
-                 join seats on drafts.id=seats.draft
-                 join packs on seats.id=packs.seat
-                 join cards on packs.id=cards.pack
-                 where cards.id=?
-                   and drafts.id=?
-                   and seats.user=?
-                   and (
-                     packs.round=0
-                     or (
-                       packs.round=seats.round
-                         and packs.modified in (
-                           select
-                             min(packs.modified)
-                           from packs
-                           join seats on packs.seat=seats.id
-                           join drafts on seats.draft=drafts.id
-                           where seats.draft=?
-                             and seats.user=?
-                             and packs.round=seats.round)))`
-
-	row = database.QueryRow(query, cardID, draftID, userID, draftID, userID)
-	var oldPackID int64
-	var modified int64
-	err = row.Scan(&oldPackID, &modified)
-	if err != nil {
-		return draftID, -1, announcements, round, err
-	}
-
-	query = `select
-                   packs.id,
-                   seats.id
-                 from packs
-                 join seats on seats.id=packs.seat
-                 where seats.user=?
-                   and packs.round=0
-                   and seats.draft=?`
+                    v_packs.id
+                  from seats
+                  join v_packs on seats.id = v_packs.seat
+                  where seats.user = ?
+                    and seats.draft = ?
+                    and seats.round = v_packs.round
+                  order by v_packs.count desc
+                  limit 1`
 
 	row = database.QueryRow(query, userID, draftID)
-	var pickID int64
-	var seatID int64
-	err = row.Scan(&pickID, &seatID)
+	var myPackID2 int64
+	err = row.Scan(&myPackID2)
+
 	if err != nil {
-		return draftID, oldPackID, announcements, round, err
+		return draftID, myPackID, announcements, round, err
+	} else if myPackID != myPackID2 {
+		return draftID, myPackID, announcements, round, fmt.Errorf("card is not in the next available pack.")
 	}
 
-	query = `select id from seats where draft=? and position=?`
+	// once we're here, we know the pick is valid
 
-	var newPosition int64
-	if round%2 == 0 {
-		newPosition = position - 1
-		if newPosition == -1 {
-			newPosition = 7
-		}
-	} else {
-		newPosition = position + 1
-		if newPosition == 8 {
-			newPosition = 0
-		}
-	}
-	row = database.QueryRow(query, draftID, newPosition)
-	var newPositionID int64
-	err = row.Scan(&newPositionID)
-	if err != nil {
-		return draftID, oldPackID, announcements, round, err
-	}
-
-	var cardModified int64
-	cardModified = 0
 	query = `select
-                   max(cards.modified)
-                 from cards
-                 join packs on cards.pack=packs.id
-                 join seats on seats.id=packs.seat
-                 where seats.draft=?
-                   and seats.user=?`
-	row = database.QueryRow(query, draftID, userID)
+                   v_packs.id,
+                   v_packs.count
+                 from v_packs
+                 join seats on seats.id = v_packs.seat
+                 where v_packs.round = 0
+                   and seats.user = ?
+                   and seats.draft = ?`
 
-	err = row.Scan(&cardModified)
+	row = database.QueryRow(query, userID, draftID)
+	var myPicksID int64
+	var myCount int64
+	err = row.Scan(&myPicksID, &myCount)
 
 	if err != nil {
-		cardModified = 0
-	} else {
-		cardModified++
+		return draftID, myPackID, announcements, round, err
 	}
 
+	// Are we passing the pack after we've picked the card?
 	if pass {
-		query = `begin transaction;update cards set pack=?, modified=? where id=?;update packs set seat=?, modified=modified+10 where id=?;commit`
-		log.Printf("%s\t%d,%d,%d,%d,%d", query, pickID, cardModified, cardID, newPositionID, oldPackID)
-
-		_, err = database.Exec(query, pickID, cardModified, cardID, newPositionID, oldPackID)
-		if err != nil {
-			return draftID, oldPackID, announcements, round, err
+		// Get the seat position that the pack will be passed to.
+		var newPosition int64
+		if round%2 == 0 {
+			newPosition = position - 1
+			if newPosition == -1 {
+				newPosition = 7
+			}
+		} else {
+			newPosition = position + 1
+			if newPosition == 8 {
+				newPosition = 0
+			}
 		}
 
+		// Now get the seat id that the pack will be passed to.
+
+		query = `select id from seats where draft=? and position=?`
+
+		row = database.QueryRow(query, draftID, newPosition)
+		var newPositionID int64
+		err = row.Scan(&newPositionID)
+		if err != nil {
+			return draftID, myPackID, announcements, round, err
+		}
+
+		// Put the picked card into the player's picks.
+		query = `update cards set pack=? where id=?`
+
+		_, err = database.Exec(query, myPicksID, cardID)
+		if err != nil {
+			return draftID, myPackID, announcements, round, err
+		}
+
+		// Move the pack to the next seat.
+		query = `update packs set seat=? where id=?`
+		_, err = database.Exec(query, newPositionID, myPackID)
+		if err != nil {
+			return draftID, myPackID, announcements, round, err
+		}
+
+		// Get the number of remaining packs in the seat.
 		query = `select
                            count(1)
                          from v_packs
-                         join seats on v_packs.seat=seats.id
-                         where seats.user=?
-                           and v_packs.round=?
-                           and v_packs.count>0
-                           and seats.draft=?`
+                         join seats on v_packs.seat = seats.id
+                         where seats.user = ?
+                           and v_packs.round = ?
+                           and v_packs.count > 0
+                           and seats.draft = ?`
 		row = database.QueryRow(query, userID, round, draftID)
 		var packsLeftInSeat int64
 		err = row.Scan(&packsLeftInSeat)
 		if err != nil {
-			return draftID, oldPackID, announcements, round, err
+			return draftID, myPackID, announcements, round, err
 		}
 
 		if packsLeftInSeat == 0 {
+			// If there are 0 packs left in the seat, check to see if the player we passed the pack to
+			// is in the same round as us. If the rounds match, NotifyByDraftAndPosition.
 			query = `select
                                    count(1)
                                  from seats a
@@ -773,22 +779,40 @@ func doPick(userID int64, cardID int64, pass bool) (int64, int64, []string, int6
 				}
 			}
 
-			// WARNING: if you ever have a draft with anything other than 8 players, 15 cards per pack, and 3 rounds, this will break horribly.
-			query = `update seats set round=round+1 where user=? and draft=? and (select count(1) in (15, 30, 45) from packs join cards on cards.pack=packs.id join seats on seats.id=packs.seat where seats.draft=? and packs.round=0 and seats.user=?)`
-			log.Printf("%s\t%d,%d,%d,%d", query, userID, draftID, draftID, userID)
-			_, err = database.Exec(query, userID, draftID, draftID, userID)
-			if err != nil {
-				log.Printf("error with possibly updating round")
-			}
+			// Now that we've passed the pack, check to see if we should advance to the next round.
+			// Update our round.
 
+			// WARNING: if you ever have a draft with anything other than 15 cards per pack, or you have
+			// something like Lore Seeker in your draft, this is going to break horribly.
+			// If we're only doing normal drafts, round is effectively something that can be calculated,
+			// but by explicitly storing it, we allow ourselves the possibility of expanding support to
+			// weirder formats.
+			query = `update seats set round=? where user=? and draft=?`
+
+			row = database.QueryRow(query, (myCount+1)/15+1, userID, draftID)
+
+			// If the rounds do NOT match from earlier, we have a situation where players are in different
+			// rounds. Look for a blocking player.
 			if roundsMatch == 0 {
+				// We now know that we've passed a pack to someone in a different round.
+				// We know that player is necessarily in a round earlier than ours because
+				// we couldn't pass them a pack from a round they're already finished with.
+				// That means we did not send a notification, because that player can't yet
+				// pick from that pack.
+				// That means there is a chance someone else is blocking the draft and needs
+				// a friendly reminder to make their picks.
+				// Before we find the blocking player, we need to make sure we're not the
+				// only ones in this round.
+				// If we are the only ones in this round, we very likely just passed the
+				// blocking player their last pick of their round, so they are very likely
+				// the most recent ping. We don't want to double ping.
 				query = `select
                                            count(1)
                                          from seats
                                          where draft=?
                                          group by round
-                                         order by round
-                                         desc limit 1`
+                                         order by round desc
+                                         limit 1`
 
 				row = database.QueryRow(query, draftID)
 				var nextRoundPlayers int64
@@ -796,14 +820,15 @@ func doPick(userID int64, cardID int64, pass bool) (int64, int64, []string, int6
 				if err != nil {
 					log.Printf("error counting players and rounds")
 				} else if nextRoundPlayers > 1 {
+					// Now we know that we are not the only player in this round.
+					// Get the position of all players that currently have a pick.
 					query = `select
                                                    seats.position
                                                  from seats
-                                                 left join packs on seats.id=packs.seat
-                                                 join v_packs on v_packs.id=packs.id
-                                                 where v_packs.count>0
-                                                   and packs.round=seats.round
-                                                   and seats.draft=?
+                                                 left join v_packs on seats.id = v_packs.seat
+                                                 where v_packs.count > 0
+                                                   and v_packs.round = seats.round
+                                                   and seats.draft = ?
                                                  group by seats.id`
 
 					rows, err := database.Query(query, draftID)
@@ -834,35 +859,17 @@ func doPick(userID int64, cardID int64, pass bool) (int64, int64, []string, int6
 			}
 		}
 	} else {
-		query = `update cards set pack=?, modified=? where id=?`
-		log.Printf("%s\t%d,%d,%d", query, pickID, cardModified, cardID)
+		// we're in some sort of non-working cogwork librarian situation
+		// just take the card from the pack.
+		query = `update cards set pack=? where id=?`
 
-		_, err = database.Exec(query, pickID, cardModified, cardID)
+		_, err = database.Exec(query, myPicksID, cardID)
 		if err != nil {
-			return draftID, oldPackID, announcements, round, err
+			return draftID, myPackID, announcements, round, err
 		}
 	}
 
-	switch cardName {
-	case "Cogwork Librarian":
-		query = `update cards set faceup=true where id=?`
-		log.Printf("%s\t%d", query, cardID)
-		_, err = database.Exec(query, cardID)
-		if err != nil {
-			return draftID, oldPackID, announcements, round, err
-		}
-
-		query = `INSERT INTO revealed (draft, message) VALUES (?, "Seat " || ? || " revealed Cogwork Librarian.")`
-		log.Printf("%s\t%d,%d", query, draftID, position)
-		_, err = database.Exec(query, draftID, position)
-		if err != nil {
-			return draftID, oldPackID, announcements, round, err
-		}
-
-		announcements = append(announcements, fmt.Sprintf("Seat %d revealed Cogwork Librarian", position))
-	}
-
-	return draftID, oldPackID, announcements, round, nil
+	return draftID, myPackID, announcements, round, nil
 }
 
 // NotifyByDraftAndPosition sends a discord alert to a user.
@@ -1052,8 +1059,8 @@ func GetFilteredJSON(draftID int64, userID int64) (string, error) {
 	return buff.String(), nil
 }
 
-// DoEvent records an event (pick) into the database.
-func DoEvent(draftID int64, userID int64, announcements []string, cardID1 int64, cardID2 sql.NullInt64, round int64) error {
+// doEvent records an event (pick) into the database.
+func doEvent(draftID int64, userID int64, announcements []string, cardID1 int64, cardID2 sql.NullInt64, round int64) error {
 	var query string
 	var err error
 	if cardID2.Valid {
