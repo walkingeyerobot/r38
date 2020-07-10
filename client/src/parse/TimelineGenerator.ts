@@ -57,31 +57,6 @@ export class TimelineGenerator {
     }
   }
 
-  pickCard(seatId: number, cardId: number) {
-    const seat = this._state.seats[seatId];
-    const playerData = this.getPlayerData(seatId);
-    if (seat == undefined || playerData == undefined) {
-      throw new Error(`No seat with ID ${seatId}`);
-    }
-    const pack = seat.queuedPacks.packs[0];
-    if (pack == undefined) {
-      throw new Error(`Seat ${seatId} doesn't have any packs to pick from.`);
-    }
-
-    const fakeEvent: SourceEvent = {
-      type: 'Pick',
-      cards: [cardId],
-      position: seatId,
-      round: pack.round,
-      announcements: [],
-      draftModified: -1,
-      playerModified: -1,
-      librarian: false,
-    };
-
-    this.parseEvent(fakeEvent);
-  }
-
   isDraftComplete() {
     for (let seat of this._state.seats) {
       if (seat.unopenedPacks.packs.length > 0
