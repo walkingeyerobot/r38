@@ -20,7 +20,7 @@ export default Vue.extend({
         authStore.setUser({
           id: parsed.userId,
           name: parsed.name,
-          picture: parsed.picture,
+          picture: parsed.picture || FALLBACK_USER_PICTURE,
         });
       }
     },
@@ -32,6 +32,9 @@ interface SourceUserInfo {
   picture: string;
   userId: number;
 }
+
+const FALLBACK_USER_PICTURE =
+    `https://cdn.discordapp.com/avatars/117108584017428481/f91aadd54de1929aaad167cabc99bdb1.png`;
 </script>
 
 <style>
