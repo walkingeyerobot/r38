@@ -282,8 +282,6 @@ func ServeAPIPick(w http.ResponseWriter, r *http.Request, userID int64) {
 	}
 	var draftID int64
 	if len(pick.CardIds) == 1 {
-		var announcements []string
-		var round int64
 		draftID, err = doSinglePick(userID, pick.CardIds[0])
 		if err != nil {
 			json.NewEncoder(w).Encode(JSONError{Error: fmt.Sprintf("error making pick: %s", err.Error())})
@@ -570,7 +568,7 @@ func doJoin(userID int64, draftID int64) error {
 
 // doSinglePick performs a normal pick based on a user id and a card id. It returns the draft id and an error.
 func doSinglePick(userID int64, cardID int64) (int64, error) {
-	draftID, _, announcements, round, err = doPick(userID, cardID, true)
+	draftID, _, announcements, round, err := doPick(userID, cardID, true)
 	if err != nil {
 		return draftID, err
 	}
