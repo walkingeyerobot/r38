@@ -233,7 +233,14 @@ func ServeAPIDraft(w http.ResponseWriter, r *http.Request, userID int64) {
 
 // ServeAPIDraftList serves the /api/draftlist endpoint.
 func ServeAPIDraftList(w http.ResponseWriter, r *http.Request, userID int64) {
-	query := `select drafts.id, drafts.name, sum(seats.user is null and seats.position is not null) as empty_seats, coalesce(sum(seats.user = ?), 0) as joined from drafts left join seats on drafts.id = seats.draft group by drafts.id`
+	query := `select
+                    drafts.id,
+                    drafts.name,
+                    sum(seats.user is null and seats.position is not null) as empty_seats,
+                    coalesce(sum(seats.user = ?), 0) as joined
+                  from drafts
+                  left join seats on drafts.id = seats.draft
+                  group by drafts.id`
 
 	rows, err := database.Query(query, userID)
 	if err != nil {
@@ -362,7 +369,12 @@ func ServeBulkMTGO(w http.ResponseWriter, r *http.Request, userID int64) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	query := `select seats.user, users.discord_name from seats join users where seats.user=users.id and seats.draft=?`
+	query := `select
+                    seats.user,
+                    users.discord_name
+                  from seats
+                  join users on users.id = seats.user
+                  where seats.draft = ?`
 	rows, err := database.Query(query, draftID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -427,11 +439,11 @@ func exportToMTGO(userID int64, draftID int64) (string, error) {
 	query := `select
                     cards.data
                   from cards
-                  join packs on cards.pack=packs.id
-                  join seats on packs.seat=seats.id
-                  where seats.user=?
-                    and seats.draft=?
-                    and packs.round=0`
+                  join packs on cards.pack = packs.id
+                  join seats on packs.seat = seats.id
+                  where seats.user = ?
+                    and seats.draft = ?
+                    and packs.round = 0`
 	rows, err := database.Query(query, userID, draftID)
 	if err != nil {
 		return "", err
@@ -468,7 +480,12 @@ func exportToMTGO(userID int64, draftID int64) (string, error) {
 
 // ServeVueApp serves to vue.
 func ServeVueApp(w http.ResponseWriter, r *http.Request, userID int64) {
-	query := `select id,discord_name,picture from users where id=?`
+	query := `select
+                    id,
+                    discord_name,
+                    picture
+                  from users
+                  where id = ?`
 	row := database.QueryRow(query, userID)
 	var userInfo UserInfo
 	err := row.Scan(&userInfo.ID, &userInfo.Name, &userInfo.Picture)
@@ -549,24 +566,36 @@ func ServeJoin(w http.ResponseWriter, r *http.Request, userID int64) {
 
 // doJoin does the actual joining.
 func doJoin(userID int64, draftID int64) error {
-	query := `select true from seats where draft=? and user=?`
-
+	query := `select
+                    count(1)
+                  from seats
+                  where draft = ?
+                    and user = ?`
 	row := database.QueryRow(query, draftID, userID)
-	var alreadyJoined bool
+	var alreadyJoined int64
 	err := row.Scan(&alreadyJoined)
-
-	if err != nil && err != sql.ErrNoRows {
+	if err != nil {
 		return err
-	} else if err != sql.ErrNoRows {
-		return err
-	} else if alreadyJoined {
-		return fmt.Errorf("already joined %d", draftID)
+	} else if alreadyJoined == 0 {
+		return fmt.Errorf("user %d already joined %d", userID, draftID)
 	}
 
-	query = `update seats set user=? where id=(select id from seats where draft=? and user is null and position is not null order by random() limit 1)`
-	log.Printf("%s\t%d,%d", query, userID, draftID)
+	query = `select
+                   id
+                 from seats
+                 where draft = ?
+                   and user is null
+                 order by random()
+                 limit 1`
+	row = database.QueryRow(query, draftID)
+	var emptySeatID int64
+	err = row.Scan(&emptySeatID)
+	if err != nil {
+		return err
+	}
 
-	_, err = database.Exec(query, userID, draftID)
+	query = `update seats set user = ? where id = ?`
+	_, err = database.Exec(query, userID, emptySeatID)
 	if err != nil {
 		return err
 	}
@@ -619,10 +648,8 @@ func doPick(userID int64, cardID int64, pass bool) (int64, int64, []string, int6
 	if err != nil {
 		return draftID, myPackID, announcements, round, err
 	} else if userID != userID2 {
-		// fail
 		return draftID, myPackID, announcements, round, fmt.Errorf("card does not belong to the user.")
 	} else if round == 0 {
-		// fail
 		return draftID, myPackID, announcements, round, fmt.Errorf("card has already been picked.")
 	}
 
@@ -733,10 +760,10 @@ func doPick(userID int64, cardID int64, pass bool) (int64, int64, []string, int6
                                    count(1)
                                  from seats a
                                  join seats b on a.draft=b.draft
-                                 where a.user=?
-                                   and b.position=?
-                                   and a.draft=?
-                                   and a.round=b.round`
+                                 where a.user = ?
+                                   and b.position = ?
+                                   and a.draft = ?
+                                   and a.round = b.round`
 			row = database.QueryRow(query, userID, newPosition, draftID)
 			var roundsMatch int64
 			err = row.Scan(&roundsMatch)
@@ -758,7 +785,7 @@ func doPick(userID int64, cardID int64, pass bool) (int64, int64, []string, int6
 			// If we're only doing normal drafts, round is effectively something that can be calculated,
 			// but by explicitly storing it, we allow ourselves the possibility of expanding support to
 			// weirder formats.
-			query = `update seats set round=? where user=? and draft=?`
+			query = `update seats set round = ? where user = ? and draft = ?`
 
 			row = database.QueryRow(query, (myCount+1)/15+1, userID, draftID)
 
@@ -780,7 +807,7 @@ func doPick(userID int64, cardID int64, pass bool) (int64, int64, []string, int6
 				query = `select
                                            count(1)
                                          from seats
-                                         where draft=?
+                                         where draft = ?
                                          group by round
                                          order by round desc
                                          limit 1`
@@ -832,7 +859,7 @@ func doPick(userID int64, cardID int64, pass bool) (int64, int64, []string, int6
 	} else {
 		// we're in some sort of non-working cogwork librarian situation
 		// just take the card from the pack.
-		query = `update cards set pack=? where id=?`
+		query = `update cards set pack = ? where id = ?`
 
 		_, err = database.Exec(query, myPicksID, cardID)
 		if err != nil {
@@ -847,7 +874,12 @@ func doPick(userID int64, cardID int64, pass bool) (int64, int64, []string, int6
 func NotifyByDraftAndPosition(draftID int64, position int64) error {
 	log.Printf("Attempting to notify %d %d", draftID, position)
 
-	query := `select users.discord_id from users join seats where users.id=seats.user and seats.draft=? and seats.position=?`
+	query := `select
+                    users.discord_id
+                  from users
+                  join seats on users.id = seats.user
+                  where seats.draft = ?
+                    and seats.position = ?`
 
 	row := database.QueryRow(query, draftID, position)
 	var discordID string
@@ -990,14 +1022,24 @@ func GetFilteredJSON(draftID int64, userID int64) (string, error) {
 		return "", err
 	}
 
-	query := `select (select round from seats where draft=? and user=?), (select count(1) from seats where draft=? and user is null)`
+	query := `select (
+                    select
+                      round
+                    from seats
+                    where draft = ?
+                      and user = ?), (
+                    select
+                      count(1)
+                    from seats
+                    where draft = ?
+                      and user is null)`
 	var myRound sql.NullInt64
 	var emptySeats int64
 	row := database.QueryRow(query, draftID, userID, draftID)
 	err = row.Scan(&myRound, &emptySeats)
 	if err != nil {
 		return "", err
-	} else if (myRound.Valid && myRound.Int64 == 4) || (!myRound.Valid && emptySeats == 0) {
+	} else if (myRound.Valid && myRound.Int64 >= 4) || (!myRound.Valid && emptySeats == 0) {
 		// either we're not in the draft, or the draft is over for us
 		// therefore, we can see the whole draft.
 		ret, err := json.Marshal(draft)
