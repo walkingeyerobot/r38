@@ -1,9 +1,11 @@
+import { SourceData } from '../parse/SourceData';
+
 export {};
 
 declare global {
   export interface Window {
-    DraftString?: string;
     UserInfo?: string;
+    draftData?: SourceData;
   }
 
   const DEVELOPMENT: boolean;

@@ -76,7 +76,7 @@ export interface CardPick {
 }
 
 export interface MtgCard {
-  // scryfall-compatible
+  // scryfall-compatible (ish)
   name: string;
   set: string;
   collector_number: string;
@@ -88,12 +88,14 @@ export interface MtgCard {
   type_line: string;
   layout: ScryfallLayout;
 
+  image_uris: string[];
+
   card_faces: Array<{
     name: string;
     colors: ScryfallColor[];
     mana_cost: string;
     type_line: string;
-  }> | null;
+  }>;
 
   // custom stuff
 

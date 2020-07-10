@@ -21,6 +21,7 @@ Displays a single card
 <script lang="ts">
 import Vue from 'vue';
 import { DraftCard } from '../../draft/DraftState';
+import { checkNotNil } from '../../util/checkNotNil';
 
 export default Vue.extend({
   props: {
@@ -80,12 +81,8 @@ function getImageSrc(card: DraftCard): string {
     // HACK HACK HACK
     return `https://media.magic.wizards.com/image_legacy_migration/magic/`
         + `images/mtgcom/fcpics/making/mr224_back.jpg`;
-  } else if (DEVELOPMENT) {
-    return `http://api.scryfall.com/cards/${card.definition.set}/`
-        + `${card.definition.collector_number}?format=image&version=normal`;
   } else {
-    return `/proxy/${card.definition.set}/`
-        + `${card.definition.collector_number}`;
+    return checkNotNil(card.definition.image_uris[0]);
   }
 }
 

@@ -3,7 +3,7 @@
     <div class="start">
       <TimelineButton class="timeline-btn" />
       <button
-          v-if="showPicksButton"
+          v-if="draftStore.isFilteredDraft"
           @click="onPicksClick"
           class="picks-btn playback-btn"
           >
@@ -60,14 +60,6 @@ export default Vue.extend({
 
     draftStore(): DraftStore {
       return draftStore;
-    },
-
-    showPicksButton(): boolean {
-      const showDraftPicker =
-          replayStore.eventPos == replayStore.events.length
-          && isAuthedUserSelected(authStore, draftStore, replayStore);
-
-      return draftStore.isFilteredDraft && !showDraftPicker;
     },
 
     numPicks(): number {
