@@ -13,6 +13,7 @@ import Vue from 'vue';
 import DeckBuilderMain from './deckbuilder/DeckBuilderMain.vue';
 import DeckBuilderPlayerSelector from './deckbuilder/DeckBuilderPlayerSelector.vue';
 
+import { authStore } from '../state/AuthStore';
 import { draftStore } from '../state/DraftStore';
 import { deckBuilderStore as deckStore, DeckInitializer } from '../state/DeckBuilderModule';
 
@@ -41,7 +42,10 @@ export default Vue.extend({
   methods: {
     async fetchDraft(draftId: number) {
       const payload =
-          await fetchEndpoint(routeDraft, { id: draftId });
+          await fetchEndpoint(routeDraft, {
+            id: draftId,
+            as: authStore.user?.id,
+          });
       this.status = 'loaded';
 
       // TODO: Handle fetch error
