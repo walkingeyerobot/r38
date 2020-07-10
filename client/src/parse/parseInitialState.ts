@@ -1,5 +1,6 @@
 import { CardContainer, CardPack, DraftCard, DraftSeat, DraftState, PlayerPicks, PackContainer, PACK_LOCATION_UNUSED, PACK_LOCATION_DEAD, MtgCard, CONTAINER_SHADOW } from '../draft/DraftState';
 import { SourceCard, SourceData, SourceSeat } from './SourceData';
+import { checkNotNil } from '../util/checkNotNil';
 
 
 export function parseInitialState(srcData: SourceData): StateParseResult {
@@ -150,6 +151,7 @@ function parseCardDefinition(src: SourceCard): MtgCard {
       colors: [],
       color_identity: [],
       foil: false,
+      image_uris: [],
       layout: 'normal',
       mtgo: -1,
       rarity: 'common',
@@ -173,6 +175,7 @@ function parseCardDefinition(src: SourceCard): MtgCard {
       color_identity: src.scryfall.color_identity,
       colors: src.scryfall.colors || [],
       foil: src.foil,
+      image_uris: checkNotNil(src.image_uris),
       layout: src.scryfall.layout,
       mana_cost: src.scryfall.mana_cost || '',
       mtgo: src.mtgo_id,

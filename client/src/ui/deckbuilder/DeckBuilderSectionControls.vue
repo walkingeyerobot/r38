@@ -45,6 +45,7 @@
 <script lang="ts">
 import Vue from "vue";
 import { BASICS, CardColumn, deckBuilderStore as store } from '../../state/DeckBuilderModule';
+import { MtgCard } from '../../draft/DraftState';
 
 export default Vue.extend({
   name: 'DeckBuilderSectionControls',
@@ -78,52 +79,104 @@ export default Vue.extend({
     },
 
     addPlains() {
-      this.addLand("Plains", "364", BASICS[0]);
+      this.addLand(PLAINS);
     },
 
     addIsland() {
-      this.addLand("Island", "368", BASICS[1]);
+      this.addLand(ISLAND);
     },
 
     addSwamp() {
-      this.addLand("Swamp", "372", BASICS[2]);
+      this.addLand(SWAMP);
     },
 
     addMountain() {
-      this.addLand("Mountain", "376", BASICS[3]);
+      this.addLand(MOUNTAIN);
     },
 
     addForest() {
-      this.addLand("Forest", "380", BASICS[4]);
+      this.addLand(FOREST);
     },
 
-    addLand(name: string, collectorNumber: string, mtgo: number) {
+    addLand(definition: MtgCard) {
       this.section[0].push({
         id: performance.now(),
         sourcePackIndex: 0,
         pickedIn: [],
         hidden: false,
-        definition: {
-          name,
-          set: '10e',
-          collector_number: collectorNumber,
-          mana_cost: '',
-          cmc: 0,
-          colors: [],
-          color_identity: [],
-          mtgo: mtgo,
-          rarity: 'common',
-          type_line: `Basic Land - ${name}`,
-          layout: 'normal',
-          card_faces: [],
-          foil: false,
-          searchName: name.toLocaleLowerCase(),
-        }
+        definition: definition,
       });
     },
 
   },
 });
+
+const PLAINS = buildBasic(
+  'Plains',
+  'm21',
+  '262',
+  81203,
+  'https://img.scryfall.com/cards/normal/front/8/a/8a299a1e-1ce9-4668-a5f5-c587081acf6b.jpg?1592761983',
+);
+
+const ISLAND = buildBasic(
+  'Island',
+  'm21',
+  '263',
+  81205,
+  'https://img.scryfall.com/cards/normal/front/f/c/fc9a66a1-367c-4035-a22e-00fab55be5a0.jpg?1592761988',
+);
+
+const SWAMP = buildBasic(
+  'Swamp',
+  'm21',
+  '266',
+  81211,
+  'https://img.scryfall.com/cards/normal/front/3/0/30b3d647-3546-4ade-b395-f2370750a7a6.jpg?1592762002',
+);
+
+const MOUNTAIN = buildBasic(
+  'Mountain',
+  'm21',
+  '271',
+  81221,
+  'https://img.scryfall.com/cards/normal/front/e/d/ed6fd37e-a5b3-48c6-b881-cedadfd94833.jpg?1592762029',
+);
+
+const FOREST = buildBasic(
+  'Forest',
+  'm21',
+  '274',
+  81227,
+  'https://img.scryfall.com/cards/normal/front/d/4/d4558304-7c17-4aa0-bd50-cdd95547f1a7.jpg?1592762045',
+);
+
+function buildBasic(
+  name: string,
+  set: string,
+  collectorNumber: string,
+  mtgoId: number,
+  imageUri: string,
+): MtgCard {
+  return Object.freeze({
+    name,
+    set,
+    collector_number: collectorNumber,
+    mana_cost: '',
+    cmc: 0,
+    colors: [],
+    color_identity: [],
+    mtgo: mtgoId,
+    rarity: 'common',
+    type_line: `Basic Land - ${name}`,
+    layout: 'normal',
+    card_faces: [],
+    foil: false,
+    image_uris: [imageUri],
+    searchName: name.toLocaleLowerCase(),
+  });
+}
+
 </script>
 
 <style scoped>
