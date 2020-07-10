@@ -133,9 +133,11 @@ func NewHandler(useAuth bool) http.Handler {
 
 	addHandler("/replay/", ServeVueApp)
 	addHandler("/deckbuilder/", ServeVueApp)
+
 	addHandler("/join/", ServeJoin)
-	addHandler("/bulk_mtgo/", ServeBulkMTGO)
 	addHandler("/index/", ServeIndex)
+
+	addHandler("/bulk_mtgo/", ServeBulkMTGO)
 
 	addHandler("/api/draft/", ServeAPIDraft)
 	addHandler("/api/draftlist/", ServeAPIDraftList)
@@ -580,6 +582,9 @@ func doSinglePick(userID int64, cardID int64) (int64, error) {
 }
 
 // doPick actually performs a pick in the database.
+// It returns the draftID, packID, announcements, round, and an error.
+// Of those return values, packID and announcements are only really relevant for Cogwork Librarian,
+// which is not currently fully implemented, but we leave them here anyway for when we want to do that.
 func doPick(userID int64, cardID int64, pass bool) (int64, int64, []string, int64, error) {
 	announcements := []string{}
 
