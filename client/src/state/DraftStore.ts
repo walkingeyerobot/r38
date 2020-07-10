@@ -84,11 +84,6 @@ export const draftStore = vuexModule(
         timelineGenerator.parseEvent(srcEvent);
         state.isComplete = timelineGenerator.isDraftComplete();
       },
-
-      pickCard(state: State, payload: PickCardPayload) {
-        timelineGenerator.pickCard(payload.seatId, payload.cardId);
-        state.isComplete = timelineGenerator.isDraftComplete();
-      },
     },
 
     getters: {

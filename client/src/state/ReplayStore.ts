@@ -38,14 +38,18 @@ export const replayStore = vuexModule(rootStore, 'replay', {
     sync(state: ReplayState) {
       console.log('Syncing replay state...');
 
-      const event = state.events[state.eventPos];
+      const event: TimelineEvent | undefined = state.events[state.eventPos];
 
       state.events = draftStore.events.concat();
       sortEvents(state.events, state.timeMode);
 
-      const newIndex = event
-          ? indexOf(state.events, { id: event.id })
-          : state.events.length;
+      let newIndex = state.events.length;
+      if (event != undefined) {
+        const evIndex = indexOf(state.events, { id: event.id });
+        if (evIndex != -1) {
+          newIndex = evIndex;
+        }
+      }
 
       freshJumpTo(draftStore, state, newIndex);
     },
