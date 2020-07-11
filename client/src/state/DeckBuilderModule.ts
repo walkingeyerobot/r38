@@ -5,7 +5,7 @@ import { rootStore } from './store';
 
 type DataVersion = 1;
 const DATA_VERSION = 1;
-const DEFAULT_NUM_COLUMNS = 7;
+const DEFAULT_NUM_COLUMNS = 8;
 const MODULE_NAME = 'deckbuilder';
 
 export const BASICS = [27647, 27280, 27649, 27725, 27727];
@@ -113,10 +113,18 @@ export const deckBuilderStore = vuexModule(rootStore, MODULE_NAME, {
                 (<DraftCard[][]>Array(numColumns)).fill([]).map(() => []);
             for (let i = 0; i < numColumns; i++) {
               newSection[i] = cards.filter(card => {
-                if (i === numColumns - 1) {
-                  return card.definition.cmc >= i;
+                const isDfc = card.definition.card_faces.length > 0;
+                const type = isDfc
+                    ? card.definition.card_faces[0].type_line
+                    : card.definition.type_line;
+                if (type.indexOf("Land") != -1) {
+                  return i === 0;
                 } else {
-                  return card.definition.cmc === i;
+                  if (i === numColumns - 1) {
+                    return card.definition.cmc >= i - 1;
+                  } else {
+                    return card.definition.cmc === i - 1;
+                  }
                 }
               });
             }
@@ -130,13 +138,27 @@ export const deckBuilderStore = vuexModule(rootStore, MODULE_NAME, {
             const newSection: CardColumn[] = fillArray(numColumns, () => []);
 
             for (const card of cards) {
-              if (card.definition.colors.length === 1) {
-                const index = getColorIndex(card.definition.colors[0]);
+              const isDfc = card.definition.card_faces.length > 0;
+              const colors = isDfc
+                  ? card.definition.card_faces[0].colors
+                  : card.definition.colors;
+              const type = isDfc
+                  ? card.definition.card_faces[0].type_line
+                  : card.definition.type_line;
+              if (colors.length === 1) {
+                const index = getColorIndex(colors[0]);
                 newSection[index].push(card);
               } else if (card.definition.colors.length === 0) {
-                newSection[Math.min(5, numColumns)].push(card);
+                if (type.indexOf("Land") != -1) {
+                  newSection[Math.min(0, numColumns)].push(card);
+                } else {
+                  newSection[Math.min(6, numColumns)].push(card);
+                }
               } else {
-                newSection[Math.min(6, numColumns)].push(card);
+                if (newSection.length < 8) {
+                  newSection.push([]);
+                }
+                newSection[Math.min(7, numColumns)].push(card);
               }
             }
             for (let i = 0; i < newSection.length - 1; i++) {
@@ -207,6 +229,7 @@ function migrateDeckVersion(deck: Deck, newVersion: DataVersion): Deck {
   function unreachable(x: never) {
     return new Error(x);
   }
+
   switch (newVersion) {
     case 1:
       // no migration to version 1
@@ -235,7 +258,7 @@ function fillArray<T>(
   return arr;
 }
 
-const COLOR_ORDER = ['W', 'U', 'B', 'G', 'R'];
+const COLOR_ORDER = ['', 'W', 'U', 'B', 'G', 'R'];
 
 function getColorIndex(color: string) {
   const index = COLOR_ORDER.indexOf(color);
