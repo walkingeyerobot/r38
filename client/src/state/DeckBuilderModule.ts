@@ -113,9 +113,9 @@ export const deckBuilderStore = vuexModule(rootStore, MODULE_NAME, {
                 (<DraftCard[][]>Array(numColumns)).fill([]).map(() => []);
             for (let i = 0; i < numColumns; i++) {
               newSection[i] = cards.filter(card => {
-                const isDfc = (card.definition.card_faces?.length || 0) > 0;
+                const isDfc = card.definition.card_faces.length > 0;
                 const type = isDfc
-                    ? card.definition.card_faces![0].type_line
+                    ? card.definition.card_faces[0].type_line
                     : card.definition.type_line;
                 if (type.indexOf("Land") != -1) {
                   return i === 0;
@@ -138,12 +138,12 @@ export const deckBuilderStore = vuexModule(rootStore, MODULE_NAME, {
             const newSection: CardColumn[] = fillArray(numColumns, () => []);
 
             for (const card of cards) {
-              const isDfc = (card.definition.card_faces?.length || 0) > 0;
+              const isDfc = card.definition.card_faces.length > 0;
               const colors = isDfc
-                  ? card.definition.card_faces![0].colors
+                  ? card.definition.card_faces[0].colors
                   : card.definition.colors;
               const type = isDfc
-                  ? card.definition.card_faces![0].type_line
+                  ? card.definition.card_faces[0].type_line
                   : card.definition.type_line;
               if (colors.length === 1) {
                 const index = getColorIndex(colors[0]);
