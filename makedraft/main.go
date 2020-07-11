@@ -13,7 +13,7 @@ import (
 	"regexp"
 	"sort"
 	"strings"
-	_ "time"
+	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -161,8 +161,8 @@ func main() {
 		flagSet.Parse(allFlags)
 	}
 
-	// rand.Seed(time.Now().UnixNano())
-	rand.Seed(1)
+	rand.Seed(time.Now().UnixNano())
+	// rand.Seed(1)
 	log.Printf("generating draft %s.", *settings.Name)
 
 	var packIDs [24]int64
