@@ -254,7 +254,7 @@ function ProcessAllCards() {
         { type: 'BasicLandHopper' },
       ],
       flags: [
-        "-pack-common-color-identity-stdev-max=0.8",
+        "-pack-common-color-identity-stdev-max=1.55",
         "-pack-common-rating-min=1.8",
         "-pack-common-rating-max=3",
         "-draft-common-color-stdev-max=3",
@@ -267,18 +267,12 @@ function ProcessAllCards() {
     var id = card.scryfall.id;
     delete card.scryfall.id;
     return {
-      cmc: card.scryfall.cmc, // temporary
-      collector_number: card.scryfall.collector_number, // temporary
       color: card.scryfall.colors ? card.scryfall.colors.join('') : card.scryfall.card_faces[0].colors.join(''),
       color_identity: card.scryfall.color_identity.join(''),
       dfc: card.scryfall.layout === 'transform',
       id: id,
-      mtgo_id: card.mtgo_id, // temporary
-      name: card.scryfall.name, // temporary
       rarity: card.scryfall.type_line.includes('Basic Land') ? 'basic' : card.scryfall.rarity,
       rating: card.rating,
-      set: card.scryfall.set, // temporary
-      type_line: card.scryfall.type_line, // temporary
       data: JSON.stringify(card)
     }
   });

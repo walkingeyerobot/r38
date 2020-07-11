@@ -13,7 +13,7 @@ import (
 	"regexp"
 	"sort"
 	"strings"
-	"time"
+	_ "time"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -161,10 +161,8 @@ func main() {
 		flagSet.Parse(allFlags)
 	}
 
-	log.Printf("settings: %v", settings)
-
-	rand.Seed(time.Now().UnixNano())
-	// rand.Seed(1)
+	// rand.Seed(time.Now().UnixNano())
+	rand.Seed(1)
 	log.Printf("generating draft %s.", *settings.Name)
 
 	var packIDs [24]int64
@@ -311,21 +309,17 @@ func main() {
 	// \"FOIL_STATUS\"
 	re := regexp.MustCompile(`"FOIL_STATUS"`)
 	log.Printf("inserting into db...")
-	// query := `INSERT INTO cards (pack, original_pack, data) VALUES (?, ?, ?)`
-	query := `INSERT INTO cards (pack, original_pack, edition, number, tags, name, cmc, type, color, mtgo, data) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	query := `INSERT INTO cards (pack, original_pack, data) VALUES (?, ?, ?)`
 	for i, pack := range packs {
 		for _, card := range pack {
 			packID := packIDs[i]
 			var data string
-			var tags string
 			if card.Foil {
 				data = re.ReplaceAllString(card.Data, "true")
-				tags = "foil"
 			} else {
 				data = re.ReplaceAllString(card.Data, "false")
 			}
-			// database.Exec(query, packId, packId, data)
-			database.Exec(query, packID, packID, card.Set, card.CollectorNumber, tags, card.Name, card.Cmc, card.TypeLine, card.ColorIdentity, card.MtgoID, data)
+			database.Exec(query, packID, packID, data)
 		}
 	}
 
@@ -365,7 +359,7 @@ func generateEmptyDraft(name string) ([24]int64, error) {
 		}
 	}
 
-	query = `INSERT INTO packs (seat, original_seat, modified, round) VALUES (?, ?, 0, ?)`
+	query = `INSERT INTO packs (seat, original_seat, round) VALUES (?, ?, ?)`
 	for i := 0; i < 8; i++ {
 		for j := 0; j < 4; j++ {
 			res, err = database.Exec(query, seatIds[i], seatIds[i], j)
@@ -456,7 +450,7 @@ func okPack(pack [15]Card) bool {
 		colorIdentities = append(colorIdentities, v)
 	}
 
-	if *settings.AbortMissingCommonColorIdentity && len(colors) != 5 {
+	if *settings.AbortMissingCommonColorIdentity && len(colorIdentities) != 5 {
 		log.Printf("a color identity is missing")
 		packReasons[4]++
 		passes = false

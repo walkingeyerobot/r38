@@ -21,20 +21,14 @@ type HopperDefinition struct {
 // DO NOT add a non-simple type to this struct.
 // if you do, copying cards with a simple assignment will break (I think).
 type Card struct {
-	Cmc             float64 `json:"cmc"`              // temporary
-	CollectorNumber string  `json:"collector_number"` // temporary
-	Color           string  `json:"color"`
-	ColorIdentity   string  `json:"color_identity"`
-	Dfc             bool    `json:"dfc"`
-	ID              string  `json:"id"`
-	MtgoID          int64   `json:"mtgo_id"` // temporary
-	Name            string  `json:"name"`    // temporary
-	Rarity          string  `json:"rarity"`
-	Rating          float64 `json:"rating"`
-	Set             string  `json:"set"`       // temporary
-	TypeLine        string  `json:"type_line"` // temporary
-	Data            string  `json:"data"`
-	Foil            bool
+	Color         string  `json:"color"`
+	ColorIdentity string  `json:"color_identity"`
+	Dfc           bool    `json:"dfc"`
+	ID            string  `json:"id"`
+	Rarity        string  `json:"rarity"`
+	Rating        float64 `json:"rating"`
+	Data          string  `json:"data"`
+	Foil          bool
 }
 
 // CardSet helps us lookup cards by rarity.
