@@ -19,15 +19,13 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-var oM map[int]int
-var oR map[int]int
-var oU map[int]int
-var oC map[int]int
-
 // Settings stores all the settings that can be passed in.
 type Settings struct {
 	Set                                       *string
 	Database                                  *string
+	Seed                                      *int
+	Verbose                                   *bool
+	Simulate                                  *bool
 	Name                                      *string
 	MaxMythic                                 *int
 	MaxRare                                   *int
@@ -47,19 +45,7 @@ type Settings struct {
 
 var settings Settings
 
-var packReasons map[int]int
-var draftReasons map[int]int
-var badPack map[int]int
-
 func main() {
-	oM = make(map[int]int)
-	oR = make(map[int]int)
-	oU = make(map[int]int)
-	oC = make(map[int]int)
-	packReasons = make(map[int]int)
-	draftReasons = make(map[int]int)
-	badPack = make(map[int]int)
-
 	flagSet := flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
 
 	settings.Set = flagSet.String(
@@ -68,6 +54,15 @@ func main() {
 	settings.Database = flagSet.String(
 		"database", "draft.db",
 		"The sqlite3 database to insert to.")
+	settings.Seed = flagSet.Int(
+		"seed", 0,
+		"The random seed to use to generate the draft. If 0, time.Now().UnixNano() will be used.")
+	settings.Verbose = flagSet.Bool(
+		"v", false,
+		"If true, will enable verbose output.")
+	settings.Simulate = flagSet.Bool(
+		"simulate", false,
+		"If true, won't commit to the database.")
 	settings.Name = flagSet.String(
 		"name", "untitled draft",
 		"The name of the draft.")
@@ -161,8 +156,12 @@ func main() {
 		flagSet.Parse(allFlags)
 	}
 
-	rand.Seed(time.Now().UnixNano())
-	// rand.Seed(1)
+	if *settings.Seed == 0 {
+		rand.Seed(time.Now().UnixNano())
+	} else {
+		rand.Seed(int64(*settings.Seed))
+	}
+
 	log.Printf("generating draft %s.", *settings.Name)
 
 	var packIDs [24]int64
@@ -280,8 +279,6 @@ func main() {
 				packs[i][j], empty = hopper.Pop()
 				if empty {
 					resetDraft = true
-					draftReasons[6]++
-					badPack[j]++
 					break
 				}
 			}
@@ -290,8 +287,10 @@ func main() {
 				break
 			}
 
-			for _, card := range packs[i] {
-				log.Printf("%s\t%v\t%s", card.Rarity, card.Foil, card.Data)
+			if *settings.Verbose {
+				for _, card := range packs[i] {
+					log.Printf("%s\t%v\t%s", card.Rarity, card.Foil, card.Data)
+				}
 			}
 
 			if okPack(packs[i]) {
@@ -301,19 +300,26 @@ func main() {
 		if !resetDraft && (okDraft(packs)) {
 			break
 		}
-		log.Printf("RESETTING DRAFT")
+
+		if *settings.Verbose {
+			log.Printf("RESETTING DRAFT")
+		}
 	}
 
-	log.Printf("draft attempts: %d", draftAttempts)
-	log.Printf("pack attempts: %d", packAttempts)
+	if *settings.Verbose {
+		log.Printf("draft attempts: %d", draftAttempts)
+		log.Printf("pack attempts: %d", packAttempts)
+	}
 
 	packIDs, err = generateEmptyDraft(tx, *settings.Name)
 	if err != nil {
 		return
 	}
-	// \"FOIL_STATUS\"
+
 	re := regexp.MustCompile(`"FOIL_STATUS"`)
-	log.Printf("inserting into db...")
+	if *settings.Verbose {
+		log.Printf("inserting into db...")
+	}
 	query := `INSERT INTO cards (pack, original_pack, data) VALUES (?, ?, ?)`
 	for i, pack := range packs {
 		for _, card := range pack {
@@ -328,14 +334,17 @@ func main() {
 		}
 	}
 
-	err = tx.Commit()
+	if *settings.Simulate {
+		err = tx.Commit()
+	} else {
+		err = nil
+	}
+
 	if err != nil {
 		log.Printf("can't commit :( %s", err.Error())
 	} else {
 		log.Printf("done!")
 	}
-
-	// fmt.Printf("%v\n%v\n%v\n%v\n", oM, oR, oU, oC)
 }
 
 func generateEmptyDraft(tx *sql.Tx, name string) ([24]int64, error) {
@@ -404,9 +413,10 @@ func okPack(pack [15]Card) bool {
 		}
 		cardHash[card.ID]++
 		if cardHash[card.ID] > 1 {
-			log.Printf("found duplicated card %s", card.ID)
+			if *settings.Verbose {
+				log.Printf("found duplicated card %s", card.ID)
+			}
 			passes = false
-			packReasons[1]++
 		}
 		if card.Rarity == "common" {
 			for _, color := range card.Color {
@@ -422,13 +432,15 @@ func okPack(pack [15]Card) bool {
 				sortedColor := stringSort(card.ColorIdentity)
 				uncommonColorIdentities[sortedColor]++
 				if uncommonColorIdentities[sortedColor] > 1 && len(sortedColor) == 3 {
-					log.Printf("found more than one %s card", sortedColor)
-					packReasons[2]++
+					if *settings.Verbose {
+						log.Printf("found more than one uncommon %s card", sortedColor)
+					}
 					passes = false
 				}
 				if uncommonColorIdentities[sortedColor] >= 3 {
-					log.Printf("all uncommons are %s", sortedColor)
-					packReasons[3]++
+					if *settings.Verbose {
+						log.Printf("all uncommons are %s", sortedColor)
+					}
 					passes = false
 				}
 			}
@@ -442,8 +454,9 @@ func okPack(pack [15]Card) bool {
 	}
 
 	if *settings.AbortMissingCommonColor && len(colors) != 5 {
-		log.Printf("a color is missing")
-		packReasons[4]++
+		if *settings.Verbose {
+			log.Printf("a color is missing among commons")
+		}
 		passes = false
 		for {
 			colors = append(colors, 0)
@@ -461,8 +474,9 @@ func okPack(pack [15]Card) bool {
 	}
 
 	if *settings.AbortMissingCommonColorIdentity && len(colorIdentities) != 5 {
-		log.Printf("a color identity is missing")
-		packReasons[4]++
+		if *settings.Verbose {
+			log.Printf("a color identity is missing among commons")
+		}
 		passes = false
 		for {
 			colorIdentities = append(colorIdentities, 0)
@@ -475,34 +489,41 @@ func okPack(pack [15]Card) bool {
 	colorIdentityStdev := stdev(colorIdentities)
 
 	ratingMean := mean(ratings)
-	log.Printf("color stdev:\t%f", colorStdev)
-	log.Printf("color identity stdev:\t%f", colorIdentityStdev)
-	log.Printf("rating mean:\t%f", ratingMean)
+	if *settings.Verbose {
+		log.Printf("color stdev:\t%f", colorStdev)
+		log.Printf("color identity stdev:\t%f", colorIdentityStdev)
+		log.Printf("rating mean:\t%f", ratingMean)
+	}
 
 	if *settings.PackCommonColorStdevMax != 0 && colorStdev > *settings.PackCommonColorStdevMax {
-		log.Printf("color stdev too high")
-		packReasons[5]++
+		if *settings.Verbose {
+			log.Printf("color stdev too high")
+		}
 		passes = false
 	}
 	if *settings.PackCommonColorIdentityStdevMax != 0 && colorIdentityStdev > *settings.PackCommonColorIdentityStdevMax {
-		log.Printf("color identity stdev too high")
-		packReasons[5]++
+		if *settings.Verbose {
+			log.Printf("color identity stdev too high")
+		}
 		passes = false
 	}
 	if *settings.PackCommonRatingMax != 0 && ratingMean > *settings.PackCommonRatingMax {
-		log.Printf("rating mean too high")
-		packReasons[6]++
+		if *settings.Verbose {
+			log.Printf("rating mean too high")
+		}
 		passes = false
 	} else if *settings.PackCommonRatingMin != 0 && ratingMean < *settings.PackCommonRatingMin {
-		log.Printf("rating mean too low")
-		packReasons[7]++
+		if *settings.Verbose {
+			log.Printf("rating mean too low")
+		}
 		passes = false
 	}
 
 	if passes {
-		log.Printf("pack passes!")
-		packReasons[0]++
-	} else {
+		if *settings.Verbose {
+			log.Printf("pack passes!")
+		}
+	} else if *settings.Verbose {
 		log.Printf("pack fails :(")
 	}
 
@@ -510,7 +531,9 @@ func okPack(pack [15]Card) bool {
 }
 
 func okDraft(packs [24][15]Card) bool {
-	log.Printf("analyzing entire draft pool...")
+	if *settings.Verbose {
+		log.Printf("analyzing entire draft pool...")
+	}
 	passes := true
 
 	cardHash := make(map[string]int)
@@ -527,26 +550,30 @@ func okDraft(packs [24][15]Card) bool {
 			switch card.Rarity {
 			case "mythic":
 				if *settings.MaxMythic != 0 && qty > *settings.MaxMythic {
-					log.Printf("found %d %s, which is more than %d", qty, card.ID, *settings.MaxMythic)
-					draftReasons[1]++
+					if *settings.Verbose {
+						log.Printf("found %d %s, which is more than %d", qty, card.ID, *settings.MaxMythic)
+					}
 					passes = false
 				}
 			case "rare":
 				if *settings.MaxRare != 0 && qty > *settings.MaxRare {
-					log.Printf("found %d %s, which is more than %d", qty, card.ID, *settings.MaxRare)
-					draftReasons[2]++
+					if *settings.Verbose {
+						log.Printf("found %d %s, which is more than %d", qty, card.ID, *settings.MaxRare)
+					}
 					passes = false
 				}
 			case "uncommon":
 				if *settings.MaxUncommon != 0 && qty > *settings.MaxUncommon {
-					log.Printf("found %d %s, which is more than %d", qty, card.ID, *settings.MaxUncommon)
-					draftReasons[3]++
+					if *settings.Verbose {
+						log.Printf("found %d %s, which is more than %d", qty, card.ID, *settings.MaxUncommon)
+					}
 					passes = false
 				}
 			case "common":
 				if *settings.MaxCommon != 0 && qty > *settings.MaxCommon {
-					log.Printf("found %d %s, which is more than %d", qty, card.ID, *settings.MaxCommon)
-					draftReasons[4]++
+					if *settings.Verbose {
+						log.Printf("found %d %s, which is more than %d", qty, card.ID, *settings.MaxCommon)
+					}
 					passes = false
 				}
 				if !(card.Foil || (*settings.DfcMode && card.Dfc)) {
@@ -576,30 +603,30 @@ func okDraft(packs [24][15]Card) bool {
 
 	colorIdentityStdev := stdev(colorIdentities)
 
-	log.Printf("all commons color stdev:\t%f\t%v", colorStdev, colorHash)
-	log.Printf("all commons color identity stdev:\t%f\t%v", colorIdentityStdev, colorIdentityHash)
+	if *settings.Verbose {
+		log.Printf("all commons color stdev:\t%f\t%v", colorStdev, colorHash)
+		log.Printf("all commons color identity stdev:\t%f\t%v", colorIdentityStdev, colorIdentityHash)
+	}
 
 	if *settings.DraftCommonColorStdevMax != 0 && colorStdev > *settings.DraftCommonColorStdevMax {
-		log.Printf("color stdev too high")
-		draftReasons[5]++
+		if *settings.Verbose {
+			log.Printf("color stdev too high")
+		}
 		passes = false
 	}
 
 	if *settings.DraftCommonColorIdentityStdevMax != 0 && colorIdentityStdev > *settings.DraftCommonColorIdentityStdevMax {
-		log.Printf("color identity stdev too high")
-		draftReasons[5]++
+		if *settings.Verbose {
+			log.Printf("color identity stdev too high")
+		}
 		passes = false
 	}
 
 	if passes {
-		draftReasons[0]++
-		log.Printf("draft passes!")
-		oM[q["mythic"]]++
-		oR[q["rare"]]++
-		oU[q["uncommon"]]++
-		oC[q["common"]]++
-		// fmt.Printf("%d, %d, %d, %d\n", q["mythic"], q["rare"], q["uncommon"], q["common"])
-	} else {
+		if *settings.Verbose {
+			log.Printf("draft passes!")
+		}
+	} else if *settings.Verbose {
 		log.Printf("draft fails :(")
 	}
 
