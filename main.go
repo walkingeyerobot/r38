@@ -137,6 +137,7 @@ func NewHandler(database *sql.DB, useAuth bool) http.Handler {
 			if err != nil {
 				tx.Rollback()
 				if strings.HasPrefix(route, "/api/") {
+					w.WriteHeader(http.StatusInternalServerError)
 					json.NewEncoder(w).Encode(JSONError{Error: err.Error()})
 				} else {
 					http.Error(w, err.Error(), http.StatusInternalServerError)
