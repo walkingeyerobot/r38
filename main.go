@@ -724,12 +724,11 @@ func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool) (int64, int64, []
 		}
 
 		// Now get the seat id that the pack will be passed to.
-
 		query = `select
                            seats.id,
                            users.discord_id
                          from seats
-                         join users on seats.user = users.id
+                         left join users on seats.user = users.id
                          where seats.draft = ?
                            and seats.position = ?`
 
@@ -755,8 +754,6 @@ func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool) (int64, int64, []
 		if err != nil {
 			return draftID, myPackID, announcements, round, err
 		}
-
-		log.Printf("player %d in draft %d took card %d", userID, draftID, cardID)
 
 		// Get the number of remaining packs in the seat.
 		query = `select
@@ -893,6 +890,8 @@ func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool) (int64, int64, []
 			return draftID, myPackID, announcements, round, err
 		}
 	}
+
+	log.Printf("player %d in draft %d took card %d", userID, draftID, cardID)
 
 	return draftID, myPackID, announcements, round, nil
 }
