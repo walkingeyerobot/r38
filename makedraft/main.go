@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"encoding/csv"
 	"encoding/json"
@@ -18,7 +19,6 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-var database *sql.DB
 var oM map[int]int
 var oR map[int]int
 var oU map[int]int
@@ -167,7 +167,7 @@ func main() {
 
 	var packIDs [24]int64
 
-	database, err = sql.Open("sqlite3", *settings.Database)
+	database, err := sql.Open("sqlite3", *settings.Database)
 	if err != nil {
 		log.Printf("error opening database %s: %s", *settings.Database, err.Error())
 		return
@@ -178,10 +178,15 @@ func main() {
 		return
 	}
 
+	tx, err := database.BeginTx(context.Background(), &sql.TxOptions{ReadOnly: false})
+	if err != nil {
+		log.Printf("can't create a context: %s", err.Error())
+		return
+	}
+	defer tx.Rollback()
+
 	var allCards CardSet
 	var dfcCards CardSet
-
-	log.Printf("dfc mode: %t", *settings.DfcMode)
 
 	for _, card := range cfg.Cards {
 		var currentSet *CardSet
@@ -302,7 +307,7 @@ func main() {
 	log.Printf("draft attempts: %d", draftAttempts)
 	log.Printf("pack attempts: %d", packAttempts)
 
-	packIDs, err = generateEmptyDraft(*settings.Name)
+	packIDs, err = generateEmptyDraft(tx, *settings.Name)
 	if err != nil {
 		return
 	}
@@ -319,20 +324,25 @@ func main() {
 			} else {
 				data = re.ReplaceAllString(card.Data, "false")
 			}
-			database.Exec(query, packID, packID, data)
+			tx.Exec(query, packID, packID, data)
 		}
 	}
 
-	log.Printf("done!")
+	err = tx.Commit()
+	if err != nil {
+		log.Printf("can't commit :( %s", err.Error())
+	} else {
+		log.Printf("done!")
+	}
 
 	// fmt.Printf("%v\n%v\n%v\n%v\n", oM, oR, oU, oC)
 }
 
-func generateEmptyDraft(name string) ([24]int64, error) {
+func generateEmptyDraft(tx *sql.Tx, name string) ([24]int64, error) {
 	var packIds [24]int64
 
 	query := `INSERT INTO drafts (name) VALUES (?);`
-	res, err := database.Exec(query, name)
+	res, err := tx.Exec(query, name)
 	if err != nil {
 		log.Printf("error creating draft: %s", err)
 		return packIds, err
@@ -347,7 +357,7 @@ func generateEmptyDraft(name string) ([24]int64, error) {
 	query = `INSERT INTO seats (position, draft) VALUES (?, ?)`
 	var seatIds [8]int64
 	for i := 0; i < 8; i++ {
-		res, err = database.Exec(query, i, draftID)
+		res, err = tx.Exec(query, i, draftID)
 		if err != nil {
 			log.Printf("could not create seats in draft: %s", err)
 			return packIds, err
@@ -362,7 +372,7 @@ func generateEmptyDraft(name string) ([24]int64, error) {
 	query = `INSERT INTO packs (seat, original_seat, round) VALUES (?, ?, ?)`
 	for i := 0; i < 8; i++ {
 		for j := 0; j < 4; j++ {
-			res, err = database.Exec(query, seatIds[i], seatIds[i], j)
+			res, err = tx.Exec(query, seatIds[i], seatIds[i], j)
 			if err != nil {
 				log.Printf("error creating packs: %s", err)
 				return packIds, err
