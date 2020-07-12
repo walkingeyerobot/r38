@@ -95,7 +95,12 @@ export class TimelineGenerator {
     const seat = checkNotNil(this._state.seats[srcEvent.position]);
     const playerData = this.getPlayerData(srcEvent.position);
 
-    this.maybeAdvancePlayerToNextRound(seat, playerData, srcEvent);
+    if (srcEvent.round != playerData.currentRound ) {
+      throw new ParseError(
+          `Seat ${srcEvent.position} is in round ${playerData.currentRound} `
+          + `but event is round ${srcEvent.round}; `
+          + `event=${JSON.stringify(srcEvent)}`);
+    }
 
     if (seat.queuedPacks.packs.length == 0) {
       throw new ParseError(
@@ -117,6 +122,10 @@ export class TimelineGenerator {
             cardName: card.definition.name,
             from: activePack.id,
             to: seat.player.picks.id
+          }, {
+            type: 'mark-transfer',
+            from: activePack.id,
+            to: seat.player.picks.id,
           });
 
           // TODO: Do we really need to embed all this info? Can we just get it
@@ -135,6 +144,11 @@ export class TimelineGenerator {
 
       case 'SecretPick':
         event = this.createEvent('hidden-pick', playerData);
+        event.actions.push({
+          type: 'mark-transfer',
+          from: activePack.id,
+          to: seat.player.picks.id,
+        });
         break;
 
       default:
@@ -147,6 +161,8 @@ export class TimelineGenerator {
         this.buildPassAction(seat, playerData, activePack, netPickCount));
 
     this.commitEvent(event);
+
+    this.maybeAdvancePlayerToNextRound(seat, playerData);
   }
 
   private buildPassAction(
@@ -231,15 +247,11 @@ export class TimelineGenerator {
   private maybeAdvancePlayerToNextRound(
     seat: DraftSeat,
     playerData: PlayerTracker,
-    srcEvent: NormalPickEvent | SecretPickEvent,
   ) {
-    if (srcEvent.round == playerData.currentRound) {
+    // TODO: This can be fooled by drafts that introduce more packs or that
+    // have packs that aren't 15 cards
+    if (![15, 30].includes(seat.player.picks.count)) {
       return;
-    }
-    if (srcEvent.round != playerData.currentRound + 1) {
-      throw new ParseError(
-          `Seat ${srcEvent.position} can't just from round`
-          + ` ${playerData.currentRound} to ${srcEvent.round}`);
     }
 
     playerData.currentRound++;

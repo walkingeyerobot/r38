@@ -8,6 +8,7 @@ export function buildEmptyDraftState(): DraftState {
       id: CONTAINER_SHADOW,
       owningSeat: -1,
       cards: [],
+      count: 0,
     },
     unusedPacks: {
       id: PACK_LOCATION_UNUSED,

@@ -18,15 +18,30 @@ export type TimelineEventType =
 export type TimelineAction =
     | ActionMoveCard
     | ActionMovePack
+    | ActionMarkTransfer
     | ActionAssignRound
     | ActionAnnounce
     ;
 
 export interface ActionMoveCard {
   type: 'move-card';
-  subtype: 'pick-card' | 'return-card' | 'shadow-pick',
+  subtype: 'pick-card' | 'return-card' | 'shadow-pick';
   cardName: string;
   card: number;
+  from: number;
+  to: number;
+}
+
+/**
+ * Decrements from's `count` by one and increments to's `count` by one.
+ *
+ * Indicates that a card was transferred from one place to another. Due to the
+ * shadow drafter, the card may not actually move until later. However, we
+ * update the container's `count` values to reflect how many cards they contain
+ * (even though we may not know exactly what those cards are).
+ */
+export interface ActionMarkTransfer {
+  type: 'mark-transfer';
   from: number;
   to: number;
 }
