@@ -116,7 +116,9 @@ function doParse(client, objstr) {
     [false, false, false],
   ];
   // the player is always allowed to see their pack 1
-  packSeen[myPosition][0] = true;
+  if (myPosition >= 0) {
+    packSeen[myPosition][0] = true;
+  }
 
   // a map from a pack's starting seat + round to what cards have been picked
   // since the watched player last saw that pack
@@ -236,7 +238,7 @@ function doParse(client, objstr) {
       // because the whole pack is empty, we need to add the cards that have
       // been picked from that pack to a shadow pick event only if the focused
       // player is not the one that took the last card.
-      if (event.position !== myPosition && shadowCards[shadowKey]) {
+      if (myPosition >= 0 && event.position !== myPosition && shadowCards[shadowKey]) {
         newEvents.push({
           announcements: [],
           cards: shadowCards[shadowKey],
@@ -256,24 +258,26 @@ function doParse(client, objstr) {
   // we need to see if there is a pack the watched player is able to pick from.
   // if there is, mark that pack as seen and add that pack's most recent shadow pick
   // to the event list
-  var myRound = state[myPosition].round;
-  var availablePack = state[myPosition].packs[myRound - 1][0];
-  if (availablePack) {
-    var ss = availablePack.startSeat;
-    packSeen[ss][myRound - 1] = true;
-    var shadowKey = ss + '|' + myRound;
-    if (shadowCards[shadowKey]) {
-      newEvents.push({
-        announcements: [],
-        cards: shadowCards[shadowKey],
-        draftModified: shadowModified[shadowKey] + 0.5,
-        librarian: false,
-        position: -1,
-        round: event.round,
-        type: 'ShadowPick',
-      });
-      delete shadowCards[shadowKey];
-      delete shadowModified[shadowKey];
+  if (myPosition >= 0) {
+    var myRound = state[myPosition].round;
+    var availablePack = state[myPosition].packs[myRound - 1][0];
+    if (availablePack) {
+      var ss = availablePack.startSeat;
+      packSeen[ss][myRound - 1] = true;
+      var shadowKey = ss + '|' + myRound;
+      if (shadowCards[shadowKey]) {
+        newEvents.push({
+          announcements: [],
+          cards: shadowCards[shadowKey],
+          draftModified: shadowModified[shadowKey] + 0.5,
+          librarian: false,
+          position: -1,
+          round: event.round,
+          type: 'ShadowPick',
+        });
+        delete shadowCards[shadowKey];
+        delete shadowModified[shadowKey];
+      }
     }
   }
 
