@@ -1,6 +1,6 @@
 import { DraftState, CardContainer, CardPack } from "./DraftState";
 import { checkNotNil } from '../util/checkNotNil';
-import { TimelineEvent, TimelineAction, ActionMovePack, ActionAssignRound } from './TimelineEvent';
+import { TimelineEvent, TimelineAction, ActionMovePack, ActionAssignRound, ActionMoveCard } from './TimelineEvent';
 import { MutationError } from './MutationError';
 import { CardStore } from './CardStore';
 import { eventToString } from '../state/util/eventToString';
@@ -56,9 +56,7 @@ function applyAction(
 ) {
   switch (action.type) {
     case 'move-card':
-      const srcContainer = checkNotNil(state.packs.get(action.from));
-      const dstContainer = checkNotNil(state.packs.get(action.to));
-      dstContainer.cards.push(removeCard(cardStore, action.card, srcContainer));
+      moveCard(state, cardStore, action.card, action.from, action.to);
       break;
     case 'move-pack':
       movePack(action, state, 'forward');
@@ -68,6 +66,9 @@ function applyAction(
       break;
     case 'assign-round':
       assignRound(action, state);
+      break;
+    case 'mark-transfer':
+      markTransfer(state, action.from, action.to);
       break;
     default:
       checkExhaustive(action);
@@ -81,10 +82,7 @@ function rollbackAction(
 ) {
   switch (action.type) {
     case 'move-card':
-      const srcContainer = checkNotNil(state.packs.get(action.to));
-      const destContainer = checkNotNil(state.packs.get(action.from));
-      destContainer.cards.push(
-          removeCard(cardStore, action.card, srcContainer));
+      moveCard(state, cardStore, action.card, action.to, action.from);
       break;
     case 'move-pack':
       movePack(action, state, 'reverse');
@@ -93,6 +91,9 @@ function rollbackAction(
       break;
     case 'assign-round':
       unassignRound(action, state);
+      break;
+    case 'mark-transfer':
+      markTransfer(state, action.to, action.from);
       break;
     default:
       checkExhaustive(action);
@@ -116,6 +117,18 @@ function removeCard(
           + `container ${container.id} w/ contents `
           +  container.cards.map(
                 id => id + ':' + cardStore.getCard(id).definition.name));
+}
+
+function moveCard(
+    state: DraftState,
+    cardStore: CardStore,
+    card: number,
+    from: number,
+    to: number,
+) {
+  const srcContainer = checkNotNil(state.packs.get(from));
+  const dstContainer = checkNotNil(state.packs.get(to));
+  dstContainer.cards.push(removeCard(cardStore, card, srcContainer));
 }
 
 function movePack(
@@ -152,6 +165,13 @@ function movePack(
   srcCnt.packs.splice(srcIndex, 1);
   dstCnt.packs.push(pack);
   dstCnt.packs.sort(packComparator);
+}
+
+function markTransfer(state: DraftState, from: number, to: number) {
+  const srcContainer = checkNotNil(state.packs.get(from));
+  const dstContainer = checkNotNil(state.packs.get(to));
+  srcContainer.count--;
+  dstContainer.count++;
 }
 
 function assignRound(action: ActionAssignRound, state: DraftState) {
