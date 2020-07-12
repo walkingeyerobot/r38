@@ -690,6 +690,7 @@ func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool) (int64, int64, []
 
 	// once we're here, we know the pick is valid
 
+	// Determine which pack we're putting the drafted card into.
 	query = `select
                    v_packs.id,
                    v_packs.count
