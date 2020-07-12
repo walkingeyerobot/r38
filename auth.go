@@ -47,37 +47,32 @@ func generateStateOauthCookie(w http.ResponseWriter) string {
 	return state
 }
 
-// TODO(jpgleg): Can we pipe this in from main:mux.HandleFunc directly somehow?
-func oauthLogin(w http.ResponseWriter, r *http.Request, config *oauth2.Config) {
+func oauthDiscordLogin(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx) error {
 	oauthState := generateStateOauthCookie(w)
-	u := config.AuthCodeURL(oauthState)
+	u := discordOauthConfig.AuthCodeURL(oauthState)
 	http.Redirect(w, r, u, http.StatusTemporaryRedirect)
+	return nil
 }
 
-func oauthDiscordLogin(w http.ResponseWriter, r *http.Request) {
-	oauthLogin(w, r, discordOauthConfig)
-}
-
-func oauthDiscordCallback(w http.ResponseWriter, r *http.Request) {
+func oauthDiscordCallback(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx) error {
 	oauthState, _ := r.Cookie("oauthstate")
 
 	if r.FormValue("state") != oauthState.Value {
 		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
-		return
+		return nil
 	}
 
 	data, err := getUserDataFromDiscord(r.FormValue("code"))
 	if err != nil {
 		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
-		return
+		return nil
 	}
 
 	session, err := store.Get(r, "session-name")
 	var p DiscordUserInfo
 	err = json.Unmarshal(data, &p)
 	if err != nil {
-		fmt.Fprintf(w, err.Error(), http.StatusInternalServerError)
-		return
+		return err
 	}
 	if p.Picture != "" {
 		p.Picture = fmt.Sprintf("https://cdn.discordapp.com/avatars/%v/%s.png", p.ID, p.Picture)
@@ -85,51 +80,47 @@ func oauthDiscordCallback(w http.ResponseWriter, r *http.Request) {
 		p.Picture = "http://draft.thefoley.net/static/favicon.png"
 	}
 
-	statement, err := database.Prepare(`INSERT INTO users (discord_id, discord_name, picture) VALUES (?, ?, ?)`)
+	statement, err := tx.Prepare(`INSERT INTO users (discord_id, discord_name, picture) VALUES (?, ?, ?)`)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return err
 	}
 	statement.Exec(p.ID, p.Name, p.Picture)
 
 	// BEGIN MIGRATION BLOCK
 	// delete this block when migration to discord oauth is deemed complete
 
-	row := database.QueryRow(`SELECT id FROM users_old WHERE slack="<@" || ? || ">"`, p.ID)
+	row := tx.QueryRow(`SELECT id FROM users_old WHERE slack="<@" || ? || ">"`, p.ID)
 	var oldUserID int64
 	err = row.Scan(&oldUserID)
 	if err == sql.ErrNoRows {
 		// everything is fine, new user
 	} else if err != nil {
 		// something bad happened
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return err
 	} else {
 		// we found the old user
-		_, err = database.Exec(`delete from users where id=? and discord_id is null; UPDATE users set id=? where discord_id=?`, oldUserID, oldUserID, p.ID)
+		_, err = tx.Exec(`delete from users where id=? and discord_id is null; UPDATE users set id=? where discord_id=?`, oldUserID, oldUserID, p.ID)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
+			return err
 		}
 	}
 
 	// END MIGRATION BLOCK
 
-	row = database.QueryRow(`SELECT id FROM users WHERE discord_id = ?`, p.ID)
+	row = tx.QueryRow(`SELECT id FROM users WHERE discord_id = ?`, p.ID)
 	var rowid string
 	err = row.Scan(&rowid)
 	if err != nil {
-		fmt.Fprintf(w, err.Error(), http.StatusInternalServerError)
-		return
+		return err
 	}
 	session.Values["userid"] = rowid
 	err = session.Save(r, w)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return err
 	}
 
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+	return nil
 }
 
 func getUserDataFromDiscord(code string) ([]byte, error) {
