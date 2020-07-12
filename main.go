@@ -735,7 +735,7 @@ func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool) (int64, int64, []
 
 		row = tx.QueryRow(query, draftID, newPosition)
 		var newPositionID int64
-		var newPositionDiscordID string
+		var newPositionDiscordID sql.NullString
 		err = row.Scan(&newPositionID, &newPositionDiscordID)
 		if err != nil {
 			return draftID, myPackID, announcements, round, err
@@ -756,7 +756,7 @@ func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool) (int64, int64, []
 			return draftID, myPackID, announcements, round, err
 		}
 
-		log.Printf("player %d in draft %d took %d", userID, draftID, cardID)
+		log.Printf("player %d in draft %d took card %d", userID, draftID, cardID)
 
 		// Get the number of remaining packs in the seat.
 		query = `select
@@ -790,9 +790,9 @@ func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool) (int64, int64, []
 			err = row.Scan(&roundsMatch)
 			if err != nil {
 				log.Printf("cannot determine if rounds match for notify")
-			} else if roundsMatch == 1 {
+			} else if roundsMatch == 1 && newPositionDiscordID.Valid {
 				log.Printf("attempting to notify position %d draft %d", newPosition, draftID)
-				err = NotifyByDraftAndDiscordID(draftID, newPositionDiscordID)
+				err = NotifyByDraftAndDiscordID(draftID, newPositionDiscordID.String)
 				if err != nil {
 					log.Printf("error with notify")
 				}
@@ -863,7 +863,7 @@ func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool) (int64, int64, []
 
 						rowCount := 0
 						var blockingPosition int64
-						var blockingDiscordID string
+						var blockingDiscordID sql.NullString
 						for rows.Next() {
 							rowCount++
 							err = rows.Scan(&blockingPosition, &blockingDiscordID)
@@ -873,8 +873,8 @@ func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool) (int64, int64, []
 								break
 							}
 						}
-						if rowCount == 1 {
-							err = NotifyByDraftAndDiscordID(draftID, blockingDiscordID)
+						if rowCount == 1 && blockingDiscordID.Valid {
+							err = NotifyByDraftAndDiscordID(draftID, blockingDiscordID.String)
 							if err != nil {
 								log.Printf("error with blocking notify")
 							}
