@@ -27,6 +27,7 @@ class StateParser {
       id: CONTAINER_SHADOW,
       owningSeat: -1,
       cards: [],
+      count: 0,
     };
     this._packs.set(shadowPool.id, shadowPool);
 
@@ -54,6 +55,7 @@ class StateParser {
       id: this._nextContainerId++,
       owningSeat: position,
       cards: [],
+      count: 0,
     };
     this._packs.set(playerPicks.id, playerPicks);
 
@@ -92,7 +94,7 @@ class StateParser {
         round: i + 1,
         epoch: 0,
         cards: cards,
-        numDraftableCards: cards.length,
+        count: cards.length,
         labelId: this._nextPackLabelId,
         originalSeat: seat.position,
       };

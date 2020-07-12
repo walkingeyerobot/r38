@@ -25,22 +25,23 @@ export interface PackContainer {
 
 export type CardContainer = CardPack | PlayerPicks;
 
-export interface CardPack {
-  type: 'pack';
+interface BaseContainer {
   id: number;
-  labelId: number;
   cards: number[];
+  count: number;
+}
+
+export interface CardPack extends BaseContainer {
+  type: 'pack';
+  labelId: number;
   originalSeat: number;
   round: number;
-  numDraftableCards: number;
   epoch: number;
 }
 
-export interface PlayerPicks {
+export interface PlayerPicks extends BaseContainer {
   type: 'seat' | 'shadow-realm';
-  id: number;
   owningSeat: number;
-  cards: number[];
 }
 
 export interface DraftPlayer {
