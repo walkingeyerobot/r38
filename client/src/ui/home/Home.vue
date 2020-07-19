@@ -59,6 +59,7 @@ import { HomeDraftDescriptor, routeDraftlist } from '../../rest/api/draftlist/dr
 import { fetchEndpoint } from '../../fetch/fetchEndpoint';
 import { FetchStatus } from '../infra/FetchStatus';
 import { ROUTE_JOIN_DRAFT } from '../../rest/api/join/join';
+import { pushDraftUrl } from '../../router/url_manipulation';
 
 export default Vue.extend({
   data() {
@@ -98,7 +99,7 @@ export default Vue.extend({
       // TODO: Error handling
       const response = await fetchEndpoint(ROUTE_JOIN_DRAFT, { id: draftId });
       this.joinFetchStatus = 'loaded';
-      this.$router.push(`/replay/${draftId}`);
+      pushDraftUrl(this, { draftId });
     },
   },
 });

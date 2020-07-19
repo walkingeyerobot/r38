@@ -1,67 +1,83 @@
-import VueRouter, { Route } from 'vue-router';
+import { Route } from 'vue-router';
 import { SelectedView } from '../state/selection';
 import { ReplayStore, TimeMode } from '../state/ReplayStore';
 import { DraftStore } from '../state/DraftStore';
+import { checkNotNil } from '../util/checkNotNil';
+import { checkExhaustive } from '../util/checkExhaustive';
 
 /**
- * Navigates the UI to a particular state, updating the URL to match.
- *
- * At the moment, the navigable state includes:
- * (a) Where in the event stream we are
- * (b) What timeline mode is being used
- * (c) Which pack/seat is currently selected
- *
- * @param store The VueX data store
- * @param route An instance of the Vue route (`this.$route`)
- * @param router An instance of the Vue router (`this.$router`)
- * @param to The desired UI state to move to
+ * Navigates to the draft url specified by [params].
  */
-export function navTo(
-  draftStore: DraftStore,
-  replayStore: ReplayStore,
-  route: Route,
-  router: VueRouter,
-  to: TargetState,
+export function pushDraftUrl(
+    component: Vue,
+    params: DraftUrlState,
 ) {
-  const url = generateReplayUrl(draftStore, replayStore, to);
-  if (url != route.path) {
-    router.push({ path: url, query: route.query });
+  const path = generateDraftUrl(params);
+  const asUser = component.$route.query.as;
+  const query = asUser != undefined ? { as: asUser } : {};
+
+  if (path != component.$route.path) {
+    component.$router.push({ path, query });
   }
 }
 
-export interface TargetState {
-  timeMode?: TimeMode,
-  eventIndex?: number,
-  selection?: SelectedView
+/**
+ * Navigates to the draft URL specified by [params]. Any missing params are
+ * filled in by examining the current draft URL.
+ */
+export function pushDraftUrlRelative(
+    component: Vue,
+    params: RelativeDraftUrlParams
+) {
+  const parsed = parseDraftUrl(component.$route);
+  parsed.timeMode = parsed.timeMode || 'synchronized';
+  const finalParams = Object.assign({}, parsed, params);
+
+  pushDraftUrl(component, finalParams);
 }
 
-
-function generateReplayUrl(
+/**
+ * Constructs a draft URL matching the current Vuex state, then navigates to it.
+ */
+export function pushDraftUrlFromState(
+    vue: Vue,
     draftStore: DraftStore,
     replayStore: ReplayStore,
-    to: TargetState,
-): string {
-  const draftId = draftStore.draftId;
+) {
+  const params: DraftUrlState = {
+    draftId: draftStore.draftId,
+    timeMode: replayStore.timeMode,
+    eventIndex: replayStore.eventPos,
+    selection: replayStore.selection || undefined,
+  };
+  pushDraftUrl(vue, params);
+}
 
-  const timeMode =
-      to.timeMode != undefined ? to.timeMode : replayStore.timeMode;
-  const eventIndex =
-      to.eventIndex != undefined ? to.eventIndex : replayStore.eventPos;
-  const shortTimelineMode = timeMode == 'original' ? 't' : 's';
+function generateDraftUrl(
+    params: DraftUrlState
+) {
+  let path = `/replay/${params.draftId}/`;
 
-  const root = `/replay/${draftId}/${shortTimelineMode}/${eventIndex}`;
-
-  const selection = to.selection ? to.selection : replayStore.selection;
-  switch (selection?.type) {
-    case 'seat':
-      return `${root}/seat/${selection.id}`;
-    case 'pack':
-      return `${root}/pack/${selection.id}`;
-    case undefined:
-      return root;
-    default:
-      throw new Error(`Unrecognized selection type ${selection?.type}`);
+  if (params.eventIndex != undefined) {
+    const timeModeCode =
+        checkNotNil(params.timeMode) == 'synchronized' ? 's' : 't';
+    path += `${timeModeCode}/${params.eventIndex}/`;
   }
+
+  if (params.selection != undefined) {
+    switch (params.selection.type) {
+      case 'seat':
+        path += `seat/${params.selection.id}/`;
+        break;
+      case 'pack':
+        path += `pack/${params.selection.id}/`
+        break;
+      default:
+        checkExhaustive(params.selection);
+    }
+  }
+
+  return path;
 }
 
 /**
@@ -72,8 +88,8 @@ function generateReplayUrl(
  * @param params The URL params (`this.$route.params`)
  */
 export function applyReplayUrlState(
-  replayStore: ReplayStore,
-  route: Route,
+    replayStore: ReplayStore,
+    route: Route,
 ) {
   const parsedUrl = parseDraftUrl(route);
 
@@ -88,7 +104,7 @@ export function applyReplayUrlState(
 }
 
 export function parseDraftUrl(route: Route) {
-  const parsedUrl: ParsedUrl = {
+  const parsedUrl: DraftUrlState = {
     draftId: parseInt(route.params['draftId']),
   };
 
@@ -140,7 +156,7 @@ export function parseDraftUrl(route: Route) {
 
 function applyUrl(
     replayStore: ReplayStore,
-    parse: ParsedUrl,
+    parse: DraftUrlState,
 ) {
   if (parse.timeMode != undefined && parse.timeMode != replayStore.timeMode) {
     replayStore.setTimeMode(parse.timeMode);
@@ -160,9 +176,12 @@ function applyUrl(
   }
 }
 
-interface ParsedUrl {
+export interface DraftUrlState {
   draftId: number,
   timeMode?: TimeMode,
   eventIndex?: number,
   selection?: SelectedView,
 }
+
+type RelativeDraftUrlParams =
+    Pick<DraftUrlState, Exclude<keyof DraftUrlState, 'draftId'>>;

@@ -86,7 +86,7 @@ import Vue from 'vue';
 import { replayStore } from '../../../state/ReplayStore';
 import { draftStore } from '../../../state/DraftStore';
 
-import { navTo } from '../../../router/url_manipulation';
+import { pushDraftUrlRelative, pushDraftUrlFromState } from '../../../router/url_manipulation';
 import { isPickEvent } from '../../../state/util/isPickEvent';
 import { eventToString } from '../../../state/util/eventToString';
 import { indexOf } from '../../../util/collection';
@@ -102,7 +102,7 @@ export default Vue.extend({
 
       set(value) {
         replayStore.setTimeMode(value ? 'synchronized' : 'original');
-        navTo(draftStore, replayStore, this.$route, this.$router, {});
+        pushDraftUrlFromState(this, draftStore, replayStore);
       }
     },
 
@@ -124,7 +124,7 @@ export default Vue.extend({
     onSyncPickClicked(eventId: number) {
       const index = indexOf(replayStore.events, { id: eventId });
       if (index != -1) {
-        navTo(draftStore, replayStore, this.$route, this.$router, {
+        pushDraftUrlRelative(this, {
           eventIndex: index,
         });
       } else {
@@ -135,7 +135,7 @@ export default Vue.extend({
     onTempPickClicked(eventId: number, seatId: number) {
       const index = indexOf(replayStore.events, { id: eventId });
       if (index != -1) {
-        navTo(draftStore, replayStore, this.$route, this.$router, {
+        pushDraftUrlRelative(this, {
           eventIndex: index,
           selection: {
             type: 'seat',
