@@ -37,7 +37,7 @@ import { authStore, AuthStore } from '../../state/AuthStore';
 import { draftStore, DraftStore } from '../../state/DraftStore';
 import { replayStore, ReplayStore } from '../../state/ReplayStore';
 
-import { navTo } from '../../router/url_manipulation';
+import { pushDraftUrlRelative } from '../../router/url_manipulation';
 import { TimelineEvent } from '../../draft/TimelineEvent';
 import { globalClickTracker, UnhandledClickListener } from '../infra/globalClickTracker';
 import { isAuthedUserSelected } from './isAuthedUserSelected';
@@ -77,7 +77,7 @@ export default Vue.extend({
     onPicksClick() {
       const seatId =
           getUserPosition(authStore.user?.id, draftStore.currentState);
-      navTo(draftStore, replayStore, this.$route, this.$router, {
+      pushDraftUrlRelative(this, {
         eventIndex: replayStore.events.length,
         selection: {
           type: 'seat',

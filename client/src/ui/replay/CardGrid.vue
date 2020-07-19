@@ -44,7 +44,7 @@ import Vue from 'vue';
 import { DraftCard, DraftPlayer, DraftSeat, CardPack, CardContainer } from '../../draft/DraftState';
 import { TimelineEvent } from '../../draft/TimelineEvent';
 import { SelectedView } from '../../state/selection';
-import { navTo } from '../../router/url_manipulation';
+import { pushDraftUrlRelative } from '../../router/url_manipulation';
 import CardView from './CardView.vue';
 
 import { draftStore, DraftStore } from '../../state/DraftStore';
@@ -178,7 +178,7 @@ export default Vue.extend({
         const adjustedIndex =
             maybeAdjustToStartOfEpoch(replayStore, pick.index);
 
-        navTo(draftStore, replayStore, this.$route, this.$router, {
+        pushDraftUrlRelative(this, {
           eventIndex: adjustedIndex,
           selection: {
             type: 'seat',

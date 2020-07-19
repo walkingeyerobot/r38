@@ -11,7 +11,7 @@
 <script lang="ts">
 import Vue from 'vue'
 import { CardPack } from '../../draft/DraftState';
-import { navTo } from '../../router/url_manipulation';
+import { pushDraftUrlRelative } from '../../router/url_manipulation';
 
 import { draftStore } from '../../state/DraftStore';
 import { replayStore } from '../../state/ReplayStore';
@@ -34,7 +34,8 @@ export default Vue.extend({
 
   methods: {
     onClick() {
-      navTo(draftStore, replayStore, this.$route, this.$router, {
+
+      pushDraftUrlRelative(this, {
         selection: {
           type: 'pack',
           id: this.pack.id,

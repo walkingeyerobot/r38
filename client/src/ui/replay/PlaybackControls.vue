@@ -12,28 +12,28 @@ import Vue from 'vue';
 import { replayStore } from '../../state/ReplayStore';
 import { draftStore } from '../../state/DraftStore';
 
-import { navTo } from '../../router/url_manipulation';
+import { pushDraftUrlRelative, pushDraftUrlFromState } from '../../router/url_manipulation';
 
 export default Vue.extend({
   methods: {
     onNextClick() {
       replayStore.goNext();
-      navTo(draftStore, replayStore, this.$route, this.$router, {});
+      pushDraftUrlFromState(this, draftStore, replayStore);
     },
 
     onPrevClick() {
       replayStore.goBack();
-      navTo(draftStore, replayStore, this.$route, this.$router, {});
+      pushDraftUrlFromState(this, draftStore, replayStore);
     },
 
     onStartClick() {
-      navTo(draftStore, replayStore, this.$route, this.$router, {
+      pushDraftUrlRelative(this, {
         eventIndex: 0,
       });
     },
 
     onEndClick() {
-      navTo(draftStore, replayStore, this.$route, this.$router, {
+      pushDraftUrlRelative(this, {
         eventIndex: replayStore.events.length,
       });
     },

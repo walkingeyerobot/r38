@@ -41,7 +41,6 @@ import { checkNotNil } from '../../util/checkNotNil';
 import { fetchEndpoint } from '../../fetch/fetchEndpoint';
 import { routePick } from '../../rest/api/pick/pick';
 import { delay } from '../../util/delay';
-import { navTo } from '../../router/url_manipulation';
 
 export default Vue.extend({
 

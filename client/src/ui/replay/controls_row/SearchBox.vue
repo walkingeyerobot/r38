@@ -72,15 +72,15 @@ results.
 
 <script lang="ts">
 import Vue from 'vue';
+import { replayStore } from '../../../state/ReplayStore';
+import { draftStore } from '../../../state/DraftStore';
+
 import { CardContainer, MtgCard } from '../../../draft/DraftState';
-import { navTo } from '../../../router/url_manipulation';
+import { pushDraftUrlRelative } from '../../../router/url_manipulation';
 import { SelectedView } from '../../../state/selection';
 import { indexOf } from '../../../util/collection';
 import { TimelineEvent, TimelineAction } from '../../../draft/TimelineEvent';
 import { globalClickTracker, UnhandledClickListener } from '../../infra/globalClickTracker';
-
-import { replayStore } from '../../../state/ReplayStore';
-import { draftStore } from '../../../state/DraftStore';
 import { CardLocation } from '../../../state/DeckBuilderModule';
 
 export default Vue.extend({
@@ -142,7 +142,7 @@ export default Vue.extend({
 
     onCardNameClick(result: CardSearchResult) {
       if (result.packType != 'shadow-realm') {
-        navTo(draftStore, replayStore, this.$route, this.$router, {
+        pushDraftUrlRelative(this, {
           selection: {
             id: result.packId,
             type: result.packType,
@@ -155,7 +155,7 @@ export default Vue.extend({
       if (pick != null) {
         const index = indexOf(replayStore.events, { id: pick.eventId });
         if (index != -1) {
-          navTo(draftStore, replayStore, this.$route, this.$router, {
+          pushDraftUrlRelative(this, {
             eventIndex: index,
             selection: {
               id: pick.fromSeat,

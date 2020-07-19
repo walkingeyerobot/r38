@@ -29,7 +29,7 @@ import { draftStore, DraftStore } from '../state/DraftStore';
 
 import { SourceData } from '../parse/SourceData';
 import { SelectedView } from '../state/selection';
-import { applyReplayUrlState, navTo, parseDraftUrl } from '../router/url_manipulation';
+import { applyReplayUrlState, pushDraftUrlFromState, parseDraftUrl } from '../router/url_manipulation';
 import { globalClickTracker } from './infra/globalClickTracker';
 import { getUserPosition } from '../state/util/userIsSeated';
 import { tuple } from '../util/tuple';
@@ -140,7 +140,7 @@ export default Vue.extend({
         applyReplayUrlState(replayStore, this.$route);
       } else {
         console.log('Syncing URL to state...');
-        navTo(draftStore, replayStore, this.$route, this.$router, {});
+        pushDraftUrlFromState(this, draftStore, replayStore);
       }
       this.isFreshBundle = false;
     },

@@ -18,7 +18,6 @@ import { replayStore } from '../../state/ReplayStore';
 import { draftStore } from '../../state/DraftStore';
 
 import { DraftState } from '../../draft/DraftState';
-import { navTo } from '../../router/url_manipulation';
 
 
 export default Vue.extend({
@@ -30,30 +29,6 @@ export default Vue.extend({
   computed: {
     draft(): DraftState {
       return replayStore.draft;
-    },
-  },
-
-  methods: {
-    onNextClick() {
-      replayStore.goNext();
-      navTo(draftStore, replayStore, this.$route, this.$router, {});
-    },
-
-    onPrevClick() {
-      replayStore.goBack();
-      navTo(draftStore, replayStore, this.$route, this.$router, {});
-    },
-
-    onStartClick() {
-      navTo(draftStore, replayStore, this.$route, this.$router, {
-        eventIndex: 0,
-      });
-    },
-
-    onEndClick() {
-      navTo(draftStore, replayStore, this.$route, this.$router, {
-        eventIndex: replayStore.events.length,
-      });
     },
   },
 });
