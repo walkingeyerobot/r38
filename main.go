@@ -158,6 +158,7 @@ func NewHandler(database *sql.DB, useAuth bool) http.Handler {
 	}
 
 	addHandler("/replay/", ServeVueApp, true)
+	addHandler("/home/", ServeVueApp, true)
 	addHandler("/deckbuilder/", ServeVueApp, true)
 
 	addHandler("/join/", ServeJoin, false)

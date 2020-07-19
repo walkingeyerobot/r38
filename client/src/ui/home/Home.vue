@@ -4,7 +4,7 @@
 
     <div class="drafts-cnt">
 
-      <div v-if="fetchStatus == 'loading'" class="loading-msg">Loading...</div>
+      <div v-if="listFetchStatus == 'fetching'" class="loading-msg">Loading...</div>
 
       <div v-if="joinableDrafts.length > 0" class="joinable-cnt" >
         <div
@@ -22,6 +22,7 @@
           <button
               class="joinable-btn"
               @click="onJoinClicked(draft.id)"
+              :disabled="joinFetchStatus == 'fetching'"
               >
             Join
           </button>
@@ -56,22 +57,25 @@ import { authStore } from '../../state/AuthStore';
 
 import { HomeDraftDescriptor, routeDraftlist } from '../../rest/api/draftlist/draftlist'
 import { fetchEndpoint } from '../../fetch/fetchEndpoint';
+import { FetchStatus } from '../infra/FetchStatus';
+import { ROUTE_JOIN_DRAFT } from '../../rest/api/join/join';
 
 export default Vue.extend({
   data() {
     return {
       drafts: [] as HomeDraftDescriptor[],
-      fetchStatus: 'missing' as 'missing' | 'loading' | 'error' | 'loaded'
+      listFetchStatus: 'missing' as FetchStatus,
+      joinFetchStatus: 'missing' as FetchStatus,
     };
   },
 
   async created() {
-    this.fetchStatus = 'loading';
+    this.listFetchStatus = 'fetching';
     const response =
         await fetchEndpoint(routeDraftlist, {
           as: authStore.user?.id,
         });
-    this.fetchStatus = 'loaded';
+    this.listFetchStatus = 'loaded';
     // TODO: catch and show error
     this.drafts = response.drafts;
   },
@@ -89,8 +93,12 @@ export default Vue.extend({
   },
 
   methods: {
-    onJoinClicked(draftId: number) {
-      console.log('Joining', draftId);
+    async onJoinClicked(draftId: number) {
+      this.joinFetchStatus = 'fetching';
+      // TODO: Error handling
+      const response = await fetchEndpoint(ROUTE_JOIN_DRAFT, { id: draftId });
+      this.joinFetchStatus = 'loaded';
+      this.$router.push(`/replay/${draftId}`);
     },
   },
 });

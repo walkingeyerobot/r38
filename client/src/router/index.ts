@@ -15,6 +15,11 @@ const routes = [
         import(/* webpackChunkName: 'home' */ '../ui/home/Home.vue'),
   },
   {
+    path: `/home`,
+    component: () =>
+        import(/* webpackChunkName: 'home' */ '../ui/home/Home.vue'),
+  },
+  {
     path: `/login`,
     component: () =>
         import(/* webpackChunkName: 'login' */ '../ui/login/Login.vue'),
