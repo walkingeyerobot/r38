@@ -158,11 +158,7 @@ func NewHandler(database *sql.DB, useAuth bool) http.Handler {
 	}
 
 	addHandler("/replay/", ServeVueApp, true)
-	addHandler("/home/", ServeVueApp, true)
 	addHandler("/deckbuilder/", ServeVueApp, true)
-
-	addHandler("/join/", ServeJoin, false)
-	addHandler("/index/", ServeIndex, true)
 
 	addHandler("/bulk_mtgo/", ServeBulkMTGO, true)
 
@@ -171,7 +167,7 @@ func NewHandler(database *sql.DB, useAuth bool) http.Handler {
 	addHandler("/api/pick/", ServeAPIPick, false)
 	addHandler("/api/join/", ServeAPIJoin, false)
 
-	addHandler("/", ServeIndex, true)
+	addHandler("/", ServeVueApp, true)
 
 	return mux
 }
@@ -374,6 +370,45 @@ func ServeAPIJoin(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.
 	return nil
 }
 
+// doJoin does the actual joining.
+func doJoin(tx *sql.Tx, userID int64, draftID int64) error {
+	query := `select
+                    count(1)
+                  from seats
+                  where draft = ?
+                    and user = ?`
+	row := tx.QueryRow(query, draftID, userID)
+	var alreadyJoined int64
+	err := row.Scan(&alreadyJoined)
+	if err != nil {
+		return err
+	} else if alreadyJoined > 0 {
+		return fmt.Errorf("user %d already joined %d", userID, draftID)
+	}
+
+	query = `select
+                   id
+                 from seats
+                 where draft = ?
+                   and user is null
+                 order by random()
+                 limit 1`
+	row = tx.QueryRow(query, draftID)
+	var emptySeatID int64
+	err = row.Scan(&emptySeatID)
+	if err != nil {
+		return err
+	}
+
+	query = `update seats set user = ? where id = ?`
+	_, err = tx.Exec(query, userID, emptySeatID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // ServeBulkMTGO serves a .zip file of all .dek files for a draft. Only useful to the admin.
 func ServeBulkMTGO(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx) error {
 	if userID != 1 {
@@ -521,99 +556,6 @@ func ServeVueApp(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.T
 	t := template.Must(template.ParseFiles("vue.tmpl"))
 
 	t.Execute(w, data)
-	return nil
-}
-
-// ServeIndex serves the index page.
-func ServeIndex(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx) error {
-	query := `select drafts.id, drafts.name, sum(seats.user is null and seats.position is not null) as empty_seats, coalesce(sum(seats.user = ?), 0) as joined from drafts left join seats on drafts.id = seats.draft group by drafts.id`
-
-	rows, err := tx.Query(query, userID)
-	if err != nil {
-		return err
-	}
-	defer rows.Close()
-	var Drafts []Draft
-	for rows.Next() {
-		var d Draft
-		err = rows.Scan(&d.ID, &d.Name, &d.Seats, &d.Joined)
-		if err != nil {
-			return err
-		}
-		d.Joinable = d.Seats > 0 && !d.Joined
-		d.Replayable = true
-
-		Drafts = append(Drafts, d)
-	}
-
-	viewParam := GetViewParam(r, userID)
-	data := IndexPageData{Drafts: Drafts, ViewURL: viewParam, UserID: userID}
-	t := template.Must(template.ParseFiles("index.tmpl"))
-	t.Execute(w, data)
-	return nil
-}
-
-// ServeJoin allows the user to join a draft, if possible.
-func ServeJoin(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx) error {
-	re := regexp.MustCompile(`/join/(\d+)`)
-	parseResult := re.FindStringSubmatch(r.URL.Path)
-
-	if parseResult == nil {
-		return fmt.Errorf("bad url")
-	}
-
-	draftIDInt, err := strconv.Atoi(parseResult[1])
-	if err != nil {
-		return err
-	}
-	draftID := int64(draftIDInt)
-
-	err = doJoin(tx, userID, draftID)
-	if err != nil {
-		return err
-	}
-
-	viewParam := GetViewParam(r, userID)
-	http.Redirect(w, r, fmt.Sprintf("/replay/%d%s", draftID, viewParam), http.StatusTemporaryRedirect)
-	return nil
-}
-
-// doJoin does the actual joining.
-func doJoin(tx *sql.Tx, userID int64, draftID int64) error {
-	query := `select
-                    count(1)
-                  from seats
-                  where draft = ?
-                    and user = ?`
-	row := tx.QueryRow(query, draftID, userID)
-	var alreadyJoined int64
-	err := row.Scan(&alreadyJoined)
-	if err != nil {
-		return err
-	} else if alreadyJoined > 0 {
-		return fmt.Errorf("user %d already joined %d", userID, draftID)
-	}
-
-	query = `select
-                   id
-                 from seats
-                 where draft = ?
-                   and user is null
-                 order by random()
-                 limit 1`
-	row = tx.QueryRow(query, draftID)
-	var emptySeatID int64
-	err = row.Scan(&emptySeatID)
-	if err != nil {
-		return err
-	}
-
-	query = `update seats set user = ? where id = ?`
-	_, err = tx.Exec(query, userID, emptySeatID)
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 
