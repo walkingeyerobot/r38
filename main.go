@@ -157,9 +157,6 @@ func NewHandler(database *sql.DB, useAuth bool) http.Handler {
 		addHandler("/auth/discord/callback", oauthDiscordCallback, false)
 	}
 
-	addHandler("/replay/", ServeVueApp, true)
-	addHandler("/deckbuilder/", ServeVueApp, true)
-
 	addHandler("/bulk_mtgo/", ServeBulkMTGO, true)
 
 	addHandler("/api/draft/", ServeAPIDraft, true)
