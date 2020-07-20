@@ -94,12 +94,7 @@ export default Vue.extend({
 
   methods: {
     getImageSrc(card: MtgCard): string {
-      if (DEVELOPMENT) {
-        return `http://api.scryfall.com/cards/${card.set}/`
-            + `${card.collector_number}?format=image&version=normal`;
-      } else {
-        return `/proxy/${card.set}/${card.collector_number}`;
-      }
+      return card.image_uris[0];
     },
 
     dragStart(e: DragEvent, index: number) {
