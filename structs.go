@@ -74,9 +74,11 @@ type DraftList struct {
 
 // DraftListEntry is turned into JSON and used for the REST API.
 type DraftListEntry struct {
-	ID             int64  `json:"id"`
-	Name           string `json:"name"`
 	AvailableSeats int64  `json:"availableSeats"`
+	Finished       bool   `json:"finished"`
+	ID             int64  `json:"id"`
+	Joined         bool   `json:"joined"`
+	Name           string `json:"name"`
 	Status         string `json:"status"`
 }
 

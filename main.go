@@ -16,6 +16,7 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -82,29 +83,30 @@ func main() {
 func NewHandler(database *sql.DB, useAuth bool) http.Handler {
 	mux := http.NewServeMux()
 
-	middleware := AuthMiddleware
-	if !useAuth {
-		middleware = NonAuthMiddleware
-	}
-
 	addHandler := func(route string, serveFunc r38handler, readonly bool) {
+		isAuthRoute := strings.HasPrefix(route, "/auth/")
 		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			var userID int64
 			if useAuth {
-				if strings.HasPrefix(route, "/auth/") {
+				if isAuthRoute {
 					userID = 0
 				} else {
 					session, err := store.Get(r, "session-name")
 					if err != nil {
-						http.Error(w, err.Error(), http.StatusInternalServerError)
-						return
+						userID = 0
+					} else {
+						userIDStr := session.Values["userid"]
+						if userIDStr == nil {
+							userID = 0
+						} else {
+							userIDInt, err := strconv.Atoi(userIDStr.(string))
+							if err != nil {
+								userID = 0
+							} else {
+								userID = int64(userIDInt)
+							}
+						}
 					}
-					userIDInt, err := strconv.Atoi(session.Values["userid"].(string))
-					if err != nil {
-						http.Error(w, err.Error(), http.StatusInternalServerError)
-						return
-					}
-					userID = int64(userIDInt)
 				}
 			} else {
 				userID = 1
@@ -146,15 +148,17 @@ func NewHandler(database *sql.DB, useAuth bool) http.Handler {
 				tx.Commit()
 			}
 		})
-		mux.Handle(route, middleware(handler))
+		mux.Handle(route, handler)
 	}
 
 	fs := http.FileServer(http.Dir("static"))
 	mux.Handle("/static/", http.StripPrefix("/static/", fs))
 
 	if useAuth {
+		log.Printf("setting up auth routes...")
 		addHandler("/auth/discord/login", oauthDiscordLogin, true) // don't actually need db at all
 		addHandler("/auth/discord/callback", oauthDiscordCallback, false)
+		addHandler("/login/", HandleLogin, true)
 	}
 
 	addHandler("/bulk_mtgo/", ServeBulkMTGO, true)
@@ -169,33 +173,10 @@ func NewHandler(database *sql.DB, useAuth bool) http.Handler {
 	return mux
 }
 
-// AuthMiddleware makes sure users are logged in if auth is enabled.
-func AuthMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		session, err := store.Get(r, "session-name")
-		if err != nil {
-			t := template.Must(template.ParseFiles("login.tmpl"))
-			t.Execute(w, nil)
-			return
-		}
-		if session.Values["userid"] != nil {
-			log.Printf("%s %s", session.Values["userid"], r.URL.Path)
-			next.ServeHTTP(w, r)
-			return
-		}
-		t := template.Must(template.ParseFiles("login.tmpl"))
-		t.Execute(w, nil)
-		return
-	})
-}
-
-// NonAuthMiddleware just passes the request along in non-auth mode.
-func NonAuthMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Printf(r.URL.Path)
-		next.ServeHTTP(w, r)
-		return
-	})
+func HandleLogin(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx) error {
+	t := template.Must(template.ParseFiles("login.tmpl"))
+	t.Execute(w, nil)
+	return nil
 }
 
 // AuthIsViewing determines if ?as= is being used in auth mode.
@@ -230,6 +211,7 @@ func GetViewParam(r *http.Request, userID int64) string {
 
 // ServeAPIDraft serves the /api/draft endpoint.
 func ServeAPIDraft(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx) error {
+	log.Printf("/API/DRAFT: USER %d", userID)
 	re := regexp.MustCompile(`/api/draft/(\d+)`)
 	parseResult := re.FindStringSubmatch(r.URL.Path)
 	if parseResult == nil {
@@ -251,39 +233,10 @@ func ServeAPIDraft(w http.ResponseWriter, r *http.Request, userID int64, tx *sql
 
 // ServeAPIDraftList serves the /api/draftlist endpoint.
 func ServeAPIDraftList(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx) error {
-	query := `select
-                    drafts.id,
-                    drafts.name,
-                    sum(seats.user is null and seats.position is not null) as empty_seats,
-                    coalesce(sum(seats.user = ?), 0) as joined
-                  from drafts
-                  left join seats on drafts.id = seats.draft
-                  group by drafts.id`
-
-	rows, err := tx.Query(query, userID)
+	drafts, err := GetDraftList(userID, tx)
 	if err != nil {
-		return fmt.Errorf("can't get draft list: %s", err.Error())
+		return err
 	}
-	defer rows.Close()
-	var drafts DraftList
-	for rows.Next() {
-		var d DraftListEntry
-		var joined int64
-		err = rows.Scan(&d.ID, &d.Name, &d.AvailableSeats, &joined)
-		if err != nil {
-			return fmt.Errorf("can't get draft list: %s", err.Error())
-		}
-		if joined == 1 {
-			d.Status = "member"
-		} else if d.AvailableSeats == 0 {
-			d.Status = "spectator"
-		} else {
-			d.Status = "joinable"
-		}
-
-		drafts.Drafts = append(drafts.Drafts, d)
-	}
-
 	json.NewEncoder(w).Encode(drafts)
 	return nil
 }
@@ -530,17 +483,20 @@ func exportToMTGO(tx *sql.Tx, userID int64, draftID int64) (string, error) {
 
 // ServeVueApp serves to vue.
 func ServeVueApp(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx) error {
-	query := `select
-                    id,
-                    discord_name,
-                    picture
-                  from users
-                  where id = ?`
-	row := tx.QueryRow(query, userID)
 	var userInfo UserInfo
-	err := row.Scan(&userInfo.ID, &userInfo.Name, &userInfo.Picture)
-	if err != nil {
-		return err
+
+	if userID != 0 {
+		query := `select
+                            id,
+                            discord_name,
+                            picture
+                          from users
+                          where id = ?`
+		row := tx.QueryRow(query, userID)
+		err := row.Scan(&userInfo.ID, &userInfo.Name, &userInfo.Picture)
+		if err != nil {
+			return err
+		}
 	}
 
 	userInfoJSON, err := json.Marshal(userInfo)
@@ -968,31 +924,46 @@ func GetJSONObject(tx *sql.Tx, draftID int64) (DraftJSON, error) {
 
 // GetFilteredJSON returns a filtered json object of replay data.
 func GetFilteredJSON(tx *sql.Tx, draftID int64, userID int64) (string, error) {
+	draftInfo, err := GetDraftListEntry(userID, tx, draftID)
+	if err != nil {
+		return "", err
+	}
+
 	draft, err := GetJSONObject(tx, draftID)
 	if err != nil {
 		return "", err
 	}
 
-	query := `select (
-                    select
-                      round
-                    from seats
-                    where draft = ?
-                      and user = ?), (
-                    select
-                      count(1)
-                    from seats
-                    where draft = ?
-                      and user is null)`
-	var myRound sql.NullInt64
-	var emptySeats int64
-	row := tx.QueryRow(query, draftID, userID, draftID)
-	err = row.Scan(&myRound, &emptySeats)
-	if err != nil {
-		return "", err
-	} else if (myRound.Valid && myRound.Int64 >= 4) || (!myRound.Valid && emptySeats == 0) {
-		// either we're not in the draft, or the draft is over for us
-		// therefore, we can see the whole draft.
+	var returnFullReplay bool
+	if draftInfo.Finished {
+		// If the draft is over, everyone can see the full replay.
+		returnFullReplay = true
+	} else if draftInfo.Joined {
+		// If we're a member of the draft and it's NOT over,
+		// we need to see if we're done with the draft. If we are,
+		// we can see the full replay. Otherwise, we need to
+		// filter.
+		query := `select
+                            round
+                          from seats
+                          where draft = ?
+                            and user = ?`
+		row := tx.QueryRow(query, draftID, userID)
+		var myRound sql.NullInt64
+		err = row.Scan(&myRound)
+		if err != nil {
+			return "", err
+		}
+		if myRound.Valid && myRound.Int64 >= 4 {
+			returnFullReplay = true
+		}
+	} else if userID != 0 && draftInfo.AvailableSeats == 0 {
+		// If we're logged in AND the draft is full,
+		// we can see the full replay.
+		returnFullReplay = true
+	}
+
+	if returnFullReplay {
 		ret, err := json.Marshal(draft)
 		if err != nil {
 			return "", err
@@ -1000,7 +971,6 @@ func GetFilteredJSON(tx *sql.Tx, draftID int64, userID int64) (string, error) {
 		return string(ret), nil
 	}
 
-	// this is an ongoing draft that we're a member of. filter the json.
 	conn, err := net.Dial("unix", sock)
 	if err != nil {
 		return "", err
@@ -1050,4 +1020,66 @@ func doEvent(tx *sql.Tx, draftID int64, userID int64, announcements []string, ca
 	}
 
 	return err
+}
+
+func GetDraftList(userID int64, tx *sql.Tx) (DraftList, error) {
+	var drafts DraftList
+
+	query := `select
+                    drafts.id,
+                    drafts.name,
+                    sum(seats.user is null and seats.position is not null) as empty_seats,
+                    coalesce(sum(seats.user = ?), 0) as joined,
+                    min(seats.round) > 3 as finished
+                  from drafts
+                  left join seats on drafts.id = seats.draft
+                  group by drafts.id
+                  order by drafts.id asc`
+
+	rows, err := tx.Query(query, userID)
+	if err != nil {
+		return drafts, fmt.Errorf("can't get draft list: %s", err.Error())
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var d DraftListEntry
+		err = rows.Scan(&d.ID, &d.Name, &d.AvailableSeats, &d.Joined, &d.Finished)
+		if err != nil {
+			return drafts, fmt.Errorf("can't get draft list: %s", err.Error())
+		}
+
+		// It looks like Status is able to be derrived by the client, but in the future
+		// we'll want to restrict who can join a given draft more.
+		if d.Joined {
+			d.Status = "member"
+		} else if d.Finished {
+			d.Status = "spectator"
+		} else if userID == 0 {
+			d.Status = "closed"
+		} else if d.AvailableSeats == 0 {
+			d.Status = "spectator"
+		} else {
+			d.Status = "joinable"
+		}
+
+		drafts.Drafts = append(drafts.Drafts, d)
+	}
+	return drafts, nil
+}
+
+func GetDraftListEntry(userID int64, tx *sql.Tx, draftID int64) (DraftListEntry, error) {
+	var ret DraftListEntry
+
+	drafts, err := GetDraftList(userID, tx)
+	if err != nil {
+		return ret, err
+	}
+
+	draftCount := len(drafts.Drafts)
+	i := sort.Search(draftCount, func(i int) bool { return draftID <= drafts.Drafts[i].ID })
+	if i < draftCount && i >= 0 {
+		return drafts.Drafts[i], nil
+	}
+
+	return ret, fmt.Errorf("could not find draft id %d", draftID)
 }

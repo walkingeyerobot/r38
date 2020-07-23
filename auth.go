@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"time"
@@ -86,28 +87,7 @@ func oauthDiscordCallback(w http.ResponseWriter, r *http.Request, userID int64, 
 	}
 	statement.Exec(p.ID, p.Name, p.Picture)
 
-	// BEGIN MIGRATION BLOCK
-	// delete this block when migration to discord oauth is deemed complete
-
-	row := tx.QueryRow(`SELECT id FROM users_old WHERE slack="<@" || ? || ">"`, p.ID)
-	var oldUserID int64
-	err = row.Scan(&oldUserID)
-	if err == sql.ErrNoRows {
-		// everything is fine, new user
-	} else if err != nil {
-		// something bad happened
-		return err
-	} else {
-		// we found the old user
-		_, err = tx.Exec(`delete from users where id=? and discord_id is null; UPDATE users set id=? where discord_id=?`, oldUserID, oldUserID, p.ID)
-		if err != nil {
-			return err
-		}
-	}
-
-	// END MIGRATION BLOCK
-
-	row = tx.QueryRow(`SELECT id FROM users WHERE discord_id = ?`, p.ID)
+	row := tx.QueryRow(`SELECT id FROM users WHERE discord_id = ?`, p.ID)
 	var rowid string
 	err = row.Scan(&rowid)
 	if err != nil {
