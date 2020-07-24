@@ -16,4 +16,6 @@ export interface HomeDraftDescriptor {
   name: string;
   availableSeats: number;
   status: 'joinable' | 'member' | 'spectator' | 'closed';
+  finished: boolean;
+  joined: boolean;
 }
