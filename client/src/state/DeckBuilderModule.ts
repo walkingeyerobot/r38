@@ -3,8 +3,8 @@ import { vuexModule } from './vuex/vuexModule';
 import { rootStore } from './store';
 
 
-type DataVersion = 1;
-const DATA_VERSION = 1;
+type DataVersion = 1 | 2;
+const DATA_VERSION = 2;
 const DEFAULT_NUM_COLUMNS = 8;
 const MODULE_NAME = 'deckbuilder';
 
@@ -211,10 +211,11 @@ function getStoredDeck(draftName: string, seatPosition: number): Deck {
     }
   }
   if (deck) {
-    for (; version < DATA_VERSION; version++) {
+    for (; version < DATA_VERSION && deck != null; version++) {
       deck = migrateDeckVersion(deck, <DataVersion>(version + 1));
     }
-  } else {
+  }
+  if (!deck) {
     deck = {
       draftName: draftName,
       sideboard: (<DraftCard[][]>Array(DEFAULT_NUM_COLUMNS)).fill([]).map(() => []),
@@ -225,7 +226,7 @@ function getStoredDeck(draftName: string, seatPosition: number): Deck {
   return deck;
 }
 
-function migrateDeckVersion(deck: Deck, newVersion: DataVersion): Deck {
+function migrateDeckVersion(deck: Deck, newVersion: DataVersion): Deck | null {
   function unreachable(x: never) {
     return new Error(x);
   }
@@ -234,6 +235,9 @@ function migrateDeckVersion(deck: Deck, newVersion: DataVersion): Deck {
     case 1:
       // no migration to version 1
       return deck;
+    case 2:
+      // no migration to version 2 - version 1 didn't have image URIs
+      return null;
     default:
       throw unreachable(newVersion);
   }
