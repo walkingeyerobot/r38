@@ -158,7 +158,6 @@ func NewHandler(database *sql.DB, useAuth bool) http.Handler {
 		log.Printf("setting up auth routes...")
 		addHandler("/auth/discord/login", oauthDiscordLogin, true) // don't actually need db at all
 		addHandler("/auth/discord/callback", oauthDiscordCallback, false)
-		addHandler("/login/", HandleLogin, true)
 	}
 
 	addHandler("/bulk_mtgo/", ServeBulkMTGO, true)
@@ -211,7 +210,6 @@ func GetViewParam(r *http.Request, userID int64) string {
 
 // ServeAPIDraft serves the /api/draft endpoint.
 func ServeAPIDraft(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx) error {
-	log.Printf("/API/DRAFT: USER %d", userID)
 	re := regexp.MustCompile(`/api/draft/(\d+)`)
 	parseResult := re.FindStringSubmatch(r.URL.Path)
 	if parseResult == nil {
