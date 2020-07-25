@@ -11,3 +11,7 @@ node_modules/
 static/dist
 settings.json
 launch.json
+.idea
+package-lock.json
+**/*.js
+**/*.js.map
