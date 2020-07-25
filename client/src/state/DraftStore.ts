@@ -1,7 +1,7 @@
 import { vuexModule } from './vuex/vuexModule';
 import { rootStore } from './store';
 import { buildEmptyDraftState } from '../draft/buildEmptyDraftState';
-import { DraftState, DraftSeat, DraftCard } from '../draft/DraftState';
+import { DraftCard, DraftState } from '../draft/DraftState';
 import { deepCopy } from '../util/deepCopy';
 import { TimelineEvent } from '../draft/TimelineEvent';
 import { SourceData, SourceEvent } from '../parse/SourceData';
@@ -13,6 +13,7 @@ import { TimelineGenerator } from '../parse/TimelineGenerator';
 import { authStore } from './AuthStore';
 import { checkNotNil } from '../util/checkNotNil';
 import { userIsSeated } from './util/userIsSeated';
+import { deckBuilderStore as deckStore, DeckInitializer } from "./DeckBuilderModule";
 
 let timelineGenerator: TimelineGenerator;
 
@@ -78,6 +79,17 @@ export const draftStore = vuexModule(
         state.cards = parsed.cards;
         state.events = events;
         state.isComplete = timelineGenerator.isDraftComplete();
+
+        const init = [] as DeckInitializer[];
+        deckStore.initNames(currentState.seats.map(seat => seat.player.name));
+        for (let seat of currentState.seats) {
+          init.push({
+            draftName: draftStore.draftName,
+            pool: seat.player.picks.cards
+                .map(cardId => draftStore.getCard(cardId)),
+          });
+        }
+        deckStore.initDecks(init);
       },
 
       pushEvent(state: State, srcEvent: SourceEvent) {

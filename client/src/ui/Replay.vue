@@ -26,18 +26,13 @@ import { rootStore } from '../state/store';
 import { authStore } from '../state/AuthStore';
 import { replayStore } from '../state/ReplayStore';
 import { draftStore, DraftStore } from '../state/DraftStore';
-
-import { SourceData } from '../parse/SourceData';
-import { SelectedView } from '../state/selection';
-import { applyReplayUrlState, pushDraftUrlFromState, parseDraftUrl } from '../router/url_manipulation';
+import { applyReplayUrlState, parseDraftUrl, pushDraftUrlFromState } from '../router/url_manipulation';
 import { globalClickTracker } from './infra/globalClickTracker';
 import { getUserPosition } from '../state/util/userIsSeated';
 import { tuple } from '../util/tuple';
 import { fetchEndpoint } from '../fetch/fetchEndpoint';
 import { routeDraft } from '../rest/api/draft/draft';
 import { FetchStatus } from './infra/FetchStatus';
-import { DraftState } from '../draft/DraftState';
-import { TimelineEvent } from '../draft/TimelineEvent';
 import { isAuthedUserSelected } from './replay/isAuthedUserSelected';
 
 

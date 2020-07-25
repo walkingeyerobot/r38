@@ -2,7 +2,7 @@
   <div class="_deck-builder-screen">
     <div class="main" v-if="status == 'loaded'">
       <DeckBuilderPlayerSelector class="player-selector" />
-      <DeckBuilderMain class="deckbuilder" />
+      <DeckBuilderMain class="deckbuilder" :horizontal="false" />
     </div>
   </div>
 </template>

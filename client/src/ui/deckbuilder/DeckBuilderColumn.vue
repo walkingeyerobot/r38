@@ -1,12 +1,13 @@
 <template>
   <div
       class="_column"
-      :class="{columnDrop: dropTargetIndex !== null}"
+      :class="{columnDrop: dropTargetIndex !== null,
+               horizontal}"
       @dragover="dragOver"
       @dragleave="dragLeave"
       @dragend="dragEnd"
       @drop="drop"
-      >
+  >
     <div
         v-for="(card, index) in column"
         :key="card.id"
@@ -22,12 +23,12 @@
             inSelectionRectangle: inSelectionRectangle.includes(index),
             inSelection: inSelection(index),
         }"
-        >
+    >
       <img
           class="card-img"
           :src="getImageSrc(card.definition)"
           :alt="card.definition.name"
-          />
+      />
     </div>
   </div>
 </template>
@@ -55,6 +56,9 @@ export default Vue.extend({
     maindeck: {
       type: Boolean
     },
+    horizontal: {
+      type: Boolean
+    },
     selectionRectangle: {
       type: Object as () => (Rectangle | null)
     },
@@ -71,7 +75,7 @@ export default Vue.extend({
     inSelectionRectangle(): number[] {
       const result = [];
       if (this.selectionRectangle) {
-        for (let i = 0 ;i < this.$el.childElementCount; i++) {
+        for (let i = 0; i < this.$el.childElementCount; i++) {
           const child = <HTMLElement>this.$el.children[i];
           const childRect = {
             start: {
@@ -226,10 +230,14 @@ export default Vue.extend({
 <style scoped>
 
 ._column {
-  padding: 10px;
+  padding: 10px 10px 250px;
   width: 204px;
   flex: 0 0 auto;
-  padding-bottom: 250px;
+}
+
+._column.horizontal {
+  padding: 3px 3px 250px;
+  width: 104px;
 }
 
 .columnDrop {
@@ -242,11 +250,21 @@ export default Vue.extend({
   position: relative;
 }
 
+.horizontal .card {
+  height: 15px;
+}
+
 .card-img {
   width: 200px;
   height: 279px;
   border: 2px solid transparent;
   border-radius: 10px;
+}
+
+.horizontal .card-img {
+  width: 100px;
+  height: 139px;
+  border-radius: 6px;
 }
 
 .noSelectionRectangle > .card-img:hover, .inSelectionRectangle > .card-img {

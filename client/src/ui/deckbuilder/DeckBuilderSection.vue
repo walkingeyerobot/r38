@@ -15,6 +15,7 @@
           :maindeck="maindeck"
           :columnIndex="index"
           :selectionRectangle="selectionRectangle"
+          :horizontal="horizontal"
           />
       <DeckBuilderColumn
           :column="[]"
@@ -22,6 +23,7 @@
           :maindeck="maindeck"
           :columnIndex="columns.length"
           :selectionRectangle="selectionRectangle"
+          :horizontal="horizontal"
           />
       <div
           class="selection"
@@ -101,7 +103,10 @@ export default (Vue as VueConstructor<Vue & {
     },
     maindeck: {
       type: Boolean
-    }
+    },
+    horizontal: {
+      type: Boolean
+    },
   },
 
   methods: {
