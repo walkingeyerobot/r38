@@ -1,13 +1,15 @@
 <template>
   <div
       class="_column"
-      :class="{columnDrop: dropTargetIndex !== null,
-               horizontal}"
+      :class="{
+        columnDrop: dropTargetIndex !== null,
+        horizontal
+      }"
       @dragover="dragOver"
       @dragleave="dragLeave"
       @dragend="dragEnd"
       @drop="drop"
-  >
+      >
     <div
         v-for="(card, index) in column"
         :key="card.id"
@@ -23,22 +25,22 @@
             inSelectionRectangle: inSelectionRectangle.includes(index),
             inSelection: inSelection(index),
         }"
-    >
+        >
       <img
           class="card-img"
           :src="getImageSrc(card.definition)"
           :alt="card.definition.name"
-      />
+          />
     </div>
   </div>
 </template>
 
 <script lang="ts">
 import Vue from 'vue';
-import { MtgCard } from "../../draft/DraftState.js";
-import { CardColumn, CardLocation, CardMove, deckBuilderStore as store } from "../../state/DeckBuilderModule";
-import { intersects, Rectangle } from "../../util/rectangle";
-import DeckBuilderSection from "./DeckBuilderSection.vue";
+import { MtgCard } from '../../draft/DraftState.js';
+import { CardColumn, CardLocation, CardMove, deckBuilderStore as store } from '../../state/DeckBuilderModule';
+import { intersects, Rectangle } from '../../util/rectangle';
+import DeckBuilderSection from './DeckBuilderSection.vue';
 
 export default Vue.extend({
   name: 'DeckBuilderColumn',

@@ -29,8 +29,8 @@ import { CardPack, DraftSeat } from '../../draft/DraftState';
 import { fetchEndpoint } from '../../fetch/fetchEndpoint';
 import { routePick } from '../../rest/api/pick/pick';
 import { delay } from '../../util/delay';
-import DeckBuilderMain from "../deckbuilder/DeckBuilderMain.vue";
-import { deckBuilderStore } from "../../state/DeckBuilderModule";
+import DeckBuilderMain from '../deckbuilder/DeckBuilderMain.vue';
+import { deckBuilderStore } from '../../state/DeckBuilderModule';
 
 export default Vue.extend({
 

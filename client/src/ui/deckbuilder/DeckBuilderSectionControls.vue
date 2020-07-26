@@ -44,7 +44,7 @@
 </template>
 
 <script lang="ts">
-import Vue from "vue";
+import Vue from 'vue';
 import { CardColumn, deckBuilderStore as store } from '../../state/DeckBuilderModule';
 import { MtgCard } from '../../draft/DraftState';
 
@@ -62,9 +62,15 @@ export default Vue.extend({
 
   computed: {
     section(): CardColumn[] {
-      return this.maindeck
-          ? store.decks[store.selectedSeat].maindeck
-          : store.decks[store.selectedSeat].sideboard;
+      const selectedSeat = store.selectedSeat;
+      const decks = store.decks;
+      if (decks[selectedSeat]) {
+        return this.maindeck
+            ? decks[selectedSeat].maindeck
+            : decks[selectedSeat].sideboard;
+      } else {
+        return [];
+      }
     },
     numCards(): number {
       return this.section.flat().length;
@@ -227,6 +233,7 @@ function buildBasic(
   border: none;
   border-radius: 12px;
   padding: 4px;
+  line-height: 0;
 }
 
 .landButton:hover {

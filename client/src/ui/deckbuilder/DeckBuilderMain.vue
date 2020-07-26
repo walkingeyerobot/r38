@@ -1,6 +1,11 @@
 <template>
-  <div class="_deck-builder-main"
-      :class="{horizontal, vertical: !horizontal}">
+  <div
+      class="_deck-builder-main"
+      :class="{
+          horizontal,
+          vertical: !horizontal,
+      }"
+    >
     <div class="sideboard">
       <DeckBuilderSectionControls
           :maindeck="false"
@@ -47,9 +52,19 @@
 <script lang="ts">
 import Vue from 'vue';
 import DeckBuilderSection from './DeckBuilderSection.vue';
-import DeckBuilderSectionControls from "./DeckBuilderSectionControls.vue";
-import { BASICS, CardColumn, Deck, deckBuilderStore as store, DeckBuilderStore } from '../../state/DeckBuilderModule';
+import DeckBuilderSectionControls from './DeckBuilderSectionControls.vue';
+import {
+  BASICS,
+  CardColumn,
+  Deck,
+  deckBuilderStore,
+  deckBuilderStore as store,
+  DeckBuilderStore
+} from '../../state/DeckBuilderModule';
 import { MtgCard } from '../../draft/DraftState';
+import { rootStore } from '../../state/store';
+import { tuple } from '../../util/tuple';
+import { draftStore } from '../../state/DraftStore';
 
 export default Vue.extend({
   components: {
@@ -59,6 +74,26 @@ export default Vue.extend({
 
   props: {
     horizontal: {type: Boolean},
+  },
+
+  data() {
+    return {
+      unwatchDraftStore: null as null | (() => void),
+    }
+  },
+
+  created() {
+    this.unwatchDraftStore = rootStore.watch(
+        (state) => tuple(draftStore.currentState),
+        (newProps, oldProps) => this.onDraftStoreChanged(),
+        {immediate: true},
+    );
+  },
+
+  destroyed() {
+    if (this.unwatchDraftStore) {
+      this.unwatchDraftStore();
+    }
   },
 
   computed: {
@@ -138,7 +173,11 @@ export default Vue.extend({
     }
   },
 
-  methods: {},
+  methods: {
+    onDraftStoreChanged() {
+      deckBuilderStore.sync(draftStore.currentState);
+    },
+  },
 });
 
 function incrementQuantity(map: Map<number, DeckEntry>, card: MtgCard) {
