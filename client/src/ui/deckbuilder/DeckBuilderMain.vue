@@ -1,28 +1,40 @@
 <template>
-  <div class="_deck-builder-main">
-    <DeckBuilderSectionControls
-        :maindeck="false"
-        />
-    <DeckBuilderSection
-        class="sideboard"
-        :columns="sideboard"
-        :deckIndex="store.selectedSeat"
-        :maindeck="false"
-        />
-    <DeckBuilderSectionControls
-        :maindeck="true"
-        />
-    <DeckBuilderSection
-        class="maindeck"
-        :columns="maindeck"
-        :deckIndex="store.selectedSeat"
-        :maindeck="true"
-        />
+  <div
+      class="_deck-builder-main"
+      :class="{
+          horizontal,
+          vertical: !horizontal,
+      }"
+      >
+    <div class="sideboard">
+      <DeckBuilderSectionControls
+          :maindeck="false"
+          :horizontal="horizontal"
+          />
+      <DeckBuilderSection
+          :columns="sideboard"
+          :deckIndex="store.selectedSeat"
+          :maindeck="false"
+          :horizontal="horizontal"
+          />
+    </div>
+    <div class="maindeck">
+      <DeckBuilderSectionControls
+          :maindeck="true"
+          :horizontal="horizontal"
+          />
+      <DeckBuilderSection
+          :columns="maindeck"
+          :deckIndex="store.selectedSeat"
+          :maindeck="true"
+          :horizontal="horizontal"
+          />
+    </div>
     <a
         :href="exportedDeck"
         download="r38export.dek"
         class="exportButton"
-        :hidden="!deck"
+        :hidden="!deck || horizontal"
         >
       Export deck
     </a>
@@ -30,7 +42,7 @@
         :href="exportedBinder"
         download="r38export.dek"
         class="exportButton"
-        :hidden="!deck"
+        :hidden="!deck || horizontal"
         >
       Export binder
     </a>
@@ -40,14 +52,48 @@
 <script lang="ts">
 import Vue from 'vue';
 import DeckBuilderSection from './DeckBuilderSection.vue';
-import DeckBuilderSectionControls from "./DeckBuilderSectionControls.vue";
-import { BASICS, CardColumn, Deck, deckBuilderStore as store, DeckBuilderStore } from '../../state/DeckBuilderModule';
+import DeckBuilderSectionControls from './DeckBuilderSectionControls.vue';
+import {
+  BASICS,
+  CardColumn,
+  Deck,
+  deckBuilderStore,
+  deckBuilderStore as store,
+  DeckBuilderStore
+} from '../../state/DeckBuilderModule';
 import { MtgCard } from '../../draft/DraftState';
+import { rootStore } from '../../state/store';
+import { tuple } from '../../util/tuple';
+import { draftStore } from '../../state/DraftStore';
 
 export default Vue.extend({
   components: {
     DeckBuilderSection,
     DeckBuilderSectionControls,
+  },
+
+  props: {
+    horizontal: {type: Boolean},
+  },
+
+  data() {
+    return {
+      unwatchDraftStore: null as null | (() => void),
+    }
+  },
+
+  created() {
+    this.unwatchDraftStore = rootStore.watch(
+        (state) => tuple(draftStore.currentState),
+        (newProps, oldProps) => this.onDraftStoreChanged(),
+        {immediate: true},
+    );
+  },
+
+  destroyed() {
+    if (this.unwatchDraftStore) {
+      this.unwatchDraftStore();
+    }
   },
 
   computed: {
@@ -127,7 +173,11 @@ export default Vue.extend({
     }
   },
 
-  methods: {},
+  methods: {
+    onDraftStoreChanged() {
+      deckBuilderStore.sync(draftStore.currentState);
+    },
+  },
 });
 
 function incrementQuantity(map: Map<number, DeckEntry>, card: MtgCard) {
@@ -156,8 +206,17 @@ const XML_HEADER =
 <style scoped>
 ._deck-builder-main {
   display: flex;
-  flex-direction: column;
   overflow-x: scroll;
+  min-height: 300px;
+}
+
+.vertical {
+  flex-direction: column;
+}
+
+.horizontal {
+  flex-direction: row-reverse;
+  border-top: 1px solid #666;
 }
 
 .maindeck {
@@ -165,8 +224,17 @@ const XML_HEADER =
   border-bottom: 1px solid #EAEAEA;
 }
 
+.horizontal .maindeck {
+  border-bottom: none;
+  border-right: 1px solid #666;
+}
+
 .sideboard {
   flex: 2 0 0;
+}
+
+.horizontal .maindeck, .horizontal .sideboard {
+  overflow-x: hidden;
 }
 
 .exportButton {

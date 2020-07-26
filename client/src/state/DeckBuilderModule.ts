@@ -1,6 +1,7 @@
-import { DraftCard } from '../draft/DraftState';
+import { DraftCard, DraftState } from '../draft/DraftState';
 import { vuexModule } from './vuex/vuexModule';
 import { rootStore } from './store';
+import { draftStore } from './DraftStore';
 
 
 type DataVersion = 1 | 2;
@@ -23,14 +24,16 @@ export const deckBuilderStore = vuexModule(rootStore, MODULE_NAME, {
 } as DeckBuilderState, {
 
   mutations: {
-    initNames(state: DeckBuilderState, names: string[]) {
-      state.names = names;
-    },
-
-    initDecks(
-        state: DeckBuilderState,
-        init: DeckInitializer[],
-    ) {
+    sync(state: DeckBuilderState, draftState: DraftState) {
+      const init = [] as DeckInitializer[];
+      state.names = draftState.seats.map(seat => seat.player.name);
+      for (let seat of draftState.seats) {
+        init.push({
+          draftName: draftStore.draftName,
+          pool: seat.player.picks.cards
+              .map(cardId => draftStore.getCard(cardId)),
+        });
+      }
       state.decks = [];
       for (let [index, initializer] of init.entries()) {
         const draftName = initializer.draftName;

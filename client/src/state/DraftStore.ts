@@ -1,7 +1,7 @@
 import { vuexModule } from './vuex/vuexModule';
 import { rootStore } from './store';
 import { buildEmptyDraftState } from '../draft/buildEmptyDraftState';
-import { DraftState, DraftSeat, DraftCard } from '../draft/DraftState';
+import { DraftCard, DraftState } from '../draft/DraftState';
 import { deepCopy } from '../util/deepCopy';
 import { TimelineEvent } from '../draft/TimelineEvent';
 import { SourceData, SourceEvent } from '../parse/SourceData';

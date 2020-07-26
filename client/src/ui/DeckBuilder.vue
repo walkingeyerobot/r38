@@ -2,7 +2,7 @@
   <div class="_deck-builder-screen">
     <div class="main" v-if="status == 'loaded'">
       <DeckBuilderPlayerSelector class="player-selector" />
-      <DeckBuilderMain class="deckbuilder" />
+      <DeckBuilderMain class="deckbuilder" :horizontal="false" />
     </div>
   </div>
 </template>
@@ -15,7 +15,7 @@ import DeckBuilderPlayerSelector from './deckbuilder/DeckBuilderPlayerSelector.v
 
 import { authStore } from '../state/AuthStore';
 import { draftStore } from '../state/DraftStore';
-import { deckBuilderStore as deckStore, DeckInitializer } from '../state/DeckBuilderModule';
+import { deckBuilderStore as deckStore } from '../state/DeckBuilderModule';
 
 import { fetchEndpoint } from '../fetch/fetchEndpoint';
 import { routeDraft } from '../rest/api/draft/draft';
@@ -54,16 +54,7 @@ export default Vue.extend({
       document.title = `${draftStore.draftName}`;
 
       const state = draftStore.currentState;
-      const init = [] as DeckInitializer[];
-      deckStore.initNames(state.seats.map(seat => seat.player.name));
-      for (let seat of state.seats) {
-        init.push({
-          draftName: draftStore.draftName,
-          pool: seat.player.picks.cards
-              .map(cardId => draftStore.getCard(cardId)),
-        });
-      }
-      deckStore.initDecks(init);
+      deckStore.sync(state);
     },
   },
 

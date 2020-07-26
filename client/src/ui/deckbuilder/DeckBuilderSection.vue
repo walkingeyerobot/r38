@@ -15,6 +15,7 @@
           :maindeck="maindeck"
           :columnIndex="index"
           :selectionRectangle="selectionRectangle"
+          :horizontal="horizontal"
           />
       <DeckBuilderColumn
           :column="[]"
@@ -22,6 +23,7 @@
           :maindeck="maindeck"
           :columnIndex="columns.length"
           :selectionRectangle="selectionRectangle"
+          :horizontal="horizontal"
           />
       <div
           class="selection"
@@ -38,9 +40,9 @@
 
 <script lang="ts">
 import Vue, { VueConstructor } from 'vue'
-import DeckBuilderColumn from "./DeckBuilderColumn.vue";
+import DeckBuilderColumn from './DeckBuilderColumn.vue';
 import { CardColumn, CardLocation, deckBuilderStore as store } from '../../state/DeckBuilderModule';
-import { Point, Rectangle } from "../../util/rectangle";
+import { Point, Rectangle } from '../../util/rectangle';
 
 export default (Vue as VueConstructor<Vue & {
   $refs: {
@@ -101,7 +103,10 @@ export default (Vue as VueConstructor<Vue & {
     },
     maindeck: {
       type: Boolean
-    }
+    },
+    horizontal: {
+      type: Boolean
+    },
   },
 
   methods: {

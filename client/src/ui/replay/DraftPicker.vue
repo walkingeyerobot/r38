@@ -14,17 +14,7 @@
       </div>
       <div v-else class="no-picks">You don't have any picks (yet)</div>
     </div>
-    <div class="pool">
-      <div class="pool-title">Drafted cards</div>
-      <div class="pool-cnt">
-        <CardView
-            v-for="cardId in currentPool"
-            :key="cardId"
-            :card="draftStore.getCard(cardId)"
-            class="card"
-            />
-      </div>
-    </div>
+    <DeckBuilderMain class="pool" :horizontal="true" />
   </div>
 </template>
 
@@ -32,20 +22,25 @@
 import Vue from 'vue';
 import { authStore } from '../../state/AuthStore';
 import { draftStore, DraftStore } from '../../state/DraftStore';
-import { replayStore, ReplayStore } from '../../state/ReplayStore';
+import { replayStore } from '../../state/ReplayStore';
 
 import CardView from './CardView.vue';
-import { CardPack, DraftSeat, DraftCard } from '../../draft/DraftState';
-import { TimelineEvent } from '../../draft/TimelineEvent';
-import { checkNotNil } from '../../util/checkNotNil';
+import { CardPack, DraftSeat } from '../../draft/DraftState';
 import { fetchEndpoint } from '../../fetch/fetchEndpoint';
 import { routePick } from '../../rest/api/pick/pick';
 import { delay } from '../../util/delay';
+import DeckBuilderMain from '../deckbuilder/DeckBuilderMain.vue';
+import { deckBuilderStore } from '../../state/DeckBuilderModule';
 
 export default Vue.extend({
 
   components: {
-    CardView
+    CardView,
+    DeckBuilderMain,
+  },
+
+  created() {
+    deckBuilderStore.setSelectedSeat(this.currentSeat.position);
   },
 
   data() {
