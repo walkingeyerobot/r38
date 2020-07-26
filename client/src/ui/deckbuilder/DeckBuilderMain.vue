@@ -5,18 +5,18 @@
           horizontal,
           vertical: !horizontal,
       }"
-    >
+      >
     <div class="sideboard">
       <DeckBuilderSectionControls
           :maindeck="false"
           :horizontal="horizontal"
-      />
+          />
       <DeckBuilderSection
           :columns="sideboard"
           :deckIndex="store.selectedSeat"
           :maindeck="false"
           :horizontal="horizontal"
-      />
+          />
     </div>
     <div class="maindeck">
       <DeckBuilderSectionControls
