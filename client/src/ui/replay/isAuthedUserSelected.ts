@@ -1,6 +1,6 @@
 import { AuthStore } from '../../state/AuthStore';
 import { DraftStore } from '../../state/DraftStore';
-import { getUserPosition } from '../../state/util/userIsSeated';
+import { getPlayerSeat } from '../../state/util/userIsSeated';
 import { ReplayStore } from '../../state/ReplayStore';
 
 export function isAuthedUserSelected(
@@ -8,10 +8,9 @@ export function isAuthedUserSelected(
     draftStore: DraftStore,
     replayStore: ReplayStore,
 ) {
-  const activeSeatPosition =
-          getUserPosition(authStore.user?.id, draftStore.currentState);
+  const authedSeat = getPlayerSeat(authStore.user?.id, draftStore.currentState);
 
-  return activeSeatPosition != -1
+  return authedSeat != null
       && replayStore.selection?.type == 'seat'
-      && replayStore.selection?.id == activeSeatPosition;
+      && replayStore.selection?.id == authedSeat.position;
 }

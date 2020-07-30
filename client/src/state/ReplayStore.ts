@@ -9,7 +9,6 @@ import { DraftState } from '../draft/DraftState';
 import { buildEmptyDraftState } from '../draft/buildEmptyDraftState';
 import { commitTimelineEvent, rollbackTimelineEvent } from '../draft/mutate';
 import { CardStore } from '../draft/CardStore';
-import { getUserPosition } from './util/userIsSeated';
 import { deepCopy } from '../util/deepCopy';
 import { indexOf } from '../util/collection';
 import { isPickEvent } from './util/isPickEvent';

@@ -15,19 +15,19 @@
 
     <div class="card-cnt">
       <CardPack
-          v-for="pack in seat.queuedPacks.packs"
+          v-for="pack in activePacks"
           :key="pack.id"
           :pack="pack"
-          class="opened-pack"
+          class="active-pack"
           />
 
       <div class="spacer"></div>
 
       <CardPack
-          v-for="pack in seat.unopenedPacks.packs"
+          v-for="pack in futurePacks"
           :key="pack.id"
           :pack="pack"
-          class="unopened-pack"
+          class="future-pack"
           />
     </div>
 
@@ -36,7 +36,7 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import { DraftSeat } from '../../draft/DraftState';
+import { DraftSeat, CardPack as CardPackModel } from '../../draft/DraftState';
 import { pushDraftUrlRelative } from '../../router/url_manipulation';
 
 import CardPack from './CardPack.vue';
@@ -62,7 +62,17 @@ export default Vue.extend({
       return selection != null
           && selection.type == 'seat'
           && selection.id == this.seat.position
-    }
+    },
+
+    activePacks(): CardPackModel[] {
+      return this.seat.queuedPacks.packs.filter(
+          pack => pack.round == this.seat.round);
+    },
+
+    futurePacks(): CardPackModel[] {
+      return this.seat.queuedPacks.packs.filter(
+          pack => pack.round > this.seat.round);
+    },
   },
 
   methods: {
@@ -102,11 +112,11 @@ export default Vue.extend({
   flex: 1
 }
 
-.opened-pack {
+.active-pack {
   margin-right: 3px;
 }
 
-.unopened-pack {
+.future-pack {
   margin-left: 3px;
   filter: saturate(20%);
 }

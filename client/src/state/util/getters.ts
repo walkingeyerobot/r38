@@ -9,6 +9,20 @@ export function getPack(draft: DraftState, id: number): CardPack {
   return pack;
 }
 
+/**
+ * Returns the pack that a player is currently looking at, if any.
+ */
+export function getActivePackForSeat(draft: DraftState, seatPosition: number) {
+  const seat = checkNotNil(draft.seats[seatPosition]);
+  const pack = seat.queuedPacks.packs[0];
+
+  if (pack == null || pack.round != seat.round) {
+    return null;
+  } else {
+    return pack;
+  }
+}
+
 export function getSeat(draft: DraftState, id: number) {
   return checkNotNil(draft.seats[id]);
 }
