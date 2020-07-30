@@ -13,8 +13,8 @@ export interface DraftSeat {
   position: number;
   player: DraftPlayer;
   queuedPacks: PackContainer;
-  unopenedPacks: PackContainer;
   originalPacks: number[];
+  round: number;
 }
 
 export interface PackContainer {

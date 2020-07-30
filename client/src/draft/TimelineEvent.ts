@@ -12,14 +12,15 @@ export type TimelineEventType =
     | 'pick'
     | 'hidden-pick'
     | 'shadow-pick'
-    | 'open-pack'
+    | 'advance-round'
     ;
 
 export type TimelineAction =
     | ActionMoveCard
     | ActionMovePack
     | ActionMarkTransfer
-    | ActionAssignRound
+    | ActionIncrementSeatRound
+    | ActionAssignPackRound
     | ActionAnnounce
     ;
 
@@ -55,11 +56,16 @@ export interface ActionMovePack {
   epoch: 'increment' | number;
 }
 
-export interface ActionAssignRound {
-  type: 'assign-round';
+export interface ActionAssignPackRound {
+  type: 'assign-pack-round';
   pack: number;
   from: number;
   to: number;
+}
+
+export interface ActionIncrementSeatRound {
+  type: 'increment-seat-round';
+  seat: number;
 }
 
 export interface ActionAnnounce {

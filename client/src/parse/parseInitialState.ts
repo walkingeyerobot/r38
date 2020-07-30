@@ -73,10 +73,7 @@ class StateParser {
           this.buildPackLocation(
               this._nextLocationId++,
               `queuedPacks for seat ${position}`),
-      unopenedPacks:
-          this.buildPackLocation(
-              this._nextLocationId++,
-              `unopenedPacks for seat ${position}`),
+      round: 1,
     };
 
     this.parsePacks(seat, src);
@@ -98,7 +95,7 @@ class StateParser {
         labelId: this._nextPackLabelId,
         originalSeat: seat.position,
       };
-      seat.unopenedPacks.packs.push(pack);
+      seat.queuedPacks.packs.push(pack);
       seat.originalPacks.push(pack.id);
       this._packs.set(pack.id, pack);
     }

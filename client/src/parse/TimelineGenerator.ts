@@ -5,6 +5,7 @@ import { TimelineEvent, TimelineEventType, ActionMovePack } from '../draft/Timel
 import { ParseError } from './ParseError';
 import { checkExhaustive } from '../util/checkExhaustive';
 import { checkNotNil } from '../util/checkNotNil';
+import { getActivePackForSeat } from '../state/util/getters';
 
 export class TimelineGenerator {
   private _state: DraftState;
@@ -37,10 +38,6 @@ export class TimelineGenerator {
     }
   }
 
-  init() {
-    this.openFirstPacks();
-  }
-
   parseEvent(srcEvent: SourceEvent) {
     switch (srcEvent.type) {
       case 'Pick':
@@ -59,36 +56,11 @@ export class TimelineGenerator {
 
   isDraftComplete() {
     for (let seat of this._state.seats) {
-      if (seat.unopenedPacks.packs.length > 0
-          || seat.queuedPacks.packs.length > 0) {
+      if (seat.queuedPacks.packs.length > 0) {
         return false;
       }
     }
     return true;
-  }
-
-  private openFirstPacks() {
-    for (const seat of this._state.seats) {
-      if (seat.unopenedPacks.packs.length == 0) {
-        console.warn(`Seat ${seat.position} doesn't have any packs!`);
-        continue;
-      }
-      const pack = seat.unopenedPacks.packs[0];
-
-      const playerData = this.getPlayerData(seat.position);
-      const event = this.createEvent('open-pack', playerData);
-
-      event.actions.push({
-        type: 'move-pack',
-        subtype: 'open',
-        pack: pack.id,
-        from: seat.unopenedPacks.id,
-        to: seat.queuedPacks.id,
-        epoch: 'increment',
-      });
-
-      this.commitEvent(event);
-    }
   }
 
   private parsePickEvent(srcEvent: NormalPickEvent | SecretPickEvent) {
@@ -102,11 +74,11 @@ export class TimelineGenerator {
           + `event=${JSON.stringify(srcEvent)}`);
     }
 
-    if (seat.queuedPacks.packs.length == 0) {
+    const activePack = getActivePackForSeat(this._state, seat.position);
+    if (activePack == null) {
       throw new ParseError(
           `Seat ${seat.position} doesn't have a pack to pick from`);
     }
-    const activePack: CardPack = seat.queuedPacks.packs[0];
 
     let event: TimelineEvent;
     let netPickCount = 0;
@@ -258,17 +230,12 @@ export class TimelineGenerator {
     playerData.nextEpoch = 0;
     playerData.nextPick = 0;
 
-    const nextPack = seat.unopenedPacks.packs[0];
-    const openPackEvent = this.createEvent('open-pack', playerData);
-    openPackEvent.actions.push({
-      type: 'move-pack',
-      subtype: 'open',
-      pack: nextPack.id,
-      from: seat.unopenedPacks.id,
-      to: seat.queuedPacks.id,
-      epoch: 'increment',
+    const event = this.createEvent('advance-round', playerData);
+    event.actions.push({
+      type: 'increment-seat-round',
+      seat: seat.position,
     });
-    this.commitEvent(openPackEvent);
+    this.commitEvent(event);
   }
 
   private createEvent(

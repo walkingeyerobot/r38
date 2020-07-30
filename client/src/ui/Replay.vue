@@ -28,7 +28,7 @@ import { replayStore } from '../state/ReplayStore';
 import { draftStore, DraftStore } from '../state/DraftStore';
 import { applyReplayUrlState, parseDraftUrl, pushDraftUrlFromState } from '../router/url_manipulation';
 import { globalClickTracker } from './infra/globalClickTracker';
-import { getUserPosition } from '../state/util/userIsSeated';
+import { getPlayerSeat } from '../state/util/userIsSeated';
 import { tuple } from '../util/tuple';
 import { fetchEndpoint } from '../fetch/fetchEndpoint';
 import { routeDraft } from '../rest/api/draft/draft';
@@ -148,13 +148,9 @@ export default Vue.extend({
       globalClickTracker.onBubbleGlobalMouseDown(e);
     },
 
-    getDefaultSeatSelection() {
-      let position =
-          getUserPosition(authStore.user?.id, draftStore.currentState);
-      if (position == -1) {
-        position = 0;
-      }
-      return position;
+    getDefaultSeatSelection(): number {
+      let seat = getPlayerSeat(authStore.user?.id, draftStore.currentState);
+      return seat?.position || 0;
     },
   },
 });

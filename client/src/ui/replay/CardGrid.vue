@@ -50,6 +50,7 @@ import CardView from './CardView.vue';
 import { draftStore, DraftStore } from '../../state/DraftStore';
 import { replayStore, ReplayStore } from '../../state/ReplayStore';
 import { checkNotNil } from '../../util/checkNotNil';
+import { getActivePackForSeat } from '../../state/util/getters';
 
 
 export default Vue.extend({
@@ -84,10 +85,7 @@ export default Vue.extend({
       } else if (this.selection.type == 'pack') {
         pack = requirePack(replayStore.draft.packs.get(this.selection.id));
       } else {
-        const player = replayStore.draft.seats[this.selection.id];
-        if (player.queuedPacks.packs.length > 0) {
-          pack = player.queuedPacks.packs[0];
-        }
+        pack = getActivePackForSeat(replayStore.draft, this.selection.id);
       }
 
       return pack;

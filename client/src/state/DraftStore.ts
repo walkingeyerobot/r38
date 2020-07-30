@@ -56,7 +56,6 @@ export const draftStore = vuexModule(
                 parsed.cards,
                 events,
                 payload.playerId || null);
-        timelineGenerator.init();
 
         const start = performance.now();
         for (let i = 0; i < payload.events.length; i++) {

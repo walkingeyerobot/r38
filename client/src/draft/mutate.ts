@@ -1,6 +1,6 @@
 import { DraftState, CardContainer, CardPack } from "./DraftState";
 import { checkNotNil } from '../util/checkNotNil';
-import { TimelineEvent, TimelineAction, ActionMovePack, ActionAssignRound, ActionMoveCard } from './TimelineEvent';
+import { TimelineEvent, TimelineAction, ActionMovePack, ActionAssignPackRound, ActionIncrementSeatRound } from './TimelineEvent';
 import { MutationError } from './MutationError';
 import { CardStore } from './CardStore';
 import { eventToString } from '../state/util/eventToString';
@@ -64,8 +64,11 @@ function applyAction(
     case 'announce':
       console.log('ANNOUNCEMENT:', action.message);
       break;
-    case 'assign-round':
-      assignRound(action, state);
+    case 'increment-seat-round':
+      state.seats[action.seat].round++;
+      break;
+    case 'assign-pack-round':
+      assignPackRound(action, state);
       break;
     case 'mark-transfer':
       markTransfer(state, action.from, action.to);
@@ -89,8 +92,11 @@ function rollbackAction(
       break;
     case 'announce':
       break;
-    case 'assign-round':
-      unassignRound(action, state);
+    case 'increment-seat-round':
+      state.seats[action.seat].round--;
+      break;
+    case 'assign-pack-round':
+      unassignPackRound(action, state);
       break;
     case 'mark-transfer':
       markTransfer(state, action.to, action.from);
@@ -174,7 +180,7 @@ function markTransfer(state: DraftState, from: number, to: number) {
   dstContainer.count++;
 }
 
-function assignRound(action: ActionAssignRound, state: DraftState) {
+function assignPackRound(action: ActionAssignPackRound, state: DraftState) {
   const pack = state.packs.get(action.pack);
   if (pack == undefined || pack.type != 'pack') {
     throw new MutationError(`Not a pack: ${action.pack}`);
@@ -182,7 +188,7 @@ function assignRound(action: ActionAssignRound, state: DraftState) {
   pack.round = action.to;
 }
 
-function unassignRound(action: ActionAssignRound, state: DraftState) {
+function unassignPackRound(action: ActionAssignPackRound, state: DraftState) {
   const pack = state.packs.get(action.pack);
   if (pack == undefined || pack.type != 'pack') {
     throw new MutationError(`Not a pack: ${action.pack}`);

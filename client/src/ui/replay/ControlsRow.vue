@@ -41,7 +41,8 @@ import { pushDraftUrlRelative } from '../../router/url_manipulation';
 import { TimelineEvent } from '../../draft/TimelineEvent';
 import { globalClickTracker, UnhandledClickListener } from '../infra/globalClickTracker';
 import { isAuthedUserSelected } from './isAuthedUserSelected';
-import { getUserPosition } from '../../state/util/userIsSeated';
+import { getPlayerSeat } from '../../state/util/userIsSeated';
+import { checkNotNil } from '../../util/checkNotNil';
 
 export default Vue.extend({
   components: {
@@ -63,25 +64,32 @@ export default Vue.extend({
     },
 
     numPicks(): number {
-      const seatId =
-          getUserPosition(authStore.user?.id, draftStore.currentState);
-      if (seatId == -1) {
-        return 0;
-      } else {
-        return draftStore.currentState.seats[seatId].queuedPacks.packs.length;
+      const seat = getPlayerSeat(authStore.user?.id, draftStore.currentState)
+
+      let count = 0;
+      if (seat != null) {
+        for (let pack of seat.queuedPacks.packs) {
+          if (pack.round != seat.round) {
+            break;
+          }
+          count++;
+        }
       }
+      return count;
     },
   },
 
   methods: {
     onPicksClick() {
-      const seatId =
-          getUserPosition(authStore.user?.id, draftStore.currentState);
+      const seat =
+          checkNotNil(
+                getPlayerSeat(authStore.user?.id, draftStore.currentState));
+
       pushDraftUrlRelative(this, {
         eventIndex: replayStore.events.length,
         selection: {
           type: 'seat',
-          id: seatId
+          id: seat.position,
         },
       });
     },
