@@ -185,6 +185,10 @@ export default (Vue as VueConstructor<Vue & {
   overflow: scroll;
 }
 
+._deck-builder-section::-webkit-scrollbar {
+  display: none;
+}
+
 .column-cnt {
   display: flex;
   flex-direction: row;
