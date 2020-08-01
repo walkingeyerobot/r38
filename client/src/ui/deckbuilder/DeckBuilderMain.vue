@@ -210,6 +210,10 @@ const XML_HEADER =
   min-height: 300px;
 }
 
+._deck-builder-main::-webkit-scrollbar {
+  display: none;
+}
+
 .vertical {
   flex-direction: column;
 }
