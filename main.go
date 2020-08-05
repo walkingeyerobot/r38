@@ -734,6 +734,12 @@ func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool) (int64, int64, []
 				err = row.Scan(&nextRoundPlayers)
 				if err != nil {
 					log.Printf("error counting players and rounds")
+				} else if nextRoundPlayers == 8 && myCount+1 == 45 {
+					// The draft is over. Notify the admin.
+					err = NotifyEndOfDraft(tx, draftID)
+					if err != nil {
+						log.Printf("error notifying end of draft: %s", err.Error())
+					}
 				} else if nextRoundPlayers > 1 {
 					// Now we know that we are not the only player in this round.
 					// Get the position of all players that currently have a pick.
@@ -794,7 +800,26 @@ func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool) (int64, int64, []
 
 // NotifyByDraftAndDiscordID sends a discord alert to a user.
 func NotifyByDraftAndDiscordID(draftID int64, discordID string) error {
-	var jsonStr = []byte(fmt.Sprintf(`{"content": "<@%s> you have new picks <http://draft.thefoley.net/draft/%d>"}`, discordID, draftID))
+	return DiscordNotify([]byte(fmt.Sprintf(`{"content": "<@%s> you have new picks <http://draft.thefoley.net/draft/%d>"}`, discordID, draftID)))
+}
+
+// NotifyEndOfDraft sends a discord alert to user 1.
+func NotifyEndOfDraft(tx *sql.Tx, draftID int64) error {
+	query := `select
+                    discord_id
+                  from users
+                  where id = 1`
+	row := tx.QueryRow(query)
+	var adminDiscordID string
+	err = row.Scan(&adminDiscordID)
+	if err != nil {
+		return err
+	}
+	return DiscordNotify([]byte(fmt.Sprintf(`{"content": "<@%s> draft %d is finished!"}`, adminDiscordID, draftID)))
+}
+
+// DiscordNotify sends a string via webhook to discord.
+func DiscordNotify(jsonStr []byte) error {
 	req, err := http.NewRequest("POST", os.Getenv("DISCORD_WEBHOOK_URL"), bytes.NewBuffer(jsonStr))
 	if err != nil {
 		return err
