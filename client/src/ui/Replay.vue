@@ -18,7 +18,7 @@
 <script lang="ts">
 import Vue from 'vue';
 import ControlsRow from './replay/ControlsRow.vue';
-import PlayerSelector from './replay/PlayerSelector.vue';
+import PlayerSelector from './replay/player_selector/PlayerSelector.vue';
 import CardGrid from './replay/CardGrid.vue';
 import DraftPicker from './replay/DraftPicker.vue';
 

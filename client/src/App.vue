@@ -7,6 +7,7 @@
 <script lang="ts">
 import Vue from 'vue'
 import { authStore } from './state/AuthStore';
+import { FALLBACK_USER_PICTURE } from './parse/fallbacks';
 
 export default Vue.extend({
   created() {
@@ -32,9 +33,6 @@ interface SourceUserInfo {
   picture: string;
   userId: number;
 }
-
-const FALLBACK_USER_PICTURE =
-    `https://cdn.discordapp.com/avatars/117108584017428481/f91aadd54de1929aaad167cabc99bdb1.png`;
 </script>
 
 <style>

@@ -9,10 +9,10 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import { replayStore } from '../../state/ReplayStore';
-import { draftStore } from '../../state/DraftStore';
+import { replayStore } from '../../../state/ReplayStore';
+import { draftStore } from '../../../state/DraftStore';
 
-import { pushDraftUrlRelative, pushDraftUrlFromState } from '../../router/url_manipulation';
+import { pushDraftUrlRelative, pushDraftUrlFromState } from '../../../router/url_manipulation';
 
 export default Vue.extend({
   methods: {

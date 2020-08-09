@@ -14,10 +14,11 @@
 import Vue from 'vue';
 import DraftSeatComponent from './DraftSeat.vue'
 import PlaybackControls from './PlaybackControls.vue';
-import { replayStore } from '../../state/ReplayStore';
-import { draftStore } from '../../state/DraftStore';
 
-import { DraftState } from '../../draft/DraftState';
+import { replayStore } from '../../../state/ReplayStore';
+import { draftStore } from '../../../state/DraftStore';
+
+import { DraftState } from '../../../draft/DraftState';
 
 
 export default Vue.extend({
