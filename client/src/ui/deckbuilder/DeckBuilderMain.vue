@@ -30,22 +30,33 @@
           :horizontal="horizontal"
           />
     </div>
-    <a
-        :href="exportedDeck"
-        download="r38export.dek"
-        class="exportButton"
-        :hidden="!deck || horizontal"
-        >
-      Export deck
-    </a>
-    <a
-        :href="exportedBinder"
-        download="r38export.dek"
-        class="exportButton"
-        :hidden="!deck || horizontal"
-        >
-      Export binder
-    </a>
+    <div
+        class="exportButtons">
+      <a
+          :href="exportedDecksZip"
+          download="r38export.zip"
+          class="exportButton"
+          :hidden="!admin || horizontal"
+          >
+        Export all
+      </a>
+      <a
+          :href="exportedDeck"
+          download="r38export.dek"
+          class="exportButton"
+          :hidden="!deck || horizontal"
+          >
+        Export deck
+      </a>
+      <a
+          :href="exportedBinder"
+          download="r38export.dek"
+          class="exportButton"
+          :hidden="!deck || horizontal"
+          >
+        Export binder
+      </a>
+    </div>
   </div>
 </template>
 
@@ -54,17 +65,17 @@ import Vue from 'vue';
 import DeckBuilderSection from './DeckBuilderSection.vue';
 import DeckBuilderSectionControls from './DeckBuilderSectionControls.vue';
 import {
-  BASICS,
   CardColumn,
   Deck,
   deckBuilderStore,
   deckBuilderStore as store,
   DeckBuilderStore
 } from '../../state/DeckBuilderModule';
-import { MtgCard } from '../../draft/DraftState';
 import { rootStore } from '../../state/store';
 import { tuple } from '../../util/tuple';
 import { draftStore } from '../../state/DraftStore';
+import { authStore } from "../../state/AuthStore";
+import { decksToBinderZip, deckToBinderXml, deckToXml } from "../../draft/deckExport";
 
 export default Vue.extend({
   components: {
@@ -97,6 +108,10 @@ export default Vue.extend({
   },
 
   computed: {
+    admin(): boolean {
+      return authStore.user?.id === 1;
+    },
+
     store(): DeckBuilderStore {
       return store;
     },
@@ -114,62 +129,17 @@ export default Vue.extend({
     },
 
     exportedDeck(): string {
-      if (this.deck) {
-        let exportStr = XML_HEADER;
-        let mainMap = new Map<number, DeckEntry>();
-        let sideMap = new Map<number, DeckEntry>();
-        for (const card of this.deck.maindeck.flat()) {
-          if (!card.definition.mtgo) {
-            continue;
-          }
-          incrementQuantity(mainMap, card.definition);
-        }
-        for (const card of this.deck.sideboard.flat()) {
-          if (!card.definition.mtgo) {
-            continue;
-          }
-          incrementQuantity(sideMap, card.definition);
-        }
-        for (const [mtgo, card] of mainMap) {
-          exportStr += `<Cards CatID=\"${mtgo}\" Quantity=\"${card.quantity}\"`
-              + ` Sideboard=\"false\" Name=\"${card.name}\" />\n`;
-        }
-        for (const [mtgo, card] of sideMap) {
-          exportStr += `<Cards CatID=\"${mtgo}\" Quantity=\"${card.quantity}\"`
-              + ` Sideboard=\"true\" Name=\"${card.name}\" />\n`;
-        }
-        exportStr += "</Deck>";
-        return `data:text/xml;charset=utf-8,${encodeURIComponent(exportStr)}`;
-      } else {
-        return '';
-      }
+      return this.deck ? deckToXml(this.deck) : '';
     },
 
     exportedBinder(): string {
-      if (this.deck) {
-        let exportStr = XML_HEADER;
-        let map = new Map<number, DeckEntry>();
-        for (const card of this.deck.maindeck.flat()) {
-          if (!card.definition.mtgo || BASICS.includes(card.definition.mtgo)) {
-            continue;
-          }
-          incrementQuantity(map, card.definition);
-        }
-        for (const card of this.deck.sideboard.flat()) {
-          if (!card.definition.mtgo) {
-            continue;
-          }
-          incrementQuantity(map, card.definition);
-        }
-        for (const [mtgo, card] of map) {
-          exportStr += `<Cards CatID=\"${mtgo}\" Quantity=\"${card.quantity}\"`
-              + ` Sideboard=\"false\" Name=\"${card.name}\" />\n`;
-        }
-        exportStr += "</Deck>";
-        return `data:text/xml;charset=utf-8,${encodeURIComponent(exportStr)}`;
-      } else {
-        return '';
-      }
+      return this.deck ? deckToBinderXml(this.deck) : '';
+    }
+  },
+
+  asyncComputed: {
+    async exportedDecksZip(): Promise<string> {
+      return await decksToBinderZip(store.decks, store.names);
     }
   },
 
@@ -179,27 +149,6 @@ export default Vue.extend({
     },
   },
 });
-
-function incrementQuantity(map: Map<number, DeckEntry>, card: MtgCard) {
-  let entry = map.get(card.mtgo);
-  if (entry == undefined) {
-    entry = {name: card.name, quantity: 0};
-    map.set(card.mtgo, entry);
-  }
-  entry.quantity++;
-}
-
-interface DeckEntry {
-  name: string;
-  quantity: number;
-}
-
-const XML_HEADER =
-    `<?xml version="1.0" encoding="utf-8"?>
-<Deck xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-<NetDeckID>0</NetDeckID>
-<PreconstructedDeckID>0</PreconstructedDeckID>
-`;
 
 </script>
 
@@ -241,21 +190,21 @@ const XML_HEADER =
   overflow-x: hidden;
 }
 
-.exportButton {
+.exportButtons {
   position: absolute;
   top: 20px;
   right: 20px;
+}
+
+.exportButton {
   padding: 10px;
+  margin-left: 20px;
   text-decoration: none;
   color: inherit;
   background: white;
   border: 1px solid #bbb;
   border-radius: 5px;
   cursor: default;
-}
-
-.exportButton + .exportButton {
-  right: calc(7em + 20px);
 }
 
 .exportButton:hover {
