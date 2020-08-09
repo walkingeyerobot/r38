@@ -62,7 +62,12 @@ export default Vue.extend({
     },
 
     availablePack(): CardPack | null {
-      return this.currentSeat.queuedPacks.packs[0] || null;
+      const pack = this.currentSeat.queuedPacks.packs[0];
+      if (pack != null && pack.round == this.currentSeat.round) {
+        return pack;
+      } else {
+        return null;
+      }
     },
 
     currentSeat(): DraftSeat {
