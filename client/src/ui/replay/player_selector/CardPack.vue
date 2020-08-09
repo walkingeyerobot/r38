@@ -10,11 +10,11 @@
 
 <script lang="ts">
 import Vue from 'vue'
-import { CardPack } from '../../draft/DraftState';
-import { pushDraftUrlRelative } from '../../router/url_manipulation';
+import { CardPack } from '../../../draft/DraftState';
+import { replayStore } from '../../../state/ReplayStore';
 
-import { draftStore } from '../../state/DraftStore';
-import { replayStore } from '../../state/ReplayStore';
+import { pushDraftUrlRelative } from '../../../router/url_manipulation';
+
 
 export default Vue.extend({
   props: {
