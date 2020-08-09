@@ -811,7 +811,7 @@ func NotifyEndOfDraft(tx *sql.Tx, draftID int64) error {
                   where id = 1`
 	row := tx.QueryRow(query)
 	var adminDiscordID string
-	err = row.Scan(&adminDiscordID)
+	err := row.Scan(&adminDiscordID)
 	if err != nil {
 		return err
 	}
