@@ -24,6 +24,14 @@
         >
       Export binder
     </a>
+    <a
+        @click="exportToPdf"
+        download="r38export.pdf"
+        class="exportButton"
+        v-if="deck"
+        >
+      Print deck
+    </a>
   </div>
 </template>
 
@@ -31,7 +39,7 @@
 import Vue from 'vue';
 import { authStore } from '../../state/AuthStore';
 import { Deck, deckBuilderStore as store } from '../../state/DeckBuilderModule';
-import { decksToBinderZip, deckToBinderXml, deckToXml } from '../../draft/deckExport';
+import { decksToBinderZip, deckToBinderXml, deckToPdf, deckToXml } from '../../draft/deckExport';
 
 export default Vue.extend({
   props: {
@@ -61,6 +69,14 @@ export default Vue.extend({
       return await decksToBinderZip(store.decks, store.names);
     }
   },
+
+  methods: {
+    exportToPdf() {
+      if (this.deck) {
+        deckToPdf(this.deck);
+      }
+    }
+  },
 });
 </script>
 
@@ -76,6 +92,7 @@ export default Vue.extend({
   color: inherit;
   text-decoration: none;
   white-space: nowrap;
+  cursor: pointer;
 }
 
 .exportButton:hover {

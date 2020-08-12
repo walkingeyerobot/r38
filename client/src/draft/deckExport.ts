@@ -1,6 +1,7 @@
-import { MtgCard } from "./DraftState";
-import { BASICS, Deck } from "../state/DeckBuilderModule";
-import JSZip from "jszip";
+import { MtgCard } from './DraftState';
+import { BASICS, Deck } from '../state/DeckBuilderModule';
+import JSZip from 'jszip';
+import jsPDF from 'jspdf';
 
 const XML_HEADER =
     `<?xml version="1.0" encoding="utf-8"?>
@@ -77,6 +78,36 @@ export async function decksToBinderZip(decks: Deck[], names: string[]): Promise<
   });
   return zip.generateAsync({type: "base64"})
       .then(base64 => `data:application/zip;base64,${base64}`);
+}
+
+export function deckToPdf(deck: Deck) {
+  const pdf = new jsPDF('p', 'in', 'letter');
+  let cardsOnLine = 0;
+  let linesOnPage = 0;
+  const cards = deck.maindeck.flat().concat(deck.sideboard.flat());
+  Promise.all(cards.map(card =>
+      fetch(card.definition.image_uris[0])
+          .then(resp => resp.arrayBuffer())))
+      .then(images => {
+        cards.forEach((card, i) => {
+          pdf.addImage(new Uint8Array(images[i]), 'JPEG',
+              0.25 + cardsOnLine * 2.4,
+              0.25 + linesOnPage * 3.35,
+              2.4, 3.348);
+          cardsOnLine++;
+          if (cardsOnLine === 3) {
+            cardsOnLine = 0;
+            linesOnPage++;
+            if (linesOnPage == 3) {
+              linesOnPage = 0;
+              if (i < cards.length - 1) {
+                pdf.addPage();
+              }
+            }
+          }
+        });
+        pdf.save('r38export.pdf');
+      });
 }
 
 function incrementQuantity(map: Map<number, DeckEntry>, card: MtgCard) {
