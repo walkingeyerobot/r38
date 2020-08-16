@@ -1,7 +1,6 @@
 package main
 
 import (
-	"archive/zip"
 	"bytes"
 	"context"
 	"database/sql"
@@ -159,8 +158,6 @@ func NewHandler(database *sql.DB, useAuth bool) http.Handler {
 		addHandler("/auth/discord/login", oauthDiscordLogin, true) // don't actually need db at all
 		addHandler("/auth/discord/callback", oauthDiscordCallback, false)
 	}
-
-	addHandler("/bulk_mtgo/", ServeBulkMTGO, true)
 
 	addHandler("/api/draft/", ServeAPIDraft, true)
 	addHandler("/api/draftlist/", ServeAPIDraftList, true)
@@ -355,128 +352,6 @@ func doJoin(tx *sql.Tx, userID int64, draftID int64) error {
 	}
 
 	return nil
-}
-
-// ServeBulkMTGO serves a .zip file of all .dek files for a draft. Only useful to the admin.
-func ServeBulkMTGO(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx) error {
-	if userID != 1 {
-		return fmt.Errorf("auth error in bulk export")
-	}
-	re := regexp.MustCompile(`/bulk_mtgo/(\d+)`)
-	parseResult := re.FindStringSubmatch(r.URL.Path)
-	if parseResult == nil {
-		return fmt.Errorf("draft not found")
-	}
-	draftID, err := strconv.ParseInt(parseResult[1], 10, 64)
-	if err != nil {
-		return err
-	}
-	query := `select
-                    seats.user,
-                    users.discord_name
-                  from seats
-                  join users on users.id = seats.user
-                  where seats.draft = ?`
-	rows, err := tx.Query(query, draftID)
-	if err != nil {
-		return err
-	}
-	defer rows.Close()
-
-	re = regexp.MustCompile(`[/\\]`) // this could be more complete
-
-	// Generate the MTGO export for each player.
-	exports := []BulkMTGOExport{}
-	for rows.Next() {
-		var playerID int64
-		var username string
-		err := rows.Scan(&playerID, &username)
-		if err != nil {
-			log.Printf("error reading player in draft %d, skipping: %s", draftID, err)
-			break
-		}
-		export, err := exportToMTGO(tx, playerID, draftID)
-		if err != nil {
-			log.Printf("could not export to MTGO for player %d in draft %d: %s", playerID, draftID, err)
-			break
-		}
-		exports = append(exports, BulkMTGOExport{PlayerID: playerID, Username: re.ReplaceAllString(username, "_"), Deck: export})
-	}
-
-	// Generate the ZIP file for all exported decks.
-	archive, err := createZipExport(exports)
-	if err != nil {
-		return fmt.Errorf("error creating zip file: %s", err.Error())
-	}
-	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%d-r38-bulk.zip", draftID))
-	w.Header().Set("Content-Type", r.Header.Get("Content-Type"))
-	io.WriteString(w, string(archive))
-	return nil
-}
-
-// createZipExport creates a .zip file containing decks from a bulk MTGO export.
-func createZipExport(exports []BulkMTGOExport) ([]byte, error) {
-	buf := new(bytes.Buffer)
-	zipWriter := zip.NewWriter(buf)
-	for _, export := range exports {
-		zipFile, err := zipWriter.Create(fmt.Sprintf("%s.dek", export.Username))
-		if err != nil {
-			return nil, err
-		}
-		_, err = zipFile.Write([]byte(export.Deck))
-		if err != nil {
-			return nil, err
-		}
-	}
-	err := zipWriter.Close()
-	if err != nil {
-		return nil, err
-	}
-	return buf.Bytes(), nil
-}
-
-// exportToMTGO creates an MTGO compatible .dek string for given user and draft.
-func exportToMTGO(tx *sql.Tx, userID int64, draftID int64) (string, error) {
-	query := `select
-                    cards.data
-                  from cards
-                  join packs on cards.pack = packs.id
-                  join seats on packs.seat = seats.id
-                  where seats.user = ?
-                    and seats.draft = ?
-                    and packs.round = 0`
-	rows, err := tx.Query(query, userID, draftID)
-	if err != nil {
-		return "", err
-	}
-	defer rows.Close()
-
-	export := "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<Deck xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\n<NetDeckID>0</NetDeckID>\n<PreconstructedDeckID>0</PreconstructedDeckID>\n"
-	var nq map[int64]NameAndQuantity
-	nq = make(map[int64]NameAndQuantity)
-	for rows.Next() {
-		var dataString string
-		var data R38CardData
-		err = rows.Scan(&dataString)
-		if err != nil {
-			return "", err
-		}
-		err = json.Unmarshal([]byte(dataString), &data)
-		if err != nil {
-			return "", err
-		}
-		if data.MTGO != 0 {
-			o := nq[data.MTGO]
-			o.Name = data.Scryfall.Name
-			o.Quantity++
-			nq[data.MTGO] = o
-		}
-	}
-	for mtgo, info := range nq {
-		export = export + fmt.Sprintf("<Cards CatID=\"%d\" Quantity=\"%d\" Sideboard=\"false\" Name=\"%s\" />\n", mtgo, info.Quantity, info.Name)
-	}
-	export = export + "</Deck>"
-	return export, nil
 }
 
 // ServeVueApp serves to vue.
