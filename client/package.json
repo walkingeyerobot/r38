@@ -10,6 +10,7 @@
   "dependencies": {
     "@types/webpack-env": "^1.15.2",
     "axios": "^0.19.2",
+    "jspdf": "^2.0.0",
     "jszip": "^3.5.0",
     "path-to-regexp": "^6.1.0",
     "tslib": "^2.0.0",
