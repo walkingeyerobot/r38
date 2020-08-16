@@ -93,11 +93,11 @@ export class TimelineGenerator {
             card: cardId,
             cardName: card.definition.name,
             from: activePack.id,
-            to: seat.player.picks.id
+            to: seat.picks.id
           }, {
             type: 'mark-transfer',
             from: activePack.id,
-            to: seat.player.picks.id,
+            to: seat.picks.id,
           });
 
           // TODO: Do we really need to embed all this info? Can we just get it
@@ -119,7 +119,7 @@ export class TimelineGenerator {
         event.actions.push({
           type: 'mark-transfer',
           from: activePack.id,
-          to: seat.player.picks.id,
+          to: seat.picks.id,
         });
         break;
 
@@ -222,7 +222,7 @@ export class TimelineGenerator {
   ) {
     // TODO: This can be fooled by drafts that introduce more packs or that
     // have packs that aren't 15 cards
-    if (![15, 30].includes(seat.player.picks.count)) {
+    if (![15, 30].includes(seat.picks.count)) {
       return;
     }
 

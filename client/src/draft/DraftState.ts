@@ -12,6 +12,7 @@ export interface DraftState {
 export interface DraftSeat {
   position: number;
   player: DraftPlayer;
+  picks: CardContainer;
   queuedPacks: PackContainer;
   originalPacks: number[];
   round: number;
@@ -49,7 +50,6 @@ export interface DraftPlayer {
   name: string;
   iconUrl: string;
   seatPosition: number;
-  picks: CardContainer;
 }
 
 export interface DraftCard {

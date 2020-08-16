@@ -83,7 +83,7 @@ export default Vue.extend({
     },
 
     currentPool(): number[] {
-      return this.currentSeat.player.picks.cards;
+      return this.currentSeat.picks.cards;
     },
   },
 
