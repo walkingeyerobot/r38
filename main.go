@@ -25,26 +25,14 @@ import (
 )
 
 type r38handler func(w http.ResponseWriter, r *http.Request, userId int64, tx *sql.Tx) error
-type viewingFunc func(r *http.Request, userId int64) (bool, error)
 
 var secretKeyNoOneWillEverGuess = []byte(os.Getenv("SESSION_SECRET"))
 var store = sessions.NewCookieStore(secretKeyNoOneWillEverGuess)
-var isViewing viewingFunc
 var sock string
 
 func main() {
 	useAuthPtr := flag.Bool("auth", true, "bool")
 	flag.Parse()
-
-	useAuth := *useAuthPtr
-
-	if useAuth {
-		isViewing = AuthIsViewing
-	} else {
-		isViewing = NonAuthIsViewing
-	}
-
-	var err error
 
 	database, err := sql.Open("sqlite3", "draft.db")
 	if err != nil {
@@ -67,7 +55,7 @@ func main() {
 
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":%s", port),
-		Handler: NewHandler(database, useAuth),
+		Handler: NewHandler(database, *useAuthPtr),
 	}
 
 	log.Printf("Starting HTTP Server. Listening at %q", server.Addr)
@@ -173,36 +161,6 @@ func HandleLogin(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.T
 	t := template.Must(template.ParseFiles("login.tmpl"))
 	t.Execute(w, nil)
 	return nil
-}
-
-// AuthIsViewing determines if ?as= is being used in auth mode.
-func AuthIsViewing(r *http.Request, userID int64) (bool, error) {
-	session, err := store.Get(r, "session-name")
-	if err != nil {
-		return false, err
-	}
-	realUserIDInt, err := strconv.Atoi(session.Values["userid"].(string))
-	if err != nil {
-		return false, err
-	}
-	realUserID := int64(realUserIDInt)
-
-	return userID != realUserID, nil
-}
-
-// NonAuthIsViewing determines if ?as= is being used in non-auth mode.
-func NonAuthIsViewing(r *http.Request, userID int64) (bool, error) {
-	return userID != 1, nil
-}
-
-// GetViewParam gets the view parameter that needs to be passed along if there is one.
-func GetViewParam(r *http.Request, userID int64) string {
-	param := ""
-	viewing, err := isViewing(r, userID)
-	if err == nil && viewing {
-		param = fmt.Sprintf("?as=%d", userID)
-	}
-	return param
 }
 
 // ServeAPIDraft serves the /api/draft endpoint.
