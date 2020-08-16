@@ -1,5 +1,9 @@
 <template>
-  <div class="_deck-builder-screen">
+  <div
+      class="_deck-builder-screen"
+      @mousedown.capture="onCaptureMouseDown"
+      @mousedown="onBubbleMouseDown"
+      >
     <div class="main" v-if="status == 'loaded'">
       <DeckBuilderPlayerSelector class="player-selector" />
       <DeckBuilderMain class="deckbuilder" :horizontal="false" />
@@ -20,6 +24,7 @@ import { deckBuilderStore as deckStore } from '../state/DeckBuilderModule';
 import { fetchEndpoint } from '../fetch/fetchEndpoint';
 import { routeDraft } from '../rest/api/draft/draft';
 import { FetchStatus } from './infra/FetchStatus';
+import { globalClickTracker } from "./infra/globalClickTracker";
 
 
 export default Vue.extend({
@@ -55,6 +60,14 @@ export default Vue.extend({
 
       const state = draftStore.currentState;
       deckStore.sync(state);
+    },
+
+    onCaptureMouseDown() {
+      globalClickTracker.onCaptureGlobalMouseDown();
+    },
+
+    onBubbleMouseDown(e: MouseEvent) {
+      globalClickTracker.onBubbleGlobalMouseDown(e);
     },
   },
 

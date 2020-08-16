@@ -31,37 +31,28 @@
           />
     </div>
     <div
-        class="exportButtons">
+        class="exportButtons"
+        @mousedown.capture="onRootMouseDown"
+        >
       <a
-          :href="exportedDecksZip"
-          download="r38export.zip"
           class="exportButton"
-          :hidden="!admin || horizontal"
+          @click="exportButtonClick"
+          v-if="deck && !horizontal"
           >
-        Export all
+        Export
       </a>
-      <a
-          :href="exportedDeck"
-          download="r38export.dek"
-          class="exportButton"
-          :hidden="!deck || horizontal"
-          >
-        Export deck
-      </a>
-      <a
-          :href="exportedBinder"
-          download="r38export.dek"
-          class="exportButton"
-          :hidden="!deck || horizontal"
-          >
-        Export binder
-      </a>
+      <DeckBuilderExportMenu
+          :deckIndex="store.selectedSeat"
+          v-if="exportMenuOpen"
+          class="exportMenu"
+          />
     </div>
   </div>
 </template>
 
 <script lang="ts">
 import Vue from 'vue';
+import DeckBuilderExportMenu from './DeckBuilderExportMenu.vue';
 import DeckBuilderSection from './DeckBuilderSection.vue';
 import DeckBuilderSectionControls from './DeckBuilderSectionControls.vue';
 import {
@@ -74,11 +65,11 @@ import {
 import { rootStore } from '../../state/store';
 import { tuple } from '../../util/tuple';
 import { draftStore } from '../../state/DraftStore';
-import { authStore } from "../../state/AuthStore";
-import { decksToBinderZip, deckToBinderXml, deckToXml } from "../../draft/deckExport";
+import { globalClickTracker, UnhandledClickListener } from '../infra/globalClickTracker';
 
 export default Vue.extend({
   components: {
+    DeckBuilderExportMenu,
     DeckBuilderSection,
     DeckBuilderSectionControls,
   },
@@ -90,6 +81,8 @@ export default Vue.extend({
   data() {
     return {
       unwatchDraftStore: null as null | (() => void),
+      exportMenuOpen: false,
+      globalMouseDownListener: null as UnhandledClickListener | null,
     }
   },
 
@@ -99,18 +92,22 @@ export default Vue.extend({
         (newProps, oldProps) => this.onDraftStoreChanged(),
         {immediate: true},
     );
+    this.globalMouseDownListener = () => this.onGlobalMouseDown();
+    globalClickTracker
+        .registerUnhandledClickListener(this.globalMouseDownListener);
   },
 
   destroyed() {
     if (this.unwatchDraftStore) {
       this.unwatchDraftStore();
     }
+    if (this.globalMouseDownListener != null) {
+      globalClickTracker
+          .unregisterUnhandledClickListener(this.globalMouseDownListener);
+    }
   },
 
   computed: {
-    admin(): boolean {
-      return authStore.user?.id === 1;
-    },
 
     store(): DeckBuilderStore {
       return store;
@@ -127,25 +124,23 @@ export default Vue.extend({
     maindeck(): CardColumn[] {
       return this.deck ? this.deck.maindeck : [];
     },
-
-    exportedDeck(): string {
-      return this.deck ? deckToXml(this.deck) : '';
-    },
-
-    exportedBinder(): string {
-      return this.deck ? deckToBinderXml(this.deck) : '';
-    }
-  },
-
-  asyncComputed: {
-    async exportedDecksZip(): Promise<string> {
-      return await decksToBinderZip(store.decks, store.names);
-    }
   },
 
   methods: {
     onDraftStoreChanged() {
       deckBuilderStore.sync(draftStore.currentState);
+    },
+
+    exportButtonClick() {
+      this.exportMenuOpen = !this.exportMenuOpen;
+    },
+
+    onRootMouseDown() {
+      globalClickTracker.onCaptureLocalMouseDown();
+    },
+
+    onGlobalMouseDown() {
+      this.exportMenuOpen = false;
     },
   },
 });
@@ -209,5 +204,11 @@ export default Vue.extend({
 
 .exportButton:hover {
   background: #ddd;
+}
+
+.exportMenu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
 }
 </style>
