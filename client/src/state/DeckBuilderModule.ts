@@ -30,7 +30,7 @@ export const deckBuilderStore = vuexModule(rootStore, MODULE_NAME, {
       for (let seat of draftState.seats) {
         init.push({
           draftName: draftStore.draftName,
-          pool: seat.player.picks.cards
+          pool: seat.picks.cards
               .map(cardId => draftStore.getCard(cardId)),
         });
       }

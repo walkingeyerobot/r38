@@ -27,7 +27,7 @@
         >
 
       <CardView
-          v-for="cardId in selectedSeat.player.picks.cards"
+          v-for="cardId in selectedSeat.picks.cards"
           :key="cardId"
           :card="draftStore.getCard(cardId)"
           :selectionStyle="getSelectionStyle(cardId)"

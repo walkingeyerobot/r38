@@ -67,8 +67,8 @@ class StateParser {
         name: src.playerName || 'Unknown player',
         iconUrl: src.playerImage || FALLBACK_USER_PICTURE,
         seatPosition: position,
-        picks: playerPicks,
       },
+      picks: playerPicks,
       originalPacks: [],
       queuedPacks:
           this.buildPackLocation(
