@@ -1,0 +1,85 @@
+<template>
+  <div class="_deck-builder-export-menu">
+    <a
+        :href="exportedDecksZip"
+        download="r38export.zip"
+        class="exportButton"
+        v-if="admin && deck"
+        >
+      Export all
+    </a>
+    <a
+        :href="exportedDeck"
+        download="r38export.dek"
+        class="exportButton"
+        v-if="deck"
+        >
+      Export deck
+    </a>
+    <a
+        :href="exportedBinder"
+        download="r38export.dek"
+        class="exportButton"
+        v-if="deck"
+        >
+      Export binder
+    </a>
+  </div>
+</template>
+
+<script lang="ts">
+import Vue from 'vue';
+import { authStore } from '../../state/AuthStore';
+import { Deck, deckBuilderStore as store } from '../../state/DeckBuilderModule';
+import { decksToBinderZip, deckToBinderXml, deckToXml } from '../../draft/deckExport';
+
+export default Vue.extend({
+  props: {
+    deckIndex: {type: Number},
+  },
+
+  computed: {
+    admin(): boolean {
+      return authStore.user?.id === 1;
+    },
+
+    deck(): Deck | undefined {
+      return store.decks[store.selectedSeat];
+    },
+
+    exportedDeck(): string {
+      return this.deck ? deckToXml(this.deck) : '';
+    },
+
+    exportedBinder(): string {
+      return this.deck ? deckToBinderXml(this.deck) : '';
+    },
+  },
+
+  asyncComputed: {
+    async exportedDecksZip(): Promise<string> {
+      return await decksToBinderZip(store.decks, store.names);
+    }
+  },
+});
+</script>
+
+<style scoped>
+._deck-builder-export-menu {
+  background: white;
+  box-shadow: #a5a5a5 3px 2px 2px;
+}
+
+.exportButton {
+  display: block;
+  padding: 10px;
+  color: inherit;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.exportButton:hover {
+  background: #ddd;
+}
+
+</style>
