@@ -75,6 +75,7 @@ class StateParser {
               this._nextLocationId++,
               `queuedPacks for seat ${position}`),
       round: 1,
+      colorCounts: { w: 0, u: 0, b: 0, r: 0, g: 0, },
     };
 
     this.parsePacks(seat, src);

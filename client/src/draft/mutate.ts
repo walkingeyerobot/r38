@@ -1,6 +1,6 @@
 import { DraftState, CardContainer, CardPack } from "./DraftState";
 import { checkNotNil } from '../util/checkNotNil';
-import { TimelineEvent, TimelineAction, ActionMovePack, ActionAssignPackRound, ActionIncrementSeatRound } from './TimelineEvent';
+import { TimelineEvent, TimelineAction, ActionMovePack, ActionAssignPackRound, ActionIncrementSeatRound, ActionIncrementPickedColors } from './TimelineEvent';
 import { MutationError } from './MutationError';
 import { CardStore } from './CardStore';
 import { eventToString } from '../state/util/eventToString';
@@ -61,6 +61,12 @@ function applyAction(
     case 'move-pack':
       movePack(action, state, 'forward');
       break;
+    case 'mark-transfer':
+      markTransfer(state, action.from, action.to);
+      break;
+    case 'increment-picked-colors':
+      incrementPickedColors(state, action);
+      break;
     case 'announce':
       console.log('ANNOUNCEMENT:', action.message);
       break;
@@ -69,9 +75,6 @@ function applyAction(
       break;
     case 'assign-pack-round':
       assignPackRound(action, state);
-      break;
-    case 'mark-transfer':
-      markTransfer(state, action.from, action.to);
       break;
     default:
       checkExhaustive(action);
@@ -90,6 +93,12 @@ function rollbackAction(
     case 'move-pack':
       movePack(action, state, 'reverse');
       break;
+    case 'mark-transfer':
+      markTransfer(state, action.to, action.from);
+      break;
+    case 'increment-picked-colors':
+      decrementPickedColors(state, action);
+      break;
     case 'announce':
       break;
     case 'increment-seat-round':
@@ -97,9 +106,6 @@ function rollbackAction(
       break;
     case 'assign-pack-round':
       unassignPackRound(action, state);
-      break;
-    case 'mark-transfer':
-      markTransfer(state, action.to, action.from);
       break;
     default:
       checkExhaustive(action);
@@ -178,6 +184,36 @@ function markTransfer(state: DraftState, from: number, to: number) {
   const dstContainer = checkNotNil(state.packs.get(to));
   srcContainer.count--;
   dstContainer.count++;
+}
+
+function incrementPickedColors(
+    state: DraftState,
+    action: ActionIncrementPickedColors,
+) {
+  const seat = state.seats[action.seat];
+  if (seat == undefined) {
+    throw new MutationError(`Cannot find seat ${action.seat}`);
+  }
+  seat.colorCounts.w += action.w;
+  seat.colorCounts.u += action.u;
+  seat.colorCounts.b += action.b;
+  seat.colorCounts.r += action.r;
+  seat.colorCounts.g += action.g;
+}
+
+function decrementPickedColors(
+    state: DraftState,
+    action: ActionIncrementPickedColors,
+) {
+  const seat = state.seats[action.seat];
+  if (seat == undefined) {
+    throw new MutationError(`Cannot find seat ${action.seat}`);
+  }
+  seat.colorCounts.w -= action.w;
+  seat.colorCounts.u -= action.u;
+  seat.colorCounts.b -= action.b;
+  seat.colorCounts.r -= action.r;
+  seat.colorCounts.g -= action.g;
 }
 
 function assignPackRound(action: ActionAssignPackRound, state: DraftState) {
