@@ -3,18 +3,29 @@
       class="_draft-seat"
       :class="{ selected: isSelected, }"
       @click="onHeaderClick"
-      @mouseleave="onQueuedPacksUnhover"
       >
     <img class="icon" :src="seat.player.iconUrl" >
 
-    <div class="player-name">
-      {{ seat.player.name }}
+    <div class="name-cnt">
+      <div class="player-name">
+        {{ seat.player.name }}
+      </div>
+
+      <div class="mana-counts">
+        <img
+            v-for="colorWeight in colorWeights"
+            :key="colorWeight.color"
+            :src="colorWeight.src"
+            class="mana-symbol"
+            >
+      </div>
     </div>
 
     <div
         v-if="packCount > 0"
         class="pack-count"
         @mouseenter="onPackCountHover"
+        @mouseleave="onQueuedPacksUnhover"
         >
       <img
           class="pack-icon"
@@ -43,7 +54,13 @@ import { replayStore } from '../../../state/ReplayStore';
 
 import { DraftSeat, CardPack as CardPackModel } from '../../../draft/DraftState';
 import { pushDraftUrlRelative } from '../../../router/url_manipulation';
+import { ScryfallColor } from '../../../draft/scryfall';
 
+import WManaSmall from '../../shared/mana/w_small.png';
+import UManaSmall from '../../shared/mana/u_small.png';
+import BManaSmall from '../../shared/mana/b_small.png';
+import RManaSmall from '../../shared/mana/r_small.png';
+import GManaSmall from '../../shared/mana/g_small.png';
 
 export default Vue.extend({
   components: {
@@ -79,6 +96,40 @@ export default Vue.extend({
       return this.seat.queuedPacks.packs.filter(
           pack => pack.round == this.seat.round).length;
     },
+
+    colorWeights(): ColorWeight[] {
+      const totalPicks = this.seat.picks.count;
+
+      return [
+        {
+          color: 'W' as const,
+          weight: this.generateColorWeight(this.seat.colorCounts.w, totalPicks),
+          src: WManaSmall,
+        },
+        {
+          color: 'U' as const,
+          weight: this.generateColorWeight(this.seat.colorCounts.u, totalPicks),
+          src: UManaSmall,
+        },
+        {
+          color: 'B' as const,
+          weight: this.generateColorWeight(this.seat.colorCounts.b, totalPicks),
+          src: BManaSmall,
+        },
+        {
+          color: 'R' as const,
+          weight: this.generateColorWeight(this.seat.colorCounts.r, totalPicks),
+          src: RManaSmall,
+        },
+        {
+          color: 'G' as const,
+          weight: this.generateColorWeight(this.seat.colorCounts.g, totalPicks),
+          src: GManaSmall,
+        },
+      ]
+      .filter(colorWeight => colorWeight.weight > 0)
+      .sort((a, b) => a.weight - b.weight);
+    },
   },
 
   methods: {
@@ -97,10 +148,25 @@ export default Vue.extend({
 
     onQueuedPacksUnhover() {
       this.showPacks = false;
-    }
+    },
+
+    generateColorWeight(pickCount: number, totalPickCount: number) {
+      if (pickCount < 2 || pickCount / totalPickCount < 0.11) {
+        return 0;
+      } else {
+        return pickCount;
+      }
+    },
   },
 
 });
+
+interface ColorWeight {
+  color: ScryfallColor;
+  weight: number;
+  src: string;
+}
+
 </script>
 
 <style scoped>
@@ -108,10 +174,14 @@ export default Vue.extend({
   display: flex;
   flex-direction: row;
   align-items: center;
+  border: 1px solid transparent;
+  margin-left: 4px;
+  margin-right: 4px;
 }
 
 ._draft-seat.selected {
-  background: #EAEAEA;
+  border: 1px solid #f5c747;
+  border-radius: 9px;
 }
 
 .icon {
@@ -119,11 +189,41 @@ export default Vue.extend({
   height: 40px;
   border-radius: 40px;
   margin: 10px;
-  margin-right: 11px;
+  margin-right: 9px;
+  margin-left: 7px;
+}
+
+.name-cnt {
+  flex: 1;
 }
 
 .player-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   flex: 1;
+}
+
+.mana-counts {
+  display: flex;
+  align-items: center;
+  justify-content: start;
+  position: relative;
+  height: 14px;
+  margin-left: 0.5px;
+  margin-top: 2px;
+  padding-bottom: 1px;
+}
+
+.mana-symbol {
+  width: 13px;
+  height: 13px;
+  border-radius: 12px;
+  box-shadow: -0.5px 1px 0 #666;
+}
+
+.mana-symbol + .mana-symbol {
+  margin-left: 3px;
 }
 
 .pack-count {
@@ -133,9 +233,11 @@ export default Vue.extend({
   height: 100%;
   box-sizing: border-box;
   padding: 4px 6px;
+  margin-left: 6px;
   flex-direction: row;
   align-items: center;
   font-size: 14px;
+  flex-shrink: 0;
 }
 
 .pack-count-label {

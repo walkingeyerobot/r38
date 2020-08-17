@@ -16,6 +16,13 @@ export interface DraftSeat {
   queuedPacks: PackContainer;
   originalPacks: number[];
   round: number;
+  colorCounts: {
+    w: number;
+    u: number;
+    b: number;
+    r: number;
+    g: number;
+  };
 }
 
 export interface PackContainer {

@@ -1,7 +1,7 @@
 import { SourceEvent, SecretPickEvent, NormalPickEvent, ShadowPickEvent } from './SourceData';
 import { commitTimelineEvent } from '../draft/mutate';
-import { DraftState, CardPack, DraftSeat, DraftCard } from '../draft/DraftState';
-import { TimelineEvent, TimelineEventType, ActionMovePack } from '../draft/TimelineEvent';
+import { DraftState, CardPack, DraftSeat, DraftCard, MtgCard } from '../draft/DraftState';
+import { TimelineEvent, TimelineEventType, ActionMovePack, ActionIncrementPickedColors } from '../draft/TimelineEvent';
 import { ParseError } from './ParseError';
 import { checkExhaustive } from '../util/checkExhaustive';
 import { checkNotNil } from '../util/checkNotNil';
@@ -87,18 +87,25 @@ export class TimelineGenerator {
         event = this.createEvent('pick', playerData);
         for (let cardId of srcEvent.cards) {
           const card = this.getCard(cardId);
-          event.actions.push({
-            type: 'move-card',
-            subtype: 'pick-card',
-            card: cardId,
-            cardName: card.definition.name,
-            from: activePack.id,
-            to: seat.picks.id
-          }, {
-            type: 'mark-transfer',
-            from: activePack.id,
-            to: seat.picks.id,
-          });
+          event.actions.push(
+            {
+              type: 'move-card',
+              subtype: 'pick-card',
+              card: cardId,
+              cardName: card.definition.name,
+              from: activePack.id,
+              to: seat.picks.id
+            }, {
+              type: 'mark-transfer',
+              from: activePack.id,
+              to: seat.picks.id,
+            },
+            buildIncrementPickedColorsAction(
+                seat.position,
+                [card.definition],
+                [],
+            ),
+          );
 
           // TODO: Do we really need to embed all this info? Can we just get it
           // out of the event object as-needed?
@@ -332,6 +339,60 @@ function getSeatToPassTo(
 
 function cardDisplayName(card: DraftCard) {
   return card.hidden ? `Hidden Card ${card.id}` : card.definition.name;
+}
+
+function buildIncrementPickedColorsAction(
+  seat: number,
+  gainedCards: MtgCard[],
+  lostCards: MtgCard[],
+) {
+  const action: ActionIncrementPickedColors = {
+    type: 'increment-picked-colors',
+    seat,
+    w: 0,
+    u: 0,
+    b: 0,
+    r: 0,
+    g: 0,
+  };
+
+  for (let gainedCard of gainedCards) {
+    if (gainedCard.colors.includes('W')) {
+      action.w++;
+    }
+    if (gainedCard.colors.includes('U')) {
+      action.u++;
+    }
+    if (gainedCard.colors.includes('B')) {
+      action.b++;
+    }
+    if (gainedCard.colors.includes('R')) {
+      action.r++;
+    }
+    if (gainedCard.colors.includes('G')) {
+      action.g++;
+    }
+  }
+
+  for (let gainedCard of lostCards) {
+    if (gainedCard.colors.includes('W')) {
+      action.w--;
+    }
+    if (gainedCard.colors.includes('U')) {
+      action.u--;
+    }
+    if (gainedCard.colors.includes('B')) {
+      action.b--;
+    }
+    if (gainedCard.colors.includes('R')) {
+      action.r--;
+    }
+    if (gainedCard.colors.includes('G')) {
+      action.g--;
+    }
+  }
+
+  return action;
 }
 
 interface PlayerTracker {

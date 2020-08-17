@@ -19,6 +19,7 @@ export type TimelineAction =
     | ActionMoveCard
     | ActionMovePack
     | ActionMarkTransfer
+    | ActionIncrementPickedColors
     | ActionIncrementSeatRound
     | ActionAssignPackRound
     | ActionAnnounce
@@ -31,6 +32,15 @@ export interface ActionMoveCard {
   card: number;
   from: number;
   to: number;
+}
+
+export interface ActionMovePack {
+  type: 'move-pack';
+  subtype: 'pass' | 'discard';
+  pack: number;
+  from: number;
+  to: number;
+  epoch: 'increment' | number;
 }
 
 /**
@@ -47,13 +57,19 @@ export interface ActionMarkTransfer {
   to: number;
 }
 
-export interface ActionMovePack {
-  type: 'move-pack';
-  subtype: 'open' | 'pass' | 'discard';
-  pack: number;
-  from: number;
-  to: number;
-  epoch: 'increment' | number;
+/**
+ * Increments the count of picked colors for a particular seat
+ *
+ * Should be included as part of a 'pick' event.
+ */
+export interface ActionIncrementPickedColors {
+  type: 'increment-picked-colors',
+  seat: number;
+  w: number;
+  u: number;
+  b: number;
+  r: number;
+  g: number;
 }
 
 export interface ActionAssignPackRound {
