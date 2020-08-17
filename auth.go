@@ -86,6 +86,12 @@ func oauthDiscordCallback(w http.ResponseWriter, r *http.Request, userID int64, 
 	}
 	statement.Exec(p.ID, p.Name, p.Picture)
 
+	query := `update users set discord_name = ?, picture = ? where discord_id = ?`
+	_, err = tx.Exec(query, p.Name, p.Picture, p.ID)
+	if err != nil {
+		return err
+	}
+
 	row := tx.QueryRow(`SELECT id FROM users WHERE discord_id = ?`, p.ID)
 	var rowid string
 	err = row.Scan(&rowid)
