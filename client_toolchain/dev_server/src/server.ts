@@ -12,7 +12,7 @@ function main() {
   configureDevServing(app);
   configureProxy(app);
 
-  app.listen(8080, 'localhost', () => {
+  app.listen(8080, () => {
     console.log('Listening on http://localhost:8080');
     console.log();
   });
