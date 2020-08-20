@@ -1,18 +1,18 @@
 <template>
   <div class="_draft-picker">
-    <div class="picks">
-      <div v-if="availablePack" class="picks-cnt">
-        <CardView
-            v-for="(cardId, i) in availablePack.cards"
-            :key="cardId"
-            :card="draftStore.getCard(cardId)"
-            class="card"
-            :class="getCardCssClass(cardId)"
-            :style="{'animation-delay': animationDelays[i] * -15000 + 'ms'}"
-            @click.native="onPackCardClicked(cardId)"
-            />
-      </div>
-      <div v-else class="no-picks">You don't have any picks (yet)</div>
+    <div v-if="availablePack" class="main-content picks">
+      <CardView
+          v-for="(cardId, i) in availablePack.cards"
+          :key="cardId"
+          :card="draftStore.getCard(cardId)"
+          class="card"
+          :class="getCardCssClass(cardId)"
+          :style="{'animation-delay': animationDelays[i] * -15000 + 'ms'}"
+          @click.native="onPackCardClicked(cardId)"
+          />
+    </div>
+    <div v-else class="main-content no-picks">
+      You don't have any picks (yet)
     </div>
     <DeckBuilderMain v-if="showDeckBuilder" class="pool" :horizontal="true" />
   </div>
@@ -134,22 +134,23 @@ export default Vue.extend({
   flex-direction: column;
   background: #3c3c3c;
   overflow-y: scroll;
-  align-items: center;
 }
 
-.picks-cnt {
+.main-content {
+  flex: 1 0 400px;
+}
+
+.picks {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
   align-content: flex-start;
   padding: 15px;
-  min-height: 400px;
   box-sizing: border-box;
 }
 
 .no-picks {
   display: flex;
-  height: 400px;
   align-items: center;
   justify-content: center;
   color: #CCC;
@@ -173,24 +174,6 @@ export default Vue.extend({
 
 .pool {
   margin-top: 60px;
-}
-
-.pool-title {
-  text-align: center;
-  color: #CCC;
-}
-
-.pool-cnt {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  padding: 15px;
-}
-
-.picks, .pool {
-  box-sizing: border-box;
-  max-width: 1110px;
-  width: 100%;
 }
 
 </style>
