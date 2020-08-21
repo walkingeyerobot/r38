@@ -334,7 +334,7 @@ func main() {
 		}
 	}
 
-	if *settings.Simulate {
+	if !*settings.Simulate {
 		err = tx.Commit()
 	} else {
 		err = nil
