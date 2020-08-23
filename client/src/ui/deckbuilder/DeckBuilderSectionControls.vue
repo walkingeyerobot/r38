@@ -65,7 +65,7 @@ export default Vue.extend({
     section(): CardColumn[] {
       const selectedSeat = store.selectedSeat;
       const decks = store.decks;
-      if (decks[selectedSeat]) {
+      if (selectedSeat !== null && decks[selectedSeat]) {
         return this.maindeck
             ? decks[selectedSeat].maindeck
             : decks[selectedSeat].sideboard;
@@ -83,10 +83,14 @@ export default Vue.extend({
 
   methods: {
     sortCmc() {
-      store.sortByCmc({seat: store.selectedSeat, maindeck: this.maindeck});
+      if (store.selectedSeat !== null) {
+        store.sortByCmc({seat: store.selectedSeat, maindeck: this.maindeck});
+      }
     },
     sortColor() {
-      store.sortByColor({seat: store.selectedSeat, maindeck: this.maindeck});
+      if (store.selectedSeat !== null) {
+        store.sortByColor({seat: store.selectedSeat, maindeck: this.maindeck});
+      }
     },
 
     addPlains() {

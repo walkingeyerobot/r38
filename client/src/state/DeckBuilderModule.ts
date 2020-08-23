@@ -55,7 +55,7 @@ export const deckBuilderStore = vuexModule(rootStore, MODULE_NAME, {
       }
     },
 
-    setSelectedSeat(state: DeckBuilderState, selectedSeat: number) {
+    setSelectedSeat(state: DeckBuilderState, selectedSeat: number | null) {
       state.selectedSeat = selectedSeat;
     },
 
@@ -278,7 +278,7 @@ function getColorIndex(color: string) {
 export type DeckBuilderStore = typeof deckBuilderStore;
 
 interface DeckBuilderState {
-  selectedSeat: number,
+  selectedSeat: number | null,
   names: string[],
   decks: Deck[],
   selection: CardLocation[],

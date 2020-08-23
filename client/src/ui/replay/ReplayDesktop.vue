@@ -14,7 +14,7 @@ Root component for desktop layout
           class="picker"
           :showDeckBuilder="true"
           />
-      <CardGrid v-else class="grid" />
+      <DraftView v-else class="grid" />
     </div>
   </div>
 </template>
@@ -23,13 +23,13 @@ Root component for desktop layout
 import Vue from 'vue'
 import ControlsRow from './ControlsRow.vue';
 import PlayerSelector from './player_selector/PlayerSelector.vue';
-import CardGrid from './CardGrid.vue';
 import DraftPicker from './DraftPicker.vue';
+import DraftView from './DraftView.vue';
 
 export default Vue.extend({
   components: {
     DraftPicker,
-    CardGrid,
+    DraftView,
     ControlsRow,
     PlayerSelector,
   },

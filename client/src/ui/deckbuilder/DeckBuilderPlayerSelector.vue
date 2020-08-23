@@ -5,7 +5,7 @@
         :key="index"
         class="player"
         :class="{
-          selected: index == state.selectedSeat
+          selected: index === state.selectedSeat
         }"
         @click="onPlayerClick(index)"
         >
