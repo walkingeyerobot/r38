@@ -46,10 +46,6 @@ export default Vue.extend({
     },
   },
 
-  created() {
-    deckBuilderStore.setSelectedSeat(this.currentSeat.position);
-  },
-
   data() {
     const animationDelays = [];
     for (let i = 0; i < 15; i++) {

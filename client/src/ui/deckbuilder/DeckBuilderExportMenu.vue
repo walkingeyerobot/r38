@@ -52,7 +52,7 @@ export default Vue.extend({
     },
 
     deck(): Deck | undefined {
-      return store.decks[store.selectedSeat];
+      return store.selectedSeat !== null ? store.decks[store.selectedSeat] : undefined;
     },
 
     exportedDeck(): string {
@@ -84,6 +84,7 @@ export default Vue.extend({
 ._deck-builder-export-menu {
   background: white;
   box-shadow: #a5a5a5 3px 2px 2px;
+  border: 1px solid #eee;
 }
 
 .exportButton {

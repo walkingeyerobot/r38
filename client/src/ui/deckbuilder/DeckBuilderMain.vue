@@ -6,7 +6,10 @@
           vertical: !horizontal,
       }"
       >
-    <div class="sideboard">
+    <div
+        class="sideboard"
+        v-if="deck"
+        >
       <DeckBuilderSectionControls
           :maindeck="false"
           :horizontal="horizontal"
@@ -18,7 +21,10 @@
           :horizontal="horizontal"
           />
     </div>
-    <div class="maindeck">
+    <div
+        class="maindeck"
+        v-if="deck"
+        >
       <DeckBuilderSectionControls
           :maindeck="true"
           :horizontal="horizontal"
@@ -37,7 +43,7 @@
       <a
           class="exportButton"
           @click="exportButtonClick"
-          v-if="deck && !horizontal"
+          v-if="deck"
           >
         Export
       </a>
@@ -114,7 +120,7 @@ export default Vue.extend({
     },
 
     deck(): Deck | undefined {
-      return store.decks[store.selectedSeat];
+      return store.selectedSeat !== null ? store.decks[store.selectedSeat] : undefined;
     },
 
     sideboard(): CardColumn[] {
@@ -152,6 +158,7 @@ export default Vue.extend({
   display: flex;
   overflow-x: scroll;
   min-height: 300px;
+  position: relative;
 }
 
 ._deck-builder-main::-webkit-scrollbar {
@@ -167,9 +174,14 @@ export default Vue.extend({
   border-top: 1px solid #666;
 }
 
+.maindeck, .sideboard {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
 .maindeck {
-  flex: 5 0 0;
-  border-bottom: 1px solid #EAEAEA;
+  flex: 5;
 }
 
 .horizontal .maindeck {
@@ -178,7 +190,8 @@ export default Vue.extend({
 }
 
 .sideboard {
-  flex: 2 0 0;
+  flex: 2;
+  border-bottom: 1px solid #EAEAEA;
 }
 
 .horizontal .maindeck, .horizontal .sideboard {

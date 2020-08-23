@@ -246,6 +246,10 @@ export default Vue.extend({
   background: #ddd;
 }
 
+.horizontal .columnDrop {
+  background: #555;
+}
+
 .card {
   height: 30px;
   overflow-y: visible;

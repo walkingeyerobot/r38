@@ -13,6 +13,7 @@ import { deepCopy } from '../util/deepCopy';
 import { indexOf } from '../util/collection';
 import { isPickEvent } from './util/isPickEvent';
 import { getNextPickEvent, getPreviousPickEvent } from './util/eventSearch';
+import { deckBuilderStore } from './DeckBuilderModule';
 
 
 /**
@@ -32,6 +33,7 @@ export const replayStore = vuexModule(rootStore, 'replay', {
   mutations: {
     setSelection(state: ReplayState, selection: SelectedView) {
       state.selection = selection;
+      deckBuilderStore.setSelectedSeat(selection.type === 'seat' ? selection.id : null);
     },
 
     sync(state: ReplayState) {
