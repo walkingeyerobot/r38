@@ -147,6 +147,7 @@ export default Vue.extend({
   align-content: flex-start;
   padding: 15px;
   box-sizing: border-box;
+  max-width: 1200px;
 }
 
 .no-picks {
