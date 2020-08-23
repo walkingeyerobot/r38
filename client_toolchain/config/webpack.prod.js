@@ -19,4 +19,14 @@ module.exports = merge.smart(common, {
     // from.
     path: path.resolve(PROJECT_ROOT, 'static/dist'),
   },
+
+  stats: {
+    modules: false,
+    assetsSort: '!size',
+    excludeAssets: [
+      /\.js\.map$/,
+    ],
+    chunks: true,
+    chunkModules: false,
+  },
 });
