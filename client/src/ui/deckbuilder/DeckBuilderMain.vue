@@ -221,7 +221,7 @@ export default Vue.extend({
 
 .exportMenu {
   position: absolute;
-  top: calc(100% + 10px);
+  top: calc(100% + 15px);
   right: 0;
 }
 </style>
