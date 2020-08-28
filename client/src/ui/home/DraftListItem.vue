@@ -1,0 +1,143 @@
+<!--
+
+Represents one entry in the list of drafts that a user might view/join
+
+-->
+
+<template>
+  <div
+      class="_draft-list-item"
+      :class="{
+        viewable: isViewable,
+      }"
+      @click="onRootClick"
+      >
+    <div class="main">
+      <div
+          class="name"
+          :class="{
+            viewable: isViewable,
+            closed: descriptor.status == 'closed'
+          }"
+          >
+        {{ descriptor.name }}
+      </div>
+      <div v-if="descriptor.availableSeats > 0 && isJoinable" class="seats">
+        {{ descriptor.availableSeats }} seats available
+      </div>
+    </div>
+    <button
+        v-if="isJoinable"
+        class="join-btn"
+        @click.stop="onJoinClicked(descriptor.id)"
+        :disabled="joinFetchStatus == 'fetching'"
+        >
+      Join
+    </button>
+  </div>
+</template>
+
+<script lang="ts">
+import Vue from 'vue';
+import { HomeDraftDescriptor } from '../../rest/api/draftlist/draftlist';
+import { FetchStatus } from '../infra/FetchStatus';
+import { fetchEndpoint } from '../../fetch/fetchEndpoint';
+import { ROUTE_JOIN_DRAFT } from '../../rest/api/join/join';
+import { pushDraftUrl } from '../../router/url_manipulation';
+
+export default Vue.extend({
+  props: {
+    descriptor: {
+      type: Object as () => HomeDraftDescriptor,
+      required: true,
+    },
+  },
+
+  data() {
+    return {
+      joinFetchStatus: 'missing' as FetchStatus,
+    };
+  },
+
+  computed: {
+    isJoinable(): boolean {
+      return this.descriptor.status == 'joinable';
+    },
+
+    isViewable(): boolean {
+      return this.descriptor.status != 'joinable'
+          && this.descriptor.status != 'closed'
+    },
+  },
+
+  methods: {
+    onRootClick() {
+      if (this.isViewable) {
+        this.$router.push(`/draft/${this.descriptor.id}`);
+      }
+    },
+
+    async onJoinClicked(draftId: number) {
+      this.joinFetchStatus = 'fetching';
+      // TODO: Error handling
+      const response = await fetchEndpoint(ROUTE_JOIN_DRAFT, { id: draftId });
+      this.joinFetchStatus = 'loaded';
+      pushDraftUrl(this, { draftId });
+    },
+  },
+});
+</script>
+
+<style scoped>
+._draft-list-item {
+  display: flex;
+  flex-direction: row;
+  height: 70px;
+  align-items: center;
+
+  font-size: 16px;
+}
+
+._draft-list-item.viewable {
+  cursor: pointer;
+}
+
+.main {
+  flex: 1 0 0;
+}
+
+.name.closed {
+  color: #777;
+}
+
+._draft-list-item:hover .name.viewable {
+  text-decoration: underline;
+}
+
+.seats {
+  margin-top: 5px;
+  font-size: 14px;
+}
+
+.join-btn {
+  margin-left: 10px;
+  padding: 5px 15px;
+
+  font-size: 100%;
+  font-family: inherit;
+  border: 1px solid #c54818;
+  border-radius: 5px;
+  background: white;
+  color: #c54818;
+}
+
+.join-btn:focus {
+  outline: none;
+}
+
+.join-btn:active {
+  background: #c54818;
+  color: white;
+}
+
+</style>
