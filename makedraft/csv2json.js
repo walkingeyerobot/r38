@@ -80,8 +80,8 @@ function GetIndividualCards(rawCards) {
 
       resp.on('end', () => {
         var obj = JSON.parse(data);
+        ProcessIndividualCard(rawCard, obj);
         if (idx < rawCards.length) {
-          ProcessIndividualCard(rawCard, obj);
           GetSingleCard(rawCards[idx++]);
         } else {
           ProcessAllCards();
