@@ -207,10 +207,11 @@ function sort(state: DeckBuilderState,
 function getStoredDeck(draftName: string, seatPosition: number): Deck {
   let deck: Deck | null = null;
   let version;
-  for (version = DATA_VERSION; version > 0 && !deck; version--) {
-    const stored = localStorage.getItem(getLocalstorageKey(draftName, seatPosition, DATA_VERSION));
+  for (version = DATA_VERSION; version > 0; version--) {
+    const stored = localStorage.getItem(getLocalstorageKey(draftName, seatPosition, version));
     if (stored) {
       deck = JSON.parse(stored);
+      break;
     }
   }
   if (deck) {
