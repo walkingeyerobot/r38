@@ -8,7 +8,8 @@
 import Vue from 'vue'
 import { authStore } from './state/AuthStore';
 import { formatStore, LayoutFormFactor } from './state/FormatStore';
-import { FALLBACK_USER_PICTURE } from './parse/fallbacks';
+import DefaultAvatar from './ui/shared/avatars/default_avatar.png';
+
 
 export default Vue.extend({
   created() {
@@ -23,7 +24,7 @@ export default Vue.extend({
         authStore.setUser({
           id: parsed.userId,
           name: parsed.name,
-          picture: parsed.picture || FALLBACK_USER_PICTURE,
+          picture: parsed.picture || DefaultAvatar,
         });
       }
     },

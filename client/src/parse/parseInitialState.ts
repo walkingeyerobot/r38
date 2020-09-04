@@ -1,7 +1,7 @@
 import { CardContainer, CardPack, DraftCard, DraftSeat, DraftState, PlayerPicks, PackContainer, PACK_LOCATION_UNUSED, PACK_LOCATION_DEAD, MtgCard, CONTAINER_SHADOW } from '../draft/DraftState';
 import { SourceCard, SourceData, SourceSeat } from './SourceData';
 import { checkNotNil } from '../util/checkNotNil';
-import { FALLBACK_USER_PICTURE } from './fallbacks';
+import DefaultAvatar from '../ui/shared/avatars/default_avatar.png';
 
 
 export function parseInitialState(srcData: SourceData): StateParseResult {
@@ -65,7 +65,7 @@ class StateParser {
       player: {
         id: src.playerId,
         name: src.playerName || 'Unknown player',
-        iconUrl: src.playerImage || FALLBACK_USER_PICTURE,
+        iconUrl: src.playerImage || DefaultAvatar,
         seatPosition: position,
       },
       picks: playerPicks,
