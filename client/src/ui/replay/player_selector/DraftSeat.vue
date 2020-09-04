@@ -103,32 +103,43 @@ export default Vue.extend({
       return [
         {
           color: 'W' as const,
+          defaultIndex: 0,
           weight: this.generateColorWeight(this.seat.colorCounts.w, totalPicks),
           src: WManaSmall,
         },
         {
           color: 'U' as const,
+          defaultIndex: 1,
           weight: this.generateColorWeight(this.seat.colorCounts.u, totalPicks),
           src: UManaSmall,
         },
         {
           color: 'B' as const,
+          defaultIndex: 2,
           weight: this.generateColorWeight(this.seat.colorCounts.b, totalPicks),
           src: BManaSmall,
         },
         {
           color: 'R' as const,
+          defaultIndex: 3,
           weight: this.generateColorWeight(this.seat.colorCounts.r, totalPicks),
           src: RManaSmall,
         },
         {
           color: 'G' as const,
+          defaultIndex: 4,
           weight: this.generateColorWeight(this.seat.colorCounts.g, totalPicks),
           src: GManaSmall,
         },
       ]
       .filter(colorWeight => colorWeight.weight > 0)
-      .sort((a, b) => a.weight - b.weight);
+      .sort((a, b) => {
+        let cmp = b.weight - a.weight;
+        if (cmp == 0) {
+          cmp = a.defaultIndex - b.defaultIndex;
+        }
+        return cmp;
+      });
     },
   },
 
@@ -151,7 +162,7 @@ export default Vue.extend({
     },
 
     generateColorWeight(pickCount: number, totalPickCount: number) {
-      if (pickCount < 2 || pickCount / totalPickCount < 0.11) {
+      if (pickCount < 2 || pickCount / totalPickCount < 0.16) {
         return 0;
       } else {
         return pickCount;
@@ -163,6 +174,7 @@ export default Vue.extend({
 
 interface ColorWeight {
   color: ScryfallColor;
+  defaultIndex: number,
   weight: number;
   src: string;
 }

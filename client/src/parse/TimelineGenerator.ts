@@ -357,37 +357,37 @@ function buildIncrementPickedColorsAction(
   };
 
   for (let gainedCard of gainedCards) {
-    if (gainedCard.colors.includes('W')) {
+    if (gainedCard.color_identity.includes('W')) {
       action.w++;
     }
-    if (gainedCard.colors.includes('U')) {
+    if (gainedCard.color_identity.includes('U')) {
       action.u++;
     }
-    if (gainedCard.colors.includes('B')) {
+    if (gainedCard.color_identity.includes('B')) {
       action.b++;
     }
-    if (gainedCard.colors.includes('R')) {
+    if (gainedCard.color_identity.includes('R')) {
       action.r++;
     }
-    if (gainedCard.colors.includes('G')) {
+    if (gainedCard.color_identity.includes('G')) {
       action.g++;
     }
   }
 
   for (let gainedCard of lostCards) {
-    if (gainedCard.colors.includes('W')) {
+    if (gainedCard.color_identity.includes('W')) {
       action.w--;
     }
-    if (gainedCard.colors.includes('U')) {
+    if (gainedCard.color_identity.includes('U')) {
       action.u--;
     }
-    if (gainedCard.colors.includes('B')) {
+    if (gainedCard.color_identity.includes('B')) {
       action.b--;
     }
-    if (gainedCard.colors.includes('R')) {
+    if (gainedCard.color_identity.includes('R')) {
       action.r--;
     }
-    if (gainedCard.colors.includes('G')) {
+    if (gainedCard.color_identity.includes('G')) {
       action.g--;
     }
   }
