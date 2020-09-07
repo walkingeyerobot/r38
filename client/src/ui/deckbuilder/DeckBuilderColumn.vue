@@ -15,7 +15,8 @@
         :key="card.id"
         @mousedown="preventMouseDown"
         @dragstart="dragStart($event, index)"
-        @click="select(index)"
+        @click.left="select(index)"
+        @click.middle="zoom(index)"
         @dblclick="switchSection(index)"
         class="card"
         :class="{
@@ -197,6 +198,14 @@ export default Vue.extend({
         cardIndex,
         maindeck: this.maindeck,
       }]);
+    },
+
+    zoom(cardIndex: number) {
+      store.zoomCard({
+        columnIndex: this.columnIndex,
+        cardIndex,
+        maindeck: this.maindeck,
+      });
     },
 
     switchSection(cardIndex: number) {

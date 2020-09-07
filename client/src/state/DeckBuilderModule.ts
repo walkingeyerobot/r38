@@ -20,6 +20,7 @@ export const deckBuilderStore = vuexModule(rootStore, MODULE_NAME, {
   names: [],
   decks: [],
   selection: [],
+  zoomed: null,
 
 } as DeckBuilderState, {
 
@@ -107,6 +108,10 @@ export const deckBuilderStore = vuexModule(rootStore, MODULE_NAME, {
 
     selectCards(state: DeckBuilderState, selection: CardLocation[]) {
       state.selection = selection;
+    },
+
+    zoomCard(state: DeckBuilderState, card: CardLocation | null) {
+      state.zoomed = card;
     },
 
     sortByCmc(state: DeckBuilderState, payload: { seat: number, maindeck: boolean }) {
@@ -283,6 +288,7 @@ interface DeckBuilderState {
   names: string[],
   decks: Deck[],
   selection: CardLocation[],
+  zoomed: CardLocation | null,
 }
 
 export interface Deck {
