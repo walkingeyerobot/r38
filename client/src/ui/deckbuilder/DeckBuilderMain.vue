@@ -15,6 +15,7 @@
           :horizontal="horizontal"
           />
       <DeckBuilderSection
+          ref="sideboard"
           :columns="sideboard"
           :deckIndex="store.selectedSeat"
           :maindeck="false"
@@ -30,6 +31,7 @@
           :horizontal="horizontal"
           />
       <DeckBuilderSection
+          ref="maindeck"
           :columns="maindeck"
           :deckIndex="store.selectedSeat"
           :maindeck="true"
@@ -53,11 +55,18 @@
           class="exportMenu"
           />
     </div>
+    <img
+        v-if="zoomedCard"
+        class="card-zoom"
+        :src="zoomedCard.image_uris[0]"
+        :alt="zoomedCard.name"
+        :style="zoomedCardPos"
+        />
   </div>
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
+import Vue, { VueConstructor } from 'vue'
 import DeckBuilderExportMenu from './DeckBuilderExportMenu.vue';
 import DeckBuilderSection from './DeckBuilderSection.vue';
 import DeckBuilderSectionControls from './DeckBuilderSectionControls.vue';
@@ -72,8 +81,16 @@ import { rootStore } from '../../state/store';
 import { tuple } from '../../util/tuple';
 import { draftStore } from '../../state/DraftStore';
 import { globalClickTracker, UnhandledClickListener } from '../infra/globalClickTracker';
+import { MtgCard } from '../../draft/DraftState';
 
-export default Vue.extend({
+export default (Vue as VueConstructor<Vue & {
+  $refs: {
+    maindeck: InstanceType<typeof DeckBuilderSection>,
+    sideboard: InstanceType<typeof DeckBuilderSection>,
+  }
+}>).extend({
+  name: 'DeckBuilderMain',
+
   components: {
     DeckBuilderExportMenu,
     DeckBuilderSection,
@@ -84,13 +101,11 @@ export default Vue.extend({
     horizontal: {type: Boolean},
   },
 
-  data() {
-    return {
-      unwatchDraftStore: null as null | (() => void),
-      exportMenuOpen: false,
-      globalMouseDownListener: null as UnhandledClickListener | null,
-    }
-  },
+  data: () => ({
+    unwatchDraftStore: null as null | (() => void),
+    exportMenuOpen: false,
+    globalMouseDownListener: null as UnhandledClickListener | null,
+  }),
 
   created() {
     this.unwatchDraftStore = rootStore.watch(
@@ -130,6 +145,27 @@ export default Vue.extend({
     maindeck(): CardColumn[] {
       return this.deck ? this.deck.maindeck : [];
     },
+
+    zoomedCard(): MtgCard | null {
+      return this.deck && store.zoomed
+          ? (store.zoomed.maindeck ? this.deck.maindeck : this.deck.sideboard)
+              [store.zoomed.columnIndex][store.zoomed.cardIndex].definition
+          : null;
+    },
+
+    zoomedCardPos(): any {
+      if (store.zoomed) {
+        const section = store.zoomed.maindeck ? this.$refs.maindeck : this.$refs.sideboard;
+        const left = (store.zoomed.columnIndex + 1) * section.$refs.columns[0].$el.clientWidth;
+        const top = store.zoomed.cardIndex * (this.horizontal ? 15 : 30);
+        return {
+          left: left + 'px',
+          top: top + 'px',
+        };
+      } else {
+        return {};
+      }
+    },
   },
 
   methods: {
@@ -147,6 +183,7 @@ export default Vue.extend({
 
     onGlobalMouseDown() {
       this.exportMenuOpen = false;
+      store.zoomCard(null);
     },
   },
 });
@@ -224,4 +261,12 @@ export default Vue.extend({
   top: calc(100% + 15px);
   right: 0;
 }
+
+.card-zoom {
+  position: absolute;
+  width: 200px;
+  height: 279px;
+  border-radius: 10px;
+}
+
 </style>
