@@ -42,8 +42,10 @@ const EXPORT_CHUNK_INTERNAL: ExportChunk = {
   async decksToBinderZip(decks: Deck[], names: string[]): Promise<string> {
     const zip = new JSZip();
     decks.map(deckToBinderXmlContents).forEach((deckXml, i) => {
-      zip.file(`${names[i]} (${decks[i].maindeck.flat().length + decks[i].sideboard.flat().length}).dek`,
-          deckXml);
+      const totalCards = decks[i].maindeck.flat().length
+          + decks[i].sideboard.flat().length;
+      const playerName = names[i].replaceAll(RegExp('[^\\w\\s]+', 'g'), '-');
+      zip.file(`${playerName} (${totalCards} cards).dek`, deckXml);
     });
     return zip.generateAsync({type: "base64"})
         .then(base64 => `data:application/zip;base64,${base64}`);

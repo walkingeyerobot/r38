@@ -3,7 +3,7 @@
     <template v-if="libLoaded && deck != null">
       <a
           :href="exportedDecksZip"
-          download="r38export.zip"
+          :download="exportedDecksFilename"
           class="exportButton"
           v-if="admin"
           >
@@ -42,6 +42,7 @@ import Vue from 'vue';
 import { authStore } from '../../state/AuthStore';
 import { Deck, deckBuilderStore as store } from '../../state/DeckBuilderModule';
 import { ExportChunk, exportLoader } from '../../chunks/export/ExportChunk';
+import { draftStore } from '../../state/DraftStore';
 
 export default Vue.extend({
   props: {
@@ -74,6 +75,10 @@ export default Vue.extend({
     exportedBinder(): string {
       return this.deck ? exportLoader.chunk.deckToBinderXml(this.deck) : '';
     },
+
+    exportedDecksFilename(): string {
+      return `${draftStore.draftName} decks.zip`
+    }
   },
 
   asyncComputed: {
