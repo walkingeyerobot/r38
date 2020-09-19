@@ -193,17 +193,13 @@ export default (Vue as VueConstructor<Vue & {
 <style scoped>
 ._deck-builder-main {
   display: flex;
-  overflow-x: scroll;
-  min-height: 300px;
   position: relative;
-}
-
-._deck-builder-main::-webkit-scrollbar {
-  display: none;
+  align-items: stretch;
 }
 
 .vertical {
   flex-direction: column;
+  overflow-y: scroll;
 }
 
 .horizontal {
