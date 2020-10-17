@@ -14,12 +14,14 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/signal"
 	"regexp"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/bwmarrin/discordgo"
 	"github.com/gorilla/sessions"
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -29,6 +31,7 @@ type r38handler func(w http.ResponseWriter, r *http.Request, userId int64, tx *s
 var secretKeyNoOneWillEverGuess = []byte(os.Getenv("SESSION_SECRET"))
 var store = sessions.NewCookieStore(secretKeyNoOneWillEverGuess)
 var sock string
+var dg *discordgo.Session
 
 func main() {
 	useAuthPtr := flag.Bool("auth", true, "bool")
@@ -58,12 +61,39 @@ func main() {
 		Handler: NewHandler(database, *useAuthPtr),
 	}
 
-	log.Printf("Starting HTTP Server. Listening at %q", server.Addr)
-	err = server.ListenAndServe() // this call blocks
-
+	dg, err = discordgo.New("Bot " + os.Getenv("DISCORD_BOT_TOKEN"))
 	if err != nil {
 		log.Printf("%s", err.Error())
+	} else {
+		defer func() {
+			log.Printf("Closing discord bot")
+			err = dg.Close()
+			if err != nil {
+				log.Printf("%s", err.Error())
+			}
+		}()
+		dg.AddHandler(DiscordReady)
+		err = dg.Open()
+		if err != nil {
+			log.Printf("%s", err.Error())
+		}
 	}
+
+	log.Printf("Starting HTTP Server. Listening at %q", server.Addr)
+	go func() {
+		err = server.ListenAndServe() // this call blocks
+
+		if err != nil {
+			log.Printf("%s", err.Error())
+		}
+	}()
+
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt)
+
+	<-stop
+
+	err = server.Shutdown(context.Background())
 }
 
 // NewHandler creates all server routes for serving the html.
@@ -999,4 +1029,11 @@ func GetDraftListEntry(userID int64, tx *sql.Tx, draftID int64) (DraftListEntry,
 	}
 
 	return ret, fmt.Errorf("could not find draft id %d", draftID)
+}
+
+func DiscordReady(s *discordgo.Session, event *discordgo.Ready) {
+	err := s.UpdateStatus(0, "Tier 5 Wolf Combo")
+	if err != nil {
+		log.Printf("%s", err.Error())
+	}
 }
