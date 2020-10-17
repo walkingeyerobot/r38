@@ -663,7 +663,8 @@ func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool) (int64, int64, []
 
 // NotifyByDraftAndDiscordID sends a discord alert to a user.
 func NotifyByDraftAndDiscordID(draftID int64, discordID string) error {
-	return DiscordNotify([]byte(fmt.Sprintf(`{"content": "<@%s> you have new picks <http://draft.thefoley.net/draft/%d>"}`, discordID, draftID)))
+	return DiscordNotify(os.Getenv("PICK_ALERTS_CHANNEL_ID"),
+		fmt.Sprintf(`<@%s> you have new picks <http://draft.thefoley.net/draft/%d>`, discordID, draftID))
 }
 
 // NotifyEndOfDraft sends a discord alert to user 1.
@@ -713,12 +714,16 @@ func NotifyEndOfDraft(tx *sql.Tx, draftID int64) error {
 			drafterIds[1], drafterIds[5],
 			drafterIds[2], drafterIds[6],
 			drafterIds[3], drafterIds[7])
-		err = DiscordNotifyHook([]byte(fmt.Sprintf(`{"embeds": [{
-			"title": "%s, Round 1",
-			"description": "%s",
-			"color": 15008649,
-			"footer": {"text": "React with 🏆 if you win and 💀 if you lose."}
-		}]}`, draftName, pairings)), "DISCORD_PAIRINGS_WEBHOOK_URL")
+		err = DiscordNotifyEmbed(
+			os.Getenv("DRAFT_ANNOUNCEMENTS_CHANNEL_ID"),
+			&discordgo.MessageEmbed{
+				Title:       fmt.Sprintf("%s, Round 1", draftName),
+				Description: pairings,
+				Color:       0xE50389,
+				Footer: &discordgo.MessageEmbedFooter{
+					Text: "React with 🏆 if you win and 💀 if you lose.",
+				},
+			})
 		if err != nil {
 			log.Print(err.Error())
 			return err
@@ -735,32 +740,25 @@ func NotifyEndOfDraft(tx *sql.Tx, draftID int64) error {
 	if err != nil {
 		return err
 	}
-	return DiscordNotify([]byte(fmt.Sprintf(`{"content": "<@%s> draft %d is finished!"}`, adminDiscordID, draftID)))
+	return DiscordNotify(os.Getenv("PICK_ALERTS_CHANNEL_ID"),
+		fmt.Sprintf(`<@%s> draft %d is finished!`, adminDiscordID, draftID))
 }
 
-// DiscordNotify sends a string via webhook to discord.
-func DiscordNotify(jsonStr []byte) error {
-	return DiscordNotifyHook(jsonStr, "DISCORD_WEBHOOK_URL")
+// DiscordNotify posts a message to discord.
+func DiscordNotify(channelId string, message string) error {
+	if dg != nil {
+		_, err := dg.ChannelMessageSend(channelId, message)
+		return err
+	}
+	return nil
 }
 
-func DiscordNotifyHook(jsonStr []byte, webhookUrlEnv string) error {
-	req, err := http.NewRequest("POST", os.Getenv(webhookUrlEnv), bytes.NewBuffer(jsonStr))
-	if err != nil {
+// DiscordNotify posts a message to discord.
+func DiscordNotifyEmbed(channelId string, message *discordgo.MessageEmbed) error {
+	if dg != nil {
+		_, err := dg.ChannelMessageSendEmbed(channelId, message)
 		return err
 	}
-	req.Header.Set("Content-Type", "application/json")
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode >= 400 {
-		return fmt.Errorf("Error sending msg. Status: %v", resp.Status)
-	}
-
 	return nil
 }
 
