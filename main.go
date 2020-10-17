@@ -638,13 +638,70 @@ func NotifyByDraftAndDiscordID(draftID int64, discordID string) error {
 
 // NotifyEndOfDraft sends a discord alert to user 1.
 func NotifyEndOfDraft(tx *sql.Tx, draftID int64) error {
-	query := `select
+	query := `select 
+					name
+				  from drafts
+				  where drafts.id = ?`
+	row := tx.QueryRow(query, draftID)
+	var draftName string
+	err := row.Scan(&draftName)
+	if err != nil {
+		log.Print(err.Error())
+		return err
+	}
+
+	query = `select
+					discord_id, discord_name
+				  from users
+				  inner join seats on users.id = seats.user
+				  where seats.draft = ?
+				  order by seats.position`
+	drafters, err := tx.Query(query, draftID)
+	if err != nil {
+		log.Print(err.Error())
+		return err
+	}
+	var drafterIds []string
+	for drafters.Next() {
+		var drafterId sql.NullString
+		var drafterName string
+		err = drafters.Scan(&drafterId, &drafterName)
+		if err != nil {
+			log.Print(err.Error())
+			return err
+		}
+		if drafterId.Valid {
+			drafterIds = append(drafterIds, fmt.Sprintf("<@%s>", drafterId.String))
+		} else {
+			drafterIds = append(drafterIds, drafterName)
+		}
+	}
+
+	if len(drafterIds) == 8 {
+		pairings := fmt.Sprintf(`%s vs %s\n%s vs %s\n%s vs %s\n%s vs %s`,
+			drafterIds[0], drafterIds[4],
+			drafterIds[1], drafterIds[5],
+			drafterIds[2], drafterIds[6],
+			drafterIds[3], drafterIds[7])
+		err = DiscordNotifyHook([]byte(fmt.Sprintf(`{"embeds": [{
+			"title": "%s, Round 1",
+			"description": "%s",
+			"color": 15008649,
+			"footer": {"text": "React with 🏆 if you win and 💀 if you lose."}
+		}]}`, draftName, pairings)), "DISCORD_PAIRINGS_WEBHOOK_URL")
+		if err != nil {
+			log.Print(err.Error())
+			return err
+		}
+	}
+
+	query = `select
                     discord_id
                   from users
                   where id = 1`
-	row := tx.QueryRow(query)
+	row = tx.QueryRow(query)
 	var adminDiscordID string
-	err := row.Scan(&adminDiscordID)
+	err = row.Scan(&adminDiscordID)
 	if err != nil {
 		return err
 	}
@@ -653,7 +710,11 @@ func NotifyEndOfDraft(tx *sql.Tx, draftID int64) error {
 
 // DiscordNotify sends a string via webhook to discord.
 func DiscordNotify(jsonStr []byte) error {
-	req, err := http.NewRequest("POST", os.Getenv("DISCORD_WEBHOOK_URL"), bytes.NewBuffer(jsonStr))
+	return DiscordNotifyHook(jsonStr, "DISCORD_WEBHOOK_URL")
+}
+
+func DiscordNotifyHook(jsonStr []byte, webhookUrlEnv string) error {
+	req, err := http.NewRequest("POST", os.Getenv(webhookUrlEnv), bytes.NewBuffer(jsonStr))
 	if err != nil {
 		return err
 	}
