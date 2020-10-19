@@ -348,6 +348,29 @@ func doJoin(tx *sql.Tx, userID int64, draftID int64) error {
 		return err
 	}
 
+	if dg != nil {
+		query = `select spectatorchannelid from drafts where id = ?`
+		row = tx.QueryRow(query, draftID)
+		var channelID string
+		err = row.Scan(&channelID)
+		if err != nil {
+			log.Printf("no spectator channel found for draft %d", draftID)
+		} else {
+			query = `select discord_id from users where id = ?`
+			row = tx.QueryRow(query, userID)
+			var discordID string
+			err = row.Scan(&discordID)
+			if err != nil {
+				log.Printf("no discord ID for user %d", userID)
+			} else {
+				err = dg.ChannelPermissionSet(channelID, discordID, "1", 0, discordgo.PermissionViewChannel)
+				if err != nil {
+					log.Printf("error locking spectator channel for user %s: %s", discordID, err.Error())
+				}
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -687,7 +710,14 @@ func NotifyEndOfDraft(tx *sql.Tx, draftID int64) error {
 		return err
 	}
 
-	return NotifyAdminOfDraftCompletion(tx, draftID)
+	err = NotifyAdminOfDraftCompletion(tx, draftID)
+	if err != nil {
+		return err
+	}
+
+	err = UnlockSpectatorChannel(tx, draftID)
+
+	return nil
 }
 
 func GetDraftName(tx *sql.Tx, draftID int64) (string, error) {
@@ -769,6 +799,30 @@ func NotifyAdminOfDraftCompletion(tx *sql.Tx, draftID int64) error {
 	}
 	return DiscordNotify(os.Getenv("PICK_ALERTS_CHANNEL_ID"),
 		fmt.Sprintf(`<@%s> draft %d is finished!`, adminDiscordID, draftID))
+}
+
+func UnlockSpectatorChannel(tx *sql.Tx, draftID int64) error {
+	if dg != nil {
+		result := tx.QueryRow("select spectatorchannelid from drafts where id=?", draftID)
+		var channelID string
+		err := result.Scan(&channelID)
+		if err != nil {
+			log.Printf("%s", err.Error())
+			// OK to not find channel
+			return nil
+		}
+		channel, err := dg.Channel(channelID)
+		if err != nil {
+			return err
+		}
+		for _, perm := range channel.PermissionOverwrites {
+			err = dg.ChannelPermissionDelete(channelID, perm.ID)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 // DiscordNotify posts a message to discord.
