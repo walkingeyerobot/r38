@@ -28,6 +28,12 @@ import (
 
 type r38handler func(w http.ResponseWriter, r *http.Request, userId int64, tx *sql.Tx) error
 
+const FOREST_BEAR_ID = "700900270153924608"
+const FOREST_BEAR = ":forestbear:" + FOREST_BEAR_ID
+const DRAFT_ALERTS_ROLE = "692079611680653442"
+const BOSS = "176164707026206720"
+const PINK = 0xE50389
+
 var secretKeyNoOneWillEverGuess = []byte(os.Getenv("SESSION_SECRET"))
 var store = sessions.NewCookieStore(secretKeyNoOneWillEverGuess)
 var sock string
@@ -73,6 +79,9 @@ func main() {
 			}
 		}()
 		dg.AddHandler(DiscordReady)
+		dg.AddHandler(DiscordMsgCreate(database))
+		dg.AddHandler(DiscordReactionAdd(database))
+		dg.AddHandler(DiscordReactionRemove(database))
 		err = dg.Open()
 		if err != nil {
 			log.Printf("%s", err.Error())
@@ -714,12 +723,12 @@ func NotifyEndOfDraft(tx *sql.Tx, draftID int64) error {
 			drafterIds[1], drafterIds[5],
 			drafterIds[2], drafterIds[6],
 			drafterIds[3], drafterIds[7])
-		err = DiscordNotifyEmbed(
+		_, err = DiscordNotifyEmbed(
 			os.Getenv("DRAFT_ANNOUNCEMENTS_CHANNEL_ID"),
 			&discordgo.MessageEmbed{
 				Title:       fmt.Sprintf("%s, Round 1", draftName),
 				Description: pairings,
-				Color:       0xE50389,
+				Color:       PINK,
 				Footer: &discordgo.MessageEmbedFooter{
 					Text: "React with 🏆 if you win and 💀 if you lose.",
 				},
@@ -754,12 +763,12 @@ func DiscordNotify(channelId string, message string) error {
 }
 
 // DiscordNotify posts a message to discord.
-func DiscordNotifyEmbed(channelId string, message *discordgo.MessageEmbed) error {
+func DiscordNotifyEmbed(channelId string, message *discordgo.MessageEmbed) (*discordgo.Message, error) {
 	if dg != nil {
-		_, err := dg.ChannelMessageSendEmbed(channelId, message)
-		return err
+		msg, err := dg.ChannelMessageSendEmbed(channelId, message)
+		return msg, err
 	}
-	return nil
+	return nil, nil
 }
 
 // GetJSONObject returns a better DraftJSON object. May be filtered.
@@ -1033,5 +1042,85 @@ func DiscordReady(s *discordgo.Session, event *discordgo.Ready) {
 	err := s.UpdateStatus(0, "Tier 5 Wolf Combo")
 	if err != nil {
 		log.Printf("%s", err.Error())
+	}
+}
+
+func DiscordMsgCreate(database *sql.DB) func(s *discordgo.Session, msg *discordgo.MessageCreate) {
+	return func(s *discordgo.Session, msg *discordgo.MessageCreate) {
+		if msg.Author.ID == BOSS {
+			if msg.Content == "!alerts" {
+				DiscordSendRoleReactionMessage(s, database, msg.ChannelID,
+					FOREST_BEAR, FOREST_BEAR_ID, DRAFT_ALERTS_ROLE,
+					"Draft alerts", "if you would like notifications for games being played")
+			}
+		}
+	}
+}
+
+func DiscordSendRoleReactionMessage(s *discordgo.Session, database *sql.DB, channelID string, emoji string, emojiId string, roleID string, title string, description string) {
+	sent, err := DiscordNotifyEmbed(
+		channelID,
+		&discordgo.MessageEmbed{
+			Title: title,
+			Description: "\nReact with <" + emoji + "> " + description + ".\n\n" +
+				"If you would like to remove the role, simply remove your reaction.\n",
+			Color: PINK,
+		})
+	if err != nil {
+		log.Printf("%s", err.Error())
+	} else if sent != nil {
+		_, err = database.Exec(
+			`insert into rolemsgs (msgid, emoji, roleid) values (?, ?, ?)`,
+			sent.ID, emojiId, roleID)
+		if err != nil {
+			log.Printf("%s", err.Error())
+		}
+		err = s.MessageReactionAdd(sent.ChannelID, sent.ID, emoji)
+		if err != nil {
+			log.Printf("%s", err.Error())
+		}
+	}
+}
+
+func DiscordReactionAdd(database *sql.DB) func(s *discordgo.Session, msg *discordgo.MessageReactionAdd) {
+	return func(s *discordgo.Session, msg *discordgo.MessageReactionAdd) {
+		row := database.QueryRow(`select emoji, roleid from rolemsgs where msgid = ?`, msg.MessageID)
+		var emojiID string
+		var roleID string
+		err := row.Scan(&emojiID, &roleID)
+		if err != nil {
+			if err != sql.ErrNoRows {
+				log.Printf("%s", err.Error())
+			}
+		} else {
+			log.Printf("add %s expect %s", msg.Emoji.ID, emojiID)
+			if emojiID == msg.Emoji.ID {
+				err = s.GuildMemberRoleAdd(msg.GuildID, msg.UserID, roleID)
+				if err != nil {
+					log.Printf("%s", err.Error())
+				}
+			}
+		}
+	}
+}
+
+func DiscordReactionRemove(database *sql.DB) func(s *discordgo.Session, msg *discordgo.MessageReactionRemove) {
+	return func(s *discordgo.Session, msg *discordgo.MessageReactionRemove) {
+		row := database.QueryRow(`select emoji, roleid from rolemsgs where msgid = ?`, msg.MessageID)
+		var emojiID string
+		var roleID string
+		err := row.Scan(&emojiID, &roleID)
+		if err != nil {
+			if err != sql.ErrNoRows {
+				log.Printf("%s", err.Error())
+			}
+		} else {
+			if emojiID == msg.Emoji.ID {
+				err = s.GuildMemberRoleRemove(msg.GuildID, msg.UserID, roleID)
+				if err != nil {
+					log.Printf("%s", err.Error())
+				}
+			}
+		}
 	}
 }
