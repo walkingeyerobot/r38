@@ -676,8 +676,21 @@ func NotifyByDraftAndDiscordID(draftID int64, discordID string) error {
 		fmt.Sprintf(`<@%s> you have new picks <http://draft.thefoley.net/draft/%d>`, discordID, draftID))
 }
 
-// NotifyEndOfDraft sends a discord alert to user 1.
 func NotifyEndOfDraft(tx *sql.Tx, draftID int64) error {
+	draftName, err := GetDraftName(tx, draftID)
+	if err != nil {
+		return err
+	}
+
+	err = PostFirstRoundPairings(tx, draftID, draftName)
+	if err != nil {
+		return err
+	}
+
+	return NotifyAdminOfDraftCompletion(tx, draftID)
+}
+
+func GetDraftName(tx *sql.Tx, draftID int64) (string, error) {
 	query := `select 
 					name
 				  from drafts
@@ -687,10 +700,12 @@ func NotifyEndOfDraft(tx *sql.Tx, draftID int64) error {
 	err := row.Scan(&draftName)
 	if err != nil {
 		log.Print(err.Error())
-		return err
 	}
+	return draftName, err
+}
 
-	query = `select
+func PostFirstRoundPairings(tx *sql.Tx, draftID int64, draftName string) error {
+	query := `select
 					discord_id, discord_name
 				  from users
 				  inner join seats on users.id = seats.user
@@ -738,14 +753,17 @@ func NotifyEndOfDraft(tx *sql.Tx, draftID int64) error {
 			return err
 		}
 	}
+	return nil
+}
 
-	query = `select
+func NotifyAdminOfDraftCompletion(tx *sql.Tx, draftID int64) error {
+	query := `select
                     discord_id
                   from users
                   where id = 1`
-	row = tx.QueryRow(query)
+	row := tx.QueryRow(query)
 	var adminDiscordID string
-	err = row.Scan(&adminDiscordID)
+	err := row.Scan(&adminDiscordID)
 	if err != nil {
 		return err
 	}
