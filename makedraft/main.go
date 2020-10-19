@@ -6,6 +6,7 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"flag"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"math"
@@ -16,8 +17,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/bwmarrin/discordgo"
 	_ "github.com/mattn/go-sqlite3"
 )
+
+const GUILD_ID = "685333271793500161"
+const SPECTATORS_CATEGORY_ID = "711340302966980698"
 
 // Settings stores all the settings that can be passed in.
 type Settings struct {
@@ -311,7 +316,7 @@ func main() {
 		log.Printf("pack attempts: %d", packAttempts)
 	}
 
-	packIDs, err = generateEmptyDraft(tx, *settings.Name)
+	packIDs, err = generateEmptyDraft(tx, *settings.Name, *settings.Simulate)
 	if err != nil {
 		return
 	}
@@ -347,11 +352,28 @@ func main() {
 	}
 }
 
-func generateEmptyDraft(tx *sql.Tx, name string) ([24]int64, error) {
+func generateEmptyDraft(tx *sql.Tx, name string, simulate bool) ([24]int64, error) {
 	var packIds [24]int64
 
-	query := `INSERT INTO drafts (name) VALUES (?);`
-	res, err := tx.Exec(query, name)
+	dg, err := discordgo.New("Bot " + os.Getenv("DISCORD_BOT_TOKEN"))
+	if err != nil {
+		log.Printf("error creating spectator channel: %s", err)
+		return packIds, err
+	}
+
+	var channel *discordgo.Channel
+	if !simulate {
+		channel, err = dg.GuildChannelCreate(GUILD_ID,
+			regexp.MustCompile("[^a-z-]").ReplaceAllString(strings.ToLower(name), "-") + "-spectators",
+			discordgo.ChannelTypeGuildText)
+		if err != nil {
+			log.Printf("error creating spectator channel: %s", err)
+			return packIds, err
+		}
+	}
+
+	query := `INSERT INTO drafts (name, spectatorchannelid) VALUES (?, ?);`
+	res, err := tx.Exec(query, name, channel.ID)
 	if err != nil {
 		log.Printf("error creating draft: %s", err)
 		return packIds, err
@@ -361,6 +383,21 @@ func generateEmptyDraft(tx *sql.Tx, name string) ([24]int64, error) {
 	if err != nil {
 		log.Printf("could not get draft ID: %s", err)
 		return packIds, err
+	}
+
+	if !simulate {
+		_, err = dg.ChannelEditComplex(channel.ID, &discordgo.ChannelEdit{
+			Topic: fmt.Sprintf("<http://draft.thefoley.net/draft/%d>", draftID),
+			ParentID: SPECTATORS_CATEGORY_ID,
+		})
+		if err != nil {
+			log.Printf("error creating spectator channel: %s", err)
+			return packIds, err
+		}
+		err = dg.Close()
+		if err != nil {
+			log.Printf("error closing bot session: %s", err)
+		}
 	}
 
 	query = `INSERT INTO seats (position, draft) VALUES (?, ?)`
