@@ -36,6 +36,8 @@ CREATE TABLE drafts( id integer primary key autoincrement, name text, spectatorc
 CREATE TABLE revealed( id integer primary key autoincrement, draft number, message text);
 CREATE TABLE events( id integer primary key autoincrement, draft number, user number, announcement text, card1 number, card2 number, modified number, round number);
 CREATE TABLE rolemsgs ( id integer primary key autoincrement, msgid text, emoji text, roleid text);
+CREATE TABLE pairingmsgs ( id integer primary key autoincrement, msgid text, draft number, round number);
+CREATE TABLE results ( id integer primary key autoincrement, draft number, round number, user number, win number);
 CREATE VIEW v_packs as select packs.*, count(cards.id) as count from packs left join cards on packs.id=cards.pack group by packs.id
 /* v_packs(id,seat,modified,round,original_seat,count) */;
 ```
