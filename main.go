@@ -1194,10 +1194,15 @@ func DiscordSendRoleReactionMessage(s *discordgo.Session, database *sql.DB, chan
 
 func DiscordReactionAdd(database *sql.DB) func(s *discordgo.Session, msg *discordgo.MessageReactionAdd) {
 	return func(s *discordgo.Session, msg *discordgo.MessageReactionAdd) {
-		row := database.QueryRow(`select emoji, roleid from rolemsgs where msgid = ?`, msg.MessageID)
+		tx, err := database.Begin()
+		if err != nil {
+			log.Printf("%s", err.Error())
+			return
+		}
+		row := tx.QueryRow(`select emoji, roleid from rolemsgs where msgid = ?`, msg.MessageID)
 		var emojiID string
 		var roleID string
-		err := row.Scan(&emojiID, &roleID)
+		err = row.Scan(&emojiID, &roleID)
 		if err == nil {
 			if emojiID == msg.Emoji.ID {
 				err = s.GuildMemberRoleAdd(msg.GuildID, msg.UserID, roleID)
@@ -1206,20 +1211,20 @@ func DiscordReactionAdd(database *sql.DB) func(s *discordgo.Session, msg *discor
 				}
 			}
 		} else if err == sql.ErrNoRows {
-			row = database.QueryRow(`select draft, round from pairingmsgs where msgid = ?`, msg.MessageID)
+			row = tx.QueryRow(`select draft, round from pairingmsgs where msgid = ?`, msg.MessageID)
 			var draftID int
 			var round int
 			err = row.Scan(&draftID, &round)
 			if err == nil {
-				row = database.QueryRow(`select id from users where discord_id = ?`, msg.UserID)
+				row = tx.QueryRow(`select id from users where discord_id = ?`, msg.UserID)
 				var user int
 				err = row.Scan(&user)
 				if err == nil {
 					if msg.Emoji.Name == "🏆" {
-						_, err = database.Exec(`insert into results (draft, round, user, win) values (?, ?, ?, 1)`,
+						_, err = tx.Exec(`insert into results (draft, round, user, win) values (?, ?, ?, 1)`,
 							draftID, round, user)
 					} else if msg.Emoji.Name == "💀" {
-						_, err = database.Exec(`insert into results (draft, round, user, win) values (?, ?, ?, 0)`,
+						_, err = tx.Exec(`insert into results (draft, round, user, win) values (?, ?, ?, 0)`,
 							draftID, round, user)
 					}
 				}
@@ -1232,15 +1237,24 @@ func DiscordReactionAdd(database *sql.DB) func(s *discordgo.Session, msg *discor
 		} else {
 			log.Printf("%s", err.Error())
 		}
+		err = tx.Commit()
+		if err != nil {
+			log.Printf("%s", err.Error())
+		}
 	}
 }
 
 func DiscordReactionRemove(database *sql.DB) func(s *discordgo.Session, msg *discordgo.MessageReactionRemove) {
 	return func(s *discordgo.Session, msg *discordgo.MessageReactionRemove) {
-		row := database.QueryRow(`select emoji, roleid from rolemsgs where msgid = ?`, msg.MessageID)
+		tx, err := database.Begin()
+		if err != nil {
+			log.Printf("%s", err.Error())
+			return
+		}
+		row := tx.QueryRow(`select emoji, roleid from rolemsgs where msgid = ?`, msg.MessageID)
 		var emojiID string
 		var roleID string
-		err := row.Scan(&emojiID, &roleID)
+		err = row.Scan(&emojiID, &roleID)
 		if err == nil {
 			if emojiID == msg.Emoji.ID {
 				err = s.GuildMemberRoleRemove(msg.GuildID, msg.UserID, roleID)
@@ -1249,20 +1263,20 @@ func DiscordReactionRemove(database *sql.DB) func(s *discordgo.Session, msg *dis
 				}
 			}
 		} else if err == sql.ErrNoRows {
-			row = database.QueryRow(`select draft, round from pairingmsgs where msgid = ?`, msg.MessageID)
+			row = tx.QueryRow(`select draft, round from pairingmsgs where msgid = ?`, msg.MessageID)
 			var draftID int
 			var round int
 			err = row.Scan(&draftID, &round)
 			if err == nil {
-				row = database.QueryRow(`select id from users where discord_id = ?`, msg.UserID)
+				row = tx.QueryRow(`select id from users where discord_id = ?`, msg.UserID)
 				var user int
 				err = row.Scan(&user)
 				if err == nil {
 					if msg.Emoji.Name == "🏆" {
-						_, err = database.Exec(`delete from results where draft = ? and round = ? and user = ? and win = 1`,
+						_, err = tx.Exec(`delete from results where draft = ? and round = ? and user = ? and win = 1`,
 							draftID, round, user)
 					} else if msg.Emoji.Name == "💀" {
-						_, err = database.Exec(`delete from results where draft = ? and round = ? and user = ? and win = 0`,
+						_, err = tx.Exec(`delete from results where draft = ? and round = ? and user = ? and win = 0`,
 							draftID, round, user)
 					}
 				}
@@ -1273,6 +1287,10 @@ func DiscordReactionRemove(database *sql.DB) func(s *discordgo.Session, msg *dis
 				log.Printf("%s", err.Error())
 			}
 		} else {
+			log.Printf("%s", err.Error())
+		}
+		err = tx.Commit()
+		if err != nil {
 			log.Printf("%s", err.Error())
 		}
 	}
