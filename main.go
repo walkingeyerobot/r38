@@ -1309,7 +1309,7 @@ func DiscordReactionRemove(database *sql.DB) func(s *discordgo.Session, msg *dis
 }
 
 func CheckNextRoundPairings(tx *sql.Tx, draftID int64, round int) {
-	row := tx.QueryRow(`select count(1) from results where draft = ? and round = ?`, draftID, round)
+	row := tx.QueryRow(`select count(1) from results where draft = ? and round <= ?`, draftID, round)
 	var numResults int
 	err := row.Scan(&numResults)
 	if err != nil {
@@ -1317,6 +1317,10 @@ func CheckNextRoundPairings(tx *sql.Tx, draftID int64, round int) {
 		return
 	}
 	if numResults == round * 8 {
+		var table1 []string
+		var table2 []string
+		var table3 []string
+		var table4 []string
 		if round == 1 {
 			// Pair round 2
 			result, err := tx.Query(
@@ -1331,10 +1335,6 @@ func CheckNextRoundPairings(tx *sql.Tx, draftID int64, round int) {
 				log.Printf("%s", err.Error())
 				return
 			}
-			var table1 []string
-			var table2 []string
-			var table3 []string
-			var table4 []string
 			for result.Next() {
 				var discordName string
 				var discordId sql.NullString
@@ -1365,35 +1365,83 @@ func CheckNextRoundPairings(tx *sql.Tx, draftID int64, round int) {
 					}
 				}
 			}
-			if len(table1) == 2 && len(table2) == 2 && len(table3) == 2 && len(table4) == 2{
-				pairings := fmt.Sprintf(`%s vs %s
+		} else if round == 2 {
+			// Pair round 3
+			result, err := tx.Query(`select 
+						users.discord_name, users.discord_id, sum(win), seats.position 
+						from results 
+						join seats on seats.draft = results.draft and seats.user = results.user
+						join users on users.id = results.user 
+						where results.draft = ? and results.round <= ?
+						group by results.user`,
+						draftID, round)
+			if err != nil {
+				log.Printf("%s", err.Error())
+				return
+			}
+			for result.Next() {
+				var discordName string
+				var discordId sql.NullString
+				var wins int
+				var seat int
+				err = result.Scan(&discordName, &discordId, &wins, &seat)
+				if err != nil {
+					log.Printf("%s", err.Error())
+					return
+				}
+				var player string
+				if discordId.Valid {
+					player = fmt.Sprintf("<@%s>", discordId.String)
+				} else {
+					player = discordName
+				}
+				if wins == 2 {
+					table1 = append(table1, player)
+				} else if wins == 0 {
+					table4 = append(table4, player)
+				} else {
+					if seat < 4 {
+						if len(table2) < 2 {
+							table2 = append(table2, player)
+						} else {
+							table3 = append(table3, player)
+						}
+					} else {
+						if len(table3) < 2 {
+							table3 = append(table3, player)
+						} else {
+							table2 = append(table2, player)
+						}
+					}
+				}
+			}
+		} else if round == 3 {
+			// Draft is complete
+		}
+		if len(table1) == 2 && len(table2) == 2 && len(table3) == 2 && len(table4) == 2{
+			pairings := fmt.Sprintf(`%s vs %s
 %s vs %s
 %s vs %s
 %s vs %s`,
-					table1[0], table1[1],
-					table2[0], table2[1],
-					table3[0], table3[1],
-					table4[0], table4[1])
-				draftName, err := GetDraftName(tx, draftID)
-				if err != nil {
-					log.Printf("%s", err.Error())
-					return
-				}
-				err = PostPairings(tx, draftID, draftName, 2, pairings)
-				if err != nil {
-					log.Printf("%s", err.Error())
-					return
-				}
-				err = tx.Commit()
-				if err != nil {
-					log.Printf("%s", err.Error())
-					return
-				}
+				table1[0], table1[1],
+				table2[0], table2[1],
+				table3[0], table3[1],
+				table4[0], table4[1])
+			draftName, err := GetDraftName(tx, draftID)
+			if err != nil {
+				log.Printf("%s", err.Error())
+				return
 			}
-		} else if round == 2 {
-			// Pair round 3
-		} else if round == 3 {
-			// Draft is complete
+			err = PostPairings(tx, draftID, draftName, round + 1, pairings)
+			if err != nil {
+				log.Printf("%s", err.Error())
+				return
+			}
+			err = tx.Commit()
+			if err != nil {
+				log.Printf("%s", err.Error())
+				return
+			}
 		}
 	}
 }
