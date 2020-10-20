@@ -843,7 +843,7 @@ func NotifyAdminOfDraftCompletion(tx *sql.Tx, draftID int64) error {
 		fmt.Sprintf(`<@%s> draft %d is finished!`, adminDiscordID, draftID))
 }
 
-func getAdminDiscordId(tx *sql.Tx) (string, error) {
+func GetAdminDiscordId(tx *sql.Tx) (string, error) {
 	query := `select
                     discord_id
                   from users
