@@ -793,34 +793,43 @@ func PostFirstRoundPairings(tx *sql.Tx, draftID int64, draftName string) error {
 			drafterIds[1], drafterIds[5],
 			drafterIds[2], drafterIds[6],
 			drafterIds[3], drafterIds[7])
-		msg, err := DiscordNotifyEmbed(
-			os.Getenv("DRAFT_ANNOUNCEMENTS_CHANNEL_ID"),
-			&discordgo.MessageEmbed{
-				Title:       fmt.Sprintf("%s, Round 1", draftName),
-				Description: pairings,
-				Color:       PINK,
-				Footer: &discordgo.MessageEmbedFooter{
-					Text: "React with 🏆 if you win and 💀 if you lose.",
-				},
-			})
-		if err != nil {
-			log.Print(err.Error())
-			return err
+		round := 1
+		err2 := PostPairings(tx, draftID, draftName, round, pairings)
+		if err2 != nil {
+			return err2
 		}
-		err = dg.MessageReactionAdd(msg.ChannelID, msg.ID, "🏆")
-		if err != nil {
-			log.Printf("%s", err.Error())
-		}
-		err = dg.MessageReactionAdd(msg.ChannelID, msg.ID, "💀")
-		if err != nil {
-			log.Printf("%s", err.Error())
-		}
-		_, err = tx.Exec("insert into pairingmsgs (msgid, draft, round) values (?, ?, 1)",
-			msg.ID, draftID)
-		if err != nil {
-			log.Print(err.Error())
-			return err
-		}
+	}
+	return nil
+}
+
+func PostPairings(tx *sql.Tx, draftID int64, draftName string, round int, pairings string) error {
+	msg, err := DiscordNotifyEmbed(
+		os.Getenv("DRAFT_ANNOUNCEMENTS_CHANNEL_ID"),
+		&discordgo.MessageEmbed{
+			Title:       fmt.Sprintf("%s, Round %d", draftName, round),
+			Description: pairings,
+			Color:       PINK,
+			Footer: &discordgo.MessageEmbedFooter{
+				Text: "React with 🏆 if you win and 💀 if you lose.",
+			},
+		})
+	if err != nil {
+		log.Print(err.Error())
+		return err
+	}
+	err = dg.MessageReactionAdd(msg.ChannelID, msg.ID, "🏆")
+	if err != nil {
+		log.Printf("%s", err.Error())
+	}
+	err = dg.MessageReactionAdd(msg.ChannelID, msg.ID, "💀")
+	if err != nil {
+		log.Printf("%s", err.Error())
+	}
+	_, err = tx.Exec("insert into pairingmsgs (msgid, draft, round) values (?, ?, ?)",
+		msg.ID, draftID, round)
+	if err != nil {
+		log.Print(err.Error())
+		return err
 	}
 	return nil
 }
@@ -1212,7 +1221,7 @@ func DiscordReactionAdd(database *sql.DB) func(s *discordgo.Session, msg *discor
 			}
 		} else if err == sql.ErrNoRows {
 			row = tx.QueryRow(`select draft, round from pairingmsgs where msgid = ?`, msg.MessageID)
-			var draftID int
+			var draftID int64
 			var round int
 			err = row.Scan(&draftID, &round)
 			if err == nil {
@@ -1227,8 +1236,11 @@ func DiscordReactionAdd(database *sql.DB) func(s *discordgo.Session, msg *discor
 						_, err = tx.Exec(`insert into results (draft, round, user, win) values (?, ?, ?, 0)`,
 							draftID, round, user)
 					}
-				}
-				if err != nil {
+					if err != nil {
+						log.Printf("%s", err.Error())
+					}
+					CheckNextRoundPairings(tx, draftID, round)
+				} else {
 					log.Printf("%s", err.Error())
 				}
 			} else if err != sql.ErrNoRows {
@@ -1292,6 +1304,96 @@ func DiscordReactionRemove(database *sql.DB) func(s *discordgo.Session, msg *dis
 		err = tx.Commit()
 		if err != nil {
 			log.Printf("%s", err.Error())
+		}
+	}
+}
+
+func CheckNextRoundPairings(tx *sql.Tx, draftID int64, round int) {
+	row := tx.QueryRow(`select count(1) from results where draft = ? and round = ?`, draftID, round)
+	var numResults int
+	err := row.Scan(&numResults)
+	if err != nil {
+		log.Printf("%s", err.Error())
+		return
+	}
+	if numResults == round * 8 {
+		if round == 1 {
+			// Pair round 2
+			result, err := tx.Query(
+				`select 
+							users.discord_name, users.discord_id, win, seats.position 
+							from results 
+							join seats on seats.draft = results.draft and seats.user = results.user
+							join users on users.id = results.user 
+							where results.draft = ? and results.round = ?`,
+				draftID, round)
+			if err != nil {
+				log.Printf("%s", err.Error())
+				return
+			}
+			var table1 []string
+			var table2 []string
+			var table3 []string
+			var table4 []string
+			for result.Next() {
+				var discordName string
+				var discordId sql.NullString
+				var win int
+				var seat int
+				err = result.Scan(&discordName, &discordId, &win, &seat)
+				if err != nil {
+					log.Printf("%s", err.Error())
+					return
+				}
+				var player string
+				if discordId.Valid {
+					player = fmt.Sprintf("<@%s>", discordId.String)
+				} else {
+					player = discordName
+				}
+				if win == 1 {
+					if seat % 2 == 0 {
+						table1 = append(table1, player)
+					} else {
+						table2 = append(table2, player)
+					}
+				} else {
+					if seat % 2 == 0 {
+						table3 = append(table3, player)
+					} else {
+						table4 = append(table4, player)
+					}
+				}
+			}
+			if len(table1) == 2 && len(table2) == 2 && len(table3) == 2 && len(table4) == 2{
+				pairings := fmt.Sprintf(`%s vs %s
+%s vs %s
+%s vs %s
+%s vs %s`,
+					table1[0], table1[1],
+					table2[0], table2[1],
+					table3[0], table3[1],
+					table4[0], table4[1])
+				draftName, err := GetDraftName(tx, draftID)
+				if err != nil {
+					log.Printf("%s", err.Error())
+					return
+				}
+				err = PostPairings(tx, draftID, draftName, 2, pairings)
+				if err != nil {
+					log.Printf("%s", err.Error())
+					return
+				}
+				err = tx.Commit()
+				if err != nil {
+					log.Printf("%s", err.Error())
+					return
+				}
+			}
+		} else if round == 2 {
+			// Pair round 3
+		} else if round == 3 {
+			// Draft is complete
 		}
 	}
 }
