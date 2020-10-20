@@ -835,7 +835,7 @@ func PostPairings(tx *sql.Tx, draftID int64, draftName string, round int, pairin
 }
 
 func NotifyAdminOfDraftCompletion(tx *sql.Tx, draftID int64) error {
-	adminDiscordID, err := getAdminDiscordId(tx)
+	adminDiscordID, err := GetAdminDiscordId(tx)
 	if err != nil {
 		return err
 	}
@@ -1444,7 +1444,7 @@ func CheckNextRoundPairings(tx *sql.Tx, draftID int64, round int) {
 				} else {
 					player = discordName
 				}
-				adminDiscordID, err := getAdminDiscordId(tx)
+				adminDiscordID, err := GetAdminDiscordId(tx)
 				if err != nil {
 					log.Printf("%s", err.Error())
 					return
