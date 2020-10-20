@@ -21,7 +21,10 @@ import (
 	"strings"
 	"time"
 
+	"./makedraft"
+
 	"github.com/bwmarrin/discordgo"
+	"github.com/google/shlex"
 	"github.com/gorilla/sessions"
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -1172,7 +1175,66 @@ func DiscordReady(s *discordgo.Session, event *discordgo.Ready) {
 func DiscordMsgCreate(database *sql.DB) func(s *discordgo.Session, msg *discordgo.MessageCreate) {
 	return func(s *discordgo.Session, msg *discordgo.MessageCreate) {
 		if msg.Author.ID == BOSS {
-			if msg.Content == "!alerts" {
+			if msg.GuildID == "" {
+				args, err := shlex.Split(msg.Content)
+				if err != nil {
+					_, _ = dg.ChannelMessageSend(msg.ChannelID, err.Error())
+					return
+				}
+				if strings.HasPrefix(msg.Content, "makedraft") {
+					tx, err := database.Begin()
+					if err != nil {
+						log.Printf("%s", err.Error())
+					} else {
+						flagSet := flag.NewFlagSet(args[0], flag.ContinueOnError)
+
+						settings := makedraft.Settings{}
+						settings.Set = flagSet.String(
+							"set", "sets/cube.json",
+							"A .json file containing relevant set data.")
+						settings.Database = flagSet.String(
+							"database", "draft.db",
+							"The sqlite3 database to insert to.")
+						settings.Seed = flagSet.Int(
+							"seed", 0,
+							"The random seed to use to generate the draft. If 0, time.Now().UnixNano() will be used.")
+						settings.Verbose = flagSet.Bool(
+							"v", false,
+							"If true, will enable verbose output.")
+						settings.Simulate = flagSet.Bool(
+							"simulate", false,
+							"If true, won't commit to the database.")
+						settings.Name = flagSet.String(
+							"name", "untitled draft",
+							"The name of the draft.")
+
+						flagSet.Parse(args[1:])
+
+						err = makedraft.MakeDraft(settings, tx)
+
+						var resp string
+						if err != nil {
+							resp = fmt.Sprintf("%s", err.Error())
+						} else {
+							if !*settings.Simulate {
+								err = tx.Commit()
+							} else {
+								err = nil
+							}
+
+							if err != nil {
+								resp = fmt.Sprintf("can't commit :( %s", err.Error())
+							} else {
+								resp = fmt.Sprintf("done!")
+							}
+						}
+						_, err = dg.ChannelMessageSend(msg.ChannelID, resp)
+						if err != nil {
+							log.Printf("%s", err)
+						}
+					}
+				}
+			} else if msg.Content == "!alerts" {
 				DiscordSendRoleReactionMessage(s, database, msg.ChannelID,
 					FOREST_BEAR, FOREST_BEAR_ID, DRAFT_ALERTS_ROLE,
 					"Draft alerts", "if you would like notifications for games being played")

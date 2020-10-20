@@ -104,7 +104,7 @@ EOF
 ## Configure a draft
 
 ```bash
-go run makedraft/main.go
+go run makedraft_cli/main.go
 ```
 
 ## Start the server
