@@ -835,6 +835,15 @@ func PostPairings(tx *sql.Tx, draftID int64, draftName string, round int, pairin
 }
 
 func NotifyAdminOfDraftCompletion(tx *sql.Tx, draftID int64) error {
+	adminDiscordID, err := getAdminDiscordId(tx)
+	if err != nil {
+		return err
+	}
+	return DiscordNotify(os.Getenv("PICK_ALERTS_CHANNEL_ID"),
+		fmt.Sprintf(`<@%s> draft %d is finished!`, adminDiscordID, draftID))
+}
+
+func getAdminDiscordId(tx *sql.Tx) (string, error) {
 	query := `select
                     discord_id
                   from users
@@ -842,11 +851,7 @@ func NotifyAdminOfDraftCompletion(tx *sql.Tx, draftID int64) error {
 	row := tx.QueryRow(query)
 	var adminDiscordID string
 	err := row.Scan(&adminDiscordID)
-	if err != nil {
-		return err
-	}
-	return DiscordNotify(os.Getenv("PICK_ALERTS_CHANNEL_ID"),
-		fmt.Sprintf(`<@%s> draft %d is finished!`, adminDiscordID, draftID))
+	return adminDiscordID, err
 }
 
 func UnlockSpectatorChannel(tx *sql.Tx, draftID int64) error {
@@ -1316,7 +1321,7 @@ func CheckNextRoundPairings(tx *sql.Tx, draftID int64, round int) {
 		log.Printf("%s", err.Error())
 		return
 	}
-	if numResults == round * 8 {
+	if numResults == round*8 {
 		var table1 []string
 		var table2 []string
 		var table3 []string
@@ -1352,13 +1357,13 @@ func CheckNextRoundPairings(tx *sql.Tx, draftID int64, round int) {
 					player = discordName
 				}
 				if win == 1 {
-					if seat % 2 == 0 {
+					if seat%2 == 0 {
 						table1 = append(table1, player)
 					} else {
 						table2 = append(table2, player)
 					}
 				} else {
-					if seat % 2 == 0 {
+					if seat%2 == 0 {
 						table3 = append(table3, player)
 					} else {
 						table4 = append(table4, player)
@@ -1374,7 +1379,7 @@ func CheckNextRoundPairings(tx *sql.Tx, draftID int64, round int) {
 						join users on users.id = results.user 
 						where results.draft = ? and results.round <= ?
 						group by results.user`,
-						draftID, round)
+				draftID, round)
 			if err != nil {
 				log.Printf("%s", err.Error())
 				return
@@ -1416,9 +1421,50 @@ func CheckNextRoundPairings(tx *sql.Tx, draftID int64, round int) {
 				}
 			}
 		} else if round == 3 {
-			// Draft is complete
+			if dg != nil {
+				row := tx.QueryRow(`select 
+							users.discord_name, users.discord_id 
+							from results 
+							join seats on seats.draft = results.draft and seats.user = results.user
+							join users on users.id = results.user 
+							where results.draft = ?
+							group by results.user
+							having sum(win) = 3`,
+					draftID, round)
+				var discordName string
+				var discordId sql.NullString
+				err = row.Scan(&discordName, &discordId)
+				if err != nil {
+					log.Printf("%s", err.Error())
+					return
+				}
+				var player string
+				if discordId.Valid {
+					player = fmt.Sprintf("<@%s>", discordId.String)
+				} else {
+					player = discordName
+				}
+				adminDiscordID, err := getAdminDiscordId(tx)
+				if err != nil {
+					log.Printf("%s", err.Error())
+					return
+				}
+				draftName, err := GetDraftName(tx, draftID)
+				if err != nil {
+					log.Printf("%s", err.Error())
+					return
+				}
+				_, err = dg.ChannelMessageSend(os.Getenv("DRAFT_ANNOUNCEMENTS_CHANNEL_ID"),
+					fmt.Sprintf("Congratulations to %s, winner of *%s*!\n\n"+
+						"All players, please ping <@%s> directly when you're ready to return cards.",
+						player, draftName, adminDiscordID))
+				if err != nil {
+					log.Printf("%s", err.Error())
+					return
+				}
+			}
 		}
-		if len(table1) == 2 && len(table2) == 2 && len(table3) == 2 && len(table4) == 2{
+		if len(table1) == 2 && len(table2) == 2 && len(table3) == 2 && len(table4) == 2 {
 			pairings := fmt.Sprintf(`%s vs %s
 %s vs %s
 %s vs %s
@@ -1432,7 +1478,7 @@ func CheckNextRoundPairings(tx *sql.Tx, draftID int64, round int) {
 				log.Printf("%s", err.Error())
 				return
 			}
-			err = PostPairings(tx, draftID, draftName, round + 1, pairings)
+			err = PostPairings(tx, draftID, draftName, round+1, pairings)
 			if err != nil {
 				log.Printf("%s", err.Error())
 				return
