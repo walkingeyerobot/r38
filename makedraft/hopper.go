@@ -1,4 +1,4 @@
-package main
+package makedraft
 
 import (
 	"math/rand"

@@ -1,7 +1,6 @@
-package main
+package makedraft
 
 import (
-	"context"
 	"database/sql"
 	"encoding/csv"
 	"encoding/json"
@@ -48,29 +47,29 @@ type Settings struct {
 	AbortDuplicateThreeColorIdentityUncommons *bool
 }
 
-var settings Settings
+func MakeDraft(settings Settings, tx *sql.Tx) error {
+	if *settings.Set == "" {
+		return fmt.Errorf("you must specify a set json file to continue")
+	}
 
-func main() {
-	flagSet := flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
+	jsonFile, err := os.Open(*settings.Set)
+	if err != nil {
+		return fmt.Errorf("error opening json file: %s", err.Error())
+	}
+	defer jsonFile.Close()
 
-	settings.Set = flagSet.String(
-		"set", "sets/cube.json",
-		"A .json file containing relevant set data.")
-	settings.Database = flagSet.String(
-		"database", "draft.db",
-		"The sqlite3 database to insert to.")
-	settings.Seed = flagSet.Int(
-		"seed", 0,
-		"The random seed to use to generate the draft. If 0, time.Now().UnixNano() will be used.")
-	settings.Verbose = flagSet.Bool(
-		"v", false,
-		"If true, will enable verbose output.")
-	settings.Simulate = flagSet.Bool(
-		"simulate", false,
-		"If true, won't commit to the database.")
-	settings.Name = flagSet.String(
-		"name", "untitled draft",
-		"The name of the draft.")
+	byteValue, err := ioutil.ReadAll(jsonFile)
+	if err != nil {
+		return fmt.Errorf("error readalling: %s", err.Error())
+	}
+
+	var cfg DraftConfig
+	err = json.Unmarshal(byteValue, &cfg)
+	if err != nil {
+		return fmt.Errorf("error unmarshalling: %s", err.Error())
+	}
+
+	flagSet := flag.FlagSet{}
 	settings.MaxMythic = flagSet.Int(
 		"max-mythic", 2,
 		"Maximum number of copies of a given mythic allowed in a draft. 0 to disable.")
@@ -114,41 +113,13 @@ func main() {
 		"abort-duplicate-three-color-identity-uncommons", false,
 		"If true, only one uncommon of a color identity triplet will be allowed per pack.")
 
-	flagSet.Parse(os.Args[1:])
-
-	if *settings.Set == "" {
-		log.Printf("you must specify a set json file to continue")
-		return
-	}
-
-	jsonFile, err := os.Open(*settings.Set)
-	if err != nil {
-		log.Printf("error opening json file: %s", err.Error())
-		return
-	}
-	defer jsonFile.Close()
-
-	byteValue, err := ioutil.ReadAll(jsonFile)
-	if err != nil {
-		log.Printf("error readalling: %s", err.Error())
-		return
-	}
-
-	var cfg DraftConfig
-	err = json.Unmarshal(byteValue, &cfg)
-	if err != nil {
-		log.Printf("error unmarshalling: %s", err.Error())
-		return
-	}
-
 	if len(cfg.Flags) != 0 {
 		jsonFlags := strings.Join(cfg.Flags, " ")
 		r := csv.NewReader(strings.NewReader(jsonFlags))
 		r.Comma = ' '
 		fields, err := r.Read()
 		if err != nil {
-			log.Printf("error parsing json flags: %s", err.Error())
-			return
+			return fmt.Errorf("error parsing json flags: %s", err.Error())
 		}
 		var allFlags []string
 		for _, flag := range fields {
@@ -156,8 +127,6 @@ func main() {
 				allFlags = append(allFlags, flag)
 			}
 		}
-		allFlags = append(allFlags, os.Args[1:]...)
-
 		flagSet.Parse(allFlags)
 	}
 
@@ -170,24 +139,6 @@ func main() {
 	log.Printf("generating draft %s.", *settings.Name)
 
 	var packIDs [24]int64
-
-	database, err := sql.Open("sqlite3", *settings.Database)
-	if err != nil {
-		log.Printf("error opening database %s: %s", *settings.Database, err.Error())
-		return
-	}
-	err = database.Ping()
-	if err != nil {
-		log.Printf("error pinging database: %s", err.Error())
-		return
-	}
-
-	tx, err := database.BeginTx(context.Background(), &sql.TxOptions{ReadOnly: false})
-	if err != nil {
-		log.Printf("can't create a context: %s", err.Error())
-		return
-	}
-	defer tx.Rollback()
 
 	var allCards CardSet
 	var dfcCards CardSet
@@ -213,8 +164,7 @@ func main() {
 		case "basic":
 			currentSet.Basics = append(currentSet.Basics, card)
 		default:
-			log.Printf("error with determining rarity for %v", card)
-			return
+			return fmt.Errorf("error with determining rarity for %v", card)
 		}
 	}
 
@@ -298,11 +248,11 @@ func main() {
 				}
 			}
 
-			if okPack(packs[i]) {
+			if okPack(packs[i], settings) {
 				i++
 			}
 		}
-		if !resetDraft && (okDraft(packs)) {
+		if !resetDraft && (okDraft(packs, settings)) {
 			break
 		}
 
@@ -318,7 +268,7 @@ func main() {
 
 	packIDs, err = generateEmptyDraft(tx, *settings.Name, *settings.Simulate)
 	if err != nil {
-		return
+		return err
 	}
 
 	re := regexp.MustCompile(`"FOIL_STATUS"`)
@@ -338,51 +288,40 @@ func main() {
 			tx.Exec(query, packID, packID, data)
 		}
 	}
-
-	if !*settings.Simulate {
-		err = tx.Commit()
-	} else {
-		err = nil
-	}
-
-	if err != nil {
-		log.Printf("can't commit :( %s", err.Error())
-	} else {
-		log.Printf("done!")
-	}
+	return nil
 }
 
 func generateEmptyDraft(tx *sql.Tx, name string, simulate bool) ([24]int64, error) {
 	var packIds [24]int64
 
 	dg, err := discordgo.New("Bot " + os.Getenv("DISCORD_BOT_TOKEN"))
-	if err != nil {
-		log.Printf("error creating spectator channel: %s", err)
-		return packIds, err
+	if err != nil && !simulate {
+		return packIds, fmt.Errorf("error creating spectator channel: %s", err)
 	}
 
 	var channel *discordgo.Channel
+	var channelID string
 	if !simulate {
 		channel, err = dg.GuildChannelCreate(GUILD_ID,
 			regexp.MustCompile("[^a-z-]").ReplaceAllString(strings.ToLower(name), "-") + "-spectators",
 			discordgo.ChannelTypeGuildText)
 		if err != nil {
-			log.Printf("error creating spectator channel: %s", err)
-			return packIds, err
+			return packIds, fmt.Errorf("error creating spectator channel: %s", err)
 		}
+		channelID = channel.ID
+	} else {
+		channelID = ""
 	}
 
 	query := `INSERT INTO drafts (name, spectatorchannelid) VALUES (?, ?);`
-	res, err := tx.Exec(query, name, channel.ID)
+	res, err := tx.Exec(query, name, channelID)
 	if err != nil {
-		log.Printf("error creating draft: %s", err)
-		return packIds, err
+		return packIds, fmt.Errorf("error creating draft: %s", err)
 	}
 
 	draftID, err := res.LastInsertId()
 	if err != nil {
-		log.Printf("could not get draft ID: %s", err)
-		return packIds, err
+		return packIds, fmt.Errorf("could not get draft ID: %s", err)
 	}
 
 	if !simulate {
@@ -391,8 +330,7 @@ func generateEmptyDraft(tx *sql.Tx, name string, simulate bool) ([24]int64, erro
 			ParentID: SPECTATORS_CATEGORY_ID,
 		})
 		if err != nil {
-			log.Printf("error creating spectator channel: %s", err)
-			return packIds, err
+			return packIds, fmt.Errorf("error creating spectator channel: %s", err)
 		}
 		err = dg.Close()
 		if err != nil {
@@ -405,13 +343,11 @@ func generateEmptyDraft(tx *sql.Tx, name string, simulate bool) ([24]int64, erro
 	for i := 0; i < 8; i++ {
 		res, err = tx.Exec(query, i, draftID)
 		if err != nil {
-			log.Printf("could not create seats in draft: %s", err)
-			return packIds, err
+			return packIds, fmt.Errorf("could not create seats in draft: %s", err)
 		}
 		seatIds[i], err = res.LastInsertId()
 		if err != nil {
-			log.Printf("could not finalize seat creation: %s", err)
-			return packIds, err
+			return packIds, fmt.Errorf("could not finalize seat creation: %s", err)
 		}
 	}
 
@@ -420,14 +356,12 @@ func generateEmptyDraft(tx *sql.Tx, name string, simulate bool) ([24]int64, erro
 		for j := 0; j < 4; j++ {
 			res, err = tx.Exec(query, seatIds[i], seatIds[i], j)
 			if err != nil {
-				log.Printf("error creating packs: %s", err)
-				return packIds, err
+				return packIds, fmt.Errorf("error creating packs: %s", err)
 			}
 			if j != 0 {
 				packIds[(3*i)+(j-1)], err = res.LastInsertId()
 				if err != nil {
-					log.Printf("error creating packs: %s", err)
-					return packIds, err
+					return packIds, fmt.Errorf("error creating packs: %s", err)
 				}
 			}
 		}
@@ -436,7 +370,7 @@ func generateEmptyDraft(tx *sql.Tx, name string, simulate bool) ([24]int64, erro
 	return packIds, nil
 }
 
-func okPack(pack [15]Card) bool {
+func okPack(pack [15]Card, settings Settings) bool {
 	passes := true
 	cardHash := make(map[string]int)
 	colorHash := make(map[rune]float64)
@@ -445,6 +379,7 @@ func okPack(pack [15]Card) bool {
 	var ratings []float64
 	totalCommons := 0
 	for _, card := range pack {
+		log.Printf("%v %v", card, settings.DfcMode)
 		if card.Foil || (*settings.DfcMode && card.Dfc) {
 			continue
 		}
@@ -567,7 +502,7 @@ func okPack(pack [15]Card) bool {
 	return passes
 }
 
-func okDraft(packs [24][15]Card) bool {
+func okDraft(packs [24][15]Card, settings Settings) bool {
 	if *settings.Verbose {
 		log.Printf("analyzing entire draft pool...")
 	}
