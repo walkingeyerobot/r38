@@ -311,9 +311,7 @@ func ServeAPISetPref(w http.ResponseWriter, r *http.Request, userID int64, tx *s
 		return fmt.Errorf("error updating user pref: %s", err.Error())
 	}
 
-	fmt.Fprint(w, "{}")
-
-	return nil
+	return ServeAPIPrefs(w, r, userID, tx)
 }
 
 // ServeAPIPick serves the /api/pick endpoint.
