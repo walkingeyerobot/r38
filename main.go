@@ -338,9 +338,9 @@ func doJoin(tx *sql.Tx, userID int64, draftID int64) error {
                  from seats
                  where draft = ?
                    and user is null
-                 order by random()
+                 order by seats.reserveduser = ? desc, random()
                  limit 1`
-	row = tx.QueryRow(query, draftID)
+	row = tx.QueryRow(query, draftID, userID)
 	var emptySeatID int64
 	err = row.Scan(&emptySeatID)
 	if err != nil {
@@ -1038,7 +1038,7 @@ func GetFilteredJSON(tx *sql.Tx, draftID int64, userID int64) (string, error) {
 		if myRound.Valid && myRound.Int64 >= 4 {
 			returnFullReplay = true
 		}
-	} else if userID != 0 && draftInfo.AvailableSeats == 0 {
+	} else if userID != 0 && draftInfo.AvailableSeats == 0 && draftInfo.ReservedSeats == 0 {
 		// If we're logged in AND the draft is full,
 		// we can see the full replay.
 		returnFullReplay = true
@@ -1109,36 +1109,40 @@ func GetDraftList(userID int64, tx *sql.Tx) (DraftList, error) {
 	query := `select
                     drafts.id,
                     drafts.name,
-                    sum(seats.user is null and seats.position is not null) as empty_seats,
+                    sum(seats.user is null and seats.reserveduser is null and seats.position is not null) as empty_seats,
+                    sum(seats.reserveduser not null) as reserved_seats,
                     coalesce(sum(seats.user = ?), 0) as joined,
+                    coalesce(sum(seats.reserveduser = ?), 0) as reserved,
                     min(seats.round) > 3 as finished
                   from drafts
                   left join seats on drafts.id = seats.draft
                   group by drafts.id
                   order by drafts.id asc`
 
-	rows, err := tx.Query(query, userID)
+	rows, err := tx.Query(query, userID, userID)
 	if err != nil {
 		return drafts, fmt.Errorf("can't get draft list: %s", err.Error())
 	}
 	defer rows.Close()
 	for rows.Next() {
 		var d DraftListEntry
-		err = rows.Scan(&d.ID, &d.Name, &d.AvailableSeats, &d.Joined, &d.Finished)
+		err = rows.Scan(&d.ID, &d.Name, &d.AvailableSeats, &d.ReservedSeats, &d.Joined, &d.Reserved, &d.Finished)
 		if err != nil {
 			return drafts, fmt.Errorf("can't get draft list: %s", err.Error())
 		}
 
-		// It looks like Status is able to be derrived by the client, but in the future
-		// we'll want to restrict who can join a given draft more.
 		if d.Joined {
 			d.Status = "member"
+		} else if d.Reserved {
+			d.Status = "reserved"
 		} else if d.Finished {
 			d.Status = "spectator"
 		} else if userID == 0 {
 			d.Status = "closed"
-		} else if d.AvailableSeats == 0 {
+		} else if d.AvailableSeats == 0 && d.ReservedSeats == 0 {
 			d.Status = "spectator"
+		} else if d.AvailableSeats == 0 {
+			d.Status = "closed"
 		} else {
 			d.Status = "joinable"
 		}

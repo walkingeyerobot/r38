@@ -61,11 +61,13 @@ export default Vue.extend({
 
   computed: {
     isJoinable(): boolean {
-      return this.descriptor.status == 'joinable';
+      return this.descriptor.status == 'joinable'
+          || this.descriptor.status == 'reserved';
     },
 
     isViewable(): boolean {
       return this.descriptor.status != 'joinable'
+          && this.descriptor.status != 'reserved'
           && this.descriptor.status != 'closed'
     },
   },
