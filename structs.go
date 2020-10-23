@@ -63,6 +63,7 @@ type DraftListEntry struct {
 	ID             int64  `json:"id"`
 	Joined         bool   `json:"joined"`
 	Reserved       bool   `json:"reserved"`
+	Skipped        bool   `json:"skipped"`
 	Name           string `json:"name"`
 	Status         string `json:"status"`
 }
