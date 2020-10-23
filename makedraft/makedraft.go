@@ -11,6 +11,7 @@ import (
 	"math"
 	"math/rand"
 	"os"
+	"path"
 	"regexp"
 	"sort"
 	"strings"
@@ -266,7 +267,9 @@ func MakeDraft(settings Settings, tx *sql.Tx) error {
 		log.Printf("pack attempts: %d", packAttempts)
 	}
 
-	packIDs, err = generateEmptyDraft(tx, *settings.Name, *settings.Simulate)
+	format := path.Base(*settings.Set)
+	format = strings.TrimSuffix(format, path.Ext(format))
+	packIDs, err = generateEmptyDraft(tx, *settings.Name, format, *settings.Simulate)
 	if err != nil {
 		return err
 	}
@@ -291,17 +294,24 @@ func MakeDraft(settings Settings, tx *sql.Tx) error {
 	return nil
 }
 
-func generateEmptyDraft(tx *sql.Tx, name string, simulate bool) ([24]int64, error) {
+func generateEmptyDraft(tx *sql.Tx, name string, format string, simulate bool) ([24]int64, error) {
 	var packIds [24]int64
 
-	dg, err := discordgo.New("Bot " + os.Getenv("DISCORD_BOT_TOKEN"))
-	if err != nil && !simulate {
-		return packIds, fmt.Errorf("error creating spectator channel: %s", err)
+	var dg *discordgo.Session
+	var err error
+	botToken := os.Getenv("DISCORD_BOT_TOKEN")
+	if !simulate && len(botToken) > 0 {
+		dg, err = discordgo.New("Bot " + botToken)
+		if err != nil {
+			return packIds, fmt.Errorf("error creating spectator channel: %s", err)
+		}
+	} else {
+		dg = nil
 	}
 
 	var channel *discordgo.Channel
 	var channelID string
-	if !simulate {
+	if dg != nil {
 		channel, err = dg.GuildChannelCreate(GUILD_ID,
 			regexp.MustCompile("[^a-z-]").ReplaceAllString(strings.ToLower(name), "-") + "-spectators",
 			discordgo.ChannelTypeGuildText)
@@ -313,8 +323,8 @@ func generateEmptyDraft(tx *sql.Tx, name string, simulate bool) ([24]int64, erro
 		channelID = ""
 	}
 
-	query := `INSERT INTO drafts (name, spectatorchannelid) VALUES (?, ?);`
-	res, err := tx.Exec(query, name, channelID)
+	query := `INSERT INTO drafts (name, spectatorchannelid, format) VALUES (?, ?, ?);`
+	res, err := tx.Exec(query, name, channelID, format)
 	if err != nil {
 		return packIds, fmt.Errorf("error creating draft: %s", err)
 	}
@@ -324,7 +334,7 @@ func generateEmptyDraft(tx *sql.Tx, name string, simulate bool) ([24]int64, erro
 		return packIds, fmt.Errorf("could not get draft ID: %s", err)
 	}
 
-	if !simulate {
+	if dg != nil {
 		_, err = dg.ChannelEditComplex(channel.ID, &discordgo.ChannelEdit{
 			Topic: fmt.Sprintf("<http://draft.thefoley.net/draft/%d>", draftID),
 			ParentID: SPECTATORS_CATEGORY_ID,
@@ -338,10 +348,19 @@ func generateEmptyDraft(tx *sql.Tx, name string, simulate bool) ([24]int64, erro
 		}
 	}
 
-	query = `INSERT INTO seats (position, draft) VALUES (?, ?)`
+	assignedUsers, err := AssignSeats(tx, draftID, format, 8)
+	if err != nil {
+		return packIds, fmt.Errorf("error assigning users: %s", err.Error())
+	}
 	var seatIds [8]int64
 	for i := 0; i < 8; i++ {
-		res, err = tx.Exec(query, i, draftID)
+		if len(assignedUsers) > i {
+			query = `INSERT INTO seats (position, draft, reserveduser) VALUES (?, ?, ?)`
+			res, err = tx.Exec(query, i, draftID, assignedUsers[i])
+		} else {
+			query = `INSERT INTO seats (position, draft) VALUES (?, ?)`
+			res, err = tx.Exec(query, i, draftID)
+		}
 		if err != nil {
 			return packIds, fmt.Errorf("could not create seats in draft: %s", err)
 		}
@@ -603,6 +622,52 @@ func okDraft(packs [24][15]Card, settings Settings) bool {
 	}
 
 	return passes
+}
+
+func AssignSeats(tx *sql.Tx, draftID int64, format string, numUsers int) ([]int, error) {
+	var minEpoch int
+	var maxEpoch int
+	query := `SELECT
+				min(epoch), max(epoch)
+				from userformats
+				where elig = 1 and format = ?`
+	row := tx.QueryRow(query, format)
+	err := row.Scan(&minEpoch, &maxEpoch)
+	if err != nil {
+		return nil, err
+	}
+	var draftEpoch int
+	if minEpoch == maxEpoch {
+		draftEpoch = maxEpoch + 1
+	} else {
+		draftEpoch = maxEpoch
+	}
+
+	query = `select
+				userformats.user
+				from userformats
+				left outer join skips on userformats.user = skips.user and skips.draft = ?
+				left outer join seats 
+				    on (userformats.user = seats.reserveduser or userformats.user = seats.user)
+						and seats.draft = ?
+				where elig = 1 and format = ? and skips.id is null and seats.id is null
+				order by epoch, random()
+				limit ?`
+	result, err := tx.Query(query, draftID, draftID, format, numUsers)
+	if err != nil {
+		return nil, err
+	}
+	var users []int
+	for result.Next() {
+		var user int
+		result.Scan(&user)
+		users = append(users, user)
+
+		query = `UPDATE userformats SET epoch = max(?, epoch + 1) where user = ? and format = ?`
+		_, err = tx.Exec(query, draftEpoch, user, format)
+	}
+
+	return users, nil
 }
 
 func stdev(list []float64) float64 {
