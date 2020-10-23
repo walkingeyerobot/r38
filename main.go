@@ -455,9 +455,30 @@ func doSkip(tx *sql.Tx, userID int64, draftID int64) error {
 		return err
 	}
 
-	// TODO: reserve for another user
-	query = `update seats set reserveduser = null where id = ?`
-	_, err = tx.Exec(query, reservedSeatID)
+	query = `select format from drafts where id = ?`
+	row = tx.QueryRow(query, draftID)
+	var format string
+	err = row.Scan(&format)
+	if err != nil {
+		return err
+	}
+	query = `update userformats set epoch = epoch - 1 where user = ? and format = ?`
+	_, err = tx.Exec(query, userID, format)
+	if err != nil {
+		return err
+	}
+
+	newUser, err := makedraft.AssignSeats(tx, draftID, format, 1)
+	if err != nil {
+		return err
+	}
+	if len(newUser) > 0 {
+		query = `update seats set reserveduser = ? where id = ?`
+		_, err = tx.Exec(query, newUser[0], reservedSeatID)
+	} else {
+		query = `update seats set reserveduser = null where id = ?`
+		_, err = tx.Exec(query, reservedSeatID)
+	}
 	if err != nil {
 		return err
 	}
