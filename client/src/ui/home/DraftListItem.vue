@@ -34,6 +34,14 @@ Represents one entry in the list of drafts that a user might view/join
         >
       Join
     </button>
+    <button
+        v-if="isSkippable"
+        class="join-btn"
+        @click.stop="onSkipClicked(descriptor.id)"
+        :disabled="joinFetchStatus == 'fetching'"
+        >
+      Skip
+    </button>
   </div>
 </template>
 
@@ -42,8 +50,9 @@ import Vue from 'vue';
 import { HomeDraftDescriptor } from '../../rest/api/draftlist/draftlist';
 import { FetchStatus } from '../infra/FetchStatus';
 import { fetchEndpoint } from '../../fetch/fetchEndpoint';
-import { ROUTE_JOIN_DRAFT } from '../../rest/api/join/join';
 import { pushDraftUrl } from '../../router/url_manipulation';
+import { ROUTE_JOIN_DRAFT } from '../../rest/api/join/join';
+import { ROUTE_SKIP_DRAFT } from '../../rest/api/skip/skip';
 
 export default Vue.extend({
   props: {
@@ -63,6 +72,10 @@ export default Vue.extend({
     isJoinable(): boolean {
       return this.descriptor.status == 'joinable'
           || this.descriptor.status == 'reserved';
+    },
+
+    isSkippable(): boolean {
+      return this.descriptor.status == 'reserved';
     },
 
     isViewable(): boolean {
@@ -85,6 +98,14 @@ export default Vue.extend({
       const response = await fetchEndpoint(ROUTE_JOIN_DRAFT, { id: draftId });
       this.joinFetchStatus = 'loaded';
       pushDraftUrl(this, { draftId });
+    },
+
+    async onSkipClicked(draftId: number) {
+      this.joinFetchStatus = 'fetching';
+      // TODO: Error handling
+      const response = await fetchEndpoint(ROUTE_SKIP_DRAFT, { id: draftId });
+      this.joinFetchStatus = 'loaded';
+      this.$emit('refreshDraftList')
     },
   },
 });

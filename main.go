@@ -193,6 +193,7 @@ func NewHandler(database *sql.DB, useAuth bool) http.Handler {
 	addHandler("/api/draftlist/", ServeAPIDraftList, true)
 	addHandler("/api/pick/", ServeAPIPick, false)
 	addHandler("/api/join/", ServeAPIJoin, false)
+	addHandler("/api/skip/", ServeAPISkip, false)
 
 	addHandler("/api/dev/forceEnd/", ServeAPIForceEnd, false)
 
@@ -334,7 +335,7 @@ func doJoin(tx *sql.Tx, userID int64, draftID int64) error {
 	}
 
 	query = `select
-                   id
+                   id, seats.reserveduser
                  from seats
                  where draft = ?
                    and user is null
@@ -342,9 +343,13 @@ func doJoin(tx *sql.Tx, userID int64, draftID int64) error {
                  limit 1`
 	row = tx.QueryRow(query, draftID, userID)
 	var emptySeatID int64
-	err = row.Scan(&emptySeatID)
+	var reservedUser sql.NullInt64
+	err = row.Scan(&emptySeatID, &reservedUser)
 	if err != nil {
 		return err
+	}
+	if reservedUser.Valid && reservedUser.Int64 != userID {
+		return fmt.Errorf("no non-reserved seats available for user %d in draft %d", userID, draftID)
 	}
 
 	query = `update seats set user = ? where id = ?`
@@ -379,7 +384,88 @@ func doJoin(tx *sql.Tx, userID int64, draftID int64) error {
 	return nil
 }
 
-// ServeAPIJoin serves the /api/dev/forceEnd testing endpoint.
+// ServeAPISkip serves the /api/skip endpoint.
+func ServeAPISkip(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx) error {
+	if r.Method != "POST" {
+		// we have to return an error manually here because we want to return
+		// a different http status code.
+		tx.Rollback()
+		http.Error(w, "invalid request method", http.StatusMethodNotAllowed)
+		return nil
+	}
+
+	bodyBytes, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		return fmt.Errorf("error reading post body: %s", err.Error())
+	}
+	var toJoin PostedJoin
+	err = json.Unmarshal(bodyBytes, &toJoin)
+	if err != nil {
+		return fmt.Errorf("error parsing post body: %s", err.Error())
+	}
+
+	draftID := toJoin.ID
+
+	err = doSkip(tx, userID, draftID)
+	if err != nil {
+		return fmt.Errorf("error skipping draft %d: %s", draftID, err.Error())
+	}
+
+	draftJSON, err := GetFilteredJSON(tx, draftID, userID)
+	if err != nil {
+		return fmt.Errorf("error getting json: %s", err.Error())
+	}
+
+	fmt.Fprint(w, draftJSON)
+	return nil
+}
+
+// doSkip does the actual skipping.
+func doSkip(tx *sql.Tx, userID int64, draftID int64) error {
+	query := `select
+                    count(1)
+                  from seats
+                  where draft = ?
+                    and user = ?`
+	row := tx.QueryRow(query, draftID, userID)
+	var alreadyJoined int64
+	err := row.Scan(&alreadyJoined)
+	if err != nil {
+		return err
+	} else if alreadyJoined > 0 {
+		return fmt.Errorf("user %d already joined %d", userID, draftID)
+	}
+
+	query = `select
+                   id
+                 from seats
+                 where draft = ?
+                   and reserveduser = ?
+                 limit 1`
+	row = tx.QueryRow(query, draftID, userID)
+	var reservedSeatID int64
+	err = row.Scan(&reservedSeatID)
+	if err != nil {
+		return err
+	}
+
+	query = `insert into skips (user, draft) values (?, ?)`
+	_, err = tx.Exec(query, userID, draftID)
+	if err != nil {
+		return err
+	}
+
+	// TODO: reserve for another user
+	query = `update seats set reserveduser = null where id = ?`
+	_, err = tx.Exec(query, reservedSeatID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// ServeAPIForceEnd serves the /api/dev/forceEnd testing endpoint.
 func ServeAPIForceEnd(_ http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx) error {
 	if userID == 1 {
 		bodyBytes, err := ioutil.ReadAll(r.Body)
@@ -1110,23 +1196,32 @@ func GetDraftList(userID int64, tx *sql.Tx) (DraftList, error) {
                     drafts.id,
                     drafts.name,
                     sum(seats.user is null and seats.reserveduser is null and seats.position is not null) as empty_seats,
-                    sum(seats.reserveduser not null) as reserved_seats,
+                    sum(seats.reserveduser not null and seats.user is null) as reserved_seats,
                     coalesce(sum(seats.user = ?), 0) as joined,
                     coalesce(sum(seats.reserveduser = ?), 0) as reserved,
+                    coalesce(skips.user = ?, 0) as skipped,
                     min(seats.round) > 3 as finished
                   from drafts
                   left join seats on drafts.id = seats.draft
+                  left join skips on drafts.id = skips.draft and skips.user = ?
                   group by drafts.id
                   order by drafts.id asc`
 
-	rows, err := tx.Query(query, userID, userID)
+	rows, err := tx.Query(query, userID, userID, userID, userID)
 	if err != nil {
 		return drafts, fmt.Errorf("can't get draft list: %s", err.Error())
 	}
 	defer rows.Close()
 	for rows.Next() {
 		var d DraftListEntry
-		err = rows.Scan(&d.ID, &d.Name, &d.AvailableSeats, &d.ReservedSeats, &d.Joined, &d.Reserved, &d.Finished)
+		err = rows.Scan(&d.ID,
+			&d.Name,
+			&d.AvailableSeats,
+			&d.ReservedSeats,
+			&d.Joined,
+			&d.Reserved,
+			&d.Skipped,
+			&d.Finished)
 		if err != nil {
 			return drafts, fmt.Errorf("can't get draft list: %s", err.Error())
 		}
@@ -1141,7 +1236,7 @@ func GetDraftList(userID int64, tx *sql.Tx) (DraftList, error) {
 			d.Status = "closed"
 		} else if d.AvailableSeats == 0 && d.ReservedSeats == 0 {
 			d.Status = "spectator"
-		} else if d.AvailableSeats == 0 {
+		} else if d.AvailableSeats == 0 || d.Skipped {
 			d.Status = "closed"
 		} else {
 			d.Status = "joinable"

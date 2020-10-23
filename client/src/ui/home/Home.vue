@@ -19,6 +19,7 @@
           class="list-item"
           :key="descriptor.id"
           :descriptor="descriptor"
+          v-on:refreshDraftList="refreshDraftList"
           />
 
       <DraftListItem
@@ -26,6 +27,7 @@
           class="list-item"
           :key="descriptor.id"
           :descriptor="descriptor"
+          v-on:refreshDraftList="refreshDraftList"
           />
 
     </div>
@@ -56,14 +58,7 @@ export default Vue.extend({
   },
 
   async created() {
-    this.listFetchStatus = 'fetching';
-    const response =
-        await fetchEndpoint(routeDraftlist, {
-          as: authStore.user?.id,
-        });
-    this.listFetchStatus = 'loaded';
-    // TODO: catch and show error
-    this.drafts = response.drafts;
+    await this.refreshDraftList();
   },
 
   computed: {
@@ -81,6 +76,19 @@ export default Vue.extend({
       return authStore.user?.id != 0;
     },
   },
+
+  methods: {
+    async refreshDraftList() {
+        this.listFetchStatus = 'fetching';
+        const response =
+            await fetchEndpoint(routeDraftlist, {
+              as: authStore.user?.id,
+            });
+        this.listFetchStatus = 'loaded';
+        // TODO: catch and show error
+        this.drafts = response.drafts;
+      }
+    },
 });
 
 </script>
