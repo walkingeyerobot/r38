@@ -75,6 +75,18 @@ type UserInfo struct {
 	ID      int64  `json:"userId"`
 }
 
+
+// UserPrefs is turned into JSON and used for the REST API.
+type UserPrefs struct {
+	Prefs []UserPrefsEntry `json:"prefs"`
+}
+
+// UserPrefsEntry is turned into JSON and used for the REST API.
+type UserPrefsEntry struct {
+	Format         string `json:"format"`
+	Elig           bool   `json:"elig"`
+}
+
 // These structs are for receiving data from the client.
 
 // PostedPick is JSON accepted from the client when a user makes a pick.

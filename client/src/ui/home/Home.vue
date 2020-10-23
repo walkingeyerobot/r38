@@ -7,6 +7,9 @@
         <a v-if="!loggedIn" class="login-btn" href="/auth/discord/login">
           Log in
         </a>
+        <a v-if="loggedIn" href="/prefs">
+          <img class="user-img" :src="userPic">
+        </a>
       </div>
     </div>
 
@@ -75,6 +78,10 @@ export default Vue.extend({
     loggedIn(): boolean {
       return authStore.user?.id != 0;
     },
+
+    userPic(): string | undefined {
+      return authStore.user?.picture
+    }
   },
 
   methods: {
@@ -117,6 +124,7 @@ export default Vue.extend({
   display: flex;
   flex-direction: row;
   justify-content: flex-end;
+  margin-right: 20px;
 }
 
 .login-btn {
@@ -148,6 +156,12 @@ export default Vue.extend({
 
 .list-item:last-child {
   border-bottom: 1px solid #e0e0e0;
+}
+
+.user-img {
+  width: 28px;
+  margin-left: 10px;
+  border-radius: 20px;
 }
 
 @media only screen and (max-width: 768px) {

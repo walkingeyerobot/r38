@@ -194,6 +194,8 @@ func NewHandler(database *sql.DB, useAuth bool) http.Handler {
 	addHandler("/api/pick/", ServeAPIPick, false)
 	addHandler("/api/join/", ServeAPIJoin, false)
 	addHandler("/api/skip/", ServeAPISkip, false)
+	addHandler("/api/prefs/", ServeAPIPrefs, true)
+	addHandler("/api/setpref/", ServeAPISetPref, false)
 
 	addHandler("/api/dev/forceEnd/", ServeAPIForceEnd, false)
 
@@ -236,6 +238,53 @@ func ServeAPIDraftList(w http.ResponseWriter, r *http.Request, userID int64, tx 
 		return err
 	}
 	json.NewEncoder(w).Encode(drafts)
+	return nil
+}
+
+// ServeAPIPrefs serves the /api/prefs endpoint.
+func ServeAPIPrefs(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx) error {
+	prefs, err := GetUserPrefs(userID, tx)
+	if err != nil {
+		return err
+	}
+	json.NewEncoder(w).Encode(prefs)
+	return nil
+}
+
+// ServeAPISetPref serves the /api/setpref endpoint.
+func ServeAPISetPref(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx) error {
+	if r.Method != "POST" {
+		// we have to return an error manually here because we want to return
+		// a different http status code.
+		tx.Rollback()
+		http.Error(w, "invalid request method", http.StatusMethodNotAllowed)
+		return nil
+	}
+
+	bodyBytes, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		return fmt.Errorf("error reading post body: %s", err.Error())
+	}
+	var pref UserPrefsEntry
+	err = json.Unmarshal(bodyBytes, &pref)
+	if err != nil {
+		return fmt.Errorf("error parsing post body: %s", err.Error())
+	}
+
+	var elig int
+	if pref.Elig {
+		elig = 1
+	} else {
+		elig = 0
+	}
+	query := `update userformats set elig = ? where user = ? and format = ?`
+	_, err = tx.Exec(query, elig, userID, pref.Format)
+	if err != nil {
+		return fmt.Errorf("error updating user pref: %s", err.Error())
+	}
+
+	fmt.Fprint(w, "{}")
+
 	return nil
 }
 
@@ -1283,6 +1332,26 @@ func GetDraftListEntry(userID int64, tx *sql.Tx, draftID int64) (DraftListEntry,
 	}
 
 	return ret, fmt.Errorf("could not find draft id %d", draftID)
+}
+
+func GetUserPrefs(userID int64, tx *sql.Tx) (UserPrefs, error) {
+	var prefs UserPrefs
+
+	query := `select 
+				format, elig
+				from userformats
+				where user = ?`
+	result, err := tx.Query(query, userID)
+	if err != nil {
+		return prefs, err
+	}
+	for result.Next() {
+		var pref UserPrefsEntry
+		err = result.Scan(&pref.Format, &pref.Elig)
+		prefs.Prefs = append(prefs.Prefs, pref)
+	}
+
+	return prefs, nil
 }
 
 func DiscordReady(s *discordgo.Session, event *discordgo.Ready) {

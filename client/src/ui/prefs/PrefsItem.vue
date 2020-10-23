@@ -1,0 +1,86 @@
+<template>
+  <label
+      class="_prefs-item"
+      :for="pref.format"
+      >
+    {{ pref.format }}
+    <input
+        :id="pref.format"
+        type="checkbox"
+        class="checkbox"
+        v-model="pref.elig"
+        @change="toggle"
+        />
+    <span class="styled-checkbox" />
+  </label>
+</template>
+
+<script lang="ts">
+import Vue from 'vue';
+import { routeSetPref, UserPrefDescriptor } from '../../rest/api/prefs/prefs';
+import { fetchEndpoint } from '../../fetch/fetchEndpoint';
+export default Vue.extend({
+  props: {
+    pref: {
+      type: Object as () => UserPrefDescriptor,
+      required: true,
+    }
+  },
+
+  methods: {
+    async toggle() {
+      await fetchEndpoint(routeSetPref,
+          {format: this.pref.format, elig: this.pref.elig});
+    }
+  }
+});
+</script>
+
+<style scoped>
+._prefs-item {
+  display: block;
+  padding-top: 20px;
+  padding-bottom: 20px;
+  cursor: pointer;
+  font-size: 25px;
+}
+
+._prefs-item:hover {
+  background: #eee;
+}
+
+.checkbox {
+  clip-path: polygon(0 0);
+}
+
+.styled-checkbox {
+  height: 20px;
+  width: 40px;
+  border-radius: 10px;
+  background: #ccc;
+  display: inline-block;
+  position: relative;
+  transition: background-color 250ms;
+}
+
+.checkbox:checked ~ .styled-checkbox {
+  background: #c54818;
+}
+
+.styled-checkbox::after {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 3px;
+  height: 14px;
+  width: 14px;
+  border-radius: 7px;
+  background: white;
+  transition: transform 250ms;
+}
+
+.checkbox:checked ~ .styled-checkbox::after {
+  transform: translateX(20px);
+}
+
+</style>

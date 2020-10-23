@@ -25,6 +25,11 @@ const routes = [
         import(/* webpackChunkName: 'login' */ '../ui/login/Login.vue'),
   },
   {
+    path: `/prefs`,
+    component: () =>
+        import(/* webpackChunkName: 'prefs' */ '../ui/prefs/Prefs.vue'),
+  },
+  {
     path: `/replay/:draftId(\\d+)/:param*`,
     component: () =>
         import(/* webpackChunkName: 'replay' */ '../ui/Replay.vue'),
