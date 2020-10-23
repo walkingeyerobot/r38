@@ -68,12 +68,12 @@ export default Vue.extend({
 
   computed: {
     joinableDrafts(): HomeDraftDescriptor[] {
-      return this.drafts.filter(value => value.status == 'joinable');
+      return this.drafts.filter(value => value.status == 'joinable' || value.status == 'reserved');
     },
 
     otherDrafts(): HomeDraftDescriptor[] {
       return this.drafts
-          .filter(value => value.status != 'joinable')
+          .filter(value => value.status != 'joinable' && value.status != 'reserved')
           .sort((a, b) => b.id - a.id);
     },
 

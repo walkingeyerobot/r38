@@ -2,24 +2,7 @@ package main
 
 // These structs are for supplying page data to .tmpl files
 
-// Draft describes a draft for the purposes of the index page.
-type Draft struct {
-	Name       string
-	ID         int64
-	Seats      int64
-	Joined     bool
-	Joinable   bool
-	Replayable bool
-}
-
-// IndexPageData is the input to index.tmpl.
-type IndexPageData struct {
-	Drafts  []Draft
-	ViewURL string
-	UserID  int64
-}
-
-// ReplayPageData is the input to replay.tmpl.
+// VuePageData is the input to the Vue shell template.
 type VuePageData struct {
 	UserJSON string
 }
@@ -75,9 +58,11 @@ type DraftList struct {
 // DraftListEntry is turned into JSON and used for the REST API.
 type DraftListEntry struct {
 	AvailableSeats int64  `json:"availableSeats"`
+	ReservedSeats  int64  `json:"reservedSeats"`
 	Finished       bool   `json:"finished"`
 	ID             int64  `json:"id"`
 	Joined         bool   `json:"joined"`
+	Reserved       bool   `json:"reserved"`
 	Name           string `json:"name"`
 	Status         string `json:"status"`
 }
