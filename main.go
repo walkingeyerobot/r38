@@ -335,7 +335,7 @@ func doJoin(tx *sql.Tx, userID int64, draftID int64) error {
 	}
 
 	query = `select
-                   id
+                   id, seats.reserveduser
                  from seats
                  where draft = ?
                    and user is null
@@ -343,9 +343,13 @@ func doJoin(tx *sql.Tx, userID int64, draftID int64) error {
                  limit 1`
 	row = tx.QueryRow(query, draftID, userID)
 	var emptySeatID int64
-	err = row.Scan(&emptySeatID)
+	var reservedUser sql.NullInt64
+	err = row.Scan(&emptySeatID, &reservedUser)
 	if err != nil {
 		return err
+	}
+	if reservedUser.Valid && reservedUser.Int64 != userID {
+		return fmt.Errorf("no non-reserved seats available for user %d in draft %d", userID, draftID)
 	}
 
 	query = `update seats set user = ? where id = ?`
@@ -1192,19 +1196,18 @@ func GetDraftList(userID int64, tx *sql.Tx) (DraftList, error) {
                     drafts.id,
                     drafts.name,
                     sum(seats.user is null and seats.reserveduser is null and seats.position is not null) as empty_seats,
-                    sum(seats.reserveduser not null) as reserved_seats,
+                    sum(seats.reserveduser not null and seats.user is null) as reserved_seats,
                     coalesce(sum(seats.user = ?), 0) as joined,
                     coalesce(sum(seats.reserveduser = ?), 0) as reserved,
-                    coalesce(skips.user = 1, 0) as skipped,
+                    coalesce(skips.user = ?, 0) as skipped,
                     min(seats.round) > 3 as finished
                   from drafts
                   left join seats on drafts.id = seats.draft
-                  left join skips on drafts.id = skips.draft
-                  where skips.user is null or skips.user = ?
+                  left join skips on drafts.id = skips.draft and skips.user = ?
                   group by drafts.id
                   order by drafts.id asc`
 
-	rows, err := tx.Query(query, userID, userID, userID)
+	rows, err := tx.Query(query, userID, userID, userID, userID)
 	if err != nil {
 		return drafts, fmt.Errorf("can't get draft list: %s", err.Error())
 	}
