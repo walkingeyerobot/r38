@@ -34,6 +34,7 @@ type r38handler func(w http.ResponseWriter, r *http.Request, userId int64, tx *s
 const FOREST_BEAR_ID = "700900270153924608"
 const FOREST_BEAR = ":forestbear:" + FOREST_BEAR_ID
 const DRAFT_ALERTS_ROLE = "692079611680653442"
+const DRAFT_FRIEND_ROLE = "692865288554938428"
 const BOSS = "176164707026206720"
 const PINK = 0xE50389
 
@@ -271,13 +272,40 @@ func ServeAPISetPref(w http.ResponseWriter, r *http.Request, userID int64, tx *s
 		return fmt.Errorf("error parsing post body: %s", err.Error())
 	}
 
+	var query string
+	if dg != nil {
+		query := `select discord_id from users where id = ?`
+		row := tx.QueryRow(query, userID)
+		var discordId sql.NullString
+		err = row.Scan(&discordId)
+		if err != nil {
+			return err
+		}
+		if !discordId.Valid {
+			return fmt.Errorf("user %d with no discord ID can't enable formats", userID)
+		}
+		member, err := dg.GuildMember(makedraft.GUILD_ID, discordId.String)
+		if err != nil {
+			return err
+		}
+		isDraftFriend := false
+		for _, role := range member.Roles {
+			if role == DRAFT_FRIEND_ROLE {
+				isDraftFriend = true
+			}
+		}
+		if !isDraftFriend {
+			return fmt.Errorf("user %d is not draft friend, can't enable formats", userID)
+		}
+	}
+
 	var elig int
 	if pref.Elig {
 		elig = 1
 	} else {
 		elig = 0
 	}
-	query := `update userformats set elig = ? where user = ? and format = ?`
+	query = `update userformats set elig = ? where user = ? and format = ?`
 	_, err = tx.Exec(query, elig, userID, pref.Format)
 	if err != nil {
 		return fmt.Errorf("error updating user pref: %s", err.Error())
