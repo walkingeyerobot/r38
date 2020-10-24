@@ -25,6 +25,7 @@ export default Vue.extend({
           id: parsed.userId,
           name: parsed.name,
           picture: parsed.picture || DefaultAvatar,
+          mtgoName: parsed.mtgoName,
         });
       }
     },
@@ -54,6 +55,7 @@ interface SourceUserInfo {
   name: string;
   picture: string;
   userId: number;
+  mtgoName: string;
 }
 </script>
 

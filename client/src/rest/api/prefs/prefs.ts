@@ -23,3 +23,12 @@ export interface UserPrefDescriptor {
   format: string;
   elig: boolean;
 }
+
+export const routeSetMtgoName = endpoint({
+  route: '/api/setmtgoname/',
+  method: 'post',
+  bodyVars: {
+    mtgoName: '' as string,
+  },
+  response: {},
+});

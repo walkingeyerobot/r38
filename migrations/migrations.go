@@ -7,6 +7,7 @@ import (
 var Migrations = []migration.Migrator{
 	initialSchema,
 	discordBotSupport,
+	addMtgoName,
 }
 
 func initialSchema(tx migration.LimitedTx) error {
@@ -31,5 +32,10 @@ func discordBotSupport(tx migration.LimitedTx) error {
 		CREATE TABLE userformats ( id integer primary key autoincrement, user number, format string, epoch number, elig number);
 		ALTER TABLE drafts ADD COLUMN spectatorchannelid string;
 		ALTER TABLE seats ADD COLUMN reserveduser number;`)
+	return err
+}
+
+func addMtgoName(tx migration.LimitedTx) error {
+	_, err := tx.Exec(`ALTER TABLE users ADD COLUMN mtgo_name string;`)
 	return err
 }

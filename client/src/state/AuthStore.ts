@@ -35,4 +35,5 @@ export interface AuthenticatedUser {
   id: number;
   name: string;
   picture: string;
+  mtgoName: string;
 }

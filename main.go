@@ -200,6 +200,7 @@ func NewHandler(database *sql.DB, useAuth bool) http.Handler {
 	addHandler("/api/skip/", ServeAPISkip, false)
 	addHandler("/api/prefs/", ServeAPIPrefs, true)
 	addHandler("/api/setpref/", ServeAPISetPref, false)
+	addHandler("/api/setmtgoname/", ServeAPISetMtgoName, false)
 
 	addHandler("/api/dev/forceEnd/", ServeAPIForceEnd, false)
 
@@ -312,6 +313,37 @@ func ServeAPISetPref(w http.ResponseWriter, r *http.Request, userID int64, tx *s
 	_, err = tx.Exec(query, elig, userID, pref.Format)
 	if err != nil {
 		return fmt.Errorf("error updating user pref: %s", err.Error())
+	}
+
+	return ServeAPIPrefs(w, r, userID, tx)
+}
+
+// ServeAPISetMtgoName serves the /api/setmtgoname endpoint.
+func ServeAPISetMtgoName(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx) error {
+	if r.Method != "POST" {
+		// we have to return an error manually here because we want to return
+		// a different http status code.
+		tx.Rollback()
+		http.Error(w, "invalid request method", http.StatusMethodNotAllowed)
+		return nil
+	}
+
+	bodyBytes, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		return fmt.Errorf("error reading post body: %s", err.Error())
+	}
+	var postedMtgoName PostedMtgoName
+	err = json.Unmarshal(bodyBytes, &postedMtgoName)
+	if err != nil {
+		return fmt.Errorf("error parsing post body: %s", err.Error())
+	}
+
+	var query string
+
+	query = `update users set mtgo_name = ? where id = ?`
+	_, err = tx.Exec(query, postedMtgoName.MtgoName, userID)
+	if err != nil {
+		return fmt.Errorf("error updating user MTGO name: %s", err.Error())
 	}
 
 	return ServeAPIPrefs(w, r, userID, tx)
@@ -592,13 +624,18 @@ func ServeVueApp(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.T
 		query := `select
                             id,
                             discord_name,
+       						mtgo_name,
                             picture
                           from users
                           where id = ?`
 		row := tx.QueryRow(query, userID)
-		err := row.Scan(&userInfo.ID, &userInfo.Name, &userInfo.Picture)
+		var mtgoName sql.NullString
+		err := row.Scan(&userInfo.ID, &userInfo.Name, &mtgoName, &userInfo.Picture)
 		if err != nil {
 			return err
+		}
+		if mtgoName.Valid {
+			userInfo.MtgoName = mtgoName.String
 		}
 	}
 
@@ -1093,6 +1130,7 @@ func GetJSONObject(tx *sql.Tx, draftID int64) (DraftJSON, error) {
                     seats.position,
                     packs.round,
                     users.discord_name,
+                    users.mtgo_name,
                     cards.id,
                     users.id,
                     cards.data,
@@ -1114,11 +1152,21 @@ func GetJSONObject(tx *sql.Tx, draftID int64) (DraftJSON, error) {
 		var position int64
 		var packRound int64
 		var cardID int64
-		var nullableDiscordID sql.NullString
+		var nullableDiscordName sql.NullString
+		var nullableMtgoName sql.NullString
 		var draftUserID sql.NullInt64
 		var cardData string
 		var nullablePicture sql.NullString
-		err = rows.Scan(&draft.DraftID, &draft.DraftName, &position, &packRound, &nullableDiscordID, &cardID, &draftUserID, &cardData, &nullablePicture)
+		err = rows.Scan(&draft.DraftID,
+			&draft.DraftName,
+			&position,
+			&packRound,
+			&nullableDiscordName,
+			&nullableMtgoName,
+			&cardID,
+			&draftUserID,
+			&cardData,
+			&nullablePicture)
 		if err != nil {
 			return draft, err
 		}
@@ -1136,7 +1184,10 @@ func GetJSONObject(tx *sql.Tx, draftID int64) (DraftJSON, error) {
 		nextIndex := indices[position][packRound]
 
 		draft.Seats[position].Packs[packRound][nextIndex] = dataObj
-		draft.Seats[position].PlayerName = nullableDiscordID.String
+		draft.Seats[position].PlayerName = nullableDiscordName.String
+		if nullableMtgoName.Valid {
+			draft.Seats[position].MtgoName = nullableMtgoName.String
+		}
 		draft.Seats[position].PlayerID = draftUserID.Int64
 		draft.Seats[position].PlayerImage = nullablePicture.String
 

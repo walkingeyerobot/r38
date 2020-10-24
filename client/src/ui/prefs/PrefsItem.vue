@@ -39,10 +39,7 @@ export default Vue.extend({
 <style scoped>
 ._prefs-item {
   display: block;
-  padding-top: 20px;
-  padding-bottom: 20px;
   cursor: pointer;
-  font-size: 25px;
 }
 
 ._prefs-item:hover {

@@ -85,7 +85,7 @@ export default Vue.extend({
     async exportedDecksZip(): Promise<string> {
       if (this.libLoaded) {
         return await exportLoader.chunk.decksToBinderZip(
-            store.decks, store.names);
+            store.decks, store.names, store.mtgoNames);
       } else {
         return '';
       }
