@@ -22,7 +22,9 @@ import (
 	"time"
 
 	"./makedraft"
+	"./migrations"
 
+	"github.com/BurntSushi/migration"
 	"github.com/bwmarrin/discordgo"
 	"github.com/google/shlex"
 	"github.com/gorilla/sessions"
@@ -47,8 +49,9 @@ func main() {
 	useAuthPtr := flag.Bool("auth", true, "bool")
 	flag.Parse()
 
-	database, err := sql.Open("sqlite3", "draft.db")
+	database, err := migration.Open("sqlite3", "draft.db", migrations.Migrations)
 	if err != nil {
+		log.Printf("error opening db: %s", err.Error())
 		return
 	}
 	err = database.Ping()
