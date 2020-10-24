@@ -13,8 +13,8 @@ export const routeSetPref = endpoint({
   route: '/api/setpref/',
   method: 'post',
   bodyVars: {
-    format: '' as string,
-    elig: false as boolean,
+    pref: {} as UserPrefDescriptor | undefined,
+    mtgoName: '' as string | undefined,
   },
   response: {},
 });
@@ -23,12 +23,3 @@ export interface UserPrefDescriptor {
   format: string;
   elig: boolean;
 }
-
-export const routeSetMtgoName = endpoint({
-  route: '/api/setmtgoname/',
-  method: 'post',
-  bodyVars: {
-    mtgoName: '' as string,
-  },
-  response: {},
-});

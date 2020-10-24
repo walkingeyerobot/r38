@@ -8,7 +8,7 @@
       <label
           for="mtgoName"
           class="mtgo-label"
-          >
+      >
         MTGO name:
       </label>
       <input
@@ -19,11 +19,11 @@
           @change="onMtgoNameChanged"
           @input="confirmed = false"
           @keyup.enter="$event.target.blur()"
-          />
+      />
       <span
           class="confirm"
           :hidden="!confirmed"
-          >
+      >
         ✓
       </span>
     </div>
@@ -32,13 +32,13 @@
         class="list-item"
         :key="pref.name"
         :pref="pref"
-        />
+    />
   </div>
 </template>
 
 <script lang="ts">
 import Vue from 'vue';
-import { routePrefs, routeSetMtgoName, UserPrefDescriptor } from '../../rest/api/prefs/prefs';
+import { routePrefs, routeSetPref, UserPrefDescriptor } from '../../rest/api/prefs/prefs';
 import { fetchEndpoint } from '../../fetch/fetchEndpoint';
 import { AuthStore, authStore } from '../../state/AuthStore';
 import PrefsItem from './PrefsItem.vue';
@@ -73,8 +73,8 @@ export default Vue.extend({
   methods: {
     async onMtgoNameChanged() {
       if (authStore.user) {
-        await fetchEndpoint(routeSetMtgoName,
-            {mtgoName: authStore.user.mtgoName});
+        await fetchEndpoint(routeSetPref,
+            {pref: undefined, mtgoName: authStore.user.mtgoName});
         this.confirmed = true;
       }
     }

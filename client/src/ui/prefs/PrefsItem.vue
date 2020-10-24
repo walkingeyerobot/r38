@@ -2,7 +2,7 @@
   <label
       class="_prefs-item"
       :for="pref.format"
-      >
+  >
     {{ pref.format }}
     <input
         :id="pref.format"
@@ -10,8 +10,8 @@
         class="checkbox"
         v-model="pref.elig"
         @change="toggle"
-        />
-    <span class="styled-checkbox" />
+    />
+    <span class="styled-checkbox"/>
   </label>
 </template>
 
@@ -19,6 +19,7 @@
 import Vue from 'vue';
 import { routeSetPref, UserPrefDescriptor } from '../../rest/api/prefs/prefs';
 import { fetchEndpoint } from '../../fetch/fetchEndpoint';
+
 export default Vue.extend({
   props: {
     pref: {
@@ -30,7 +31,10 @@ export default Vue.extend({
   methods: {
     async toggle() {
       await fetchEndpoint(routeSetPref,
-          {format: this.pref.format, elig: this.pref.elig});
+          {
+            pref: {format: this.pref.format, elig: this.pref.elig},
+            mtgoName: undefined
+          });
     }
   }
 });

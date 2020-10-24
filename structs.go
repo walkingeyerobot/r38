@@ -77,14 +77,13 @@ type UserInfo struct {
 	MtgoName string `json:"mtgoName"`
 }
 
-
-// UserPrefs is turned into JSON and used for the REST API.
-type UserPrefs struct {
-	Prefs []UserPrefsEntry `json:"prefs"`
+// UserFormatPrefs is turned into JSON and used for the REST API.
+type UserFormatPrefs struct {
+	Prefs []UserFormatPref `json:"prefs"`
 }
 
-// UserPrefsEntry is turned into JSON and used for the REST API.
-type UserPrefsEntry struct {
+// UserFormatPref is turned into JSON and used for the REST API.
+type UserFormatPref struct {
 	Format         string `json:"format"`
 	Elig           bool   `json:"elig"`
 }
@@ -101,9 +100,10 @@ type PostedJoin struct {
 	ID int64 `json:"id"`
 }
 
-// PostedJoin is JSON accepted from the client when a user changes their MTGO name.
-type PostedMtgoName struct {
-	MtgoName string `json:"mtgoName"`
+// PostedJoin is JSON accepted from the client when a user changes their preferences.
+type PostedPref struct {
+	MtgoName   string         `json:"mtgoName"`
+	FormatPref UserFormatPref `json:"pref"`
 }
 
 // These structs are for exporting in bulk to .dek files.

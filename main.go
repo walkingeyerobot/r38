@@ -200,7 +200,6 @@ func NewHandler(database *sql.DB, useAuth bool) http.Handler {
 	addHandler("/api/skip/", ServeAPISkip, false)
 	addHandler("/api/prefs/", ServeAPIPrefs, true)
 	addHandler("/api/setpref/", ServeAPISetPref, false)
-	addHandler("/api/setmtgoname/", ServeAPISetMtgoName, false)
 
 	addHandler("/api/dev/forceEnd/", ServeAPIForceEnd, false)
 
@@ -270,80 +269,59 @@ func ServeAPISetPref(w http.ResponseWriter, r *http.Request, userID int64, tx *s
 	if err != nil {
 		return fmt.Errorf("error reading post body: %s", err.Error())
 	}
-	var pref UserPrefsEntry
+	var pref PostedPref
 	err = json.Unmarshal(bodyBytes, &pref)
 	if err != nil {
 		return fmt.Errorf("error parsing post body: %s", err.Error())
 	}
 
-	var query string
-	if dg != nil {
-		query := `select discord_id from users where id = ?`
-		row := tx.QueryRow(query, userID)
-		var discordId sql.NullString
-		err = row.Scan(&discordId)
-		if err != nil {
-			return err
-		}
-		if !discordId.Valid {
-			return fmt.Errorf("user %d with no discord ID can't enable formats", userID)
-		}
-		member, err := dg.GuildMember(makedraft.GUILD_ID, discordId.String)
-		if err != nil {
-			return err
-		}
-		isDraftFriend := false
-		for _, role := range member.Roles {
-			if role == DRAFT_FRIEND_ROLE {
-				isDraftFriend = true
+	if pref.FormatPref.Format != "" {
+		var query string
+		if dg != nil {
+			query := `select discord_id from users where id = ?`
+			row := tx.QueryRow(query, userID)
+			var discordId sql.NullString
+			err = row.Scan(&discordId)
+			if err != nil {
+				return err
+			}
+			if !discordId.Valid {
+				return fmt.Errorf("user %d with no discord ID can't enable formats", userID)
+			}
+			member, err := dg.GuildMember(makedraft.GUILD_ID, discordId.String)
+			if err != nil {
+				return err
+			}
+			isDraftFriend := false
+			for _, role := range member.Roles {
+				if role == DRAFT_FRIEND_ROLE {
+					isDraftFriend = true
+				}
+			}
+			if !isDraftFriend {
+				return fmt.Errorf("user %d is not draft friend, can't enable formats", userID)
 			}
 		}
-		if !isDraftFriend {
-			return fmt.Errorf("user %d is not draft friend, can't enable formats", userID)
+
+		var elig int
+		if pref.FormatPref.Elig {
+			elig = 1
+		} else {
+			elig = 0
+		}
+		query = `update userformats set elig = ? where user = ? and format = ?`
+		_, err = tx.Exec(query, elig, userID, pref.FormatPref.Format)
+		if err != nil {
+			return fmt.Errorf("error updating user pref: %s", err.Error())
 		}
 	}
 
-	var elig int
-	if pref.Elig {
-		elig = 1
-	} else {
-		elig = 0
-	}
-	query = `update userformats set elig = ? where user = ? and format = ?`
-	_, err = tx.Exec(query, elig, userID, pref.Format)
-	if err != nil {
-		return fmt.Errorf("error updating user pref: %s", err.Error())
-	}
-
-	return ServeAPIPrefs(w, r, userID, tx)
-}
-
-// ServeAPISetMtgoName serves the /api/setmtgoname endpoint.
-func ServeAPISetMtgoName(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx) error {
-	if r.Method != "POST" {
-		// we have to return an error manually here because we want to return
-		// a different http status code.
-		tx.Rollback()
-		http.Error(w, "invalid request method", http.StatusMethodNotAllowed)
-		return nil
-	}
-
-	bodyBytes, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		return fmt.Errorf("error reading post body: %s", err.Error())
-	}
-	var postedMtgoName PostedMtgoName
-	err = json.Unmarshal(bodyBytes, &postedMtgoName)
-	if err != nil {
-		return fmt.Errorf("error parsing post body: %s", err.Error())
-	}
-
-	var query string
-
-	query = `update users set mtgo_name = ? where id = ?`
-	_, err = tx.Exec(query, postedMtgoName.MtgoName, userID)
-	if err != nil {
-		return fmt.Errorf("error updating user MTGO name: %s", err.Error())
+	if pref.MtgoName != "" {
+		query := `update users set mtgo_name = ? where id = ?`
+		_, err = tx.Exec(query, pref.MtgoName, userID)
+		if err != nil {
+			return fmt.Errorf("error updating user MTGO name: %s", err.Error())
+		}
 	}
 
 	return ServeAPIPrefs(w, r, userID, tx)
@@ -1414,8 +1392,8 @@ func GetDraftListEntry(userID int64, tx *sql.Tx, draftID int64) (DraftListEntry,
 	return ret, fmt.Errorf("could not find draft id %d", draftID)
 }
 
-func GetUserPrefs(userID int64, tx *sql.Tx) (UserPrefs, error) {
-	var prefs UserPrefs
+func GetUserPrefs(userID int64, tx *sql.Tx) (UserFormatPrefs, error) {
+	var prefs UserFormatPrefs
 
 	query := `select 
 				format, elig
@@ -1426,7 +1404,7 @@ func GetUserPrefs(userID int64, tx *sql.Tx) (UserPrefs, error) {
 		return prefs, err
 	}
 	for result.Next() {
-		var pref UserPrefsEntry
+		var pref UserFormatPref
 		err = result.Scan(&pref.Format, &pref.Elig)
 		prefs.Prefs = append(prefs.Prefs, pref)
 	}
