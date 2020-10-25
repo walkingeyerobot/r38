@@ -29,6 +29,7 @@ import (
 
 	"github.com/BurntSushi/migration"
 	"github.com/bwmarrin/discordgo"
+	"github.com/go-co-op/gocron"
 	"github.com/google/shlex"
 	"github.com/gorilla/sessions"
 	_ "github.com/mattn/go-sqlite3"
@@ -40,6 +41,7 @@ const FOREST_BEAR_ID = "700900270153924608"
 const FOREST_BEAR = ":forestbear:" + FOREST_BEAR_ID
 const DRAFT_ALERTS_ROLE = "692079611680653442"
 const DRAFT_FRIEND_ROLE = "692865288554938428"
+const EVERYONE_ROLE = "685333271793500161"
 const BOSS = "176164707026206720"
 const PINK = 0xE50389
 
@@ -112,6 +114,14 @@ func main() {
 			log.Printf("%s", err.Error())
 		}
 	}
+
+	scheduler := gocron.NewScheduler(time.UTC)
+	_, err = scheduler.Every(8).Hours().Do(ArchiveSpectatorChannels, database)
+	if err != nil {
+		log.Printf("error setting up spectator channel archive task: %s", err.Error())
+	}
+
+	scheduler.StartAsync()
 
 	log.Printf("Starting HTTP Server. Listening at %q", server.Addr)
 	go func() {
@@ -1457,6 +1467,7 @@ func DiscordMsgCreate(database *sql.DB) func(s *discordgo.Session, msg *discordg
 					if err != nil {
 						log.Printf("%s", err.Error())
 					} else {
+						defer tx.Rollback()
 						flagSet := flag.NewFlagSet(args[0], flag.ContinueOnError)
 
 						settings := makedraft.Settings{}
@@ -1546,6 +1557,7 @@ func DiscordReactionAdd(database *sql.DB) func(s *discordgo.Session, msg *discor
 			log.Printf("%s", err.Error())
 			return
 		}
+		defer tx.Rollback()
 		row := tx.QueryRow(`select emoji, roleid from rolemsgs where msgid = ?`, msg.MessageID)
 		var emojiID string
 		var roleID string
@@ -1568,10 +1580,10 @@ func DiscordReactionAdd(database *sql.DB) func(s *discordgo.Session, msg *discor
 				err = row.Scan(&user)
 				if err == nil {
 					if msg.Emoji.Name == "🏆" {
-						_, err = tx.Exec(`insert into results (draft, round, user, win) values (?, ?, ?, 1)`,
+						_, err = tx.Exec(`insert into results (draft, round, user, win, timestamp) values (?, ?, ?, 1, datetime('now'))`,
 							draftID, round, user)
 					} else if msg.Emoji.Name == "💀" {
-						_, err = tx.Exec(`insert into results (draft, round, user, win) values (?, ?, ?, 0)`,
+						_, err = tx.Exec(`insert into results (draft, round, user, win, timestamp) values (?, ?, ?, 0, datetime('now'))`,
 							draftID, round, user)
 					}
 					if err != nil {
@@ -1601,6 +1613,7 @@ func DiscordReactionRemove(database *sql.DB) func(s *discordgo.Session, msg *dis
 			log.Printf("%s", err.Error())
 			return
 		}
+		defer tx.Rollback()
 		row := tx.QueryRow(`select emoji, roleid from rolemsgs where msgid = ?`, msg.MessageID)
 		var emojiID string
 		var roleID string
@@ -1823,4 +1836,62 @@ func CheckNextRoundPairings(tx *sql.Tx, draftID int64, round int) {
 			}
 		}
 	}
+}
+
+func ArchiveSpectatorChannels(db *sql.DB) error {
+	if dg != nil {
+		log.Printf("archiving spectator channels")
+		tx, err := db.Begin()
+		if err != nil {
+			log.Printf("error archiving spectator channels: %s", err.Error())
+			return err
+		}
+		defer tx.Rollback()
+
+		query := `select 
+				spectatorchannelid
+				from drafts
+				join results on results.draft = drafts.id
+				group by results.draft
+				having count(results.id) = 24 and max(results.timestamp) < datetime('now', '-3 days')`
+		result, err := tx.Query(query)
+		if err != nil {
+			log.Printf("error archiving spectator channels: %s", err.Error())
+			return err
+		}
+		var channels []interface{}
+		for result.Next() {
+			var channelID string
+			err = result.Scan(&channelID)
+			if err != nil {
+				log.Printf("error archiving spectator channels: %s", err.Error())
+				return err
+			}
+			log.Printf("locking channel %s", channelID)
+			err = dg.ChannelPermissionSet(channelID, EVERYONE_ROLE, "0", 0, discordgo.PermissionViewChannel)
+			if err != nil {
+				log.Printf("error archiving spectator channels: %s", err.Error())
+				return err
+			}
+			channels = append(channels, channelID)
+		}
+
+		if len(channels) > 0 {
+			query = `update drafts set spectatorchannelid = null where spectatorchannelid in (?` + strings.Repeat(",?", len(channels)-1) + `)`
+			_, err = tx.Exec(query, channels...)
+			if err != nil {
+				log.Printf("error archiving spectator channels: %s", err.Error())
+				return err
+			}
+		}
+
+		err = tx.Commit()
+		if err != nil {
+			log.Printf("error archiving spectator channels: %s", err.Error())
+			return err
+		}
+	}
+
+	log.Printf("done archiving spectator channels")
+	return nil
 }
