@@ -102,6 +102,7 @@ export default Vue.extend({
       // TODO: Error handling
       const response = await fetchEndpoint(routePick, {
         cards: [cardId],
+        xsrfToken: draftStore.pickXsrf,
         as: authStore.user?.id,
       });
       const elapsed = Date.now() - start;

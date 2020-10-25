@@ -9,6 +9,7 @@ export const routePick = endpoint({
   } as { as?: number },
   bodyVars: {
     cards: [],
-  } as { cards: number[] },
+    xsrfToken: '',
+  } as { cards: number[], xsrfToken: string },
   response: {} as SourceData,
 });

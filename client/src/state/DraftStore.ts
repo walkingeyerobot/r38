@@ -22,6 +22,7 @@ export const draftStore = vuexModule(
   {
     draftId: 0,
     draftName: 'Unknown draft',
+    pickXsrf: '',
     initialState: buildEmptyDraftState(),
     currentState: buildEmptyDraftState(),
     cards: new Map<number, DraftCard>(),
@@ -44,6 +45,7 @@ export const draftStore = vuexModule(
 
         state.draftId = payload.draftId;
         state.draftName = payload.draftName;
+        state.pickXsrf = payload.pickXsrf;
         state.initialState = parsed.state;
         const currentState = deepCopy(parsed.state);
         const events = [] as TimelineEvent[];
@@ -106,6 +108,7 @@ export type DraftStore = typeof draftStore;
 interface State {
   draftId: number,
   draftName: string,
+  pickXsrf: string,
   initialState: DraftState,
   currentState: DraftState,
   cards: Map<number, DraftCard>,

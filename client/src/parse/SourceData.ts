@@ -5,6 +5,7 @@ export interface SourceData {
   draftName: string;
   seats: SourceSeat[];
   events: SourceEvent[];
+  pickXsrf: string;
 
   // If this source data is from the perspective of a specific player, then
   // that player's ID
