@@ -21,6 +21,7 @@ type DraftJSON struct {
 	DraftName string       `json:"draftName"`
 	Seats     [8]Seat      `json:"seats"`
 	Events    []DraftEvent `json:"events"`
+	PickXsrf  string	   `json:"pickXsrf"`
 }
 
 // Seat is part of DraftJSON.
@@ -91,7 +92,8 @@ type UserPrefsEntry struct {
 
 // PostedPick is JSON accepted from the client when a user makes a pick.
 type PostedPick struct {
-	CardIds []int64 `json:"cards"`
+	CardIds   []int64 `json:"cards"`
+	XsrfToken string  `json:"xsrfToken"`
 }
 
 // PostedJoin is JSON accepted from the client when a user joins a draft.

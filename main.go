@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"crypto/rand"
 	"database/sql"
 	"encoding/json"
 	"flag"
@@ -24,6 +25,8 @@ import (
 	"./makedraft"
 	"./migrations"
 
+	"golang.org/x/net/xsrftoken"
+
 	"github.com/BurntSushi/migration"
 	"github.com/bwmarrin/discordgo"
 	"github.com/google/shlex"
@@ -41,6 +44,7 @@ const BOSS = "176164707026206720"
 const PINK = 0xE50389
 
 var secretKeyNoOneWillEverGuess = []byte(os.Getenv("SESSION_SECRET"))
+var xsrfKey string
 var store = sessions.NewCookieStore(secretKeyNoOneWillEverGuess)
 var sock string
 var dg *discordgo.Session
@@ -48,6 +52,20 @@ var dg *discordgo.Session
 func main() {
 	useAuthPtr := flag.Bool("auth", true, "bool")
 	flag.Parse()
+
+	xsrfKey = os.Getenv("XSRF_KEY")
+	if len(xsrfKey) == 0 {
+		xsrfKeyBytes := make([]byte, 128)
+		_, err := rand.Read(xsrfKeyBytes)
+		if err != nil {
+			log.Printf("error generating XSRF key: %s. set using XSRF_KEY env variable", err.Error())
+		}
+		chars := "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+		for i, b := range xsrfKeyBytes {
+			xsrfKeyBytes[i] = chars[b%byte(len(chars))]
+		}
+		xsrfKey = string(xsrfKeyBytes)
+	}
 
 	database, err := migration.Open("sqlite3", "draft.db", migrations.Migrations)
 	if err != nil {
@@ -336,9 +354,13 @@ func ServeAPIPick(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.
 	if err != nil {
 		return fmt.Errorf("error parsing post body: %s", err.Error())
 	}
+
 	var draftID int64
 	if len(pick.CardIds) == 1 {
 		draftID, err = doSinglePick(tx, userID, pick.CardIds[0])
+		if err == nil && !xsrftoken.Valid(pick.XsrfToken, xsrfKey, strconv.FormatInt(userID, 16), fmt.Sprintf("pick%d", draftID)) {
+			err = fmt.Errorf("invalid XSRF token")
+		}
 		if err != nil {
 			// We can't send the actual error back to the client without leaking information about
 			// where the card they tried to pick actually is.
@@ -1199,6 +1221,8 @@ func GetFilteredJSON(tx *sql.Tx, draftID int64, userID int64) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
+	draft.PickXsrf = xsrftoken.Generate(xsrfKey, strconv.FormatInt(userID, 16), fmt.Sprintf("pick%d", draftID))
 
 	var returnFullReplay bool
 	if draftInfo.Finished {
