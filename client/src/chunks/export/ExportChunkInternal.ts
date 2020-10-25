@@ -39,12 +39,13 @@ const EXPORT_CHUNK_INTERNAL: ExportChunk = {
     return `data:text/xml;charset=utf-8,${encodeURIComponent(deckToBinderXmlContents(deck))}`;
   },
 
-  async decksToBinderZip(decks: Deck[], names: string[]): Promise<string> {
+  async decksToBinderZip(decks: Deck[], names: string[], mtgoNames: string[]): Promise<string> {
     const zip = new JSZip();
     decks.map(deckToBinderXmlContents).forEach((deckXml, i) => {
       const totalCards = decks[i].maindeck.flat().length
           + decks[i].sideboard.flat().length;
-      const playerName = names[i].replaceAll(RegExp('[^\\w\\s]+', 'g'), '-');
+      const playerName = (mtgoNames[i] || names[i]).replaceAll(
+          RegExp('[^\\w\\s]+', 'g'), '-');
       zip.file(`${playerName} (${totalCards} cards).dek`, deckXml);
     });
     return zip.generateAsync({type: "base64"})

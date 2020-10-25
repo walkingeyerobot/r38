@@ -13,8 +13,8 @@ export const routeSetPref = endpoint({
   route: '/api/setpref/',
   method: 'post',
   bodyVars: {
-    format: '' as string,
-    elig: false as boolean,
+    pref: {} as UserPrefDescriptor | undefined,
+    mtgoName: '' as string | undefined,
   },
   response: {},
 });

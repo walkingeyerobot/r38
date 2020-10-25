@@ -65,6 +65,7 @@ class StateParser {
       player: {
         id: src.playerId,
         name: src.playerName || 'Unknown player',
+        mtgoName: src.mtgoName,
         iconUrl: src.playerImage || DefaultAvatar,
         seatPosition: position,
       },

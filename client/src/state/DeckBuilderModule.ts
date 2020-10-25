@@ -18,6 +18,7 @@ export const deckBuilderStore = vuexModule(rootStore, MODULE_NAME, {
 
   selectedSeat: 0,
   names: [],
+  mtgoNames: [],
   decks: [],
   selection: [],
   zoomed: null,
@@ -28,6 +29,7 @@ export const deckBuilderStore = vuexModule(rootStore, MODULE_NAME, {
     sync(state: DeckBuilderState, draftState: DraftState) {
       const init = [] as DeckInitializer[];
       state.names = draftState.seats.map(seat => seat.player.name);
+      state.mtgoNames = draftState.seats.map(seat => seat.player.mtgoName);
       for (let seat of draftState.seats) {
         init.push({
           draftName: draftStore.draftName,
@@ -286,6 +288,7 @@ export type DeckBuilderStore = typeof deckBuilderStore;
 interface DeckBuilderState {
   selectedSeat: number | null,
   names: string[],
+  mtgoNames: string[],
   decks: Deck[],
   selection: CardLocation[],
   zoomed: CardLocation | null,

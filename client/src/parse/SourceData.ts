@@ -15,6 +15,7 @@ export interface SourceData {
 export interface SourceSeat {
   playerId: number;
   playerName: string;
+  mtgoName: string;
   playerImage: string;
   packs: SourcePack[];
 }

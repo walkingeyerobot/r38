@@ -55,6 +55,7 @@ export interface PlayerPicks extends BaseContainer {
 export interface DraftPlayer {
   id: number;
   name: string;
+  mtgoName: string;
   iconUrl: string;
   seatPosition: number;
 }
