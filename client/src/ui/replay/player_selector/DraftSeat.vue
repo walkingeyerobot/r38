@@ -56,11 +56,11 @@ import { DraftSeat, CardPack as CardPackModel } from '../../../draft/DraftState'
 import { pushDraftUrlRelative } from '../../../router/url_manipulation';
 import { ScryfallColor } from '../../../draft/scryfall';
 
-import WManaSmall from '../../shared/mana/w_small.png';
-import UManaSmall from '../../shared/mana/u_small.png';
-import BManaSmall from '../../shared/mana/b_small.png';
-import RManaSmall from '../../shared/mana/r_small.png';
-import GManaSmall from '../../shared/mana/g_small.png';
+import WManaSmall from '../../shared/mana/W_small.png';
+import UManaSmall from '../../shared/mana/U_small.png';
+import BManaSmall from '../../shared/mana/B_small.png';
+import RManaSmall from '../../shared/mana/R_small.png';
+import GManaSmall from '../../shared/mana/G_small.png';
 
 export default Vue.extend({
   components: {
