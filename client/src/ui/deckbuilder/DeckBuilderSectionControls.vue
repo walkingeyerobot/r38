@@ -13,32 +13,32 @@
     <button class="landButton" @click="addPlains" :hidden="horizontal">
       <img
           alt="Plains"
-          src="../shared/mana/w_small.png"
+          src="../shared/mana/W_small.png"
           >
     </button>
     <button class="landButton" @click="addIsland" :hidden="horizontal">
       <img
           alt="Island"
-          src="../shared/mana/u_small.png"
+          src="../shared/mana/U_small.png"
           >
     </button>
     <button class="landButton" @click="addSwamp" :hidden="horizontal">
       <img
           class="mana-symbol"
           alt="Swamp"
-          src="../shared/mana/b_small.png"
+          src="../shared/mana/B_small.png"
           >
     </button>
     <button class="landButton" @click="addMountain" :hidden="horizontal">
       <img
           alt="Mountain"
-          src="../shared/mana/r_small.png"
+          src="../shared/mana/R_small.png"
           >
     </button>
     <button class="landButton" @click="addForest" :hidden="horizontal">
       <img
           alt="Forest"
-          src="../shared/mana/g_small.png"
+          src="../shared/mana/G_small.png"
           >
     </button>
   </div>
