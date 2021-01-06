@@ -9,7 +9,7 @@
   "license": "ISC",
   "dependencies": {
     "@types/webpack-env": "^1.15.2",
-    "axios": "^0.19.2",
+    "axios": "^0.21.1",
     "jspdf": "^2.1.0",
     "jszip": "^3.5.0",
     "path-to-regexp": "^6.1.0",
