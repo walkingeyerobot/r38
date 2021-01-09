@@ -33,10 +33,18 @@ results.
           class="card-result"
           >
         <div
-            class="card-name"
+            class="card-nameslate"
             @click="onCardNameClick(result)"
             >
-          {{ result.card.name }}
+          <div class="card-name">
+            {{ result.card.name }}
+          </div>
+          <ManaSymbol
+              v-for="(code, i) in result.card.mana_cost"
+              :key="i"
+              :code="code"
+              class="mana-symbol"
+              />
         </div>
         <div
             class="card-picked"
@@ -72,6 +80,8 @@ results.
 
 <script lang="ts">
 import Vue from 'vue';
+import ManaSymbol from '../../shared/mana/ManaSymbol.vue';
+
 import { replayStore } from '../../../state/ReplayStore';
 import { draftStore } from '../../../state/DraftStore';
 
@@ -84,6 +94,10 @@ import { globalClickTracker, UnhandledClickListener } from '../../infra/globalCl
 import { CardLocation } from '../../../state/DeckBuilderModule';
 
 export default Vue.extend({
+  components: {
+    ManaSymbol,
+  },
+
   data() {
     return {
       searchStr: '',
@@ -290,7 +304,7 @@ interface CardSearchResult {
   margin-bottom: 10px;
 }
 
-.card-name {
+.card-nameslate {
   padding: 4px 6px;
   border-radius: 6px;
   background-color: #f7f7f7;
@@ -298,11 +312,23 @@ interface CardSearchResult {
 
   cursor: pointer;
   user-select: none;
+
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
 }
 
-.card-name:hover {
+.card-nameslate:hover {
   border-color: #9a9a9a;
   box-shadow: 0 0 2px rgba(0, 0, 0, 0.2);
+}
+
+.card-name {
+  flex: 1;
+}
+
+.mana-symbol {
+  margin-left: 2px;
 }
 
 .card-picked {

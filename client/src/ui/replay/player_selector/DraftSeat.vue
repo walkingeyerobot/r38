@@ -12,12 +12,13 @@
       </div>
 
       <div class="mana-counts">
-        <img
+        <ManaSymbol
             v-for="colorWeight in colorWeights"
             :key="colorWeight.color"
-            :src="colorWeight.src"
+            :code="colorWeight.color"
             class="mana-symbol"
             >
+        </ManaSymbol>
       </div>
     </div>
 
@@ -48,6 +49,7 @@
 
 <script lang="ts">
 import Vue from 'vue';
+import ManaSymbol from '../../shared/mana/ManaSymbol.vue';
 import QueuedPacks from './QueuedPacks.vue';
 
 import { replayStore } from '../../../state/ReplayStore';
@@ -56,14 +58,9 @@ import { DraftSeat, CardPack as CardPackModel } from '../../../draft/DraftState'
 import { pushDraftUrlRelative } from '../../../router/url_manipulation';
 import { ScryfallColor } from '../../../draft/scryfall';
 
-import WManaSmall from '../../shared/mana/W_small.png';
-import UManaSmall from '../../shared/mana/U_small.png';
-import BManaSmall from '../../shared/mana/B_small.png';
-import RManaSmall from '../../shared/mana/R_small.png';
-import GManaSmall from '../../shared/mana/G_small.png';
-
 export default Vue.extend({
   components: {
+    ManaSymbol,
     QueuedPacks,
   },
 
@@ -105,31 +102,26 @@ export default Vue.extend({
           color: 'W' as const,
           defaultIndex: 0,
           weight: this.generateColorWeight(this.seat.colorCounts.w, totalPicks),
-          src: WManaSmall,
         },
         {
           color: 'U' as const,
           defaultIndex: 1,
           weight: this.generateColorWeight(this.seat.colorCounts.u, totalPicks),
-          src: UManaSmall,
         },
         {
           color: 'B' as const,
           defaultIndex: 2,
           weight: this.generateColorWeight(this.seat.colorCounts.b, totalPicks),
-          src: BManaSmall,
         },
         {
           color: 'R' as const,
           defaultIndex: 3,
           weight: this.generateColorWeight(this.seat.colorCounts.r, totalPicks),
-          src: RManaSmall,
         },
         {
           color: 'G' as const,
           defaultIndex: 4,
           weight: this.generateColorWeight(this.seat.colorCounts.g, totalPicks),
-          src: GManaSmall,
         },
       ]
       .filter(colorWeight => colorWeight.weight > 0)
@@ -176,7 +168,6 @@ interface ColorWeight {
   color: ScryfallColor;
   defaultIndex: number,
   weight: number;
-  src: string;
 }
 
 </script>
@@ -225,13 +216,6 @@ interface ColorWeight {
   margin-left: 0.5px;
   margin-top: 2px;
   padding-bottom: 1px;
-}
-
-.mana-symbol {
-  width: 13px;
-  height: 13px;
-  border-radius: 12px;
-  box-shadow: -0.5px 1px 0 #666;
 }
 
 .mana-symbol + .mana-symbol {
