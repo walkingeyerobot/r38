@@ -177,7 +177,7 @@ function buildBasic(
     name,
     set,
     collector_number: collectorNumber,
-    mana_cost: '',
+    mana_cost: [],
     cmc: 0,
     colors: [],
     color_identity: [],

@@ -2,6 +2,7 @@ import { CardContainer, CardPack, DraftCard, DraftSeat, DraftState, PlayerPicks,
 import { SourceCard, SourceData, SourceSeat } from './SourceData';
 import { checkNotNil } from '../util/checkNotNil';
 import DefaultAvatar from '../ui/shared/avatars/default_avatar.png';
+import { nil } from '../util/nil';
 
 
 export function parseInitialState(srcData: SourceData): StateParseResult {
@@ -146,7 +147,7 @@ function parseCardDefinition(src: SourceCard): MtgCard {
   if (src.hidden) {
     return {
       name: 'Hidden card',
-      mana_cost: '',
+      mana_cost: [],
       cmc: 0,
       collector_number: '-1',
       card_faces: [],
@@ -179,7 +180,7 @@ function parseCardDefinition(src: SourceCard): MtgCard {
       foil: src.foil,
       image_uris: checkNotNil(src.image_uris),
       layout: src.scryfall.layout,
-      mana_cost: src.scryfall.mana_cost || '',
+      mana_cost: parseManaCost(src.scryfall.mana_cost),
       mtgo: src.mtgo_id,
       rarity: src.scryfall.rarity,
       set: src.scryfall.set,
@@ -190,7 +191,22 @@ function parseCardDefinition(src: SourceCard): MtgCard {
   }
 }
 
+function parseManaCost(src: string | nil): string[] {
+  if (src == null || src.length == 0) {
+    return [];
+  }
+
+  const costs = [] as string[];
+  const matches = src.matchAll(MANA_COST_PATTERN);
+  for (let match of matches) {
+    costs.push(match[1]);
+  }
+  return costs;
+}
+
 interface StateParseResult {
   state: DraftState,
   cards: Map<number, DraftCard>,
 }
+
+const MANA_COST_PATTERN = /\{([^}]+)\}/g;
