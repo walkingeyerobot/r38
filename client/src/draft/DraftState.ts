@@ -89,7 +89,7 @@ export interface MtgCard {
   name: string;
   set: string;
   collector_number: string;
-  mana_cost: string;
+  mana_cost: string[];
   cmc: number;
   colors: ScryfallColor[];
   color_identity: ScryfallColor[];
