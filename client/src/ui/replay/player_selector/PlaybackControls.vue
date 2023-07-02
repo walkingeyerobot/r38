@@ -8,13 +8,13 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 import { replayStore } from '../../../state/ReplayStore';
 import { draftStore } from '../../../state/DraftStore';
 
 import { pushDraftUrlRelative, pushDraftUrlFromState } from '../../../router/url_manipulation';
 
-export default Vue.extend({
+export default defineComponent({
   methods: {
     onNextClick() {
       replayStore.goNext();

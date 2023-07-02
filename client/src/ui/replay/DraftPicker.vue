@@ -19,7 +19,7 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 import { authStore } from '../../state/AuthStore';
 import { draftStore, DraftStore } from '../../state/DraftStore';
 import { replayStore } from '../../state/ReplayStore';
@@ -32,7 +32,7 @@ import { delay } from '../../util/delay';
 import DeckBuilderMain from '../deckbuilder/DeckBuilderMain.vue';
 import { deckBuilderStore } from '../../state/DeckBuilderModule';
 
-export default Vue.extend({
+export default defineComponent({
 
   components: {
     CardView,

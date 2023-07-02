@@ -40,7 +40,7 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 import { DraftCard, DraftPlayer, DraftSeat, CardPack, CardContainer } from '../../draft/DraftState';
 import { TimelineEvent } from '../../draft/TimelineEvent';
 import { SelectedView } from '../../state/selection';
@@ -53,7 +53,7 @@ import { checkNotNil } from '../../util/checkNotNil';
 import { getActivePackForSeat } from '../../state/util/getters';
 
 
-export default Vue.extend({
+export default defineComponent({
 
   components: {
     CardView

@@ -67,10 +67,10 @@ import MANA_S from './S.svg';
 
 import MANA_UNKNOWN from './unknown.svg';
 
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 import { SimpleCollection } from '../../../util/SimpleCollection';
 
-export default Vue.extend({
+export default defineComponent({
   props: {
     /**
      * Accepts the official comprehensive rules plaintext notation, but with

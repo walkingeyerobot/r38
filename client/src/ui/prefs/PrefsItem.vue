@@ -16,11 +16,11 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 import { routeSetPref, UserPrefDescriptor } from '../../rest/api/prefs/prefs';
 import { fetchEndpoint } from '../../fetch/fetchEndpoint';
 
-export default Vue.extend({
+export default defineComponent({
   props: {
     pref: {
       type: Object as () => UserPrefDescriptor,

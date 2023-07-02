@@ -14,7 +14,6 @@ the timeline.
       >
     <button
         class="button"
-        ref="button"
         @click="onButtonClick"
         >
       <div class="location-p1">{{ labels[0] }}</div>
@@ -31,7 +30,7 @@ the timeline.
 </template>
 
 <script lang="ts">
-import Vue, { VueConstructor } from 'vue';
+import { defineComponent } from 'vue';
 import TimelineSelector from './TimelineSelector.vue';
 import { globalClickTracker, UnhandledClickListener } from '../../infra/globalClickTracker';
 import { TimelineEvent } from '../../../draft/TimelineEvent';
@@ -46,11 +45,7 @@ import { checkNotNil } from '../../../util/checkNotNil';
 import { eventToString } from '../../../state/util/eventToString';
 
 
-export default (Vue as VueConstructor<Vue & {
-  $refs: {
-    button: HTMLElement
-  },
-}>).extend({
+export default defineComponent({
   components: {
     TimelineSelector,
   },

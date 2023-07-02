@@ -20,13 +20,13 @@ Root component for desktop layout
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
+import { defineComponent } from 'vue'
 import ControlsRow from './ControlsRow.vue';
 import PlayerSelector from './player_selector/PlayerSelector.vue';
 import DraftPicker from './DraftPicker.vue';
 import DraftView from './DraftView.vue';
 
-export default Vue.extend({
+export default defineComponent({
   components: {
     DraftPicker,
     DraftView,

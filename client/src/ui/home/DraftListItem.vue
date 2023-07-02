@@ -46,7 +46,7 @@ Represents one entry in the list of drafts that a user might view/join
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 import { HomeDraftDescriptor } from '../../rest/api/draftlist/draftlist';
 import { FetchStatus } from '../infra/FetchStatus';
 import { fetchEndpoint } from '../../fetch/fetchEndpoint';
@@ -54,7 +54,7 @@ import { pushDraftUrl } from '../../router/url_manipulation';
 import { ROUTE_JOIN_DRAFT } from '../../rest/api/join/join';
 import { ROUTE_SKIP_DRAFT } from '../../rest/api/skip/skip';
 
-export default Vue.extend({
+export default defineComponent({
   props: {
     descriptor: {
       type: Object as () => HomeDraftDescriptor,

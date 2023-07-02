@@ -29,28 +29,56 @@
           class="selection"
           :hidden="selectionRectangle === null"
           :style="{
-          top: selectionTop,
-          left: selectionLeft,
-          width: selectionWidth,
-          height: selectionHeight,
+          top: selectionTop || undefined,
+          left: selectionLeft || undefined,
+          width: selectionWidth || undefined,
+          height: selectionHeight || undefined,
         }"></div>
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import Vue, { VueConstructor } from 'vue'
+import { defineComponent, ref } from 'vue'
 import DeckBuilderColumn from './DeckBuilderColumn.vue';
 import { CardColumn, CardLocation, deckBuilderStore as store } from '../../state/DeckBuilderModule';
 import { Point, Rectangle } from '../../util/rectangle';
 
-export default (Vue as VueConstructor<Vue & {
-  $refs: {
-    columns: InstanceType<typeof DeckBuilderColumn>[],
-    columnContent: HTMLElement,
-  }
-}>).extend({
+export default defineComponent({
   name: 'DeckBuilderSection',
+
+  components: {
+    DeckBuilderColumn,
+  },
+
+  props: {
+    columns: {
+      type: Array as () => CardColumn[],
+      required: true,
+    },
+    deckIndex: {
+      type: Number,
+      required: true,
+    },
+    maindeck: {
+      type: Boolean,
+      required: true,
+    },
+    horizontal: {
+      type: Boolean,
+      required: true,
+    },
+  },
+
+  setup() {
+    const columnElems = ref<Array<InstanceType<typeof DeckBuilderColumn>>>([]);
+    const columnContentElem = ref<HTMLElement>(STANDIN_ELEM);
+
+    return {
+      columnElems,
+      columnContentElem,
+    };
+  },
 
   data: () => ({
     selectionRectangle: null as (Rectangle | null),
@@ -90,29 +118,10 @@ export default (Vue as VueConstructor<Vue & {
     },
   },
 
-  components: {
-    DeckBuilderColumn,
-  },
-
-  props: {
-    columns: {
-      type: Array as () => CardColumn[]
-    },
-    deckIndex: {
-      type: Number
-    },
-    maindeck: {
-      type: Boolean
-    },
-    horizontal: {
-      type: Boolean
-    },
-  },
-
   methods: {
 
     relativePoint(clientX: number, clientY: number): Point {
-      const rect = this.$refs.columnContent.getBoundingClientRect();
+      const rect = this.columnContentElem.getBoundingClientRect();
       return {
         x: clientX - rect.left,
         y: clientY - rect.top,
@@ -140,9 +149,9 @@ export default (Vue as VueConstructor<Vue & {
     mouseUp(e: MouseEvent) {
       if (this.selectionRectangle) {
         const selection: CardLocation[] =
-            (this.$refs.columns)
+            (this.columnElems)
                 .flatMap((column, columnIndex) => column.inSelectionRectangle
-                    .map(cardIndex => ({
+                    .map((cardIndex: number) => ({
                       columnIndex,
                       cardIndex,
                       maindeck: this.maindeck,
@@ -154,11 +163,11 @@ export default (Vue as VueConstructor<Vue & {
     },
 
     createDragImage() {
-      const dragImage = <HTMLElement>this.$refs.columnContent.cloneNode(false);
-      for (let columnIndex = 0; columnIndex < this.$refs.columns.length; columnIndex++) {
+      const dragImage = <HTMLElement>this.columnContentElem.cloneNode(false);
+      for (let columnIndex = 0; columnIndex < this.columnElems.length; columnIndex++) {
         if (this.selection.some(location =>
             location.maindeck === this.maindeck && location.columnIndex === columnIndex)) {
-          const column = <HTMLElement>this.$refs.columns[columnIndex].$el.cloneNode(true);
+          const column = <HTMLElement>this.columnElems[columnIndex].$el.cloneNode(true);
           for (let cardIndex = column.childElementCount - 1; cardIndex >= 0; cardIndex--) {
             if (!this.selection.some(location =>
                 location.maindeck === this.maindeck && location.columnIndex === columnIndex
@@ -178,6 +187,8 @@ export default (Vue as VueConstructor<Vue & {
   },
 
 });
+
+const STANDIN_ELEM = {} as any;
 </script>
 
 <style scoped>

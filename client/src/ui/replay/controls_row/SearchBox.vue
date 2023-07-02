@@ -79,7 +79,7 @@ results.
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 import ManaSymbol from '../../shared/mana/ManaSymbol.vue';
 
 import { replayStore } from '../../../state/ReplayStore';
@@ -93,7 +93,7 @@ import { TimelineEvent, TimelineAction } from '../../../draft/TimelineEvent';
 import { globalClickTracker, UnhandledClickListener } from '../../infra/globalClickTracker';
 import { CardLocation } from '../../../state/DeckBuilderModule';
 
-export default Vue.extend({
+export default defineComponent({
   components: {
     ManaSymbol,
   },

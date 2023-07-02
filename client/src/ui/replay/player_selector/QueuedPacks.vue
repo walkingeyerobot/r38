@@ -17,7 +17,7 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 import CardPack from './CardPack.vue';
 import { replayStore } from '../../../state/ReplayStore';
 
@@ -25,7 +25,7 @@ import { DraftSeat, CardPack as CardPackModel } from '../../../draft/DraftState'
 import { checkNotNil } from '../../../util/checkNotNil';
 
 
-export default Vue.extend({
+export default defineComponent({
   components: {
     CardPack,
   },

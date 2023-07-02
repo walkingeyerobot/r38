@@ -11,7 +11,7 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 import DraftSeatComponent from './DraftSeat.vue'
 import PlaybackControls from './PlaybackControls.vue';
 
@@ -21,7 +21,7 @@ import { draftStore } from '../../../state/DraftStore';
 import { DraftState } from '../../../draft/DraftState';
 
 
-export default Vue.extend({
+export default defineComponent({
   components: {
     DraftSeatComponent,
     PlaybackControls,

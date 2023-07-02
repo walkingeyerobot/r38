@@ -37,13 +37,13 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 import { routePrefs, routeSetPref, UserPrefDescriptor } from '../../rest/api/prefs/prefs';
 import { fetchEndpoint } from '../../fetch/fetchEndpoint';
 import { AuthStore, authStore } from '../../state/AuthStore';
 import PrefsItem from './PrefsItem.vue';
 
-export default Vue.extend({
+export default defineComponent({
   components: {
     PrefsItem,
   },

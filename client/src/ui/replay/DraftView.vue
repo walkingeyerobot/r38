@@ -6,26 +6,26 @@
       <button
           class="tab"
           @click="selectTab(0)"
-          :class="{selected: this.selectedTab === 0}"
-          v-if="this.selectedSeat !== null"
+          :class="{selected: selectedTab === 0}"
+          v-if="selectedSeat !== null"
           >
         History
       </button>
       <button
           class="tab"
           @click="selectTab(1)"
-          :class="{selected: this.selectedTab === 1}"
-          v-if="this.selectedSeat !== null"
+          :class="{selected: selectedTab === 1}"
+          v-if="selectedSeat !== null"
           >
         Deck
       </button>
     </div>
     <CardGrid
-        v-if="this.selectedTab === 0 || this.selectedSeat === null"
+        v-if="selectedTab === 0 || selectedSeat === null"
         class="tab-content"
         />
     <DeckBuilderMain
-        v-if="this.selectedTab === 1 && this.selectedSeat !== null"
+        v-if="selectedTab === 1 && selectedSeat !== null"
         :horizontal="false"
         class="tab-content"
         />
@@ -33,12 +33,12 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
+import { defineComponent } from 'vue'
 import DeckBuilderMain from '../deckbuilder/DeckBuilderMain.vue';
 import CardGrid from './CardGrid.vue';
 import { replayStore } from '../../state/ReplayStore';
 
-export default Vue.extend({
+export default defineComponent({
   components: {
     CardGrid,
     DeckBuilderMain,

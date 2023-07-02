@@ -38,7 +38,7 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 import DraftListItem from './DraftListItem.vue';
 
 import { authStore } from '../../state/AuthStore';
@@ -48,7 +48,7 @@ import { fetchEndpoint } from '../../fetch/fetchEndpoint';
 import { FetchStatus } from '../infra/FetchStatus';
 
 
-export default Vue.extend({
+export default defineComponent({
   components: {
     DraftListItem,
   },

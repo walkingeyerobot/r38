@@ -48,7 +48,7 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 import ManaSymbol from '../../shared/mana/ManaSymbol.vue';
 import QueuedPacks from './QueuedPacks.vue';
 
@@ -58,7 +58,7 @@ import { DraftSeat, CardPack as CardPackModel } from '../../../draft/DraftState'
 import { pushDraftUrlRelative } from '../../../router/url_manipulation';
 import { ScryfallColor } from '../../../draft/scryfall';
 
-export default Vue.extend({
+export default defineComponent({
   components: {
     ManaSymbol,
     QueuedPacks,

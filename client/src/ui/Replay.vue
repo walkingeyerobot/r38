@@ -15,7 +15,7 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 import ReplayDesktop from './replay/ReplayDesktop.vue';
 import ReplayMobile from './replay/ReplayMobile.vue';
 
@@ -34,7 +34,7 @@ import { FetchStatus } from './infra/FetchStatus';
 import { isAuthedUserSelected } from './replay/isAuthedUserSelected';
 
 
-export default Vue.extend({
+export default defineComponent({
   components: {
     ReplayMobile,
     ReplayDesktop,

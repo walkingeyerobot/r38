@@ -2,10 +2,10 @@
   <div class="_deck-builder-export-menu">
     <template v-if="libLoaded && deck != null">
       <a
+          v-if="admin && exportedDecksZip"
           :href="exportedDecksZip"
           :download="exportedDecksFilename"
           class="exportButton"
-          v-if="admin"
           >
         Export all
       </a>
@@ -38,13 +38,13 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 import { authStore } from '../../state/AuthStore';
 import { Deck, deckBuilderStore as store } from '../../state/DeckBuilderModule';
-import { ExportChunk, exportLoader } from '../../chunks/export/ExportChunk';
+import { exportLoader } from '../../chunks/export/ExportChunk';
 import { draftStore } from '../../state/DraftStore';
 
-export default Vue.extend({
+export default defineComponent({
   props: {
     deckIndex: {type: Number},
   },
@@ -56,6 +56,7 @@ export default Vue.extend({
   data() {
     return {
       libLoaded: false,
+      exportedDecksZip: null as string | null,
     };
   },
 
@@ -78,16 +79,18 @@ export default Vue.extend({
 
     exportedDecksFilename(): string {
       return `${draftStore.draftName} decks.zip`
-    }
+    },
+
+    zipDeps() {
+      return [this.libLoaded, store.decks, store.names, store.mtgoNames] as const;
+    },
   },
 
-  asyncComputed: {
-    async exportedDecksZip(): Promise<string> {
-      if (this.libLoaded) {
-        return await exportLoader.chunk.decksToBinderZip(
-            store.decks, store.names, store.mtgoNames);
-      } else {
-        return '';
+  watch: {
+    async libLoaded(oldVal, libLoaded) {
+      if (libLoaded) {
+        this.exportedDecksZip = await exportLoader.chunk.decksToBinderZip(
+            store.decks, store.names, store.mtgoNames)
       }
     }
   },

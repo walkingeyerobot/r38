@@ -29,7 +29,7 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 import TimelineButton from './controls_row/TimelineButton.vue';
 import SearchBox from './controls_row/SearchBox.vue';
 
@@ -44,7 +44,7 @@ import { isAuthedUserSelected } from './isAuthedUserSelected';
 import { getPlayerSeat } from '../../state/util/userIsSeated';
 import { checkNotNil } from '../../util/checkNotNil';
 
-export default Vue.extend({
+export default defineComponent({
   components: {
     TimelineButton,
     SearchBox,
@@ -171,7 +171,7 @@ export default Vue.extend({
 
   color: #444;
   -webkit-appearance: none;
-
+  appearance: none;
 }
 
 .playback-btn:focus {
