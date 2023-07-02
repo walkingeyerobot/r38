@@ -24,7 +24,7 @@ gets its own entry.
 
         <div
             v-else-if="entry.type == 'synchronized-pick'"
-            :key="entry.eventId"
+            :key="`synpick-${entry.eventId}`"
             class="sync-pick"
             :class="{
               selected: entry.eventId == currentEventId
@@ -36,7 +36,7 @@ gets its own entry.
 
         <div
             v-else-if="entry.type == 'temporal-pick'"
-            :key="entry.eventId"
+            :key="`tpick-${entry.eventId}`"
             class="temp-pick"
             :class="{
               selected: entry.eventId == currentEventId
@@ -56,7 +56,7 @@ gets its own entry.
 
         <div
             v-else-if="entry.type == 'temporal-other'"
-            :key="entry.eventId"
+            :key="`tother-${entry.eventId}`"
             class="temp-other"
             >
           <span class="event-id">{{ entry.eventId }}</span>
@@ -82,8 +82,8 @@ gets its own entry.
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
-import { replayStore } from '../../../state/ReplayStore';
+import { defineComponent } from 'vue';
+import { TimeMode, replayStore } from '../../../state/ReplayStore';
 import { draftStore } from '../../../state/DraftStore';
 
 import { pushDraftUrlRelative, pushDraftUrlFromState } from '../../../router/url_manipulation';
@@ -93,14 +93,14 @@ import { indexOf } from '../../../util/collection';
 import { TimelineEvent, ActionMoveCard, ActionMovePack } from '../../../draft/TimelineEvent';
 
 
-export default Vue.extend({
+export default defineComponent({
   computed: {
     synchronizeTimeline: {
       get() {
         return replayStore.timeMode == 'synchronized';
       },
 
-      set(value) {
+      set(value: TimeMode) {
         replayStore.setTimeMode(value ? 'synchronized' : 'original');
         pushDraftUrlFromState(this, draftStore, replayStore);
       }

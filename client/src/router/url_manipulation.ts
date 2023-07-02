@@ -1,15 +1,21 @@
-import { Route } from 'vue-router';
+import { RouteLocationNormalized, RouteLocationNormalizedLoaded, Router } from 'vue-router';
 import { SelectedView } from '../state/selection';
 import { ReplayStore, TimeMode } from '../state/ReplayStore';
 import { DraftStore } from '../state/DraftStore';
 import { checkNotNil } from '../util/checkNotNil';
 import { checkExhaustive } from '../util/checkExhaustive';
+import { routeParam } from '../util/routeParam';
+
+interface RouteProvider {
+  $route: RouteLocationNormalizedLoaded,
+  $router: Router
+}
 
 /**
  * Navigates to the draft url specified by [params].
  */
 export function pushDraftUrl(
-    component: Vue,
+    component: RouteProvider,
     params: DraftUrlState,
 ) {
   const path = generateDraftUrl(params);
@@ -26,7 +32,7 @@ export function pushDraftUrl(
  * filled in by examining the current draft URL.
  */
 export function pushDraftUrlRelative(
-    component: Vue,
+    component: RouteProvider,
     params: RelativeDraftUrlParams
 ) {
   const parsed = parseDraftUrl(component.$route);
@@ -40,7 +46,7 @@ export function pushDraftUrlRelative(
  * Constructs a draft URL matching the current Vuex state, then navigates to it.
  */
 export function pushDraftUrlFromState(
-    vue: Vue,
+    vue: RouteProvider,
     draftStore: DraftStore,
     replayStore: ReplayStore,
 ) {
@@ -89,7 +95,7 @@ function generateDraftUrl(
  */
 export function applyReplayUrlState(
     replayStore: ReplayStore,
-    route: Route,
+    route: RouteLocationNormalized,
 ) {
   const parsedUrl = parseDraftUrl(route);
 
@@ -103,12 +109,12 @@ export function applyReplayUrlState(
   applyUrl(replayStore, parsedUrl);
 }
 
-export function parseDraftUrl(route: Route) {
+export function parseDraftUrl(route: RouteLocationNormalized) {
   const parsedUrl: DraftUrlState = {
-    draftId: parseInt(route.params['draftId']),
+    draftId: parseInt(routeParam(route, 'draftId')),
   };
 
-  const rawParams  = route.params['param'] || '';
+  const rawParams  = routeParam(route, 'param') || '';
   const params = rawParams.split('/');
 
   for (let i = 0; i < params.length; i++) {
@@ -116,7 +122,7 @@ export function parseDraftUrl(route: Route) {
     const param = params[i];
     i++;
     const value = parseInt(params[i]);
-    if (value == NaN) {
+    if (Number.isNaN(value)) {
       console.error('Invalid value:', value);
       continue;
     }

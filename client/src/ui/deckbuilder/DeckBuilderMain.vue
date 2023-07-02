@@ -1,5 +1,6 @@
 <template>
   <div
+      v-if="store.selectedSeat != null"
       class="_deck-builder-main"
       :class="{
           horizontal,
@@ -66,7 +67,7 @@
 </template>
 
 <script lang="ts">
-import Vue, { VueConstructor } from 'vue'
+import { defineComponent, ref } from 'vue';
 import DeckBuilderExportMenu from './DeckBuilderExportMenu.vue';
 import DeckBuilderSection from './DeckBuilderSection.vue';
 import DeckBuilderSectionControls from './DeckBuilderSectionControls.vue';
@@ -83,18 +84,20 @@ import { draftStore } from '../../state/DraftStore';
 import { globalClickTracker, UnhandledClickListener } from '../infra/globalClickTracker';
 import { MtgCard } from '../../draft/DraftState';
 
-export default (Vue as VueConstructor<Vue & {
-  $refs: {
-    maindeck: InstanceType<typeof DeckBuilderSection>,
-    sideboard: InstanceType<typeof DeckBuilderSection>,
-  }
-}>).extend({
+export default defineComponent({
   name: 'DeckBuilderMain',
 
   components: {
     DeckBuilderExportMenu,
     DeckBuilderSection,
     DeckBuilderSectionControls,
+  },
+
+  setup() {
+    const maindeckElem = ref<InstanceType<typeof DeckBuilderSection> | null>();
+    const sideboardElem = ref<InstanceType<typeof DeckBuilderSection> | null>();
+
+    return { maindeckElem, sideboardElem };
   },
 
   props: {
@@ -155,8 +158,10 @@ export default (Vue as VueConstructor<Vue & {
 
     zoomedCardPos(): any {
       if (store.zoomed) {
-        const section = store.zoomed.maindeck ? this.$refs.maindeck : this.$refs.sideboard;
-        const left = (store.zoomed.columnIndex + 1) * section.$refs.columns[0].$el.clientWidth;
+        const section = store.zoomed.maindeck
+            ? this.maindeckElem
+            : this.sideboardElem;
+        const left = (store.zoomed.columnIndex + 1) * section?.columnElems[0].$el.clientWidth;
         const top = store.zoomed.cardIndex * (this.horizontal ? 15 : 30);
         return {
           left: left + 'px',

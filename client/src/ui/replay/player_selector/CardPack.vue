@@ -9,17 +9,18 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
+import { defineComponent } from 'vue'
 import { CardPack } from '../../../draft/DraftState';
 import { replayStore } from '../../../state/ReplayStore';
 
 import { pushDraftUrlRelative } from '../../../router/url_manipulation';
 
 
-export default Vue.extend({
+export default defineComponent({
   props: {
     pack: {
-      type: Object as () => CardPack
+      type: Object as () => CardPack,
+      required: true,
     },
   },
 

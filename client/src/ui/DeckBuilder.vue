@@ -12,7 +12,7 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 
 import DeckBuilderMain from './deckbuilder/DeckBuilderMain.vue';
 import DeckBuilderPlayerSelector from './deckbuilder/DeckBuilderPlayerSelector.vue';
@@ -25,9 +25,10 @@ import { fetchEndpoint } from '../fetch/fetchEndpoint';
 import { routeDraft } from '../rest/api/draft/draft';
 import { FetchStatus } from './infra/FetchStatus';
 import { globalClickTracker } from "./infra/globalClickTracker";
+import { routeParam } from '../util/routeParam';
 
 
-export default Vue.extend({
+export default defineComponent({
   components: {
     DeckBuilderMain,
     DeckBuilderPlayerSelector,
@@ -40,7 +41,8 @@ export default Vue.extend({
   },
 
   created() {
-    const draftId = parseInt(this.$route.params['draftId']);
+    const draftId =
+        parseInt(routeParam(this.$route, 'draftId'));
     this.fetchDraft(draftId);
   },
 

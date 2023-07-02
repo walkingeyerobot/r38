@@ -26,8 +26,8 @@ An interface for mobile use
       <div class="footer-center">
         <button
             v-long-press="400"
+            ref="prevButton"
             @click="onPrevClick"
-            @long-press-start="onPrevLongPress"
             @contextmenu.prevent
             class="left-button"
             >
@@ -38,8 +38,8 @@ An interface for mobile use
             popover-alignment="center above" />
         <button
             v-long-press="400"
+            ref="nextButton"
             @click="onNextClick"
-            @long-press-start="onNextLongPress"
             @contextmenu.prevent
             class="right-button"
             >
@@ -53,8 +53,9 @@ An interface for mobile use
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
-import LongPress from 'vue-directive-long-press';
+import { defineComponent, ref } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { onLongPress } from '@vueuse/core';
 
 import CardGrid from './CardGrid.vue';
 import DraftPicker from './DraftPicker.vue';
@@ -67,15 +68,11 @@ import { pushDraftUrlRelative, pushDraftUrlFromState } from '../../router/url_ma
 import { FALLBACK_USER_PICTURE } from '../../parse/fallbacks';
 
 
-export default Vue.extend({
+export default defineComponent({
   components: {
     DraftPicker,
     CardGrid,
     TimelineButton,
-  },
-
-  directives: {
-    'long-press': LongPress
   },
 
   props: {
@@ -83,6 +80,43 @@ export default Vue.extend({
       type: Boolean,
       required: true,
     },
+  },
+
+  setup() {
+    const prevButton = ref<HTMLElement | null>(null);
+    const nextButton = ref<HTMLElement | null>(null);
+
+    const route = useRoute();
+    const router = useRouter();
+
+    const routeProvider = {
+      $route: route,
+      $router: router,
+    };
+
+    onLongPress(
+      prevButton,
+      onPrevLongPress,
+      { modifiers: { prevent: true } },
+    );
+
+    onLongPress(
+      nextButton,
+      onNextLongPress,
+      { modifiers: { prevent: true } },
+    );
+
+    function onPrevLongPress() {
+      pushDraftUrlRelative(routeProvider, {
+        eventIndex: 0,
+      });
+    }
+
+    function onNextLongPress() {
+      pushDraftUrlRelative(routeProvider, {
+        eventIndex: replayStore.events.length,
+      });
+    }
   },
 
   computed: {
@@ -110,23 +144,10 @@ export default Vue.extend({
       pushDraftUrlFromState(this, draftStore, replayStore);
     },
 
-    onPrevLongPress() {
-      pushDraftUrlRelative(this, {
-        eventIndex: 0,
-      });
-    },
-
     onNextClick() {
       replayStore.goNext();
       pushDraftUrlFromState(this, draftStore, replayStore);
     },
-
-    onNextLongPress() {
-      pushDraftUrlRelative(this, {
-        eventIndex: replayStore.events.length,
-      });
-    },
-
   }
 })
 </script>

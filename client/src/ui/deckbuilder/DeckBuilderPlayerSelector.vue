@@ -15,10 +15,10 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 import { deckBuilderStore as store, DeckBuilderStore } from '../../state/DeckBuilderModule';
 
-export default Vue.extend({
+export default defineComponent({
   computed: {
     state(): DeckBuilderStore {
       return store;

@@ -19,11 +19,11 @@ Displays a single card
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 import { DraftCard } from '../../draft/DraftState';
 import { checkNotNil } from '../../util/checkNotNil';
 
-export default Vue.extend({
+export default defineComponent({
   props: {
     card: {
       type: Object as () => DraftCard,

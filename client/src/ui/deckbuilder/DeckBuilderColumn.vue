@@ -37,13 +37,13 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 import { MtgCard } from '../../draft/DraftState.js';
 import { CardColumn, CardLocation, CardMove, deckBuilderStore as store } from '../../state/DeckBuilderModule';
 import { intersects, Rectangle } from '../../util/rectangle';
 import DeckBuilderSection from './DeckBuilderSection.vue';
 
-export default Vue.extend({
+export default defineComponent({
   name: 'DeckBuilderColumn',
 
   props: {
@@ -51,10 +51,12 @@ export default Vue.extend({
       type: Array as () => CardColumn
     },
     columnIndex: {
-      type: Number
+      type: Number,
+      required: true,
     },
     deckIndex: {
-      type: Number
+      type: Number,
+      required: true,
     },
     maindeck: {
       type: Boolean
