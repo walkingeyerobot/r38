@@ -5,13 +5,13 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
+import { defineComponent } from 'vue';
 import { authStore } from './state/AuthStore';
 import { formatStore, LayoutFormFactor } from './state/FormatStore';
 import DefaultAvatar from './ui/shared/avatars/default_avatar.png';
 
 
-export default Vue.extend({
+export default defineComponent({
   created() {
     this.loadAuthInfo();
     this.initFormat();

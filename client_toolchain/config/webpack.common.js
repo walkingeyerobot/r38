@@ -7,9 +7,9 @@
 const path = require('path');
 const webpack = require('webpack');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
-const VueLoaderPlugin = require('vue-loader/lib/plugin')
+const { VueLoaderPlugin } = require('vue-loader');
 
-const { PROJECT_ROOT, CLIENT_ROOT, CLIENT_SRC_ROOT } = require('./paths')
+const { CLIENT_ROOT, CLIENT_SRC_ROOT } = require('./paths')
 
 module.exports = mode => {
   return {
@@ -43,6 +43,13 @@ module.exports = mode => {
         {
           test: /\.vue$/,
           loader: 'vue-loader',
+          options: {
+            // TODO: without this option we get errors along the lines of
+            // "Parameter 'n' implicitly has an 'any' type", which has
+            // something to do with our scoped style loading. The answer may
+            // be to move to vite or vue-tsc
+            enableTsInTemplate: false,
+          },
         },
 
         // Compilation for Typescript files

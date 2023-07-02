@@ -1,8 +1,5 @@
-import Vue from 'vue';
-import Vuex from 'vuex';
+import { createStore } from 'vuex';
 
-Vue.use(Vuex);
-
-export const rootStore = new Vuex.Store({
+export const rootStore = createStore({
   state: { },
 });

@@ -1,12 +1,11 @@
 const path = require('path');
-const webpack = require('webpack');
-const merge = require('webpack-merge');
+const { merge } = require('webpack-merge');
 
 const common = require('./webpack.common')('production');
 
 const { PROJECT_ROOT, CLIENT_ROOT, CLIENT_SRC_ROOT } = require('./paths')
 
-module.exports = merge.smart(common, {
+module.exports = merge(common, {
   mode: 'production',
 
   // Emit a source map, even for production. Recommended by webpack, but means
