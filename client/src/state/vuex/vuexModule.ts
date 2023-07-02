@@ -1,7 +1,7 @@
 import { ActionTree, Module, MutationPayload, Store } from 'vuex';
 import { deepCopy } from '../../util/deepCopy';
 
-export function vuexModule<S, D extends ModuleDef<S>>(
+export function vuexModule<S extends object, D extends ModuleDef<S>>(
   rootStore: Store<any>,
   name: string,
   state: S,
@@ -10,9 +10,10 @@ export function vuexModule<S, D extends ModuleDef<S>>(
   const publicModule = {} as TypedModule<S, D>;
 
   const stateKeys = Object.keys(state) as (keyof S)[];
-  const getterKeys = Object.keys(module.getters) as (keyof D['getters'])[];
-  const mutatorKeys = Object.keys(module.mutations) as (keyof D['mutations'])[];
-  const actionKeys = Object.keys(module.actions) as (keyof D['actions'])[];
+  const getterKeys = Object.keys(module.getters) as StringKeys<D['getters']>[];
+  const mutatorKeys =
+      Object.keys(module.mutations) as StringKeys<D['mutations']>[];
+  const actionKeys = Object.keys(module.actions) as StringKeys<D['actions']>[];
 
   // Attempt to salvage state from pre-existing module
   // If things have changed too much, this won't work
@@ -149,3 +150,5 @@ type PublicAction<S, T extends Action<S>> =
 type PublicActionCollection<S, D extends SimpleCollection<Action<S>>> = {
   [P in keyof D]: PublicAction<S, D[P]>
 }
+
+type StringKeys<T extends object> = Extract<keyof T, string>;

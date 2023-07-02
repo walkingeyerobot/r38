@@ -1,14 +1,11 @@
-import Vue from 'vue';
-import VueRouter, { RouteConfig } from 'vue-router';
-
-Vue.use(VueRouter);
+import { RouteRecordRaw, createRouter, createWebHistory } from 'vue-router';
 
 // See https://github.com/pillarjs/path-to-regexp/ for route matching language
 
 // We use chunk splitting so that we only load the source for the route we're
 // looking at right now. That's what the webpackChunkName directive does below
 
-const routes = [
+const routes: RouteRecordRaw[] = [
   {
     path: `/`,
     component: () =>
@@ -44,12 +41,11 @@ const routes = [
     component: () =>
         import(/* webpackChunkName: 'deckbuilder' */ '../ui/DeckBuilder.vue'),
   },
-] as RouteConfig[];
+];
 
-const router = new VueRouter({
-  mode: 'history',
-  base: process.env.BASE_URL,
-  routes,
-});
+const router = createRouter({
+  history: createWebHistory(),
+  routes: routes,
+})
 
 export default router;

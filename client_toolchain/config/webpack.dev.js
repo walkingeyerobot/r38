@@ -1,6 +1,6 @@
 const path = require('path');
 const webpack = require('webpack');
-const merge = require('webpack-merge');
+const { merge } = require('webpack-merge');
 
 const common = require('./webpack.common')('development');
 
@@ -8,7 +8,7 @@ const { PROJECT_ROOT, CLIENT_ROOT, CLIENT_SRC_ROOT } = require('./paths')
 
 const OUT_PATH = path.join(CLIENT_ROOT, 'srv/static/dist');
 
-module.exports = merge.smart(common, {
+module.exports = merge(common, {
 
   mode: 'development',
 
