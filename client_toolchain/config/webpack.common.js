@@ -101,7 +101,12 @@ module.exports = mode => {
       new webpack.DefinePlugin({
         DEVELOPMENT: JSON.stringify(mode == 'development'),
         'process.env.NODE_ENV': JSON.stringify(mode),
-      })
+
+        // The following should be set by Vue in order to enable proper
+        // tree-shaking (although we're basically telling it keep everything)
+        __VUE_OPTIONS_API__: true,
+        __VUE_PROD_DEVTOOLS__: true,
+      }),
     ],
 
     resolve: {
