@@ -21,7 +21,7 @@ module.exports = merge(common, {
   // Which approach to use while serving source maps
   // There are a dizzying array of options that trade accuracy for speed, etc.
   // See https://webpack.js.org/configuration/devtool/
-  devtool: 'cheap-module-eval-source-map',
+  devtool: 'eval-cheap-module-source-map',
 
   output: {
     // Directory to write compiled JS and any static assets to
