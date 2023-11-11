@@ -10,7 +10,7 @@
   "dependencies": {
     "@types/webpack-env": "^1.18.1",
     "@vueuse/core": "^10.2.1",
-    "axios": "^1.4.0",
+    "axios": "^1.6.0",
     "jspdf": "^2.5.1",
     "jszip": "^3.10.1",
     "path-to-regexp": "^6.2.1",
