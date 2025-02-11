@@ -22,8 +22,8 @@ import (
 	"strings"
 	"time"
 
-	"./makedraft"
-	"./migrations"
+	"github.com/walkingeyerobot/r38/makedraft"
+	"github.com/walkingeyerobot/r38/migrations"
 
 	"golang.org/x/net/xsrftoken"
 
@@ -493,7 +493,7 @@ func doJoin(tx *sql.Tx, userID int64, draftID int64) error {
 			if err != nil {
 				log.Printf("no discord ID for user %d", userID)
 			} else {
-				err = dg.ChannelPermissionSet(channelID, discordID, "1", 0, discordgo.PermissionViewChannel)
+				err = dg.ChannelPermissionSet(channelID, discordID, 1, 0, discordgo.PermissionViewChannel)
 				if err != nil {
 					log.Printf("error locking spectator channel for user %s: %s", discordID, err.Error())
 				}
@@ -1447,7 +1447,7 @@ func GetUserPrefs(userID int64, tx *sql.Tx) (UserFormatPrefs, error) {
 }
 
 func DiscordReady(s *discordgo.Session, event *discordgo.Ready) {
-	err := s.UpdateStatus(0, "Tier 5 Wolf Combo")
+	err := s.UpdateCustomStatus("Tier 5 Wolf Combo")
 	if err != nil {
 		log.Printf("%s", err.Error())
 	}
@@ -1868,7 +1868,7 @@ func ArchiveSpectatorChannels(db *sql.DB) error {
 				return err
 			}
 			log.Printf("locking channel %s", channelID)
-			err = dg.ChannelPermissionSet(channelID, EVERYONE_ROLE, "0", 0, discordgo.PermissionViewChannel)
+			err = dg.ChannelPermissionSet(channelID, EVERYONE_ROLE, 0, 0, discordgo.PermissionViewChannel)
 			if err != nil {
 				log.Printf("error archiving spectator channels: %s", err.Error())
 				return err

@@ -1,10 +1,10 @@
 package main
 
 import (
-	"../makedraft"
 	"context"
 	"database/sql"
 	"flag"
+	"github.com/walkingeyerobot/r38/makedraft"
 	"log"
 )
 import "os"
