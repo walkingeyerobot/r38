@@ -22,6 +22,9 @@ func main() {
 	settings.Seed = flagSet.Int(
 		"seed", 0,
 		"The random seed to use to generate the draft. If 0, time.Now().UnixNano() will be used.")
+	settings.InPerson = flagSet.Bool(
+		"inPerson", false,
+		"If true, draft will be initialized with empty packs.")
 	settings.Verbose = flagSet.Bool(
 		"v", false,
 		"If true, will enable verbose output.")
