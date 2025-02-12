@@ -29,6 +29,7 @@ type Settings struct {
 	Set                                       *string
 	Database                                  *string
 	Seed                                      *int
+	InPerson                                  *bool
 	Verbose                                   *bool
 	Simulate                                  *bool
 	Name                                      *string
@@ -225,6 +226,9 @@ func MakeDraft(settings Settings, tx *sql.Tx) error {
 	draftAttempts := 0
 
 	for {
+		if *settings.InPerson {
+			break
+		}
 		resetHoppers()
 		resetDraft := false
 		draftAttempts++
@@ -269,9 +273,13 @@ func MakeDraft(settings Settings, tx *sql.Tx) error {
 
 	format := path.Base(*settings.Set)
 	format = strings.TrimSuffix(format, path.Ext(format))
-	packIDs, err = generateEmptyDraft(tx, *settings.Name, format, *settings.Simulate)
+	packIDs, err = generateEmptyDraft(tx, *settings.Name, format, !*settings.InPerson, *settings.Simulate)
 	if err != nil {
 		return err
+	}
+
+	if *settings.InPerson {
+		return nil
 	}
 
 	re := regexp.MustCompile(`"FOIL_STATUS"`)
@@ -294,7 +302,7 @@ func MakeDraft(settings Settings, tx *sql.Tx) error {
 	return nil
 }
 
-func generateEmptyDraft(tx *sql.Tx, name string, format string, simulate bool) ([24]int64, error) {
+func generateEmptyDraft(tx *sql.Tx, name string, format string, assignSeats bool, simulate bool) ([24]int64, error) {
 	var packIds [24]int64
 
 	var dg *discordgo.Session
@@ -313,7 +321,7 @@ func generateEmptyDraft(tx *sql.Tx, name string, format string, simulate bool) (
 	var channelID string
 	if dg != nil {
 		channel, err = dg.GuildChannelCreate(GUILD_ID,
-			regexp.MustCompile("[^a-z-]").ReplaceAllString(strings.ToLower(name), "-") + "-spectators",
+			regexp.MustCompile("[^a-z-]").ReplaceAllString(strings.ToLower(name), "-")+"-spectators",
 			discordgo.ChannelTypeGuildText)
 		if err != nil {
 			return packIds, fmt.Errorf("error creating spectator channel: %s", err)
@@ -336,7 +344,7 @@ func generateEmptyDraft(tx *sql.Tx, name string, format string, simulate bool) (
 
 	if dg != nil {
 		_, err = dg.ChannelEditComplex(channel.ID, &discordgo.ChannelEdit{
-			Topic: fmt.Sprintf("<http://draft.thefoley.net/draft/%d>", draftID),
+			Topic:    fmt.Sprintf("<http://draft.thefoley.net/draft/%d>", draftID),
 			ParentID: SPECTATORS_CATEGORY_ID,
 		})
 		if err != nil {
@@ -348,7 +356,13 @@ func generateEmptyDraft(tx *sql.Tx, name string, format string, simulate bool) (
 		}
 	}
 
-	assignedUsers, err := AssignSeats(tx, draftID, format, 8)
+	var numUsers int
+	if assignSeats {
+		numUsers = 8
+	} else {
+		numUsers = 0
+	}
+	assignedUsers, err := AssignSeats(tx, draftID, format, numUsers)
 	if err != nil {
 		return packIds, fmt.Errorf("error assigning users: %s", err.Error())
 	}
@@ -625,6 +639,10 @@ func okDraft(packs [24][15]Card, settings Settings) bool {
 }
 
 func AssignSeats(tx *sql.Tx, draftID int64, format string, numUsers int) ([]int, error) {
+	if numUsers == 0 {
+		return []int{}, nil
+	}
+
 	var minEpoch int
 	var maxEpoch int
 	query := `SELECT
