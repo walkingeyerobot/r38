@@ -384,6 +384,8 @@ func generateEmptyDraft(tx *sql.Tx, name string, format string, assignSeats bool
 		}
 	}
 
+	// We create 4 packs here. The first one will stay empty; this is where picked cards will go.
+	// The other three packs will have cards in them at the start of the draft.
 	query = `INSERT INTO packs (seat, original_seat, round) VALUES (?, ?, ?)`
 	for i := 0; i < 8; i++ {
 		for j := 0; j < 4; j++ {
