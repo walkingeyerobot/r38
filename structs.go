@@ -21,7 +21,7 @@ type DraftJSON struct {
 	DraftName string       `json:"draftName"`
 	Seats     [8]Seat      `json:"seats"`
 	Events    []DraftEvent `json:"events"`
-	PickXsrf  string	   `json:"pickXsrf"`
+	PickXsrf  string       `json:"pickXsrf"`
 }
 
 // Seat is part of DraftJSON.
@@ -85,8 +85,8 @@ type UserFormatPrefs struct {
 
 // UserFormatPref is turned into JSON and used for the REST API.
 type UserFormatPref struct {
-	Format         string `json:"format"`
-	Elig           bool   `json:"elig"`
+	Format string `json:"format"`
+	Elig   bool   `json:"elig"`
 }
 
 // These structs are for receiving data from the client.
@@ -97,12 +97,19 @@ type PostedPick struct {
 	XsrfToken string  `json:"xsrfToken"`
 }
 
+// PostedRfidPick is JSON accepted from the client when a user makes a pick by scanning an RFID tag.
+type PostedRfidPick struct {
+	DraftId   int64    `json:"draftId"`
+	CardRfids []string `json:"cardRfids"`
+	XsrfToken string   `json:"xsrfToken"`
+}
+
 // PostedJoin is JSON accepted from the client when a user joins a draft.
 type PostedJoin struct {
 	ID int64 `json:"id"`
 }
 
-// PostedJoin is JSON accepted from the client when a user changes their preferences.
+// PostedPref is JSON accepted from the client when a user changes their preferences.
 type PostedPref struct {
 	MtgoName   string         `json:"mtgoName"`
 	FormatPref UserFormatPref `json:"pref"`
