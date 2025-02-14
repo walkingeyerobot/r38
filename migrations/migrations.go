@@ -9,6 +9,7 @@ var Migrations = []migration.Migrator{
 	discordBotSupport,
 	addMtgoName,
 	addResultsTimestamp,
+	addCardId,
 }
 
 func initialSchema(tx migration.LimitedTx) error {
@@ -43,5 +44,11 @@ func addMtgoName(tx migration.LimitedTx) error {
 
 func addResultsTimestamp(tx migration.LimitedTx) error {
 	_, err := tx.Exec(`ALTER TABLE results ADD COLUMN timestamp text;`)
+	return err
+}
+
+func addCardId(tx migration.LimitedTx) error {
+	_, err := tx.Exec(`ALTER TABLE cards ADD COLUMN cardid string;
+		CREATE INDEX cardid_idx ON cards (cardid);`)
 	return err
 }

@@ -226,9 +226,6 @@ func MakeDraft(settings Settings, tx *sql.Tx) error {
 	draftAttempts := 0
 
 	for {
-		if *settings.InPerson {
-			break
-		}
 		resetHoppers()
 		resetDraft := false
 		draftAttempts++
@@ -282,7 +279,7 @@ func MakeDraft(settings Settings, tx *sql.Tx) error {
 	if *settings.Verbose {
 		log.Printf("inserting into db...")
 	}
-	query := `INSERT INTO cards (pack, original_pack, data) VALUES (?, ?, ?)`
+	query := `INSERT INTO cards (pack, original_pack, data, cardid) VALUES (?, ?, ?, ?)`
 	for i, pack := range packs {
 		for _, card := range pack {
 			packID := packIDs[i]
@@ -292,7 +289,7 @@ func MakeDraft(settings Settings, tx *sql.Tx) error {
 			} else {
 				data = re.ReplaceAllString(card.Data, "false")
 			}
-			tx.Exec(query, packID, packID, data)
+			tx.Exec(query, packID, packID, data, card.ID)
 		}
 	}
 	return nil
