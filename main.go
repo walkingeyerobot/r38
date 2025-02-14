@@ -6,6 +6,7 @@ import (
 	"crypto/rand"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"html/template"
@@ -224,6 +225,7 @@ func NewHandler(database *sql.DB, useAuth bool) http.Handler {
 	addHandler("/api/draft/", ServeAPIDraft, true)
 	addHandler("/api/draftlist/", ServeAPIDraftList, true)
 	addHandler("/api/pick/", ServeAPIPick, false)
+	addHandler("/api/pickrfid/", ServeAPIPickRfid, false)
 	addHandler("/api/join/", ServeAPIJoin, false)
 	addHandler("/api/skip/", ServeAPISkip, false)
 	addHandler("/api/prefs/", ServeAPIPrefs, true)
@@ -375,9 +377,58 @@ func ServeAPIPick(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.
 		return fmt.Errorf("error parsing post body: %s", err.Error())
 	}
 
+	err = doHandlePostedPick(w, pick, userID, tx)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// ServeAPIPickRfid serves the /api/pickrfid endpoint.
+func ServeAPIPickRfid(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx) error {
+	if r.Method != "POST" {
+		// we have to return an error manually here because we want to return
+		// a different http status code.
+		tx.Rollback()
+		http.Error(w, "invalid request method", http.StatusMethodNotAllowed)
+		return nil
+	}
+
+	bodyBytes, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		return fmt.Errorf("error reading post body: %s", err.Error())
+	}
+	var rfidPick PostedRfidPick
+	err = json.Unmarshal(bodyBytes, &rfidPick)
+	if err != nil {
+		return fmt.Errorf("error parsing post body: %s", err.Error())
+	}
+
+	var cardIds []int64
+	for _, cardRfid := range rfidPick.CardRfids {
+		var cardId, err = findCardByRfid(tx, cardRfid, userID, rfidPick.DraftId)
+		if err != nil {
+			return fmt.Errorf("error finding card in active draft: %s", err.Error())
+		}
+		cardIds = append(cardIds, cardId)
+	}
+
+	var pick = PostedPick{
+		CardIds:   cardIds,
+		XsrfToken: rfidPick.XsrfToken,
+	}
+
+	err = doHandlePostedPick(w, pick, userID, tx)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func doHandlePostedPick(w http.ResponseWriter, pick PostedPick, userID int64, tx *sql.Tx) error {
 	var draftID int64
 	if len(pick.CardIds) == 1 {
-		draftID, err = doSinglePick(tx, userID, pick.CardIds[0])
+		draftID, err := doSinglePick(tx, userID, pick.CardIds[0])
 		if err == nil && !xsrftoken.Valid(pick.XsrfToken, xsrfKey, strconv.FormatInt(userID, 16), fmt.Sprintf("pick%d", draftID)) {
 			err = fmt.Errorf("invalid XSRF token")
 		}
@@ -666,6 +717,64 @@ func ServeVueApp(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.T
 	return nil
 }
 
+func findCardByRfid(tx *sql.Tx, cardRfid string, userID int64, draftID int64) (int64, error) {
+	// Find card in user's packs.
+	query := `select cards.id
+					from cards
+					join packs on packs.id = cards.pack
+					join seats on seats.id = packs.seat
+					and seats.draft = ?
+					and seats.user = ?
+					and seats.round = packs.round
+					where cards.cardid = ?`
+	row := tx.QueryRow(query, draftID, userID, cardRfid)
+	var cardId int64
+	err := row.Scan(&cardId)
+	if err == nil {
+		return cardId, nil
+	}
+	if !errors.Is(err, sql.ErrNoRows) {
+		return 0, err
+	}
+
+	// Find card in unclaimed packs.
+	query = `select cards.id, packs.id
+					from cards
+					join packs on packs.id = cards.pack
+					join seats on seats.id = packs.seat
+					and seats.draft = ?
+					and seats.position = 8
+					where cards.cardid = ?`
+	row = tx.QueryRow(query, draftID, cardRfid)
+	var packId int64
+	err = row.Scan(&cardId, &packId)
+	if err != nil {
+		return 0, err
+	}
+
+	query = `select seats.id, seats.round
+					from seats
+					where seats.user = ?
+					and seats.draft = ?`
+	row = tx.QueryRow(query, userID, draftID)
+	var seatId int64
+	var round int
+	err = row.Scan(&seatId, &round)
+	if err != nil {
+		return 0, err
+	}
+
+	query = `update packs
+					set seat = ?, original_seat = ?, round = ?
+					where id = ?`
+	_, err = tx.Exec(query, seatId, seatId, round, packId)
+	if err != nil {
+		return 0, err
+	}
+
+	return cardId, nil
+}
+
 // doSinglePick performs a normal pick based on a user id and a card id. It returns the draft id and an error.
 func doSinglePick(tx *sql.Tx, userID int64, cardID int64) (int64, error) {
 	draftID, _, announcements, round, err := doPick(tx, userID, cardID, true)
@@ -704,13 +813,13 @@ func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool) (int64, int64, []
 	var myPackID int64
 	var position int64
 	var draftID int64
-	var userID2 int64
+	var userID2 sql.NullInt64
 	var round int64
 	err := row.Scan(&myPackID, &position, &draftID, &userID2, &round)
 
 	if err != nil {
 		return draftID, myPackID, announcements, round, err
-	} else if userID != userID2 {
+	} else if userID2.Valid && userID != userID2.Int64 {
 		return draftID, myPackID, announcements, round, fmt.Errorf("card does not belong to the user.")
 	} else if round == 0 {
 		return draftID, myPackID, announcements, round, fmt.Errorf("card has already been picked.")
@@ -1155,7 +1264,8 @@ func GetJSONObject(tx *sql.Tx, draftID int64) (DraftJSON, error) {
                   join drafts on drafts.id = seats.draft
                   join packs on packs.original_seat = seats.id
                   join cards on cards.original_pack = packs.id
-                  where drafts.id = ?`
+                  where drafts.id = ?
+                  and seats.position <> 8`
 
 	rows, err := tx.Query(query, draftID)
 	if err != nil {
