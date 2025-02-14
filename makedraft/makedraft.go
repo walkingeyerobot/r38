@@ -273,13 +273,9 @@ func MakeDraft(settings Settings, tx *sql.Tx) error {
 
 	format := path.Base(*settings.Set)
 	format = strings.TrimSuffix(format, path.Ext(format))
-	packIDs, err = generateEmptyDraft(tx, *settings.Name, format, !*settings.InPerson, *settings.Simulate)
+	packIDs, err = generateEmptyDraft(tx, *settings.Name, format, !*settings.InPerson, !*settings.InPerson, *settings.Simulate)
 	if err != nil {
 		return err
-	}
-
-	if *settings.InPerson {
-		return nil
 	}
 
 	re := regexp.MustCompile(`"FOIL_STATUS"`)
@@ -302,7 +298,7 @@ func MakeDraft(settings Settings, tx *sql.Tx) error {
 	return nil
 }
 
-func generateEmptyDraft(tx *sql.Tx, name string, format string, assignSeats bool, simulate bool) ([24]int64, error) {
+func generateEmptyDraft(tx *sql.Tx, name string, format string, assignSeats bool, assignPacks bool, simulate bool) ([24]int64, error) {
 	var packIds [24]int64
 
 	var dg *discordgo.Session
@@ -366,8 +362,15 @@ func generateEmptyDraft(tx *sql.Tx, name string, format string, assignSeats bool
 	if err != nil {
 		return packIds, fmt.Errorf("error assigning users: %s", err.Error())
 	}
-	var seatIds [8]int64
-	for i := 0; i < 8; i++ {
+	var numSeats int
+	if assignPacks {
+		numSeats = 8
+	} else {
+		// Seat ID 8 holds unknown packs until a pick is made from them.
+		numSeats = 9
+	}
+	var seatIds [9]int64
+	for i := 0; i < numSeats; i++ {
 		if len(assignedUsers) > i {
 			query = `INSERT INTO seats (position, draft, reserveduser) VALUES (?, ?, ?)`
 			res, err = tx.Exec(query, i, draftID, assignedUsers[i])
@@ -389,7 +392,16 @@ func generateEmptyDraft(tx *sql.Tx, name string, format string, assignSeats bool
 	query = `INSERT INTO packs (seat, original_seat, round) VALUES (?, ?, ?)`
 	for i := 0; i < 8; i++ {
 		for j := 0; j < 4; j++ {
-			res, err = tx.Exec(query, seatIds[i], seatIds[i], j)
+			var seatId int64
+			var round int
+			if assignPacks || j == 0 {
+				seatId = seatIds[i]
+				round = j
+			} else {
+				seatId = seatIds[8]
+				round = 0
+			}
+			res, err = tx.Exec(query, seatId, seatId, round)
 			if err != nil {
 				return packIds, fmt.Errorf("error creating packs: %s", err)
 			}

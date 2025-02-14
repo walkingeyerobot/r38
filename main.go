@@ -444,7 +444,8 @@ func doJoin(tx *sql.Tx, userID int64, draftID int64) error {
                     count(1)
                   from seats
                   where draft = ?
-                    and user = ?`
+                    and user = ?
+                    and position <> 8`
 	row := tx.QueryRow(query, draftID, userID)
 	var alreadyJoined int64
 	err := row.Scan(&alreadyJoined)
@@ -459,6 +460,7 @@ func doJoin(tx *sql.Tx, userID int64, draftID int64) error {
                  from seats
                  where draft = ?
                    and user is null
+                   and position <> 8
                  order by seats.reserveduser = ? desc, random()
                  limit 1`
 	row = tx.QueryRow(query, draftID, userID)
@@ -546,7 +548,8 @@ func doSkip(tx *sql.Tx, userID int64, draftID int64) error {
                     count(1)
                   from seats
                   where draft = ?
-                    and user = ?`
+                    and user = ?
+                    and position <> 8`
 	row := tx.QueryRow(query, draftID, userID)
 	var alreadyJoined int64
 	err := row.Scan(&alreadyJoined)
@@ -561,6 +564,7 @@ func doSkip(tx *sql.Tx, userID int64, draftID int64) error {
                  from seats
                  where draft = ?
                    and reserveduser = ?
+                   and position <> 8
                  limit 1`
 	row = tx.QueryRow(query, draftID, userID)
 	var reservedSeatID int64
@@ -877,6 +881,7 @@ func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool) (int64, int64, []
                                            count(1)
                                          from seats
                                          where draft = ?
+                                         and position <> 8
                                          group by round
                                          order by round desc
                                          limit 1`
@@ -1357,7 +1362,7 @@ func GetDraftList(userID int64, tx *sql.Tx) (DraftList, error) {
 	query := `select
                     drafts.id,
                     drafts.name,
-                    sum(seats.user is null and seats.reserveduser is null and seats.position is not null) as empty_seats,
+                    sum(seats.user is null and seats.reserveduser is null and seats.position is not null and seats.position <> 8) as empty_seats,
                     sum(seats.reserveduser not null and seats.user is null) as reserved_seats,
                     coalesce(sum(seats.user = ?), 0) as joined,
                     coalesce(sum(seats.reserveduser = ?), 0) as reserved,
