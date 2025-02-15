@@ -270,7 +270,7 @@ func MakeDraft(settings Settings, tx *sql.Tx) error {
 
 	format := path.Base(*settings.Set)
 	format = strings.TrimSuffix(format, path.Ext(format))
-	packIDs, err = generateEmptyDraft(tx, *settings.Name, format, !*settings.InPerson, !*settings.InPerson, *settings.Simulate)
+	packIDs, err = generateEmptyDraft(tx, *settings.Name, format, *settings.InPerson, *settings.Simulate)
 	if err != nil {
 		return err
 	}
@@ -295,7 +295,10 @@ func MakeDraft(settings Settings, tx *sql.Tx) error {
 	return nil
 }
 
-func generateEmptyDraft(tx *sql.Tx, name string, format string, assignSeats bool, assignPacks bool, simulate bool) ([24]int64, error) {
+func generateEmptyDraft(tx *sql.Tx, name string, format string, inPerson bool, simulate bool) ([24]int64, error) {
+	assignSeats := !inPerson
+	assignPacks := !inPerson
+
 	var packIds [24]int64
 
 	var dg *discordgo.Session
@@ -324,8 +327,8 @@ func generateEmptyDraft(tx *sql.Tx, name string, format string, assignSeats bool
 		channelID = ""
 	}
 
-	query := `INSERT INTO drafts (name, spectatorchannelid, format) VALUES (?, ?, ?);`
-	res, err := tx.Exec(query, name, channelID, format)
+	query := `INSERT INTO drafts (name, spectatorchannelid, format, inperson) VALUES (?, ?, ?, ?);`
+	res, err := tx.Exec(query, name, channelID, format, inPerson)
 	if err != nil {
 		return packIds, fmt.Errorf("error creating draft: %s", err)
 	}

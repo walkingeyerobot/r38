@@ -10,6 +10,7 @@ var Migrations = []migration.Migrator{
 	addMtgoName,
 	addResultsTimestamp,
 	addCardId,
+	addInPersonFlag,
 }
 
 func initialSchema(tx migration.LimitedTx) error {
@@ -50,5 +51,10 @@ func addResultsTimestamp(tx migration.LimitedTx) error {
 func addCardId(tx migration.LimitedTx) error {
 	_, err := tx.Exec(`ALTER TABLE cards ADD COLUMN cardid string;
 		CREATE INDEX cardid_idx ON cards (cardid);`)
+	return err
+}
+
+func addInPersonFlag(tx migration.LimitedTx) error {
+	_, err := tx.Exec(`ALTER TABLE drafts ADD COLUMN inperson number DEFAULT 0`)
 	return err
 }
