@@ -68,6 +68,7 @@ type DraftListEntry struct {
 	Skipped        bool   `json:"skipped"`
 	Name           string `json:"name"`
 	Status         string `json:"status"`
+	InPerson       bool   `json:"inPerson""`
 }
 
 // UserInfo is JSON passed to the client.

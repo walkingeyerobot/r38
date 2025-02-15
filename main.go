@@ -1540,7 +1540,8 @@ func GetDraftList(userID int64, tx *sql.Tx) (DraftList, error) {
                     coalesce(sum(seats.user = ?), 0) as joined,
                     coalesce(sum(seats.reserveduser = ?), 0) as reserved,
                     coalesce(skips.user = ?, 0) as skipped,
-                    min(seats.round) > 3 as finished
+                    min(seats.round) > 3 as finished,
+                    drafts.inperson
                   from drafts
                   left join seats on drafts.id = seats.draft
                   left join skips on drafts.id = skips.draft and skips.user = ?
@@ -1561,7 +1562,8 @@ func GetDraftList(userID int64, tx *sql.Tx) (DraftList, error) {
 			&d.Joined,
 			&d.Reserved,
 			&d.Skipped,
-			&d.Finished)
+			&d.Finished,
+			&d.InPerson)
 		if err != nil {
 			return drafts, fmt.Errorf("can't get draft list: %s", err.Error())
 		}
