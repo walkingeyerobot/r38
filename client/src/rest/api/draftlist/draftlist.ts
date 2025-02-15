@@ -18,4 +18,5 @@ export interface HomeDraftDescriptor {
   status: 'joinable' | 'reserved' | 'member' | 'spectator' | 'closed';
   finished: boolean;
   joined: boolean;
+  inPerson: boolean;
 }
