@@ -467,7 +467,10 @@ func ServeAPIJoin(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.
 	if err != nil {
 		return fmt.Errorf("error reading post body: %s", err.Error())
 	}
-	var toJoin PostedJoin
+	toJoin := PostedJoin{
+		ID:       0,
+		Position: -1,
+	}
 	err = json.Unmarshal(bodyBytes, &toJoin)
 	if err != nil {
 		return fmt.Errorf("error parsing post body: %s", err.Error())
@@ -475,7 +478,13 @@ func ServeAPIJoin(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.
 
 	draftID := toJoin.ID
 
-	err = doJoin(tx, userID, draftID)
+	if toJoin.Position < 0 {
+		err = doJoin(tx, userID, draftID)
+	} else if toJoin.Position > 7 {
+		return fmt.Errorf("invalid position %d", toJoin.Position)
+	} else {
+		err = doJoinSeat(tx, userID, draftID, toJoin.Position)
+	}
 	if err != nil {
 		return fmt.Errorf("error joining draft %d: %s", draftID, err.Error())
 	}
@@ -496,7 +505,7 @@ func doJoin(tx *sql.Tx, userID int64, draftID int64) error {
                   from seats
                   where draft = ?
                     and user = ?
-                    and position <> 8`
+                    and Position <> 8`
 	row := tx.QueryRow(query, draftID, userID)
 	var alreadyJoined int64
 	err := row.Scan(&alreadyJoined)
@@ -511,7 +520,7 @@ func doJoin(tx *sql.Tx, userID int64, draftID int64) error {
                  from seats
                  where draft = ?
                    and user is null
-                   and position <> 8
+                   and Position <> 8
                  order by seats.reserveduser = ? desc, random()
                  limit 1`
 	row = tx.QueryRow(query, draftID, userID)
@@ -525,8 +534,63 @@ func doJoin(tx *sql.Tx, userID int64, draftID int64) error {
 		return fmt.Errorf("no non-reserved seats available for user %d in draft %d", userID, draftID)
 	}
 
+	err = doJoinSeatId(tx, userID, draftID, query, emptySeatID, row)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// doJoinSeat joins at a specific seat Position.
+func doJoinSeat(tx *sql.Tx, userID int64, draftID int64, position int64) error {
+	query := `select
+                    count(1)
+                  from seats
+                  where draft = ?
+                    and user = ?
+                    and Position <> 8`
+	row := tx.QueryRow(query, draftID, userID)
+	var alreadyJoined int64
+	err := row.Scan(&alreadyJoined)
+	if err != nil {
+		return err
+	} else if alreadyJoined > 0 {
+		return fmt.Errorf("user %d already joined %d", userID, draftID)
+	}
+
+	query = `select
+                   id, seats.user, seats.reserveduser
+                 from seats
+                 where draft = ?
+                   and Position = ?
+                 limit 1`
+	row = tx.QueryRow(query, draftID, position)
+	var seatID int64
+	var user sql.NullInt64
+	var reservedUser sql.NullInt64
+	err = row.Scan(&seatID, &user, &reservedUser)
+	if err != nil {
+		return err
+	}
+	if user.Valid && user.Int64 != userID {
+		return fmt.Errorf("seat %d (position %d) in draft %d already occupied by user %d", seatID, position, draftID, user.Int64)
+	}
+	if reservedUser.Valid && reservedUser.Int64 != userID {
+		return fmt.Errorf("seat %d (position %d) in draft %d already reserved by user %d", seatID, position, draftID, reservedUser.Int64)
+	}
+
+	err = doJoinSeatId(tx, userID, draftID, query, seatID, row)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func doJoinSeatId(tx *sql.Tx, userID int64, draftID int64, query string, emptySeatID int64, row *sql.Row) error {
 	query = `update seats set user = ? where id = ?`
-	_, err = tx.Exec(query, userID, emptySeatID)
+	_, err := tx.Exec(query, userID, emptySeatID)
 	if err != nil {
 		return err
 	}
@@ -553,7 +617,6 @@ func doJoin(tx *sql.Tx, userID int64, draftID int64) error {
 			}
 		}
 	}
-
 	return nil
 }
 
@@ -600,7 +663,7 @@ func doSkip(tx *sql.Tx, userID int64, draftID int64) error {
                   from seats
                   where draft = ?
                     and user = ?
-                    and position <> 8`
+                    and Position <> 8`
 	row := tx.QueryRow(query, draftID, userID)
 	var alreadyJoined int64
 	err := row.Scan(&alreadyJoined)
@@ -615,7 +678,7 @@ func doSkip(tx *sql.Tx, userID int64, draftID int64) error {
                  from seats
                  where draft = ?
                    and reserveduser = ?
-                   and position <> 8
+                   and Position <> 8
                  limit 1`
 	row = tx.QueryRow(query, draftID, userID)
 	var reservedSeatID int64
@@ -722,7 +785,7 @@ func findCardByRfid(tx *sql.Tx, cardRfid string, userID int64, draftID int64) (i
 	query := `select cards.id
 					from cards
 					join packs on packs.id = cards.pack
-					join seats on seats.id = packs.seat
+					join seats on seats.id = packs.Position
 					and seats.draft = ?
 					and seats.user = ?
 					and seats.round = packs.round
@@ -741,9 +804,9 @@ func findCardByRfid(tx *sql.Tx, cardRfid string, userID int64, draftID int64) (i
 	query = `select cards.id, packs.id
 					from cards
 					join packs on packs.id = cards.pack
-					join seats on seats.id = packs.seat
+					join seats on seats.id = packs.Position
 					and seats.draft = ?
-					and seats.position = 8
+					and seats.Position = 8
 					where cards.cardid = ?`
 	row = tx.QueryRow(query, draftID, cardRfid)
 	var packId int64
@@ -765,7 +828,7 @@ func findCardByRfid(tx *sql.Tx, cardRfid string, userID int64, draftID int64) (i
 	}
 
 	query = `update packs
-					set seat = ?, original_seat = ?, round = ?
+					set Position = ?, original_seat = ?, round = ?
 					where id = ?`
 	_, err = tx.Exec(query, seatId, seatId, round, packId)
 	if err != nil {
@@ -796,17 +859,17 @@ func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool) (int64, int64, []
 	announcements := []string{}
 
 	// First we need information about the card. Determine which pack the card is in,
-	// where that pack is at the table, who sits at that position, which draft that
+	// where that pack is at the table, who sits at that Position, which draft that
 	// pack is a part of, and which round that card is in.
 	query := `select
                    packs.id,
-                   seats.position,
+                   seats.Position,
                    seats.draft,
                    seats.user,
                    seats.round
                  from cards
                  join packs on cards.pack = packs.id
-                 join seats on packs.seat = seats.id
+                 join seats on packs.Position = seats.id
                  where cards.id = ?`
 
 	row := tx.QueryRow(query, cardID)
@@ -830,7 +893,7 @@ func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool) (int64, int64, []
 	query = `select
                     v_packs.id
                   from seats
-                  join v_packs on seats.id = v_packs.seat
+                  join v_packs on seats.id = v_packs.Position
                   where seats.user = ?
                     and seats.draft = ?
                     and seats.round = v_packs.round
@@ -854,7 +917,7 @@ func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool) (int64, int64, []
                    v_packs.id,
                    v_packs.count
                  from v_packs
-                 join seats on seats.id = v_packs.seat
+                 join seats on seats.id = v_packs.Position
                  where v_packs.round = 0
                    and seats.user = ?
                    and seats.draft = ?`
@@ -870,7 +933,7 @@ func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool) (int64, int64, []
 
 	// Are we passing the pack after we've picked the card?
 	if pass {
-		// Get the seat position that the pack will be passed to.
+		// Get the Position Position that the pack will be passed to.
 		var newPosition int64
 		if round%2 == 0 {
 			newPosition = position - 1
@@ -884,14 +947,14 @@ func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool) (int64, int64, []
 			}
 		}
 
-		// Now get the seat id that the pack will be passed to.
+		// Now get the Position id that the pack will be passed to.
 		query = `select
                            seats.id,
                            users.discord_id
                          from seats
                          left join users on seats.user = users.id
                          where seats.draft = ?
-                           and seats.position = ?`
+                           and seats.Position = ?`
 
 		row = tx.QueryRow(query, draftID, newPosition)
 		var newPositionID int64
@@ -909,18 +972,18 @@ func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool) (int64, int64, []
 			return draftID, myPackID, announcements, round, err
 		}
 
-		// Move the pack to the next seat.
-		query = `update packs set seat = ? where id = ?`
+		// Move the pack to the next Position.
+		query = `update packs set Position = ? where id = ?`
 		_, err = tx.Exec(query, newPositionID, myPackID)
 		if err != nil {
 			return draftID, myPackID, announcements, round, err
 		}
 
-		// Get the number of remaining packs in the seat.
+		// Get the number of remaining packs in the Position.
 		query = `select
                            count(1)
                          from v_packs
-                         join seats on v_packs.seat = seats.id
+                         join seats on v_packs.Position = seats.id
                          where seats.user = ?
                            and v_packs.round = ?
                            and v_packs.count > 0
@@ -933,14 +996,14 @@ func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool) (int64, int64, []
 		}
 
 		if packsLeftInSeat == 0 {
-			// If there are 0 packs left in the seat, check to see if the player we passed the pack to
+			// If there are 0 packs left in the Position, check to see if the player we passed the pack to
 			// is in the same round as us. If the rounds match, NotifyByDraftAndPosition.
 			query = `select
                                    count(1)
                                  from seats a
                                  join seats b on a.draft = b.draft
                                  where a.user = ?
-                                   and b.position = ?
+                                   and b.Position = ?
                                    and a.draft = ?
                                    and a.round = b.round`
 			row = tx.QueryRow(query, userID, newPosition, draftID)
@@ -949,7 +1012,7 @@ func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool) (int64, int64, []
 			if err != nil {
 				log.Printf("cannot determine if rounds match for notify")
 			} else if roundsMatch == 1 && newPositionDiscordID.Valid {
-				log.Printf("attempting to notify position %d draft %d", newPosition, draftID)
+				log.Printf("attempting to notify Position %d draft %d", newPosition, draftID)
 				err = NotifyByDraftAndDiscordID(draftID, newPositionDiscordID.String)
 				if err != nil {
 					log.Printf("error with notify")
@@ -990,7 +1053,7 @@ func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool) (int64, int64, []
                                            count(1)
                                          from seats
                                          where draft = ?
-                                         and position <> 8
+                                         and Position <> 8
                                          group by round
                                          order by round desc
                                          limit 1`
@@ -1008,12 +1071,12 @@ func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool) (int64, int64, []
 					}
 				} else if nextRoundPlayers > 1 {
 					// Now we know that we are not the only player in this round.
-					// Get the position of all players that currently have a pick.
+					// Get the Position of all players that currently have a pick.
 					query = `select
-                                                   seats.position,
+                                                   seats.Position,
                                                    users.discord_id
                                                  from seats
-                                                 left join v_packs on seats.id = v_packs.seat
+                                                 left join v_packs on seats.id = v_packs.Position
                                                  join users on seats.user = users.id
                                                  where v_packs.count > 0
                                                    and v_packs.round = seats.round
@@ -1111,7 +1174,7 @@ func PostFirstRoundPairings(tx *sql.Tx, draftID int64, draftName string) error {
 				  from users
 				  inner join seats on users.id = seats.user
 				  where seats.draft = ?
-				  order by seats.position`
+				  order by seats.Position`
 	drafters, err := tx.Query(query, draftID)
 	if err != nil {
 		log.Print(err.Error())
@@ -1251,7 +1314,7 @@ func GetJSONObject(tx *sql.Tx, draftID int64) (DraftJSON, error) {
 	query := `select
                     drafts.id,
                     drafts.name,
-                    seats.position,
+                    seats.Position,
                     packs.round,
                     users.discord_name,
                     users.mtgo_name,
@@ -1265,7 +1328,7 @@ func GetJSONObject(tx *sql.Tx, draftID int64) (DraftJSON, error) {
                   join packs on packs.original_seat = seats.id
                   join cards on cards.original_pack = packs.id
                   where drafts.id = ?
-                  and seats.position <> 8`
+                  and seats.Position <> 8`
 
 	rows, err := tx.Query(query, draftID)
 	if err != nil {
@@ -1320,7 +1383,7 @@ func GetJSONObject(tx *sql.Tx, draftID int64) (DraftJSON, error) {
 	}
 
 	query = `select
-                   position,
+                   Position,
                    announcement,
                    card1,
                    card2,
@@ -1441,9 +1504,9 @@ func GetFilteredJSON(tx *sql.Tx, draftID int64, userID int64) (string, error) {
 func doEvent(tx *sql.Tx, draftID int64, userID int64, announcements []string, cardID1 int64, cardID2 sql.NullInt64, round int64) error {
 	query := `select
                     v_packs.count,
-                    seats.position
+                    seats.Position
                   from v_packs
-                  join seats on v_packs.seat = seats.id
+                  join seats on v_packs.Position = seats.id
                   where v_packs.round = 0
                     and seats.draft = ?
                     and seats.user = ?`
@@ -1456,10 +1519,10 @@ func doEvent(tx *sql.Tx, draftID int64, userID int64, announcements []string, ca
 	}
 
 	if cardID2.Valid {
-		query = `insert into events (round, draft, position, announcement, card1, card2, modified) VALUES (?, ?, ?, ?, ?, ?, ?)`
+		query = `insert into events (round, draft, Position, announcement, card1, card2, modified) VALUES (?, ?, ?, ?, ?, ?, ?)`
 		_, err = tx.Exec(query, round, draftID, position, strings.Join(announcements, "\n"), cardID1, cardID2.Int64, count)
 	} else {
-		query = `insert into events (round, draft, position, announcement, card1, card2, modified) VALUES (?, ?, ?, ?, ?, null, ?)`
+		query = `insert into events (round, draft, Position, announcement, card1, card2, modified) VALUES (?, ?, ?, ?, ?, null, ?)`
 		_, err = tx.Exec(query, round, draftID, position, strings.Join(announcements, "\n"), cardID1, count)
 	}
 
@@ -1472,7 +1535,7 @@ func GetDraftList(userID int64, tx *sql.Tx) (DraftList, error) {
 	query := `select
                     drafts.id,
                     drafts.name,
-                    sum(seats.user is null and seats.reserveduser is null and seats.position is not null and seats.position <> 8) as empty_seats,
+                    sum(seats.user is null and seats.reserveduser is null and seats.Position is not null and seats.Position <> 8) as empty_seats,
                     sum(seats.reserveduser not null and seats.user is null) as reserved_seats,
                     coalesce(sum(seats.user = ?), 0) as joined,
                     coalesce(sum(seats.reserveduser = ?), 0) as reserved,
@@ -1791,7 +1854,7 @@ func CheckNextRoundPairings(tx *sql.Tx, draftID int64, round int) {
 			// Pair round 2
 			result, err := tx.Query(
 				`select 
-							users.discord_name, users.discord_id, win, seats.position 
+							users.discord_name, users.discord_id, win, seats.Position 
 							from results 
 							join seats on seats.draft = results.draft and seats.user = results.user
 							join users on users.id = results.user 
@@ -1834,7 +1897,7 @@ func CheckNextRoundPairings(tx *sql.Tx, draftID int64, round int) {
 		} else if round == 2 {
 			// Pair round 3
 			result, err := tx.Query(`select 
-						users.discord_name, users.discord_id, sum(win), seats.position 
+						users.discord_name, users.discord_id, sum(win), seats.Position 
 						from results 
 						join seats on seats.draft = results.draft and seats.user = results.user
 						join users on users.id = results.user 
