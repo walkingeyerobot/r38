@@ -35,7 +35,7 @@ type Seat struct {
 
 // DraftEvent is part of DraftJSON.
 type DraftEvent struct {
-	Position       int64    `json:"position"`
+	Position       int64    `json:"Position"`
 	Announcements  []string `json:"announcements"`
 	Cards          []int64  `json:"cards"`
 	PlayerModified int64    `json:"playerModified"`
@@ -106,7 +106,8 @@ type PostedRfidPick struct {
 
 // PostedJoin is JSON accepted from the client when a user joins a draft.
 type PostedJoin struct {
-	ID int64 `json:"id"`
+	ID       int64 `json:"id"`
+	Position int64 `json:"Position,omitempty"`
 }
 
 // PostedPref is JSON accepted from the client when a user changes their preferences.
