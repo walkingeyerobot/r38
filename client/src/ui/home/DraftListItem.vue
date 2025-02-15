@@ -27,13 +27,25 @@ Represents one entry in the list of drafts that a user might view/join
       </div>
     </div>
     <button
-        v-if="isJoinable"
+        v-if="!descriptor.inPerson && isJoinable"
         class="join-btn"
         @click.stop="onJoinClicked(descriptor.id)"
         :disabled="joinFetchStatus == 'fetching'"
         >
       Join
     </button>
+    <span
+      v-if="descriptor.inPerson && isJoinable"
+      class="join-seats">
+      <button
+        v-for="n in 8"
+        class="join-btn"
+        @click.stop="onJoinSeatClicked(descriptor.id, n - 1)"
+        :disabled="joinFetchStatus == 'fetching'"
+        >
+        {{ n }}
+      </button>
+    </span>
     <button
         v-if="isSkippable"
         class="join-btn"
@@ -95,7 +107,15 @@ export default defineComponent({
     async onJoinClicked(draftId: number) {
       this.joinFetchStatus = 'fetching';
       // TODO: Error handling
-      const response = await fetchEndpoint(ROUTE_JOIN_DRAFT, { id: draftId });
+      const response = await fetchEndpoint(ROUTE_JOIN_DRAFT, { id: draftId, position: undefined });
+      this.joinFetchStatus = 'loaded';
+      pushDraftUrl(this, { draftId });
+    },
+
+    async onJoinSeatClicked(draftId: number, position: number) {
+      this.joinFetchStatus = 'fetching';
+      // TODO: Error handling
+      const response = await fetchEndpoint(ROUTE_JOIN_DRAFT, { id: draftId, position });
       this.joinFetchStatus = 'loaded';
       pushDraftUrl(this, { draftId });
     },
@@ -115,7 +135,8 @@ export default defineComponent({
 ._draft-list-item {
   display: flex;
   flex-direction: row;
-  height: 70px;
+  min-height: 55px;
+  padding: 15px 0;
   align-items: center;
 
   font-size: 16px;
@@ -140,6 +161,11 @@ export default defineComponent({
 .seats {
   margin-top: 5px;
   font-size: 14px;
+}
+
+.join-seats {
+  display: grid;
+  grid-template-columns: 25% 25% 25% 25%;
 }
 
 .join-btn {
