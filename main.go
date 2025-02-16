@@ -1314,6 +1314,7 @@ func GetJSONObject(tx *sql.Tx, draftID int64) (DraftJSON, error) {
 	query := `select
                     drafts.id,
                     drafts.name,
+                    drafts.inperson,
                     seats.Position,
                     packs.round,
                     users.discord_name,
@@ -1346,6 +1347,7 @@ func GetJSONObject(tx *sql.Tx, draftID int64) (DraftJSON, error) {
 		var nullablePicture sql.NullString
 		err = rows.Scan(&draft.DraftID,
 			&draft.DraftName,
+			&draft.InPerson,
 			&position,
 			&packRound,
 			&nullableDiscordName,

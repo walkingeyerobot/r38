@@ -13,6 +13,7 @@ Root component for desktop layout
           v-if="showDraftPicker"
           class="picker"
           :showDeckBuilder="true"
+          :inPersonDraft="inPersonDraft"
           />
       <DraftView v-else class="grid" />
     </div>
@@ -36,6 +37,10 @@ export default defineComponent({
 
   props: {
     showDraftPicker: {
+      type: Boolean,
+      required: true,
+    },
+    inPersonDraft: {
       type: Boolean,
       required: true,
     },

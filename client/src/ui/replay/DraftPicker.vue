@@ -1,6 +1,9 @@
 <template>
   <div class="_draft-picker">
-    <div v-if="availablePack" class="main-content picks">
+    <div v-if="inPersonDraft" class="main-content scan">
+      Scan now
+    </div>
+    <div v-else-if="availablePack" class="main-content picks">
       <CardView
           v-for="(cardId, i) in availablePack.cards"
           :key="cardId"
@@ -41,6 +44,10 @@ export default defineComponent({
 
   props: {
     showDeckBuilder: {
+      type: Boolean,
+      required: true,
+    },
+    inPersonDraft: {
       type: Boolean,
       required: true,
     },
@@ -145,6 +152,15 @@ export default defineComponent({
   padding: 15px;
   box-sizing: border-box;
   max-width: 1200px;
+}
+
+.scan {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-transform: uppercase;
+  color: white;
+  font-size: 300%;
 }
 
 .no-picks {

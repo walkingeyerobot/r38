@@ -6,6 +6,7 @@ export interface SourceData {
   seats: SourceSeat[];
   events: SourceEvent[];
   pickXsrf: string;
+  inPerson: boolean;
 
   // If this source data is from the perspective of a specific player, then
   // that player's ID

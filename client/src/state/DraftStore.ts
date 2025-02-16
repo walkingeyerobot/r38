@@ -28,6 +28,7 @@ export const draftStore = vuexModule(
     cards: new Map<number, DraftCard>(),
     events: [],
     isComplete: false,
+    inPerson: false,
     parseError: null,
 
   } as State,
@@ -79,6 +80,7 @@ export const draftStore = vuexModule(
         state.cards = parsed.cards;
         state.events = events;
         state.isComplete = timelineGenerator.isDraftComplete();
+        state.inPerson = parsed.state.inPerson;
       },
 
       pushEvent(state: State, srcEvent: SourceEvent) {
@@ -92,6 +94,10 @@ export const draftStore = vuexModule(
         return !draftStore.isComplete
             && authStore.user != null
             && userIsSeated(authStore.user.id, draftStore.currentState);
+      },
+
+      isInPersonDraft(): boolean {
+        return draftStore.currentState.inPerson;
       },
 
       getCard(): (id: number) => DraftCard {
@@ -114,6 +120,7 @@ interface State {
   cards: Map<number, DraftCard>,
   events: TimelineEvent[],
   isComplete: boolean,
+  inPerson: boolean,
 
   /** Non-null if there was an error while parsing the event stream */
   parseError: Error | null,

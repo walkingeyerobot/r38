@@ -22,6 +22,7 @@ type DraftJSON struct {
 	Seats     [8]Seat      `json:"seats"`
 	Events    []DraftEvent `json:"events"`
 	PickXsrf  string       `json:"pickXsrf"`
+	InPerson  bool         `json:"inPerson"`
 }
 
 // Seat is part of DraftJSON.

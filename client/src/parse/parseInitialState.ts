@@ -45,7 +45,8 @@ class StateParser {
         unusedPacks,
         deadPacks,
         packs: this._packs,
-        locations: this._locations
+        locations: this._locations,
+        inPerson: srcData.inPerson
       },
       cards: this._cards,
     };
