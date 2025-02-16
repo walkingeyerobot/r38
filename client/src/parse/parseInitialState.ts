@@ -109,6 +109,7 @@ class StateParser {
     const cards = [] as number[];
     for (let i = 0; i < srcPack.length; i++) {
       const srcCard = srcPack[i];
+      if (!srcCard) continue;
       const card: DraftCard = {
         id: srcCard.id,
         sourcePackIndex: i,

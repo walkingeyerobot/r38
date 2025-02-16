@@ -1325,8 +1325,8 @@ func GetJSONObject(tx *sql.Tx, draftID int64) (DraftJSON, error) {
                   from seats
                   left join users on users.id = seats.user
                   join drafts on drafts.id = seats.draft
-                  join packs on packs.original_seat = seats.id
-                  join cards on cards.original_pack = packs.id
+                  left join packs on packs.original_seat = seats.id
+                  left join cards on cards.original_pack = packs.id
                   where drafts.id = ?`
 
 	rows, err := tx.Query(query, draftID)
@@ -1338,11 +1338,11 @@ func GetJSONObject(tx *sql.Tx, draftID int64) (DraftJSON, error) {
 	for rows.Next() {
 		var position int64
 		var packRound int64
-		var cardID int64
+		var cardID sql.NullInt64
 		var nullableDiscordName sql.NullString
 		var nullableMtgoName sql.NullString
 		var draftUserID sql.NullInt64
-		var cardData string
+		var cardData sql.NullString
 		var nullablePicture sql.NullString
 		err = rows.Scan(&draft.DraftID,
 			&draft.DraftName,
@@ -1358,19 +1358,26 @@ func GetJSONObject(tx *sql.Tx, draftID int64) (DraftJSON, error) {
 			return draft, err
 		}
 
-		dataObj := make(map[string]interface{})
-		err = json.Unmarshal([]byte(cardData), &dataObj)
-		if err != nil {
-			log.Printf("making nil card data because of error %s", err.Error())
-			dataObj = nil
+		if position == 8 {
+			continue
 		}
-		dataObj["id"] = cardID
 
-		packRound--
+		if cardID.Valid && cardData.Valid {
+			dataObj := make(map[string]interface{})
+			err = json.Unmarshal([]byte(cardData.String), &dataObj)
+			if err != nil {
+				log.Printf("making nil card data because of error %s", err.Error())
+				dataObj = nil
+			}
+			dataObj["id"] = cardID.Int64
 
-		nextIndex := indices[position][packRound]
+			packRound--
 
-		draft.Seats[position].Packs[packRound][nextIndex] = dataObj
+			nextIndex := indices[position][packRound]
+
+			draft.Seats[position].Packs[packRound][nextIndex] = dataObj
+		}
+
 		draft.Seats[position].PlayerName = nullableDiscordName.String
 		if nullableMtgoName.Valid {
 			draft.Seats[position].MtgoName = nullableMtgoName.String
