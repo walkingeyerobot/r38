@@ -1327,8 +1327,7 @@ func GetJSONObject(tx *sql.Tx, draftID int64) (DraftJSON, error) {
                   join drafts on drafts.id = seats.draft
                   join packs on packs.original_seat = seats.id
                   join cards on cards.original_pack = packs.id
-                  where drafts.id = ?
-                  and seats.Position <> 8`
+                  where drafts.id = ?`
 
 	rows, err := tx.Query(query, draftID)
 	if err != nil {
