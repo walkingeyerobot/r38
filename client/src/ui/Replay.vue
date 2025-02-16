@@ -8,8 +8,13 @@
       <ReplayMobile
           v-if="formatStore.layout == 'mobile'"
           :showDraftPicker="showDraftPicker"
+          :inPersonDraft="inPersonDraft"
           />
-      <ReplayDesktop v-else :showDraftPicker="showDraftPicker" />
+      <ReplayDesktop
+          v-else
+          :showDraftPicker="showDraftPicker"
+          :inPersonDraft="inPersonDraft"
+      />
     </template>
   </div>
 </template>
@@ -32,10 +37,12 @@ import { fetchEndpoint } from '../fetch/fetchEndpoint';
 import { routeDraft } from '../rest/api/draft/draft';
 import { FetchStatus } from './infra/FetchStatus';
 import { isAuthedUserSelected } from './replay/isAuthedUserSelected';
+import DraftPicker from "./replay/DraftPicker.vue";
 
 
 export default defineComponent({
   components: {
+    DraftPicker,
     ReplayMobile,
     ReplayDesktop,
   },
@@ -80,6 +87,10 @@ export default defineComponent({
           && replayStore.eventPos == replayStore.events.length
           && isAuthedUserSelected(authStore, draftStore, replayStore);
     },
+
+    inPersonDraft(): boolean {
+      return draftStore.isInPersonDraft;
+    }
   },
 
   methods: {

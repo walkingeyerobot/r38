@@ -7,6 +7,7 @@ export interface DraftState {
   deadPacks: PackContainer;
   packs: Map<number, CardContainer>;
   locations: Map<number, PackContainer>;
+  inPerson: boolean;
 }
 
 export interface DraftSeat {
