@@ -92,12 +92,14 @@ function doParse(client, objstr) {
       var pack = packs[j];
       pack.startSeat = i;
       for (var k = 0; k < pack.length; k++) {
-        cardToPackAndIndex[pack[k].id] = { pack: pack, index: k };
-        if (pack[k].scryfall.name === 'Cogwork Librarian') {
-          if (librarian) {
-            throw Error('Cannot have multiple Cogwork Librarians in a draft without rewriting this logic.');
+        if (pack[k]) {
+          cardToPackAndIndex[pack[k].id] = { pack: pack, index: k };
+          if (pack[k].scryfall.name === 'Cogwork Librarian') {
+            if (librarian) {
+              throw Error('Cannot have multiple Cogwork Librarians in a draft without rewriting this logic.');
+            }
+            librarian = pack[k];
           }
-          librarian = pack[k];
         }
       }
       packs[j] = [packs[j]];
@@ -286,7 +288,7 @@ function doParse(client, objstr) {
     for (var j = 0; j < packSeen[i].length; j++) {
       if (!packSeen[i][j]) {
         obj.draft.seats[i].packs[j] = obj.draft.seats[i].packs[j].map((card) => {
-          if (card.hidden) {
+          if (!card || card.hidden) {
             return card;
           }
           return {
