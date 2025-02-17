@@ -38,7 +38,7 @@ type Seat struct {
 
 // DraftEvent is part of DraftJSON.
 type DraftEvent struct {
-	Position       int64    `json:"Position"`
+	Position       int64    `json:"position"`
 	Announcements  []string `json:"announcements"`
 	Cards          []int64  `json:"cards"`
 	PlayerModified int64    `json:"playerModified"`
