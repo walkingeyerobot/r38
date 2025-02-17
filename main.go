@@ -1386,6 +1386,8 @@ func GetJSONObject(tx *sql.Tx, draftID int64) (DraftJSON, error) {
 			nextIndex := indices[position][packRound]
 
 			draft.Seats[position].Packs[packRound][nextIndex] = dataObj
+
+			indices[position][packRound]++
 		}
 
 		draft.Seats[position].PlayerName = nullableDiscordName.String
@@ -1396,8 +1398,6 @@ func GetJSONObject(tx *sql.Tx, draftID int64) (DraftJSON, error) {
 		draft.Seats[position].PlayerImage = nullablePicture.String
 		draft.Seats[position].ScanSound = scanSound
 		draft.Seats[position].ErrorSound = errorSound
-
-		indices[position][packRound]++
 	}
 
 	query = `select
