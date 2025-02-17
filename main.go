@@ -427,8 +427,9 @@ func ServeAPIPickRfid(w http.ResponseWriter, r *http.Request, userID int64, tx *
 
 func doHandlePostedPick(w http.ResponseWriter, pick PostedPick, userID int64, tx *sql.Tx) error {
 	var draftID int64
+	var err error
 	if len(pick.CardIds) == 1 {
-		draftID, err := doSinglePick(tx, userID, pick.CardIds[0])
+		draftID, err = doSinglePick(tx, userID, pick.CardIds[0])
 		if err == nil && !xsrftoken.Valid(pick.XsrfToken, xsrfKey, strconv.FormatInt(userID, 16), fmt.Sprintf("pick%d", draftID)) {
 			err = fmt.Errorf("invalid XSRF token")
 		}
@@ -444,7 +445,8 @@ func doHandlePostedPick(w http.ResponseWriter, pick PostedPick, userID int64, tx
 		return fmt.Errorf("invalid number of picked cards: %d", len(pick.CardIds))
 	}
 
-	draftJSON, err := GetFilteredJSON(tx, draftID, userID)
+	var draftJSON string
+	draftJSON, err = GetFilteredJSON(tx, draftID, userID)
 	if err != nil {
 		return fmt.Errorf("error getting json: %s", err.Error())
 	}
@@ -1447,12 +1449,12 @@ func GetJSONObject(tx *sql.Tx, draftID int64) (DraftJSON, error) {
 func GetFilteredJSON(tx *sql.Tx, draftID int64, userID int64) (string, error) {
 	draftInfo, err := GetDraftListEntry(userID, tx, draftID)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("error getting draft list entry: %s", err.Error())
 	}
 
 	draft, err := GetJSONObject(tx, draftID)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("error getting draft details: %s", err.Error())
 	}
 
 	draft.PickXsrf = xsrftoken.Generate(xsrfKey, strconv.FormatInt(userID, 16), fmt.Sprintf("pick%d", draftID))
@@ -1475,7 +1477,7 @@ func GetFilteredJSON(tx *sql.Tx, draftID int64, userID int64) (string, error) {
 		var myRound sql.NullInt64
 		err = row.Scan(&myRound)
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("error detecting end of draft %d for user %d: %s", draftID, userID, err.Error())
 		}
 		if myRound.Valid && myRound.Int64 >= 4 {
 			returnFullReplay = true
@@ -1489,20 +1491,20 @@ func GetFilteredJSON(tx *sql.Tx, draftID int64, userID int64) (string, error) {
 	if returnFullReplay {
 		ret, err := json.Marshal(draft)
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("error marshalling full draft replay: %s", err.Error())
 		}
 		return string(ret), nil
 	}
 
 	conn, err := net.Dial("unix", sock)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("error connecting to filter service: %s", err.Error())
 	}
 	defer conn.Close()
 
 	ret, err := json.Marshal(Perspective{User: userID, Draft: draft})
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("error marshalling filter service request: %s", err.Error())
 	}
 
 	stop := "\r\n\r\n"
