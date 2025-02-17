@@ -505,7 +505,7 @@ func doJoin(tx *sql.Tx, userID int64, draftID int64) error {
                   from seats
                   where draft = ?
                     and user = ?
-                    and Position <> 8`
+                    and position <> 8`
 	row := tx.QueryRow(query, draftID, userID)
 	var alreadyJoined int64
 	err := row.Scan(&alreadyJoined)
@@ -520,7 +520,7 @@ func doJoin(tx *sql.Tx, userID int64, draftID int64) error {
                  from seats
                  where draft = ?
                    and user is null
-                   and Position <> 8
+                   and position <> 8
                  order by seats.reserveduser = ? desc, random()
                  limit 1`
 	row = tx.QueryRow(query, draftID, userID)
@@ -549,7 +549,7 @@ func doJoinSeat(tx *sql.Tx, userID int64, draftID int64, position int64) error {
                   from seats
                   where draft = ?
                     and user = ?
-                    and Position <> 8`
+                    and position <> 8`
 	row := tx.QueryRow(query, draftID, userID)
 	var alreadyJoined int64
 	err := row.Scan(&alreadyJoined)
@@ -563,7 +563,7 @@ func doJoinSeat(tx *sql.Tx, userID int64, draftID int64, position int64) error {
                    id, seats.user, seats.reserveduser
                  from seats
                  where draft = ?
-                   and Position = ?
+                   and position = ?
                  limit 1`
 	row = tx.QueryRow(query, draftID, position)
 	var seatID int64
@@ -663,7 +663,7 @@ func doSkip(tx *sql.Tx, userID int64, draftID int64) error {
                   from seats
                   where draft = ?
                     and user = ?
-                    and Position <> 8`
+                    and position <> 8`
 	row := tx.QueryRow(query, draftID, userID)
 	var alreadyJoined int64
 	err := row.Scan(&alreadyJoined)
@@ -678,7 +678,7 @@ func doSkip(tx *sql.Tx, userID int64, draftID int64) error {
                  from seats
                  where draft = ?
                    and reserveduser = ?
-                   and Position <> 8
+                   and position <> 8
                  limit 1`
 	row = tx.QueryRow(query, draftID, userID)
 	var reservedSeatID int64
@@ -828,7 +828,7 @@ func findCardByRfid(tx *sql.Tx, cardRfid string, userID int64, draftID int64) (i
 	}
 
 	query = `update packs
-					set Position = ?, original_seat = ?, round = ?
+					set seat = ?, original_seat = ?, round = ?
 					where id = ?`
 	_, err = tx.Exec(query, seatId, seatId, round, packId)
 	if err != nil {
@@ -973,7 +973,7 @@ func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool) (int64, int64, []
 		}
 
 		// Move the pack to the next Position.
-		query = `update packs set Position = ? where id = ?`
+		query = `update packs set seat = ? where id = ?`
 		_, err = tx.Exec(query, newPositionID, myPackID)
 		if err != nil {
 			return draftID, myPackID, announcements, round, err
@@ -1053,7 +1053,7 @@ func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool) (int64, int64, []
                                            count(1)
                                          from seats
                                          where draft = ?
-                                         and Position <> 8
+                                         and position <> 8
                                          group by round
                                          order by round desc
                                          limit 1`
@@ -1535,10 +1535,10 @@ func doEvent(tx *sql.Tx, draftID int64, userID int64, announcements []string, ca
 	}
 
 	if cardID2.Valid {
-		query = `insert into events (round, draft, Position, announcement, card1, card2, modified) VALUES (?, ?, ?, ?, ?, ?, ?)`
+		query = `insert into events (round, draft, position, announcement, card1, card2, modified) VALUES (?, ?, ?, ?, ?, ?, ?)`
 		_, err = tx.Exec(query, round, draftID, position, strings.Join(announcements, "\n"), cardID1, cardID2.Int64, count)
 	} else {
-		query = `insert into events (round, draft, Position, announcement, card1, card2, modified) VALUES (?, ?, ?, ?, ?, null, ?)`
+		query = `insert into events (round, draft, position, announcement, card1, card2, modified) VALUES (?, ?, ?, ?, ?, null, ?)`
 		_, err = tx.Exec(query, round, draftID, position, strings.Join(announcements, "\n"), cardID1, count)
 	}
 
