@@ -885,9 +885,9 @@ func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool) (int64, int64, []
 	if err != nil {
 		return draftID, myPackID, announcements, round, err
 	} else if userID2.Valid && userID != userID2.Int64 {
-		return draftID, myPackID, announcements, round, fmt.Errorf("card does not belong to the user.")
+		return draftID, myPackID, announcements, round, fmt.Errorf("card does not belong to the user")
 	} else if round == 0 {
-		return draftID, myPackID, announcements, round, fmt.Errorf("card has already been picked.")
+		return draftID, myPackID, announcements, round, fmt.Errorf("card has already been picked")
 	}
 
 	// Now get the pack id that the user is allowed to pick from in the draft that the
@@ -909,7 +909,8 @@ func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool) (int64, int64, []
 	if err != nil {
 		return draftID, myPackID, announcements, round, err
 	} else if myPackID != myPackID2 {
-		return draftID, myPackID, announcements, round, fmt.Errorf("card is not in the next available pack.")
+		return draftID, myPackID, announcements, round,
+			fmt.Errorf("card is not in the next available pack (in pack %d but expecting pack %d)", myPackID, myPackID2)
 	}
 
 	// once we're here, we know the pick is valid
@@ -980,6 +981,7 @@ func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool) (int64, int64, []
 		if err != nil {
 			return draftID, myPackID, announcements, round, err
 		}
+		log.Printf("moved pack %d to seat %d", myPackID, newPositionID)
 
 		// Get the number of remaining packs in the Position.
 		query = `select
@@ -1124,7 +1126,8 @@ func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool) (int64, int64, []
 		}
 	}
 
-	log.Printf("player %d in draft %d took card %d", userID, draftID, cardID)
+	log.Printf("player %d in draft %d (position %d) took card %d from pack %d",
+		userID, draftID, position+1, cardID, myPackID)
 
 	return draftID, myPackID, announcements, round, nil
 }
@@ -1230,6 +1233,9 @@ func PostPairings(tx *sql.Tx, draftID int64, draftName string, round int, pairin
 	if err != nil {
 		log.Print(err.Error())
 		return err
+	}
+	if msg == nil {
+		return nil
 	}
 	err = dg.MessageReactionAdd(msg.ChannelID, msg.ID, "🏆")
 	if err != nil {
@@ -1342,7 +1348,7 @@ func GetJSONObject(tx *sql.Tx, draftID int64) (DraftJSON, error) {
 	var indices [8][3]int64
 	for rows.Next() {
 		var position int64
-		var packRound int64
+		var packRound sql.NullInt64
 		var cardID sql.NullInt64
 		var nullableDiscordName sql.NullString
 		var nullableMtgoName sql.NullString
@@ -1372,7 +1378,7 @@ func GetJSONObject(tx *sql.Tx, draftID int64) (DraftJSON, error) {
 			continue
 		}
 
-		if cardID.Valid && cardData.Valid {
+		if packRound.Valid && cardID.Valid && cardData.Valid {
 			dataObj := make(map[string]interface{})
 			err = json.Unmarshal([]byte(cardData.String), &dataObj)
 			if err != nil {
@@ -1381,13 +1387,11 @@ func GetJSONObject(tx *sql.Tx, draftID int64) (DraftJSON, error) {
 			}
 			dataObj["id"] = cardID.Int64
 
-			packRound--
+			nextIndex := indices[position][packRound.Int64-1]
 
-			nextIndex := indices[position][packRound]
+			draft.Seats[position].Packs[packRound.Int64-1][nextIndex] = dataObj
 
-			draft.Seats[position].Packs[packRound][nextIndex] = dataObj
-
-			indices[position][packRound]++
+			indices[position][packRound.Int64-1]++
 		}
 
 		draft.Seats[position].PlayerName = nullableDiscordName.String
