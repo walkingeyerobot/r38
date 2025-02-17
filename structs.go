@@ -111,7 +111,7 @@ type PostedRfidPick struct {
 // PostedJoin is JSON accepted from the client when a user joins a draft.
 type PostedJoin struct {
 	ID       int64 `json:"id"`
-	Position int64 `json:"Position,omitempty"`
+	Position int64 `json:"position,omitempty"`
 }
 
 // PostedPref is JSON accepted from the client when a user changes their preferences.
