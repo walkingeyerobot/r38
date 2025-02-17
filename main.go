@@ -1322,7 +1322,9 @@ func GetJSONObject(tx *sql.Tx, draftID int64) (DraftJSON, error) {
                     cards.id,
                     users.id,
                     cards.data,
-                    users.picture
+                    users.picture,
+                    seats.scansound,
+                    seats.errorsound
                   from seats
                   left join users on users.id = seats.user
                   join drafts on drafts.id = seats.draft
@@ -1345,6 +1347,8 @@ func GetJSONObject(tx *sql.Tx, draftID int64) (DraftJSON, error) {
 		var draftUserID sql.NullInt64
 		var cardData sql.NullString
 		var nullablePicture sql.NullString
+		var scanSound int64
+		var errorSound int64
 		err = rows.Scan(&draft.DraftID,
 			&draft.DraftName,
 			&draft.InPerson,
@@ -1355,7 +1359,9 @@ func GetJSONObject(tx *sql.Tx, draftID int64) (DraftJSON, error) {
 			&cardID,
 			&draftUserID,
 			&cardData,
-			&nullablePicture)
+			&nullablePicture,
+			&scanSound,
+			&errorSound)
 		if err != nil {
 			return draft, err
 		}
@@ -1386,6 +1392,8 @@ func GetJSONObject(tx *sql.Tx, draftID int64) (DraftJSON, error) {
 		}
 		draft.Seats[position].PlayerID = draftUserID.Int64
 		draft.Seats[position].PlayerImage = nullablePicture.String
+		draft.Seats[position].ScanSound = scanSound
+		draft.Seats[position].ErrorSound = errorSound
 
 		indices[position][packRound]++
 	}

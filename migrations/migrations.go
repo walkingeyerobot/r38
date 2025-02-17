@@ -11,6 +11,7 @@ var Migrations = []migration.Migrator{
 	addResultsTimestamp,
 	addCardId,
 	addInPersonFlag,
+	addSounds,
 }
 
 func initialSchema(tx migration.LimitedTx) error {
@@ -56,5 +57,11 @@ func addCardId(tx migration.LimitedTx) error {
 
 func addInPersonFlag(tx migration.LimitedTx) error {
 	_, err := tx.Exec(`ALTER TABLE drafts ADD COLUMN inperson number DEFAULT 0`)
+	return err
+}
+
+func addSounds(tx migration.LimitedTx) error {
+	_, err := tx.Exec(`ALTER TABLE seats ADD COLUMN scansound number DEFAULT 0;
+		ALTER TABLE seats ADD COLUMN errorsound number DEFAULT 0;`)
 	return err
 }

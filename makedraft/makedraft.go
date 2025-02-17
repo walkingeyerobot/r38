@@ -370,13 +370,24 @@ func generateEmptyDraft(tx *sql.Tx, name string, format string, inPerson bool, s
 		numSeats = 9
 	}
 	var seatIds [9]int64
+	scanSounds := rand.Perm(8)
+	errorSounds := rand.Perm(8)
 	for i := 0; i < numSeats; i++ {
-		if len(assignedUsers) > i {
-			query = `INSERT INTO seats (position, draft, reserveduser) VALUES (?, ?, ?)`
-			res, err = tx.Exec(query, i, draftID, assignedUsers[i])
+		var scanSound int
+		var errorSound int
+		if i == 8 {
+			scanSound = 0
+			errorSound = 0
 		} else {
-			query = `INSERT INTO seats (position, draft) VALUES (?, ?)`
-			res, err = tx.Exec(query, i, draftID)
+			scanSound = scanSounds[i]
+			errorSound = errorSounds[i]
+		}
+		if len(assignedUsers) > i {
+			query = `INSERT INTO seats (position, draft, scansound, errorsound, reserveduser) VALUES (?, ?, ?, ?, ?)`
+			res, err = tx.Exec(query, i, draftID, scanSound, errorSound, assignedUsers[i])
+		} else {
+			query = `INSERT INTO seats (position, draft, scansound, errorsound) VALUES (?, ?, ?, ?)`
+			res, err = tx.Exec(query, i, draftID, scanSound, errorSound)
 		}
 		if err != nil {
 			return packIds, fmt.Errorf("could not create seats in draft: %s", err)

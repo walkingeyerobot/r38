@@ -32,6 +32,8 @@ type Seat struct {
 	MtgoName    string             `json:"mtgoName"`
 	PlayerID    int64              `json:"playerId"`
 	PlayerImage string             `json:"playerImage"`
+	ScanSound   int64              `json:"scanSound"`
+	ErrorSound  int64              `json:"errorSound"`
 }
 
 // DraftEvent is part of DraftJSON.
