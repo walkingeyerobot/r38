@@ -12,6 +12,9 @@ var Migrations = []migration.Migrator{
 	addCardId,
 	addInPersonFlag,
 	addSounds,
+	addDraftFormat,
+	addCardData,
+	addEventPosition,
 }
 
 func initialSchema(tx migration.LimitedTx) error {
@@ -63,5 +66,20 @@ func addInPersonFlag(tx migration.LimitedTx) error {
 func addSounds(tx migration.LimitedTx) error {
 	_, err := tx.Exec(`ALTER TABLE seats ADD COLUMN scansound number DEFAULT 0;
 		ALTER TABLE seats ADD COLUMN errorsound number DEFAULT 0;`)
+	return err
+}
+
+func addDraftFormat(tx migration.LimitedTx) error {
+	_, err := tx.Exec(`ALTER TABLE drafts ADD COLUMN format string`)
+	return err
+}
+
+func addCardData(tx migration.LimitedTx) error {
+	_, err := tx.Exec(`ALTER TABLE cards ADD COLUMN data string`)
+	return err
+}
+
+func addEventPosition(tx migration.LimitedTx) error {
+	_, err := tx.Exec(`ALTER TABLE events ADD COLUMN position string`)
 	return err
 }
