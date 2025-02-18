@@ -1,10 +1,6 @@
 <template>
-  <div
-      class="_draft-seat"
-      :class="{ selected: isSelected, }"
-      @click="onHeaderClick"
-      >
-    <img class="icon" :src="seat.player.iconUrl" >
+  <div class="_draft-seat" :class="{ selected: isSelected }" @click="onHeaderClick">
+    <img class="icon" :src="seat.player.iconUrl" />
 
     <div class="name-cnt">
       <div class="player-name">
@@ -13,50 +9,41 @@
 
       <div class="mana-counts">
         <ManaSymbol
-            v-for="colorWeight in colorWeights"
-            :key="colorWeight.color"
-            :code="colorWeight.color"
-            class="mana-symbol"
-            >
+          v-for="colorWeight in colorWeights"
+          :key="colorWeight.color"
+          :code="colorWeight.color"
+          class="mana-symbol"
+        >
         </ManaSymbol>
       </div>
     </div>
 
     <div
-        v-if="packCount > 0"
-        class="pack-count"
-        @mouseenter="onPackCountHover"
-        @mouseleave="onQueuedPacksUnhover"
-        >
-      <img
-          class="pack-icon"
-          :class="{ 'no-packs': activePackCount == 0 }"
-          src="./card_back.png"
-          >
+      v-if="packCount > 0"
+      class="pack-count"
+      @mouseenter="onPackCountHover"
+      @mouseleave="onQueuedPacksUnhover"
+    >
+      <img class="pack-icon" :class="{ 'no-packs': activePackCount == 0 }" src="./card_back.png" />
       <div v-if="activePackCount > 0" class="pack-count-label">
         {{ activePackCount }}
       </div>
 
-      <QueuedPacks
-          v-if="showPacks"
-          :seat="seat"
-          class="queued-packs"
-          />
+      <QueuedPacks v-if="showPacks" :seat="seat" class="queued-packs" />
     </div>
-
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
-import ManaSymbol from '../../shared/mana/ManaSymbol.vue';
-import QueuedPacks from './QueuedPacks.vue';
+import { defineComponent } from "vue";
 
-import { replayStore } from '../../../state/ReplayStore';
+import ManaSymbol from "../../shared/mana/ManaSymbol.vue";
+import QueuedPacks from "./QueuedPacks.vue";
 
-import { DraftSeat, CardPack as CardPackModel } from '../../../draft/DraftState';
-import { pushDraftUrlRelative } from '../../../router/url_manipulation';
-import { ScryfallColor } from '../../../draft/scryfall';
+import { replayStore } from "@/state/ReplayStore";
+import type { DraftSeat } from "@/draft/DraftState";
+import { pushDraftUrlRelative } from "@/router/url_manipulation";
+import type { ScryfallColor } from "@/draft/scryfall";
 
 export default defineComponent({
   components: {
@@ -80,9 +67,7 @@ export default defineComponent({
   computed: {
     isSelected(): boolean {
       const selection = replayStore.selection;
-      return selection != null
-          && selection.type == 'seat'
-          && selection.id == this.seat.position
+      return selection != null && selection.type == "seat" && selection.id == this.seat.position;
     },
 
     packCount(): number {
@@ -90,8 +75,7 @@ export default defineComponent({
     },
 
     activePackCount(): number {
-      return this.seat.queuedPacks.packs.filter(
-          pack => pack.round == this.seat.round).length;
+      return this.seat.queuedPacks.packs.filter((pack) => pack.round == this.seat.round).length;
     },
 
     colorWeights(): ColorWeight[] {
@@ -99,39 +83,39 @@ export default defineComponent({
 
       return [
         {
-          color: 'W' as const,
+          color: "W" as const,
           defaultIndex: 0,
           weight: this.generateColorWeight(this.seat.colorCounts.w, totalPicks),
         },
         {
-          color: 'U' as const,
+          color: "U" as const,
           defaultIndex: 1,
           weight: this.generateColorWeight(this.seat.colorCounts.u, totalPicks),
         },
         {
-          color: 'B' as const,
+          color: "B" as const,
           defaultIndex: 2,
           weight: this.generateColorWeight(this.seat.colorCounts.b, totalPicks),
         },
         {
-          color: 'R' as const,
+          color: "R" as const,
           defaultIndex: 3,
           weight: this.generateColorWeight(this.seat.colorCounts.r, totalPicks),
         },
         {
-          color: 'G' as const,
+          color: "G" as const,
           defaultIndex: 4,
           weight: this.generateColorWeight(this.seat.colorCounts.g, totalPicks),
         },
       ]
-      .filter(colorWeight => colorWeight.weight > 0)
-      .sort((a, b) => {
-        let cmp = b.weight - a.weight;
-        if (cmp == 0) {
-          cmp = a.defaultIndex - b.defaultIndex;
-        }
-        return cmp;
-      });
+        .filter((colorWeight) => colorWeight.weight > 0)
+        .sort((a, b) => {
+          let cmp = b.weight - a.weight;
+          if (cmp == 0) {
+            cmp = a.defaultIndex - b.defaultIndex;
+          }
+          return cmp;
+        });
     },
   },
 
@@ -139,7 +123,7 @@ export default defineComponent({
     onHeaderClick() {
       pushDraftUrlRelative(this, {
         selection: {
-          type: 'seat',
+          type: "seat",
           id: this.seat.position,
         },
       });
@@ -161,15 +145,13 @@ export default defineComponent({
       }
     },
   },
-
 });
 
 interface ColorWeight {
   color: ScryfallColor;
-  defaultIndex: number,
+  defaultIndex: number;
   weight: number;
 }
-
 </script>
 
 <style scoped>
@@ -260,5 +242,4 @@ interface ColorWeight {
   border-radius: 4px;
   box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.15);
 }
-
 </style>

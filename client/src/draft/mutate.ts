@@ -1,79 +1,78 @@
-import { DraftState, CardContainer, CardPack } from "./DraftState";
-import { checkNotNil } from '../util/checkNotNil';
-import { TimelineEvent, TimelineAction, ActionMovePack, ActionAssignPackRound, ActionIncrementSeatRound, ActionIncrementPickedColors } from './TimelineEvent';
-import { MutationError } from './MutationError';
-import { CardStore } from './CardStore';
-import { eventToString } from '../state/util/eventToString';
-import { checkExhaustive } from '../util/checkExhaustive';
+import type { DraftState, CardContainer, CardPack } from "./DraftState";
+import { checkNotNil } from "@/util/checkNotNil";
+import type {
+  TimelineEvent,
+  TimelineAction,
+  ActionMovePack,
+  ActionIncrementPickedColors,
+  ActionAssignPackRound,
+} from "./TimelineEvent";
+import { MutationError } from "./MutationError";
+import type { CardStore } from "./CardStore";
+import { eventToString } from "@/state/util/eventToString";
+import { checkExhaustive } from "@/util/checkExhaustive";
 
 const DEBUG = false;
 
-export function commitTimelineEvent(
-    cardStore: CardStore,
-    event: TimelineEvent,
-    state: DraftState,
-) {
+export function commitTimelineEvent(cardStore: CardStore, event: TimelineEvent, state: DraftState) {
   if (DEBUG) {
     console.log(
-        'APPLYING EVENT:',
-        event.id,
-        event.round,
-        event.roundEpoch,
-        event.associatedSeat,
-        event.actions.map(a => a.type));
+      "APPLYING EVENT:",
+      event.id,
+      event.round,
+      event.roundEpoch,
+      event.associatedSeat,
+      event.actions.map((a) => a.type),
+    );
   }
   try {
     for (const action of event.actions) {
       applyAction(cardStore, action, state);
     }
   } catch (e) {
-    console.log('Error while trying to commit event:');
+    console.log("Error while trying to commit event:");
     console.log(eventToString(event));
     throw e;
   }
 }
 
 export function rollbackTimelineEvent(
-    cardStore: CardStore,
-    event: TimelineEvent,
-    state: DraftState,
+  cardStore: CardStore,
+  event: TimelineEvent,
+  state: DraftState,
 ) {
   try {
     for (let i = event.actions.length - 1; i >= 0; i--) {
       rollbackAction(cardStore, event.actions[i], state);
     }
   } catch (e) {
-    console.log('Error while trying to rollback event:');
+    console.log("Error while trying to rollback event:");
     console.log(eventToString(event));
     throw e;
   }
 }
 
-function applyAction(
-    cardStore: CardStore,
-    action: TimelineAction,
-    state: DraftState,
-) {
+function applyAction(cardStore: CardStore, action: TimelineAction, state: DraftState) {
   switch (action.type) {
-    case 'move-card':
+    case "move-card":
       moveCard(state, cardStore, action.card, action.from, action.to);
       break;
-    case 'move-pack':
-      movePack(action, state, 'forward');
+    case "move-pack":
+      movePack(action, state, "forward");
       break;
-    case 'mark-transfer':
+    case "mark-transfer":
       markTransfer(state, action.from, action.to);
       break;
-    case 'increment-picked-colors':
+    case "increment-picked-colors":
       incrementPickedColors(state, action);
       break;
-    case 'announce':
-      console.log('ANNOUNCEMENT:', action.message);
+    case "announce":
+      console.log("ANNOUNCEMENT:", action.message);
       break;
-    case 'increment-seat-round':
+    case "increment-seat-round":
       state.seats[action.seat].round++;
       break;
-    case 'assign-pack-round':
+    case "assign-pack-round":
       assignPackRound(action, state);
       break;
     default:
@@ -81,30 +80,26 @@ function applyAction(
   }
 }
 
-function rollbackAction(
-    cardStore: CardStore,
-    action: TimelineAction,
-    state: DraftState,
-) {
+function rollbackAction(cardStore: CardStore, action: TimelineAction, state: DraftState) {
   switch (action.type) {
-    case 'move-card':
+    case "move-card":
       moveCard(state, cardStore, action.card, action.to, action.from);
       break;
-    case 'move-pack':
-      movePack(action, state, 'reverse');
+    case "move-pack":
+      movePack(action, state, "reverse");
       break;
-    case 'mark-transfer':
+    case "mark-transfer":
       markTransfer(state, action.to, action.from);
       break;
-    case 'increment-picked-colors':
+    case "increment-picked-colors":
       decrementPickedColors(state, action);
       break;
-    case 'announce':
+    case "announce":
       break;
-    case 'increment-seat-round':
+    case "increment-seat-round":
       state.seats[action.seat].round--;
       break;
-    case 'assign-pack-round':
+    case "assign-pack-round":
       unassignPackRound(action, state);
       break;
     default:
@@ -112,11 +107,7 @@ function rollbackAction(
   }
 }
 
-function removeCard(
-    cardStore: CardStore,
-    id: number,
-    container: CardContainer,
-) {
+function removeCard(cardStore: CardStore, id: number, container: CardContainer) {
   for (let i = 0; i < container.cards.length; i++) {
     const cardId = container.cards[i];
     if (cardId == id) {
@@ -125,48 +116,37 @@ function removeCard(
     }
   }
   throw new MutationError(
-      `Cannot find card ${id} ${cardStore.getCard(id).definition.name} in `
-          + `container ${container.id} w/ contents `
-          +  container.cards.map(
-                id => id + ':' + cardStore.getCard(id).definition.name));
+    `Cannot find card ${id} ${cardStore.getCard(id).definition.name} in ` +
+      `container ${container.id} w/ contents ` +
+      container.cards.map((id) => id + ":" + cardStore.getCard(id).definition.name),
+  );
 }
 
-function moveCard(
-    state: DraftState,
-    cardStore: CardStore,
-    card: number,
-    from: number,
-    to: number,
-) {
+function moveCard(state: DraftState, cardStore: CardStore, card: number, from: number, to: number) {
   const srcContainer = checkNotNil(state.packs.get(from));
   const dstContainer = checkNotNil(state.packs.get(to));
   dstContainer.cards.push(removeCard(cardStore, card, srcContainer));
 }
 
-function movePack(
-    action: ActionMovePack,
-    state: DraftState,
-    direction: 'forward' | 'reverse'
-) {
+function movePack(action: ActionMovePack, state: DraftState, direction: "forward" | "reverse") {
   const pack = state.packs.get(action.pack);
-  if (pack == undefined || pack.type != 'pack') {
+  if (pack == undefined || pack.type != "pack") {
     throw new MutationError(`Cannot find pack ${action.pack}`);
   }
 
-  const src = direction == 'forward' ? action.from : action.to;
-  const dst = direction == 'forward' ? action.to : action.from;
+  const src = direction == "forward" ? action.from : action.to;
+  const dst = direction == "forward" ? action.to : action.from;
   const srcCnt = checkNotNil(state.locations.get(src));
   const dstCnt = checkNotNil(state.locations.get(dst));
 
-
-  if (action.epoch == 'increment') {
-    if (direction == 'forward') {
+  if (action.epoch == "increment") {
+    if (direction == "forward") {
       pack.epoch++;
     } else {
       pack.epoch--;
     }
   } else {
-    if (direction == 'forward') {
+    if (direction == "forward") {
       pack.epoch = action.epoch;
     } else {
       pack.epoch = 0;
@@ -186,10 +166,7 @@ function markTransfer(state: DraftState, from: number, to: number) {
   dstContainer.count++;
 }
 
-function incrementPickedColors(
-    state: DraftState,
-    action: ActionIncrementPickedColors,
-) {
+function incrementPickedColors(state: DraftState, action: ActionIncrementPickedColors) {
   const seat = state.seats[action.seat];
   if (seat == undefined) {
     throw new MutationError(`Cannot find seat ${action.seat}`);
@@ -201,10 +178,7 @@ function incrementPickedColors(
   seat.colorCounts.g += action.g;
 }
 
-function decrementPickedColors(
-    state: DraftState,
-    action: ActionIncrementPickedColors,
-) {
+function decrementPickedColors(state: DraftState, action: ActionIncrementPickedColors) {
   const seat = state.seats[action.seat];
   if (seat == undefined) {
     throw new MutationError(`Cannot find seat ${action.seat}`);
@@ -218,7 +192,7 @@ function decrementPickedColors(
 
 function assignPackRound(action: ActionAssignPackRound, state: DraftState) {
   const pack = state.packs.get(action.pack);
-  if (pack == undefined || pack.type != 'pack') {
+  if (pack == undefined || pack.type != "pack") {
     throw new MutationError(`Not a pack: ${action.pack}`);
   }
   pack.round = action.to;
@@ -226,7 +200,7 @@ function assignPackRound(action: ActionAssignPackRound, state: DraftState) {
 
 function unassignPackRound(action: ActionAssignPackRound, state: DraftState) {
   const pack = state.packs.get(action.pack);
-  if (pack == undefined || pack.type != 'pack') {
+  if (pack == undefined || pack.type != "pack") {
     throw new MutationError(`Not a pack: ${action.pack}`);
   }
   pack.round = action.from;

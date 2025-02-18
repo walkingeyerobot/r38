@@ -1,4 +1,4 @@
-import { ScryfallColor, ScryfallRarity, ScryfallLayout } from './scryfall';
+import type { ScryfallColor, ScryfallRarity, ScryfallLayout } from "./scryfall";
 
 export interface DraftState {
   seats: DraftSeat[];
@@ -41,7 +41,7 @@ interface BaseContainer {
 }
 
 export interface CardPack extends BaseContainer {
-  type: 'pack';
+  type: "pack";
   labelId: number;
   originalSeat: number;
   round: number;
@@ -49,7 +49,7 @@ export interface CardPack extends BaseContainer {
 }
 
 export interface PlayerPicks extends BaseContainer {
-  type: 'seat' | 'shadow-realm';
+  type: "seat" | "shadow-realm";
   owningSeat: number;
 }
 
@@ -72,17 +72,17 @@ export interface DraftCard {
 
 export interface CardPick {
   /** The seat from whose packs the card was picked. */
-  fromSeat: number,
+  fromSeat: number;
 
   /**
    * The seat that did the picking. If the shadow player is picking, this will
    * be -1, otherwise it will match fromSeat.
    */
-  bySeat: number,
+  bySeat: number;
 
-  round: number,
-  pick: number,
-  eventId: number,
+  round: number;
+  pick: number;
+  eventId: number;
 }
 
 export interface MtgCard {

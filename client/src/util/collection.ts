@@ -3,7 +3,7 @@ export function indexOf<T extends object>(array: T[], match: Partial<T>) {
   for (let i = 0; i < array.length; i++) {
     const obj = array[i];
     let isMatch = true;
-    for (let v of keys) {
+    for (const v of keys) {
       if (obj[v] != match[v]) {
         isMatch = false;
         break;
@@ -16,17 +16,11 @@ export function indexOf<T extends object>(array: T[], match: Partial<T>) {
   return -1;
 }
 
-export function find<T extends object>(
-    array: T[],
-    match: Partial<T>,
-): T | null {
+export function find<T extends object>(array: T[], match: Partial<T>): T | null {
   const index = indexOf(array, match);
   return index == -1 ? null : array[index];
 }
 
-export function contains<T extends object>(
-    array: T[],
-    match: Partial<T>,
-): boolean {
+export function contains<T extends object>(array: T[], match: Partial<T>): boolean {
   return indexOf(array, match) != -1;
 }

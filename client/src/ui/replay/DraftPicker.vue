@@ -1,3 +1,4 @@
+<!-- eslint-disable vue/no-deprecated-v-on-native-modifier -->
 <template>
   <div class="_draft-picker">
     <div v-if="inPersonDraft" class="main-content scan">
@@ -5,38 +6,34 @@
     </div>
     <div v-else-if="availablePack" class="main-content picks">
       <CardView
-          v-for="(cardId, i) in availablePack.cards"
-          :key="cardId"
-          :card="draftStore.getCard(cardId)"
-          class="card"
-          :class="getCardCssClass(cardId)"
-          :style="{'animation-delay': animationDelays[i] * -15000 + 'ms'}"
-          @click.native="onPackCardClicked(cardId)"
-          />
+        v-for="(cardId, i) in availablePack.cards"
+        :key="cardId"
+        :card="draftStore.getCard(cardId)"
+        class="card"
+        :class="getCardCssClass(cardId)"
+        :style="{ 'animation-delay': animationDelays[i] * -15000 + 'ms' }"
+        @click.native="onPackCardClicked(cardId)"
+      />
     </div>
-    <div v-else class="main-content no-picks">
-      You don't have any picks (yet)
-    </div>
+    <div v-else class="main-content no-picks">You don't have any picks (yet)</div>
     <DeckBuilderMain v-if="showDeckBuilder" class="pool" :horizontal="true" />
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
-import { authStore } from '../../state/AuthStore';
-import { draftStore, DraftStore } from '../../state/DraftStore';
-import { replayStore } from '../../state/ReplayStore';
+import { defineComponent } from "vue";
+import CardView from "./CardView.vue";
+import DeckBuilderMain from "../deckbuilder/DeckBuilderMain.vue";
 
-import CardView from './CardView.vue';
-import { CardPack, DraftSeat } from '../../draft/DraftState';
-import { fetchEndpoint } from '../../fetch/fetchEndpoint';
-import { routePick } from '../../rest/api/pick/pick';
-import { delay } from '../../util/delay';
-import DeckBuilderMain from '../deckbuilder/DeckBuilderMain.vue';
-import { deckBuilderStore } from '../../state/DeckBuilderModule';
+import { authStore } from "@/state/AuthStore";
+import { draftStore, type DraftStore } from "@/state/DraftStore";
+import { replayStore } from "@/state/ReplayStore";
+import type { CardPack, DraftSeat } from "@/draft/DraftState";
+import { fetchEndpoint } from "@/fetch/fetchEndpoint";
+import { routePick } from "@/rest/api/pick/pick";
+import { delay } from "@/util/delay";
 
 export default defineComponent({
-
   components: {
     CardView,
     DeckBuilderMain,
@@ -124,11 +121,11 @@ export default defineComponent({
     getCardCssClass(cardId: number) {
       const isPicked = cardId == this.pickedCardId;
       return {
-        'picked-fade': isPicked,
-        'not-picked-fade': this.submittingPick && !isPicked,
+        "picked-fade": isPicked,
+        "not-picked-fade": this.submittingPick && !isPicked,
       };
     },
-  }
+  },
 });
 </script>
 
@@ -167,7 +164,7 @@ export default defineComponent({
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #CCC;
+  color: #ccc;
 }
 
 .card {
@@ -189,5 +186,4 @@ export default defineComponent({
 .pool {
   margin-top: 60px;
 }
-
 </style>

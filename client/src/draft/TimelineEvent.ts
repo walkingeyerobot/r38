@@ -1,6 +1,6 @@
 export interface TimelineEvent {
   id: number;
-  type: TimelineEventType,
+  type: TimelineEventType;
   associatedSeat: number;
   round: number;
   roundEpoch: number;
@@ -8,26 +8,20 @@ export interface TimelineEvent {
   actions: TimelineAction[];
 }
 
-export type TimelineEventType =
-    | 'pick'
-    | 'hidden-pick'
-    | 'shadow-pick'
-    | 'advance-round'
-    ;
+export type TimelineEventType = "pick" | "hidden-pick" | "shadow-pick" | "advance-round";
 
 export type TimelineAction =
-    | ActionMoveCard
-    | ActionMovePack
-    | ActionMarkTransfer
-    | ActionIncrementPickedColors
-    | ActionIncrementSeatRound
-    | ActionAssignPackRound
-    | ActionAnnounce
-    ;
+  | ActionMoveCard
+  | ActionMovePack
+  | ActionMarkTransfer
+  | ActionIncrementPickedColors
+  | ActionIncrementSeatRound
+  | ActionAssignPackRound
+  | ActionAnnounce;
 
 export interface ActionMoveCard {
-  type: 'move-card';
-  subtype: 'pick-card' | 'return-card' | 'shadow-pick';
+  type: "move-card";
+  subtype: "pick-card" | "return-card" | "shadow-pick";
   cardName: string;
   card: number;
   from: number;
@@ -35,12 +29,12 @@ export interface ActionMoveCard {
 }
 
 export interface ActionMovePack {
-  type: 'move-pack';
-  subtype: 'pass' | 'discard';
+  type: "move-pack";
+  subtype: "pass" | "discard";
   pack: number;
   from: number;
   to: number;
-  epoch: 'increment' | number;
+  epoch: "increment" | number;
 }
 
 /**
@@ -52,7 +46,7 @@ export interface ActionMovePack {
  * (even though we may not know exactly what those cards are).
  */
 export interface ActionMarkTransfer {
-  type: 'mark-transfer';
+  type: "mark-transfer";
   from: number;
   to: number;
 }
@@ -63,7 +57,7 @@ export interface ActionMarkTransfer {
  * Should be included as part of a 'pick' event.
  */
 export interface ActionIncrementPickedColors {
-  type: 'increment-picked-colors',
+  type: "increment-picked-colors";
   seat: number;
   w: number;
   u: number;
@@ -73,18 +67,18 @@ export interface ActionIncrementPickedColors {
 }
 
 export interface ActionAssignPackRound {
-  type: 'assign-pack-round';
+  type: "assign-pack-round";
   pack: number;
   from: number;
   to: number;
 }
 
 export interface ActionIncrementSeatRound {
-  type: 'increment-seat-round';
+  type: "increment-seat-round";
   seat: number;
 }
 
 export interface ActionAnnounce {
-  type: 'announce';
+  type: "announce";
   message: string;
 }

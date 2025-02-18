@@ -8,90 +8,63 @@ results.
 -->
 
 <template>
-  <div
-      class="_search-box"
-      @mousedown.capture="onRootMouseDown"
-      >
+  <div class="_search-box" @mousedown.capture="onRootMouseDown">
     <input
-        v-model.trim="searchStr"
-        class="input"
-        :class="{
-          expanded: inputFocused || resultsOpen,
-        }"
-        @focus="onInputFocus"
-        @blur="onInputBlur"
-        @input="onInputChange"
-        placeholder="Search"
-        >
-    <div
-        v-if="resultsOpen"
-        class="results"
-        >
-      <div
-          v-for="(result, index) in searchResults"
-          :key="index"
-          class="card-result"
-          >
-        <div
-            class="card-nameslate"
-            @click="onCardNameClick(result)"
-            >
+      v-model.trim="searchStr"
+      class="input"
+      :class="{
+        expanded: inputFocused || resultsOpen,
+      }"
+      @focus="onInputFocus"
+      @blur="onInputBlur"
+      @input="onInputChange"
+      placeholder="Search"
+    />
+    <div v-if="resultsOpen" class="results">
+      <div v-for="(result, index) in searchResults" :key="index" class="card-result">
+        <div class="card-nameslate" @click="onCardNameClick(result)">
           <div class="card-name">
             {{ result.card.name }}
           </div>
           <ManaSymbol
-              v-for="(code, i) in result.card.mana_cost"
-              :key="i"
-              :code="code"
-              class="mana-symbol"
-              />
+            v-for="(code, i) in result.card.mana_cost"
+            :key="i"
+            :code="code"
+            class="mana-symbol"
+          />
         </div>
-        <div
-            class="card-picked"
-            >
+        <div class="card-picked">
           <template v-if="result.picked">
             Picked by
             {{ result.picked.playerName }}
             in
-            <span
-                class="pick-time"
-                @click="onPickTimeClick(result.picked)">
+            <span class="pick-time" @click="onPickTimeClick(result.picked)">
               pack
               {{ result.picked.round }}
               pick
               {{ result.picked.pick + 1 }}
             </span>
           </template>
-          <template v-else>
-            Not picked yet
-          </template>
+          <template v-else> Not picked yet </template>
         </div>
       </div>
 
-      <div
-          v-if="searchResults.length == 0"
-          class="no-results-message"
-          >
-        No results
-      </div>
+      <div v-if="searchResults.length == 0" class="no-results-message">No results</div>
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
-import ManaSymbol from '../../shared/mana/ManaSymbol.vue';
+import { defineComponent } from "vue";
+import ManaSymbol from "../../shared/mana/ManaSymbol.vue";
 
-import { replayStore } from '../../../state/ReplayStore';
-import { draftStore } from '../../../state/DraftStore';
+import { replayStore } from "@/state/ReplayStore";
+import { draftStore } from "@/state/DraftStore";
 
-import { CardContainer, MtgCard } from '../../../draft/DraftState';
-import { pushDraftUrlRelative } from '../../../router/url_manipulation';
-import { SelectedView } from '../../../state/selection';
-import { indexOf } from '../../../util/collection';
-import { TimelineEvent, TimelineAction } from '../../../draft/TimelineEvent';
-import { globalClickTracker, UnhandledClickListener } from '../../infra/globalClickTracker';
-import { CardLocation } from '../../../state/DeckBuilderModule';
+import type { CardContainer, MtgCard } from "@/draft/DraftState";
+import { pushDraftUrlRelative } from "@/router/url_manipulation";
+import { indexOf } from "@/util/collection";
+import { globalClickTracker, type UnhandledClickListener } from "@/ui/infra/globalClickTracker";
 
 export default defineComponent({
   components: {
@@ -100,7 +73,7 @@ export default defineComponent({
 
   data() {
     return {
-      searchStr: '',
+      searchStr: "",
       resultsOpen: false,
       inputFocused: false,
       globalMouseDownListener: null as UnhandledClickListener | null,
@@ -123,20 +96,18 @@ export default defineComponent({
 
   created() {
     this.globalMouseDownListener = () => this.onGlobalMouseDown();
-    globalClickTracker
-        .registerUnhandledClickListener(this.globalMouseDownListener);
+    globalClickTracker.registerUnhandledClickListener(this.globalMouseDownListener);
   },
 
-  destroyed() {
+  unmounted() {
     if (this.globalMouseDownListener != null) {
-      globalClickTracker
-          .unregisterUnhandledClickListener(this.globalMouseDownListener);
+      globalClickTracker.unregisterUnhandledClickListener(this.globalMouseDownListener);
     }
   },
 
   methods: {
     onInputFocus() {
-      if (this.searchStr != '') {
+      if (this.searchStr != "") {
         this.resultsOpen = true;
       }
       this.inputFocused = true;
@@ -147,7 +118,7 @@ export default defineComponent({
     },
 
     onInputChange() {
-      this.resultsOpen = this.searchStr != '';
+      this.resultsOpen = this.searchStr != "";
     },
 
     onRootMouseDown() {
@@ -155,7 +126,7 @@ export default defineComponent({
     },
 
     onCardNameClick(result: CardSearchResult) {
-      if (result.packType != 'shadow-realm') {
+      if (result.packType != "shadow-realm") {
         pushDraftUrlRelative(this, {
           selection: {
             id: result.packId,
@@ -165,7 +136,7 @@ export default defineComponent({
       }
     },
 
-    onPickTimeClick(pick: CardSearchResult['picked']) {
+    onPickTimeClick(pick: CardSearchResult["picked"]) {
       if (pick != null) {
         const index = indexOf(replayStore.events, { id: pick.eventId });
         if (index != -1) {
@@ -173,7 +144,7 @@ export default defineComponent({
             eventIndex: index,
             selection: {
               id: pick.fromSeat,
-              type: 'seat',
+              type: "seat",
             },
           });
         }
@@ -187,17 +158,17 @@ export default defineComponent({
     performSearch(query: string): CardSearchResult[] {
       const startTime = Date.now();
 
-      const finalQuery = query.toLocaleLowerCase().normalize();
+      const _finalQuery = query.toLocaleLowerCase().normalize();
       const results = [] as CardSearchResult[];
-      for (let pack of replayStore.draft.packs.values()) {
-        for (let cardId of pack.cards) {
+      for (const pack of replayStore.draft.packs.values()) {
+        for (const cardId of pack.cards) {
           const card = draftStore.getCard(cardId);
 
           if (card.definition.searchName.indexOf(query) != -1) {
-            const packId = pack.type == 'seat' ? pack.owningSeat : pack.id;
+            const packId = pack.type == "seat" ? pack.owningSeat : pack.id;
 
             const result: CardSearchResult = {
-              type: 'card',
+              type: "card",
               packType: pack.type,
               packId: packId,
               card: card.definition,
@@ -206,9 +177,8 @@ export default defineComponent({
 
             const pick = card.pickedIn[card.pickedIn.length - 1];
             if (pick != null) {
-              const playerName = pick.bySeat == -1
-                  ? 'someone'
-                  : replayStore.draft.seats[pick.bySeat].player.name;
+              const playerName =
+                pick.bySeat == -1 ? "someone" : replayStore.draft.seats[pick.bySeat].player.name;
               result.picked = {
                 playerName,
                 fromSeat: pick.fromSeat,
@@ -225,27 +195,25 @@ export default defineComponent({
 
       results.sort((a, b) => a.card.name.localeCompare(b.card.name));
 
-      console.log('Search took', (Date.now() - startTime), 'ms');
+      console.log("Search took", Date.now() - startTime, "ms");
 
       return results;
     },
   },
 });
 
-type SearchResult = CardSearchResult;
-
 interface CardSearchResult {
-  type: 'card',
-  packId: number,
-  packType: CardContainer['type'],
-  card: MtgCard,
+  type: "card";
+  packId: number;
+  packType: CardContainer["type"];
+  card: MtgCard;
   picked: {
-    playerName: string,
-    fromSeat: number,
-    eventId: number,
-    round: number,
-    pick: number,
-  } | null,
+    playerName: string;
+    fromSeat: number;
+    eventId: number;
+    round: number;
+    pick: number;
+  } | null;
 }
 </script>
 

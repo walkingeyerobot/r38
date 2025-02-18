@@ -1,22 +1,20 @@
-import { rootStore } from './store';
-import { vuexModule } from './vuex/vuexModule';
+import { rootStore } from "./store";
+import { vuexModule } from "./vuex/vuexModule";
 
 /**
  * Stores the logged-in user's credentials (if present)
  */
 export const authStore = vuexModule(
   rootStore,
-  'auth',
+  "auth",
   {
-
     user: null,
-
   } as AuthenticatedUserState,
   {
     mutations: {
       setUser(state: AuthenticatedUserState, user: AuthenticatedUser) {
         state.user = user;
-      }
+      },
     },
 
     getters: {},

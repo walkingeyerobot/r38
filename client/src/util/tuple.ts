@@ -7,6 +7,6 @@
  * var x = ['foo', 3];      // type is Array<string | number>
  * var x = tuple('foo', 3)  // type is [string, number]
  */
-export function tuple<T extends any[]>(...elements: T) {
+export function tuple<T extends unknown[]>(...elements: T) {
   return elements;
 }

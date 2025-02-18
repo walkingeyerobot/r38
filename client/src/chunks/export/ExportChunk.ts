@@ -1,5 +1,5 @@
-import { Deck } from "../../state/DeckBuilderModule";
-import { ChunkLoader } from '../ChunkLoader';
+import type { Deck } from "@/state/DeckBuilderModule";
+import { ChunkLoader } from "../ChunkLoader";
 
 export interface ExportChunk {
   deckToXml(deck: Deck): string;
@@ -8,8 +8,6 @@ export interface ExportChunk {
   deckToPdf(deck: Deck): void;
 }
 
-export const exportLoader = new ChunkLoader(
-    () =>
-        import(/* webpackChunkName: "export" */ './ExportChunkInternal')
-            .then(chunk => chunk.default)
+export const exportLoader = new ChunkLoader(() =>
+  import(/* webpackChunkName: "export" */ "./ExportChunkInternal").then((chunk) => chunk.default),
 );

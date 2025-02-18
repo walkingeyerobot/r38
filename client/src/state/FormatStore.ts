@@ -1,11 +1,11 @@
-import { vuexModule } from './vuex/vuexModule';
-import { rootStore } from './store';
+import { vuexModule } from "./vuex/vuexModule";
+import { rootStore } from "./store";
 
 export const formatStore = vuexModule(
   rootStore,
-  'format',
+  "format",
   {
-    layout: 'desktop',
+    layout: "desktop",
   } as FormatState,
   {
     mutations: {
@@ -17,13 +17,13 @@ export const formatStore = vuexModule(
     getters: {},
 
     actions: {},
-  }
-)
+  },
+);
 
 export interface FormatState {
   layout: LayoutFormFactor;
 }
 
-export type LayoutFormFactor = 'mobile' | 'desktop';
+export type LayoutFormFactor = "mobile" | "desktop";
 
 export type FormatStore = typeof formatStore;

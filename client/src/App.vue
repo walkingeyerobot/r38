@@ -5,11 +5,11 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
-import { authStore } from './state/AuthStore';
-import { formatStore, LayoutFormFactor } from './state/FormatStore';
-import DefaultAvatar from './ui/shared/avatars/default_avatar.png';
+import { defineComponent } from "vue";
+import DefaultAvatar from "./ui/shared/avatars/default_avatar.png";
 
+import { authStore } from "./state/AuthStore";
+import { formatStore, type LayoutFormFactor } from "./state/FormatStore";
 
 export default defineComponent({
   created() {
@@ -33,7 +33,7 @@ export default defineComponent({
     initFormat() {
       this.updateFormFactor();
 
-      window.addEventListener('resize', () => {
+      window.addEventListener("resize", () => {
         this.updateFormFactor();
       });
     },
@@ -48,7 +48,7 @@ export default defineComponent({
 });
 
 function getLayoutFormFactor(): LayoutFormFactor {
-  return window.innerWidth >= 768 ? 'desktop' : 'mobile';
+  return window.innerWidth >= 768 ? "desktop" : "mobile";
 }
 
 interface SourceUserInfo {
@@ -60,7 +60,8 @@ interface SourceUserInfo {
 </script>
 
 <style>
-html, body {
+html,
+body {
   height: 100%;
 }
 

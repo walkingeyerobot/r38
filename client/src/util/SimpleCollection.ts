@@ -1,3 +1,3 @@
 export type SimpleCollection<T> = {
-  [key: string]: T,
-}
+  [key: string]: T;
+};

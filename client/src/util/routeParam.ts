@@ -1,4 +1,4 @@
-import { RouteLocationNormalized } from "vue-router";
+import { type RouteLocationNormalized } from "vue-router";
 
 /**
  * Convenience wrapper for retrieving params from routes. Coerces the raw param
@@ -8,7 +8,7 @@ import { RouteLocationNormalized } from "vue-router";
 export function routeParam(route: RouteLocationNormalized, name: string) {
   const param = route.params[name];
   if (param instanceof Array) {
-    return param[0] || '';
+    return param[0] || "";
   } else {
     return param;
   }

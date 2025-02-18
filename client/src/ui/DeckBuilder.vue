@@ -1,9 +1,9 @@
 <template>
   <div
-      class="_deck-builder-screen"
-      @mousedown.capture="onCaptureMouseDown"
-      @mousedown="onBubbleMouseDown"
-      >
+    class="_deck-builder-screen"
+    @mousedown.capture="onCaptureMouseDown"
+    @mousedown="onBubbleMouseDown"
+  >
     <div class="main" v-if="status == 'loaded'">
       <DeckBuilderPlayerSelector class="player-selector" />
       <DeckBuilderMain class="deckbuilder" :horizontal="false" />
@@ -12,21 +12,20 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
+import { defineComponent } from "vue";
 
-import DeckBuilderMain from './deckbuilder/DeckBuilderMain.vue';
-import DeckBuilderPlayerSelector from './deckbuilder/DeckBuilderPlayerSelector.vue';
+import DeckBuilderMain from "./deckbuilder/DeckBuilderMain.vue";
+import DeckBuilderPlayerSelector from "./deckbuilder/DeckBuilderPlayerSelector.vue";
 
-import { authStore } from '../state/AuthStore';
-import { draftStore } from '../state/DraftStore';
-import { deckBuilderStore as deckStore } from '../state/DeckBuilderModule';
+import { authStore } from "@/state/AuthStore";
+import { draftStore } from "@/state/DraftStore";
+import { deckBuilderStore as deckStore } from "@/state/DeckBuilderModule";
 
-import { fetchEndpoint } from '../fetch/fetchEndpoint';
-import { routeDraft } from '../rest/api/draft/draft';
-import { FetchStatus } from './infra/FetchStatus';
+import { fetchEndpoint } from "@/fetch/fetchEndpoint";
+import { routeDraft } from "@/rest/api/draft/draft";
+import type { FetchStatus } from "./infra/FetchStatus";
 import { globalClickTracker } from "./infra/globalClickTracker";
-import { routeParam } from '../util/routeParam';
-
+import { routeParam } from "@/util/routeParam";
 
 export default defineComponent({
   components: {
@@ -36,24 +35,22 @@ export default defineComponent({
 
   data() {
     return {
-      status: 'missing' as FetchStatus,
+      status: "missing" as FetchStatus,
     };
   },
 
   created() {
-    const draftId =
-        parseInt(routeParam(this.$route, 'draftId'));
+    const draftId = parseInt(routeParam(this.$route, "draftId"));
     this.fetchDraft(draftId);
   },
 
   methods: {
     async fetchDraft(draftId: number) {
-      const payload =
-          await fetchEndpoint(routeDraft, {
-            id: draftId,
-            as: authStore.user?.id,
-          });
-      this.status = 'loaded';
+      const payload = await fetchEndpoint(routeDraft, {
+        id: draftId.toString(),
+        as: authStore.user?.id,
+      });
+      this.status = "loaded";
 
       // TODO: Handle fetch error
 
@@ -72,7 +69,6 @@ export default defineComponent({
       globalClickTracker.onBubbleGlobalMouseDown(e);
     },
   },
-
 });
 </script>
 

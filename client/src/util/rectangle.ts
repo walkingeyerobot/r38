@@ -1,11 +1,11 @@
 export interface Point {
-  x: number,
-  y: number,
+  x: number;
+  y: number;
 }
 
 export interface Rectangle {
-  start: Point,
-  end: Point,
+  start: Point;
+  end: Point;
 }
 
 export function intersects(a: Rectangle, b: Rectangle): boolean {

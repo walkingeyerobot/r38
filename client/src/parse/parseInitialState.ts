@@ -1,9 +1,20 @@
-import { CardContainer, CardPack, DraftCard, DraftSeat, DraftState, PlayerPicks, PackContainer, PACK_LOCATION_UNUSED, PACK_LOCATION_DEAD, MtgCard, CONTAINER_SHADOW } from '../draft/DraftState';
-import { SourceCard, SourceData, SourceSeat } from './SourceData';
-import { checkNotNil } from '../util/checkNotNil';
-import DefaultAvatar from '../ui/shared/avatars/default_avatar.png';
-import { nil } from '../util/nil';
-
+import {
+  type CardContainer,
+  type PackContainer,
+  type DraftCard,
+  PACK_LOCATION_UNUSED,
+  PACK_LOCATION_DEAD,
+  type PlayerPicks,
+  CONTAINER_SHADOW,
+  type DraftSeat,
+  type CardPack,
+  type MtgCard,
+  type DraftState,
+} from "@/draft/DraftState";
+import type { SourceData, SourceSeat, SourceCard } from "./SourceData";
+import { checkNotNil } from "@/util/checkNotNil";
+import DefaultAvatar from "@/ui/shared/avatars/default_avatar.png";
+import type { nil } from "@/util/nil";
 
 export function parseInitialState(srcData: SourceData): StateParseResult {
   return new StateParser().parse(srcData);
@@ -18,14 +29,12 @@ class StateParser {
   private _cards = new Map<number, DraftCard>();
 
   parse(srcData: SourceData): StateParseResult {
-    const unusedPacks =
-        this.buildPackLocation(PACK_LOCATION_UNUSED, 'Unused packs');
+    const unusedPacks = this.buildPackLocation(PACK_LOCATION_UNUSED, "Unused packs");
 
-    const deadPacks =
-        this.buildPackLocation(PACK_LOCATION_DEAD, 'Dead packs');
+    const deadPacks = this.buildPackLocation(PACK_LOCATION_DEAD, "Dead packs");
 
     const shadowPool: PlayerPicks = {
-      type: 'shadow-realm',
+      type: "shadow-realm",
       id: CONTAINER_SHADOW,
       owningSeat: -1,
       cards: [],
@@ -46,7 +55,7 @@ class StateParser {
         deadPacks,
         packs: this._packs,
         locations: this._locations,
-        inPerson: srcData.inPerson
+        inPerson: srcData.inPerson,
       },
       cards: this._cards,
     };
@@ -54,7 +63,7 @@ class StateParser {
 
   private buildSeat(position: number, src: SourceSeat) {
     const playerPicks: PlayerPicks = {
-      type: 'seat',
+      type: "seat",
       id: this._nextContainerId++,
       owningSeat: position,
       cards: [],
@@ -66,19 +75,19 @@ class StateParser {
       position: position,
       player: {
         id: src.playerId,
-        name: src.playerName || 'Unknown player',
+        name: src.playerName || "Unknown player",
         mtgoName: src.mtgoName,
         iconUrl: src.playerImage || DefaultAvatar,
         seatPosition: position,
       },
       picks: playerPicks,
       originalPacks: [],
-      queuedPacks:
-          this.buildPackLocation(
-              this._nextLocationId++,
-              `queuedPacks for seat ${position}`),
+      queuedPacks: this.buildPackLocation(
+        this._nextLocationId++,
+        `queuedPacks for seat ${position}`,
+      ),
       round: 1,
-      colorCounts: { w: 0, u: 0, b: 0, r: 0, g: 0, },
+      colorCounts: { w: 0, u: 0, b: 0, r: 0, g: 0 },
     };
 
     this.parsePacks(seat, src);
@@ -91,7 +100,7 @@ class StateParser {
       const srcPack = src.packs[i];
       const cards = this.parseCards(srcPack);
       const pack: CardPack = {
-        type: 'pack',
+        type: "pack",
         id: this._nextContainerId++,
         round: i + 1,
         epoch: 0,
@@ -131,10 +140,7 @@ class StateParser {
     return cards;
   }
 
-  private buildPackLocation(
-      id: number,
-      label: string,
-  ): PackContainer {
+  private buildPackLocation(id: number, label: string): PackContainer {
     const packLocation = {
       id: id,
       packs: [],
@@ -148,21 +154,21 @@ class StateParser {
 function parseCardDefinition(src: SourceCard): MtgCard {
   if (src.hidden) {
     return {
-      name: 'Hidden card',
+      name: "Hidden card",
       mana_cost: [],
       cmc: 0,
-      collector_number: '-1',
+      collector_number: "-1",
       card_faces: [],
       colors: [],
       color_identity: [],
       foil: false,
       image_uris: [],
-      layout: 'normal',
+      layout: "normal",
       mtgo: -1,
-      rarity: 'common',
-      set: '',
-      type_line: '',
-      searchName: '',
+      rarity: "common",
+      set: "",
+      type_line: "",
+      searchName: "",
     };
   } else {
     return {
@@ -170,13 +176,12 @@ function parseCardDefinition(src: SourceCard): MtgCard {
 
       cmc: src.scryfall.cmc,
       collector_number: src.scryfall.collector_number,
-      card_faces: (src.scryfall.card_faces || [])
-          .map(face => ({
-            name: face.name,
-            colors: face.colors || [],
-            mana_cost: face.mana_cost,
-            type_line: face.type_line,
-          })),
+      card_faces: (src.scryfall.card_faces || []).map((face) => ({
+        name: face.name,
+        colors: face.colors || [],
+        mana_cost: face.mana_cost,
+        type_line: face.type_line,
+      })),
       color_identity: src.scryfall.color_identity,
       colors: src.scryfall.colors || [],
       foil: src.foil,
@@ -200,15 +205,15 @@ function parseManaCost(src: string | nil): string[] {
 
   const costs = [] as string[];
   const matches = src.matchAll(MANA_COST_PATTERN);
-  for (let match of matches) {
+  for (const match of matches) {
     costs.push(match[1]);
   }
   return costs;
 }
 
 interface StateParseResult {
-  state: DraftState,
-  cards: Map<number, DraftCard>,
+  state: DraftState;
+  cards: Map<number, DraftCard>;
 }
 
 const MANA_COST_PATTERN = /\{([^}]+)\}/g;

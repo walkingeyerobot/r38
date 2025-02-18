@@ -1,4 +1,4 @@
-import { DraftState } from '../../draft/DraftState';
+import type { DraftState } from "@/draft/DraftState";
 
 export function userIsSeated(id: number | undefined, draft: DraftState) {
   return getPlayerSeat(id, draft) != null;

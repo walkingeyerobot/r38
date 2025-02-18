@@ -1,52 +1,48 @@
+<!-- eslint-disable vue/multi-word-component-names -->
 <template>
   <div class="_home">
     <div class="header">
       <div class="header-left title">R38</div>
       <div class="header-center"></div>
       <div class="header-right">
-        <a v-if="!loggedIn" class="login-btn" href="/auth/discord/login">
-          Log in
-        </a>
+        <a v-if="!loggedIn" class="login-btn" href="/auth/discord/login"> Log in </a>
         <a v-if="loggedIn" href="/prefs">
-          <img class="user-img" :src="userPic">
+          <img class="user-img" :src="userPic" />
         </a>
       </div>
     </div>
 
     <div class="drafts-cnt">
-
       <div v-if="listFetchStatus == 'fetching'" class="loading-msg">Loading...</div>
 
       <DraftListItem
-          v-for="descriptor in joinableDrafts"
-          class="list-item"
-          :key="descriptor.id"
-          :descriptor="descriptor"
-          v-on:refreshDraftList="refreshDraftList"
-          />
+        v-for="descriptor in joinableDrafts"
+        class="list-item"
+        :key="descriptor.id"
+        :descriptor="descriptor"
+        v-on:refreshDraftList="refreshDraftList"
+      />
 
       <DraftListItem
-          v-for="descriptor in otherDrafts"
-          class="list-item"
-          :key="descriptor.id"
-          :descriptor="descriptor"
-          v-on:refreshDraftList="refreshDraftList"
-          />
-
+        v-for="descriptor in otherDrafts"
+        class="list-item"
+        :key="descriptor.id"
+        :descriptor="descriptor"
+        v-on:refreshDraftList="refreshDraftList"
+      />
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
-import DraftListItem from './DraftListItem.vue';
+import { defineComponent } from "vue";
+import DraftListItem from "./DraftListItem.vue";
 
-import { authStore } from '../../state/AuthStore';
+import { authStore } from "@/state/AuthStore";
 
-import { HomeDraftDescriptor, routeDraftlist } from '../../rest/api/draftlist/draftlist'
-import { fetchEndpoint } from '../../fetch/fetchEndpoint';
-import { FetchStatus } from '../infra/FetchStatus';
-
+import { type HomeDraftDescriptor, routeDraftlist } from "@/rest/api/draftlist/draftlist";
+import { fetchEndpoint } from "@/fetch/fetchEndpoint";
+import type { FetchStatus } from "../infra/FetchStatus";
 
 export default defineComponent({
   components: {
@@ -56,7 +52,7 @@ export default defineComponent({
   data() {
     return {
       drafts: [] as HomeDraftDescriptor[],
-      listFetchStatus: 'missing' as FetchStatus,
+      listFetchStatus: "missing" as FetchStatus,
     };
   },
 
@@ -66,13 +62,15 @@ export default defineComponent({
 
   computed: {
     joinableDrafts(): HomeDraftDescriptor[] {
-      return this.drafts.filter(value => value.status == 'joinable' || value.status == 'reserved');
+      return this.drafts.filter(
+        (value) => value.status == "joinable" || value.status == "reserved",
+      );
     },
 
     otherDrafts(): HomeDraftDescriptor[] {
       return this.drafts
-          .filter(value => value.status != 'joinable' && value.status != 'reserved')
-          .sort((a, b) => b.id - a.id);
+        .filter((value) => value.status != "joinable" && value.status != "reserved")
+        .sort((a, b) => b.id - a.id);
     },
 
     loggedIn(): boolean {
@@ -80,24 +78,22 @@ export default defineComponent({
     },
 
     userPic(): string | undefined {
-      return authStore.user?.picture
-    }
+      return authStore.user?.picture;
+    },
   },
 
   methods: {
     async refreshDraftList() {
-        this.listFetchStatus = 'fetching';
-        const response =
-            await fetchEndpoint(routeDraftlist, {
-              as: authStore.user?.id,
-            });
-        this.listFetchStatus = 'loaded';
-        // TODO: catch and show error
-        this.drafts = response.drafts;
-      }
+      this.listFetchStatus = "fetching";
+      const response = await fetchEndpoint(routeDraftlist, {
+        as: authStore.user?.id,
+      });
+      this.listFetchStatus = "loaded";
+      // TODO: catch and show error
+      this.drafts = response.drafts;
     },
+  },
 });
-
 </script>
 
 <style scoped>
@@ -111,7 +107,8 @@ export default defineComponent({
   align-items: center;
 }
 
-.header-left, .header-right {
+.header-left,
+.header-right {
   flex: 1 0 0;
 }
 
@@ -137,7 +134,7 @@ export default defineComponent({
   font-size: 14px;
   font-weight: bold;
   color: white;
-  background: #7187DD;
+  background: #7187dd;
   border-radius: 4px;
   text-decoration: none;
   padding: 0 20px;

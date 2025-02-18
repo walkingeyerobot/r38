@@ -6,20 +6,20 @@ Represents one entry in the list of drafts that a user might view/join
 
 <template>
   <div
-      class="_draft-list-item"
-      :class="{
-        viewable: isViewable,
-      }"
-      @click="onRootClick"
-      >
+    class="_draft-list-item"
+    :class="{
+      viewable: isViewable,
+    }"
+    @click="onRootClick"
+  >
     <div class="main">
       <div
-          class="name"
-          :class="{
-            viewable: isViewable,
-            closed: descriptor.status == 'closed'
-          }"
-          >
+        class="name"
+        :class="{
+          viewable: isViewable,
+          closed: descriptor.status == 'closed',
+        }"
+      >
         {{ descriptor.name }}
       </div>
       <div v-if="descriptor.availableSeats > 0 && isJoinable" class="seats">
@@ -27,44 +27,43 @@ Represents one entry in the list of drafts that a user might view/join
       </div>
     </div>
     <button
-        v-if="!descriptor.inPerson && isJoinable"
-        class="join-btn"
-        @click.stop="onJoinClicked(descriptor.id)"
-        :disabled="joinFetchStatus == 'fetching'"
-        >
+      v-if="!descriptor.inPerson && isJoinable"
+      class="join-btn"
+      @click.stop="onJoinClicked(descriptor.id)"
+      :disabled="joinFetchStatus == 'fetching'"
+    >
       Join
     </button>
-    <span
-      v-if="descriptor.inPerson && isJoinable"
-      class="join-seats">
+    <span v-if="descriptor.inPerson && isJoinable" class="join-seats">
       <button
         v-for="n in 8"
+        :key="n"
         class="join-btn"
         @click.stop="onJoinSeatClicked(descriptor.id, n - 1)"
         :disabled="joinFetchStatus == 'fetching'"
-        >
+      >
         {{ n }}
       </button>
     </span>
     <button
-        v-if="isSkippable"
-        class="join-btn"
-        @click.stop="onSkipClicked(descriptor.id)"
-        :disabled="joinFetchStatus == 'fetching'"
-        >
+      v-if="isSkippable"
+      class="join-btn"
+      @click.stop="onSkipClicked(descriptor.id)"
+      :disabled="joinFetchStatus == 'fetching'"
+    >
       Skip
     </button>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
-import { HomeDraftDescriptor } from '../../rest/api/draftlist/draftlist';
-import { FetchStatus } from '../infra/FetchStatus';
-import { fetchEndpoint } from '../../fetch/fetchEndpoint';
-import { pushDraftUrl } from '../../router/url_manipulation';
-import { ROUTE_JOIN_DRAFT } from '../../rest/api/join/join';
-import { ROUTE_SKIP_DRAFT } from '../../rest/api/skip/skip';
+import { defineComponent } from "vue";
+import type { HomeDraftDescriptor } from "@/rest/api/draftlist/draftlist";
+import type { FetchStatus } from "../infra/FetchStatus";
+import { fetchEndpoint } from "@/fetch/fetchEndpoint";
+import { pushDraftUrl } from "@/router/url_manipulation";
+import { ROUTE_JOIN_DRAFT } from "@/rest/api/join/join";
+import { ROUTE_SKIP_DRAFT } from "@/rest/api/skip/skip";
 
 export default defineComponent({
   props: {
@@ -76,24 +75,25 @@ export default defineComponent({
 
   data() {
     return {
-      joinFetchStatus: 'missing' as FetchStatus,
+      joinFetchStatus: "missing" as FetchStatus,
     };
   },
 
   computed: {
     isJoinable(): boolean {
-      return this.descriptor.status == 'joinable'
-          || this.descriptor.status == 'reserved';
+      return this.descriptor.status == "joinable" || this.descriptor.status == "reserved";
     },
 
     isSkippable(): boolean {
-      return this.descriptor.status == 'reserved';
+      return this.descriptor.status == "reserved";
     },
 
     isViewable(): boolean {
-      return this.descriptor.status != 'joinable'
-          && this.descriptor.status != 'reserved'
-          && this.descriptor.status != 'closed'
+      return (
+        this.descriptor.status != "joinable" &&
+        this.descriptor.status != "reserved" &&
+        this.descriptor.status != "closed"
+      );
     },
   },
 
@@ -105,27 +105,27 @@ export default defineComponent({
     },
 
     async onJoinClicked(draftId: number) {
-      this.joinFetchStatus = 'fetching';
+      this.joinFetchStatus = "fetching";
       // TODO: Error handling
-      const response = await fetchEndpoint(ROUTE_JOIN_DRAFT, { id: draftId, position: undefined });
-      this.joinFetchStatus = 'loaded';
+      const _response = await fetchEndpoint(ROUTE_JOIN_DRAFT, { id: draftId, position: undefined });
+      this.joinFetchStatus = "loaded";
       pushDraftUrl(this, { draftId });
     },
 
     async onJoinSeatClicked(draftId: number, position: number) {
-      this.joinFetchStatus = 'fetching';
+      this.joinFetchStatus = "fetching";
       // TODO: Error handling
-      const response = await fetchEndpoint(ROUTE_JOIN_DRAFT, { id: draftId, position });
-      this.joinFetchStatus = 'loaded';
+      const _response = await fetchEndpoint(ROUTE_JOIN_DRAFT, { id: draftId, position });
+      this.joinFetchStatus = "loaded";
       pushDraftUrl(this, { draftId });
     },
 
     async onSkipClicked(draftId: number) {
-      this.joinFetchStatus = 'fetching';
+      this.joinFetchStatus = "fetching";
       // TODO: Error handling
-      const response = await fetchEndpoint(ROUTE_SKIP_DRAFT, { id: draftId });
-      this.joinFetchStatus = 'loaded';
-      this.$emit('refreshDraftList')
+      const _response = await fetchEndpoint(ROUTE_SKIP_DRAFT, { id: draftId });
+      this.joinFetchStatus = "loaded";
+      this.$emit("refreshDraftList");
     },
   },
 });
@@ -188,5 +188,4 @@ export default defineComponent({
   background: #c54818;
   color: white;
 }
-
 </style>

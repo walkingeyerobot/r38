@@ -1,18 +1,17 @@
 <template>
-<div class="_playback-controls">
-  <button @click="onStartClick" class="playback-btn">Start</button>
-  <button @click="onPrevClick" class="prev-btn playback-btn">Prev</button>
-  <button @click="onNextClick" class="next-btn playback-btn">Next</button>
-  <button @click="onEndClick" class="playback-btn">End</button>
-</div>
+  <div class="_playback-controls">
+    <button @click="onStartClick" class="playback-btn">Start</button>
+    <button @click="onPrevClick" class="prev-btn playback-btn">Prev</button>
+    <button @click="onNextClick" class="next-btn playback-btn">Next</button>
+    <button @click="onEndClick" class="playback-btn">End</button>
+  </div>
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
-import { replayStore } from '../../../state/ReplayStore';
-import { draftStore } from '../../../state/DraftStore';
-
-import { pushDraftUrlRelative, pushDraftUrlFromState } from '../../../router/url_manipulation';
+import { defineComponent } from "vue";
+import { draftStore } from "@/state/DraftStore";
+import { replayStore } from "@/state/ReplayStore";
+import { pushDraftUrlFromState, pushDraftUrlRelative } from "@/router/url_manipulation";
 
 export default defineComponent({
   methods: {
@@ -42,7 +41,6 @@ export default defineComponent({
 </script>
 
 <style scoped>
-
 ._playback-controls {
   display: flex;
 }
@@ -59,6 +57,7 @@ export default defineComponent({
   border-radius: 5px;
 
   color: #444;
+  appearance: none;
   -webkit-appearance: none;
 
   flex: 1;
@@ -73,7 +72,8 @@ export default defineComponent({
   border-color: #777;
 }
 
-.prev-btn, .next-btn {
+.prev-btn,
+.next-btn {
   width: 70px;
 }
 </style>

@@ -1,91 +1,71 @@
 <template>
   <div
-      v-if="store.selectedSeat != null"
-      class="_deck-builder-main"
-      :class="{
-          horizontal,
-          vertical: !horizontal,
-      }"
-      >
-    <div
-        class="sideboard"
-        v-if="deck"
-        >
-      <DeckBuilderSectionControls
-          :maindeck="false"
-          :horizontal="horizontal"
-          />
+    v-if="store.selectedSeat != null"
+    class="_deck-builder-main"
+    :class="{
+      horizontal,
+      vertical: !horizontal,
+    }"
+  >
+    <div class="sideboard" v-if="deck">
+      <DeckBuilderSectionControls :maindeck="false" :horizontal="horizontal" />
       <DeckBuilderSection
-          ref="sideboard"
-          :columns="sideboard"
-          :deckIndex="store.selectedSeat"
-          :maindeck="false"
-          :horizontal="horizontal"
-          />
+        ref="sideboard"
+        :columns="sideboard"
+        :deckIndex="store.selectedSeat"
+        :maindeck="false"
+        :horizontal="horizontal"
+      />
     </div>
-    <div
-        class="maindeck"
-        v-if="deck"
-        >
-      <DeckBuilderSectionControls
-          :maindeck="true"
-          :horizontal="horizontal"
-          />
+    <div class="maindeck" v-if="deck">
+      <DeckBuilderSectionControls :maindeck="true" :horizontal="horizontal" />
       <DeckBuilderSection
-          ref="maindeck"
-          :columns="maindeck"
-          :deckIndex="store.selectedSeat"
-          :maindeck="true"
-          :horizontal="horizontal"
-          />
+        ref="maindeck"
+        :columns="maindeck"
+        :deckIndex="store.selectedSeat"
+        :maindeck="true"
+        :horizontal="horizontal"
+      />
     </div>
-    <div
-        class="exportButtons"
-        @mousedown.capture="onRootMouseDown"
-        >
-      <a
-          class="exportButton"
-          @click="exportButtonClick"
-          v-if="deck"
-          >
-        Export
-      </a>
+    <div class="exportButtons" @mousedown.capture="onRootMouseDown">
+      <a class="exportButton" @click="exportButtonClick" v-if="deck"> Export </a>
       <DeckBuilderExportMenu
-          :deckIndex="store.selectedSeat"
-          v-if="exportMenuOpen"
-          class="exportMenu"
-          />
+        :deckIndex="store.selectedSeat"
+        v-if="exportMenuOpen"
+        class="exportMenu"
+      />
     </div>
     <img
-        v-if="zoomedCard"
-        class="card-zoom"
-        :src="zoomedCard.image_uris[0]"
-        :alt="zoomedCard.name"
-        :style="zoomedCardPos"
-        />
+      v-if="zoomedCard"
+      class="card-zoom"
+      :src="zoomedCard.image_uris[0]"
+      :alt="zoomedCard.name"
+      :style="zoomedCardPos"
+    />
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, ref } from 'vue';
-import DeckBuilderExportMenu from './DeckBuilderExportMenu.vue';
-import DeckBuilderSection from './DeckBuilderSection.vue';
-import DeckBuilderSectionControls from './DeckBuilderSectionControls.vue';
+import { defineComponent, ref, type StyleValue } from "vue";
+import DeckBuilderExportMenu from "./DeckBuilderExportMenu.vue";
+import DeckBuilderSection from "./DeckBuilderSection.vue";
+import DeckBuilderSectionControls from "./DeckBuilderSectionControls.vue";
+
 import {
-  CardColumn,
-  Deck,
-  deckBuilderStore,
+  type DeckBuilderStore,
+  type Deck,
+  type CardColumn,
   deckBuilderStore as store,
-  DeckBuilderStore
-} from '../../state/DeckBuilderModule';
-import { rootStore } from '../../state/store';
-import { tuple } from '../../util/tuple';
-import { draftStore } from '../../state/DraftStore';
-import { globalClickTracker, UnhandledClickListener } from '../infra/globalClickTracker';
-import { MtgCard } from '../../draft/DraftState';
+  deckBuilderStore,
+} from "@/state/DeckBuilderModule";
+import { rootStore } from "@/state/store";
+import { tuple } from "@/util/tuple";
+import { draftStore } from "@/state/DraftStore";
+import { globalClickTracker, type UnhandledClickListener } from "../infra/globalClickTracker";
+import type { MtgCard } from "@/draft/DraftState";
 
 export default defineComponent({
-  name: 'DeckBuilderMain',
+  name: "DeckBuilderMain",
 
   components: {
     DeckBuilderExportMenu,
@@ -101,7 +81,7 @@ export default defineComponent({
   },
 
   props: {
-    horizontal: {type: Boolean},
+    horizontal: { type: Boolean },
   },
 
   data: () => ({
@@ -112,27 +92,24 @@ export default defineComponent({
 
   created() {
     this.unwatchDraftStore = rootStore.watch(
-        (state) => tuple(draftStore.currentState),
-        (newProps, oldProps) => this.onDraftStoreChanged(),
-        {immediate: true},
+      (_state) => tuple(draftStore.currentState),
+      (_newProps, _oldProps) => this.onDraftStoreChanged(),
+      { immediate: true },
     );
     this.globalMouseDownListener = () => this.onGlobalMouseDown();
-    globalClickTracker
-        .registerUnhandledClickListener(this.globalMouseDownListener);
+    globalClickTracker.registerUnhandledClickListener(this.globalMouseDownListener);
   },
 
-  destroyed() {
+  unmounted() {
     if (this.unwatchDraftStore) {
       this.unwatchDraftStore();
     }
     if (this.globalMouseDownListener != null) {
-      globalClickTracker
-          .unregisterUnhandledClickListener(this.globalMouseDownListener);
+      globalClickTracker.unregisterUnhandledClickListener(this.globalMouseDownListener);
     }
   },
 
   computed: {
-
     store(): DeckBuilderStore {
       return store;
     },
@@ -151,21 +128,20 @@ export default defineComponent({
 
     zoomedCard(): MtgCard | null {
       return this.deck && store.zoomed
-          ? (store.zoomed.maindeck ? this.deck.maindeck : this.deck.sideboard)
-              [store.zoomed.columnIndex][store.zoomed.cardIndex].definition
-          : null;
+        ? (store.zoomed.maindeck ? this.deck.maindeck : this.deck.sideboard)[
+            store.zoomed.columnIndex
+          ][store.zoomed.cardIndex].definition
+        : null;
     },
 
-    zoomedCardPos(): any {
+    zoomedCardPos(): Partial<StyleValue> {
       if (store.zoomed) {
-        const section = store.zoomed.maindeck
-            ? this.maindeckElem
-            : this.sideboardElem;
+        const section = store.zoomed.maindeck ? this.maindeckElem : this.sideboardElem;
         const left = (store.zoomed.columnIndex + 1) * section?.columnElems[0].$el.clientWidth;
         const top = store.zoomed.cardIndex * (this.horizontal ? 15 : 30);
         return {
-          left: left + 'px',
-          top: top + 'px',
+          left: left + "px",
+          top: top + "px",
         };
       } else {
         return {};
@@ -192,7 +168,6 @@ export default defineComponent({
     },
   },
 });
-
 </script>
 
 <style scoped>
@@ -212,7 +187,8 @@ export default defineComponent({
   border-top: 1px solid #666;
 }
 
-.maindeck, .sideboard {
+.maindeck,
+.sideboard {
   min-height: 0;
   display: flex;
   flex-direction: column;
@@ -229,10 +205,11 @@ export default defineComponent({
 
 .sideboard {
   flex: 2;
-  border-bottom: 1px solid #EAEAEA;
+  border-bottom: 1px solid #eaeaea;
 }
 
-.horizontal .maindeck, .horizontal .sideboard {
+.horizontal .maindeck,
+.horizontal .sideboard {
   overflow-x: hidden;
 }
 
@@ -269,5 +246,4 @@ export default defineComponent({
   height: 279px;
   border-radius: 10px;
 }
-
 </style>

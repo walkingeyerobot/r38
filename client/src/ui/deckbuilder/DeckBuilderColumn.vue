@@ -1,54 +1,55 @@
 <template>
   <div
-      class="_column"
-      :class="{
-        columnDrop: dropTargetIndex !== null,
-        horizontal
-      }"
-      @dragover="dragOver"
-      @dragleave="dragLeave"
-      @dragend="dragEnd"
-      @drop="drop"
-      >
+    class="_column"
+    :class="{
+      columnDrop: dropTargetIndex !== null,
+      horizontal,
+    }"
+    @dragover="dragOver"
+    @dragleave="dragLeave"
+    @dragend="dragEnd"
+    @drop="drop"
+  >
     <div
-        v-for="(card, index) in column"
-        :key="card.id"
-        @mousedown="preventMouseDown"
-        @dragstart="dragStart($event, index)"
-        @click.left="select(index)"
-        @click.middle="zoom(index)"
-        @dblclick="switchSection(index)"
-        class="card"
-        :class="{
-            cardDropAbove: dropTargetIndex !== null && index === 0 && dropTargetIndex === 0,
-            cardDropBelow: dropTargetIndex !== null && index === dropTargetIndex - 1,
-            noSelectionRectangle: selectionRectangle === null,
-            inSelectionRectangle: inSelectionRectangle.includes(index),
-            inSelection: inSelection(index),
-        }"
-        >
-      <img
-          class="card-img"
-          :src="getImageSrc(card.definition)"
-          :alt="card.definition.name"
-          />
+      v-for="(card, index) in column"
+      :key="card.id"
+      @mousedown="preventMouseDown"
+      @dragstart="dragStart($event, index)"
+      @click.left="select(index)"
+      @click.middle="zoom(index)"
+      @dblclick="switchSection(index)"
+      class="card"
+      :class="{
+        cardDropAbove: dropTargetIndex !== null && index === 0 && dropTargetIndex === 0,
+        cardDropBelow: dropTargetIndex !== null && index === dropTargetIndex - 1,
+        noSelectionRectangle: selectionRectangle === null,
+        inSelectionRectangle: inSelectionRectangle.includes(index),
+        inSelection: inSelection(index),
+      }"
+    >
+      <img class="card-img" :src="getImageSrc(card.definition)" :alt="card.definition.name" />
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
-import { MtgCard } from '../../draft/DraftState.js';
-import { CardColumn, CardLocation, CardMove, deckBuilderStore as store } from '../../state/DeckBuilderModule';
-import { intersects, Rectangle } from '../../util/rectangle';
-import DeckBuilderSection from './DeckBuilderSection.vue';
+import { defineComponent } from "vue";
+import type { MtgCard } from "@/draft/DraftState";
+import {
+  type CardColumn,
+  type CardLocation,
+  type CardMove,
+  deckBuilderStore as store,
+} from "@/state/DeckBuilderModule";
+import { type Rectangle, intersects } from "@/util/rectangle";
+import DeckBuilderSection from "./DeckBuilderSection.vue";
 
 export default defineComponent({
-  name: 'DeckBuilderColumn',
+  name: "DeckBuilderColumn",
 
   props: {
     column: {
-      type: Array as () => CardColumn
+      type: Array as () => CardColumn,
     },
     columnIndex: {
       type: Number,
@@ -59,18 +60,18 @@ export default defineComponent({
       required: true,
     },
     maindeck: {
-      type: Boolean
+      type: Boolean,
     },
     horizontal: {
-      type: Boolean
+      type: Boolean,
     },
     selectionRectangle: {
-      type: Object as () => (Rectangle | null)
+      type: Object as () => Rectangle | null,
     },
   },
 
   data: () => ({
-    dropTargetIndex: null as (number | null),
+    dropTargetIndex: null as number | null,
   }),
 
   computed: {
@@ -109,9 +110,10 @@ export default defineComponent({
     dragStart(e: DragEvent, index: number) {
       let cardMove: CardMove;
       if (e.dataTransfer) {
-        if (this.selection.length > 1
-            && this.inSelection(index)) {
-          const dragImage = (<InstanceType<typeof DeckBuilderSection>>this.$parent).createDragImage();
+        if (this.selection.length > 1 && this.inSelection(index)) {
+          const dragImage = (<InstanceType<typeof DeckBuilderSection>>(
+            this.$parent
+          )).createDragImage();
           e.dataTransfer.setDragImage(dragImage, (<HTMLElement>this.$el).offsetWidth / 2, 20);
           cardMove = {
             deckIndex: this.deckIndex,
@@ -126,11 +128,13 @@ export default defineComponent({
           store.selectCards([]);
           cardMove = {
             deckIndex: this.deckIndex,
-            source: [{
-              columnIndex: this.columnIndex,
-              cardIndex: index,
-              maindeck: this.maindeck,
-            }],
+            source: [
+              {
+                columnIndex: this.columnIndex,
+                cardIndex: index,
+                maindeck: this.maindeck,
+              },
+            ],
             target: {
               columnIndex: 0,
               cardIndex: 0,
@@ -181,25 +185,26 @@ export default defineComponent({
       e.preventDefault();
       if (e.dataTransfer) {
         const cardMove: CardMove = JSON.parse(e.dataTransfer.getData("text/plain"));
-        store.moveCard(
-            {
-              ...cardMove,
-              target: {
-                columnIndex: this.columnIndex,
-                cardIndex: this.getTargetIndex(e),
-                maindeck: this.maindeck,
-              },
-            });
+        store.moveCard({
+          ...cardMove,
+          target: {
+            columnIndex: this.columnIndex,
+            cardIndex: this.getTargetIndex(e),
+            maindeck: this.maindeck,
+          },
+        });
       }
       this.dropTargetIndex = null;
     },
 
     select(cardIndex: number) {
-      store.selectCards([{
-        columnIndex: this.columnIndex,
-        cardIndex,
-        maindeck: this.maindeck,
-      }]);
+      store.selectCards([
+        {
+          columnIndex: this.columnIndex,
+          cardIndex,
+          maindeck: this.maindeck,
+        },
+      ]);
     },
 
     zoom(cardIndex: number) {
@@ -213,11 +218,13 @@ export default defineComponent({
     switchSection(cardIndex: number) {
       store.moveCard({
         deckIndex: this.deckIndex,
-        source: [{
-          columnIndex: this.columnIndex,
-          cardIndex,
-          maindeck: this.maindeck,
-        }],
+        source: [
+          {
+            columnIndex: this.columnIndex,
+            cardIndex,
+            maindeck: this.maindeck,
+          },
+        ],
         target: {
           columnIndex: this.columnIndex,
           cardIndex: -1,
@@ -231,17 +238,18 @@ export default defineComponent({
     },
 
     inSelection(index: number) {
-      return this.selection.some(location =>
-          location.maindeck === this.maindeck
-          && location.columnIndex === this.columnIndex
-          && location.cardIndex === index);
-    }
+      return this.selection.some(
+        (location) =>
+          location.maindeck === this.maindeck &&
+          location.columnIndex === this.columnIndex &&
+          location.cardIndex === index,
+      );
+    },
   },
 });
 </script>
 
 <style scoped>
-
 ._column {
   padding: 10px 10px 250px;
   width: 204px;
@@ -284,16 +292,18 @@ export default defineComponent({
   border-radius: 6px;
 }
 
-.noSelectionRectangle > .card-img:hover, .inSelectionRectangle > .card-img {
+.noSelectionRectangle > .card-img:hover,
+.inSelectionRectangle > .card-img {
   border-color: #bbd;
 }
 
-.inSelection > .card-img, .inSelection > .card-img:hover {
+.inSelection > .card-img,
+.inSelection > .card-img:hover {
   border-color: #66e;
 }
 
 .inSelectionRectangle::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
@@ -304,7 +314,7 @@ export default defineComponent({
 }
 
 .cardDropAbove:before {
-  content: '';
+  content: "";
   position: absolute;
   left: 0;
   right: 0;
@@ -316,7 +326,7 @@ export default defineComponent({
 }
 
 .cardDropBelow:before {
-  content: '';
+  content: "";
   position: absolute;
   left: 0;
   right: 0;
