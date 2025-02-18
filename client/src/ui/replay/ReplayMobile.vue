@@ -11,37 +11,34 @@ An interface for mobile use
     </div>
 
     <DraftPicker
-        v-if="showDraftPicker"
-        class="main-content picker"
-        :showDeckBuilder="false"
-        :inPersonDraft="inPersonDraft"
-        />
+      v-if="showDraftPicker"
+      class="main-content picker"
+      :showDeckBuilder="false"
+      :inPersonDraft="inPersonDraft"
+    />
     <CardGrid v-else class="main-content grid" />
 
     <div class="footer">
-
-      <img class="icon" :src="selectedUserIcon">
+      <img class="icon" :src="selectedUserIcon" />
 
       <div class="footer-center">
         <button
-            v-long-press="400"
-            ref="prevButton"
-            @click="onPrevClick"
-            @contextmenu.prevent
-            class="left-button"
-            >
+          v-long-press="400"
+          ref="prevButton"
+          @click="onPrevClick"
+          @contextmenu.prevent
+          class="left-button"
+        >
           Prev
         </button>
-        <TimelineButton
-            class="timeline-button"
-            popover-alignment="center above" />
+        <TimelineButton class="timeline-button" popover-alignment="center above" />
         <button
-            v-long-press="400"
-            ref="nextButton"
-            @click="onNextClick"
-            @contextmenu.prevent
-            class="right-button"
-            >
+          v-long-press="400"
+          ref="nextButton"
+          @click="onNextClick"
+          @contextmenu.prevent
+          class="right-button"
+        >
           Next
         </button>
       </div>
@@ -52,20 +49,18 @@ An interface for mobile use
 </template>
 
 <script lang="ts">
-import { defineComponent, ref } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { onLongPress } from '@vueuse/core';
+import { defineComponent, ref } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { onLongPress } from "@vueuse/core";
 
-import CardGrid from './CardGrid.vue';
-import DraftPicker from './DraftPicker.vue';
-import TimelineButton from './controls_row/TimelineButton.vue';
+import CardGrid from "./CardGrid.vue";
+import DraftPicker from "./DraftPicker.vue";
+import TimelineButton from "./controls_row/TimelineButton.vue";
 
-import { draftStore, DraftStore } from '../../state/DraftStore';
-import { replayStore } from '../../state/ReplayStore';
-
-import { pushDraftUrlRelative, pushDraftUrlFromState } from '../../router/url_manipulation';
-import { FALLBACK_USER_PICTURE } from '../../parse/fallbacks';
-
+import { draftStore, type DraftStore } from "@/state/DraftStore";
+import { replayStore } from "@/state/ReplayStore";
+import { pushDraftUrlFromState, pushDraftUrlRelative } from "@/router/url_manipulation";
+import { FALLBACK_USER_PICTURE } from "@/parse/fallbacks";
 
 export default defineComponent({
   components: {
@@ -97,17 +92,9 @@ export default defineComponent({
       $router: router,
     };
 
-    onLongPress(
-      prevButton,
-      onPrevLongPress,
-      { modifiers: { prevent: true } },
-    );
+    onLongPress(prevButton, onPrevLongPress, { modifiers: { prevent: true } });
 
-    onLongPress(
-      nextButton,
-      onNextLongPress,
-      { modifiers: { prevent: true } },
-    );
+    onLongPress(nextButton, onNextLongPress, { modifiers: { prevent: true } });
 
     function onPrevLongPress() {
       pushDraftUrlRelative(routeProvider, {
@@ -123,7 +110,6 @@ export default defineComponent({
   },
 
   computed: {
-
     draftStore(): DraftStore {
       return draftStore;
     },
@@ -132,7 +118,7 @@ export default defineComponent({
       if (replayStore.selection == null) {
         // TODO Fill this in with something that makes more sense
         return FALLBACK_USER_PICTURE;
-      } else if (replayStore.selection.type == 'pack') {
+      } else if (replayStore.selection.type == "pack") {
         // TODO Fill this in with something that makes more sense
         return FALLBACK_USER_PICTURE;
       } else {
@@ -151,8 +137,8 @@ export default defineComponent({
       replayStore.goNext();
       pushDraftUrlFromState(this, draftStore, replayStore);
     },
-  }
-})
+  },
+});
 </script>
 
 <style scoped>
@@ -198,7 +184,8 @@ export default defineComponent({
   align-items: center;
 }
 
-.left-button, .right-button {
+.left-button,
+.right-button {
   padding: 5px 10px;
   min-width: 52px;
   text-align: center;
@@ -219,5 +206,4 @@ export default defineComponent({
 .footer-right {
   width: 45px;
 }
-
 </style>

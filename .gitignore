@@ -1,10 +1,9 @@
 draft.db*
 *.csv
 /*.env
-pkg/
-/src/
 run.sh
 node_modules/
+/client-dist
 /client/dist
 /client_toolchain/stats.json
 /client_toolchain/dev_server/dist

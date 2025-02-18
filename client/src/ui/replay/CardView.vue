@@ -10,18 +10,14 @@ Displays a single card
       <div class="shadow"></div>
       <div class="selection-outline" :class="outlineClass"></div>
     </div>
-    <img
-          class="card-img"
-          :alt="renderInfo.displayName"
-          :src="renderInfo.imageUrl"
-          >
+    <img class="card-img" :alt="renderInfo.displayName" :src="renderInfo.imageUrl" />
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
-import { DraftCard } from '../../draft/DraftState';
-import { checkNotNil } from '../../util/checkNotNil';
+import { defineComponent } from "vue";
+import type { DraftCard } from "@/draft/DraftState";
+import { checkNotNil } from "@/util/checkNotNil";
 
 export default defineComponent({
   props: {
@@ -31,24 +27,23 @@ export default defineComponent({
     },
 
     selectionStyle: {
-      type: String as () => 'none' | 'picked' | 'returned'
+      type: String as () => "none" | "picked" | "returned",
     },
   },
 
   computed: {
     renderInfo(): CardRenderInfo {
       return {
-        displayName:
-            this.card.hidden ? 'Unknown card' : this.card.definition.name,
+        displayName: this.card.hidden ? "Unknown card" : this.card.definition.name,
         imageUrl: getImageSrc(this.card),
       };
     },
 
     underlayerClass() {
       switch (this.selectionStyle) {
-        case 'picked':
-        case 'returned':
-          return 'selected';
+        case "picked":
+        case "returned":
+          return "selected";
         default:
           return undefined;
       }
@@ -56,19 +51,17 @@ export default defineComponent({
 
     outlineClass() {
       switch (this.selectionStyle) {
-        case 'picked':
-          return 'action-picked';
-        case 'returned':
-          return 'action-returned';
+        case "picked":
+          return "action-picked";
+        case "returned":
+          return "action-returned";
         default:
           return undefined;
       }
-    }
+    },
   },
 
-  methods: {
-
-  },
+  methods: {},
 });
 
 interface CardRenderInfo {
@@ -79,13 +72,14 @@ interface CardRenderInfo {
 function getImageSrc(card: DraftCard): string {
   if (card.hidden) {
     // HACK HACK HACK
-    return `https://media.magic.wizards.com/image_legacy_migration/magic/`
-        + `images/mtgcom/fcpics/making/mr224_back.jpg`;
+    return (
+      `https://media.magic.wizards.com/image_legacy_migration/magic/` +
+      `images/mtgcom/fcpics/making/mr224_back.jpg`
+    );
   } else {
     return checkNotNil(card.definition.image_uris[0]);
   }
 }
-
 </script>
 
 <style scoped>
@@ -148,19 +142,19 @@ function getImageSrc(card: DraftCard): string {
 
 .action-picked {
   display: block;
-  background-color: #00F;
+  background-color: #00f;
 }
 
 .action-returned {
   display: block;
-  background-color: #F00;
+  background-color: #f00;
 }
 
 /* native is 745 × 1040 */
 .card-img {
   width: 200px;
   height: 279px;
-  background: #AAA;
+  background: #aaa;
   border-radius: 10px;
   overflow: hidden;
 }

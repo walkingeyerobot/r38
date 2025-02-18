@@ -1,51 +1,58 @@
 <template>
   <div class="_deck-builder-section">
-    <div class="column-cnt"
-         ref="columnContent"
-         @mousedown="mouseDown"
-         @mousemove="mouseMove"
-         @mouseup="mouseUp"
-         >
+    <div
+      class="column-cnt"
+      ref="columnContent"
+      @mousedown="mouseDown"
+      @mousemove="mouseMove"
+      @mouseup="mouseUp"
+    >
       <DeckBuilderColumn
-          v-for="(column, index) in columns"
-          ref="columns"
-          :key="index"
-          :column="column"
-          :deckIndex="deckIndex"
-          :maindeck="maindeck"
-          :columnIndex="index"
-          :selectionRectangle="selectionRectangle"
-          :horizontal="horizontal"
-          />
+        v-for="(column, index) in columns"
+        ref="columns"
+        :key="index"
+        :column="column"
+        :deckIndex="deckIndex"
+        :maindeck="maindeck"
+        :columnIndex="index"
+        :selectionRectangle="selectionRectangle"
+        :horizontal="horizontal"
+      />
       <DeckBuilderColumn
-          :column="[]"
-          :deckIndex="deckIndex"
-          :maindeck="maindeck"
-          :columnIndex="columns.length"
-          :selectionRectangle="selectionRectangle"
-          :horizontal="horizontal"
-          />
+        :column="[]"
+        :deckIndex="deckIndex"
+        :maindeck="maindeck"
+        :columnIndex="columns.length"
+        :selectionRectangle="selectionRectangle"
+        :horizontal="horizontal"
+      />
       <div
-          class="selection"
-          :hidden="selectionRectangle === null"
-          :style="{
+        class="selection"
+        :hidden="selectionRectangle === null"
+        :style="{
           top: selectionTop || undefined,
           left: selectionLeft || undefined,
           width: selectionWidth || undefined,
           height: selectionHeight || undefined,
-        }"></div>
+        }"
+      ></div>
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, ref } from 'vue'
-import DeckBuilderColumn from './DeckBuilderColumn.vue';
-import { CardColumn, CardLocation, deckBuilderStore as store } from '../../state/DeckBuilderModule';
-import { Point, Rectangle } from '../../util/rectangle';
+import { defineComponent, ref } from "vue";
+import DeckBuilderColumn from "./DeckBuilderColumn.vue";
+
+import {
+  deckBuilderStore as store,
+  type CardColumn,
+  type CardLocation,
+} from "@/state/DeckBuilderModule";
+import type { Rectangle, Point } from "@/util/rectangle";
 
 export default defineComponent({
-  name: 'DeckBuilderSection',
+  name: "DeckBuilderSection",
 
   components: {
     DeckBuilderColumn,
@@ -81,7 +88,7 @@ export default defineComponent({
   },
 
   data: () => ({
-    selectionRectangle: null as (Rectangle | null),
+    selectionRectangle: null as Rectangle | null,
   }),
 
   computed: {
@@ -119,20 +126,19 @@ export default defineComponent({
   },
 
   methods: {
-
     relativePoint(clientX: number, clientY: number): Point {
       const rect = this.columnContentElem.getBoundingClientRect();
       return {
         x: clientX - rect.left,
         y: clientY - rect.top,
-      }
+      };
     },
 
     mouseDown(e: MouseEvent) {
       const point = this.relativePoint(e.clientX, e.clientY);
       this.selectionRectangle = {
-        start: {x: point.x, y: point.y},
-        end: {x: point.x, y: point.y},
+        start: { x: point.x, y: point.y },
+        end: { x: point.x, y: point.y },
       };
       e.preventDefault();
     },
@@ -148,14 +154,13 @@ export default defineComponent({
 
     mouseUp(e: MouseEvent) {
       if (this.selectionRectangle) {
-        const selection: CardLocation[] =
-            (this.columnElems)
-                .flatMap((column, columnIndex) => column.inSelectionRectangle
-                    .map((cardIndex: number) => ({
-                      columnIndex,
-                      cardIndex,
-                      maindeck: this.maindeck,
-                    })));
+        const selection: CardLocation[] = this.columnElems.flatMap((column, columnIndex) =>
+          column.inSelectionRectangle.map((cardIndex: number) => ({
+            columnIndex,
+            cardIndex,
+            maindeck: this.maindeck,
+          })),
+        );
         store.selectCards(selection);
         this.selectionRectangle = null;
         e.preventDefault();
@@ -165,13 +170,22 @@ export default defineComponent({
     createDragImage() {
       const dragImage = <HTMLElement>this.columnContentElem.cloneNode(false);
       for (let columnIndex = 0; columnIndex < this.columnElems.length; columnIndex++) {
-        if (this.selection.some(location =>
-            location.maindeck === this.maindeck && location.columnIndex === columnIndex)) {
+        if (
+          this.selection.some(
+            (location) =>
+              location.maindeck === this.maindeck && location.columnIndex === columnIndex,
+          )
+        ) {
           const column = <HTMLElement>this.columnElems[columnIndex].$el.cloneNode(true);
           for (let cardIndex = column.childElementCount - 1; cardIndex >= 0; cardIndex--) {
-            if (!this.selection.some(location =>
-                location.maindeck === this.maindeck && location.columnIndex === columnIndex
-                && location.cardIndex === cardIndex)) {
+            if (
+              !this.selection.some(
+                (location) =>
+                  location.maindeck === this.maindeck &&
+                  location.columnIndex === columnIndex &&
+                  location.cardIndex === cardIndex,
+              )
+            ) {
               column.removeChild(column.children[cardIndex]);
             }
           }
@@ -183,11 +197,11 @@ export default defineComponent({
       dragImage.id = "dragImage";
       document.body.appendChild(dragImage);
       return dragImage;
-    }
+    },
   },
-
 });
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const STANDIN_ELEM = {} as any;
 </script>
 
@@ -210,5 +224,4 @@ const STANDIN_ELEM = {} as any;
   border: 2px solid #b9f4c6;
   box-sizing: border-box;
 }
-
 </style>

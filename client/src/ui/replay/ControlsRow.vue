@@ -3,46 +3,39 @@
     <div class="start">
       <TimelineButton class="timeline-btn" popoverAlignment="left below" />
       <button
-          v-if="draftStore.isFilteredDraft"
-          @click="onPicksClick"
-          class="picks-btn playback-btn"
-          >
-        {{ numPicks }} {{ numPicks == 1 ? 'pick' : 'picks' }} available
+        v-if="draftStore.isFilteredDraft"
+        @click="onPicksClick"
+        class="picks-btn playback-btn"
+      >
+        {{ numPicks }} {{ numPicks == 1 ? "pick" : "picks" }} available
       </button>
     </div>
     <div class="center">
       <div class="draft-name">
         {{ draftStore.draftName }}
-        <span
-            v-if="draftStore.parseError != null"
-            class="parse-error-warning"
-            >
+        <span v-if="draftStore.parseError != null" class="parse-error-warning">
           [parse error]
         </span>
       </div>
     </div>
     <div class="end">
       <SearchBox />
-      <img v-if="authStore.user" class="user-img" :src="authStore.user.picture">
+      <img v-if="authStore.user" class="user-img" :src="authStore.user.picture" />
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
-import TimelineButton from './controls_row/TimelineButton.vue';
-import SearchBox from './controls_row/SearchBox.vue';
+import { defineComponent } from "vue";
+import TimelineButton from "./controls_row/TimelineButton.vue";
+import SearchBox from "./controls_row/SearchBox.vue";
 
-import { authStore, AuthStore } from '../../state/AuthStore';
-import { draftStore, DraftStore } from '../../state/DraftStore';
-import { replayStore, ReplayStore } from '../../state/ReplayStore';
-
-import { pushDraftUrlRelative } from '../../router/url_manipulation';
-import { TimelineEvent } from '../../draft/TimelineEvent';
-import { globalClickTracker, UnhandledClickListener } from '../infra/globalClickTracker';
-import { isAuthedUserSelected } from './isAuthedUserSelected';
-import { getPlayerSeat } from '../../state/util/userIsSeated';
-import { checkNotNil } from '../../util/checkNotNil';
+import { pushDraftUrlRelative } from "@/router/url_manipulation";
+import { authStore, type AuthStore } from "@/state/AuthStore";
+import { draftStore, type DraftStore } from "@/state/DraftStore";
+import { replayStore, type ReplayStore } from "@/state/ReplayStore";
+import { getPlayerSeat } from "@/state/util/userIsSeated";
+import { checkNotNil } from "@/util/checkNotNil";
 
 export default defineComponent({
   components: {
@@ -64,11 +57,11 @@ export default defineComponent({
     },
 
     numPicks(): number {
-      const seat = getPlayerSeat(authStore.user?.id, draftStore.currentState)
+      const seat = getPlayerSeat(authStore.user?.id, draftStore.currentState);
 
       let count = 0;
       if (seat != null) {
-        for (let pack of seat.queuedPacks.packs) {
+        for (const pack of seat.queuedPacks.packs) {
           if (pack.round != seat.round) {
             break;
           }
@@ -81,14 +74,12 @@ export default defineComponent({
 
   methods: {
     onPicksClick() {
-      const seat =
-          checkNotNil(
-                getPlayerSeat(authStore.user?.id, draftStore.currentState));
+      const seat = checkNotNil(getPlayerSeat(authStore.user?.id, draftStore.currentState));
 
       pushDraftUrlRelative(this, {
         eventIndex: replayStore.events.length,
         selection: {
-          type: 'seat',
+          type: "seat",
           id: seat.position,
         },
       });
@@ -105,7 +96,7 @@ export default defineComponent({
   font-size: 14px;
 
   padding: 13px 12px;
-  border-bottom: 1px solid #EAEAEA;
+  border-bottom: 1px solid #eaeaea;
   z-index: 1;
 
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
@@ -148,7 +139,7 @@ export default defineComponent({
 }
 
 .parse-error-warning {
-  color: #F00;
+  color: #f00;
 }
 
 .user-img {

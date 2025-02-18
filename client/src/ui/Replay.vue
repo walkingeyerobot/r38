@@ -1,48 +1,42 @@
+<!-- eslint-disable vue/multi-word-component-names -->
 <template>
-  <div
-      class="_replay"
-      @mousedown.capture="onCaptureMouseDown"
-      @mousedown="onBubbleMouseDown"
-      >
+  <div class="_replay" @mousedown.capture="onCaptureMouseDown" @mousedown="onBubbleMouseDown">
     <template v-if="status == 'loaded'">
       <ReplayMobile
-          v-if="formatStore.layout == 'mobile'"
-          :showDraftPicker="showDraftPicker"
-          :inPersonDraft="inPersonDraft"
-          />
-      <ReplayDesktop
-          v-else
-          :showDraftPicker="showDraftPicker"
-          :inPersonDraft="inPersonDraft"
+        v-if="formatStore.layout == 'mobile'"
+        :showDraftPicker="showDraftPicker"
+        :inPersonDraft="inPersonDraft"
       />
+      <ReplayDesktop v-else :showDraftPicker="showDraftPicker" :inPersonDraft="inPersonDraft" />
     </template>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
-import ReplayDesktop from './replay/ReplayDesktop.vue';
-import ReplayMobile from './replay/ReplayMobile.vue';
+import { defineComponent } from "vue";
+import ReplayDesktop from "./replay/ReplayDesktop.vue";
+import ReplayMobile from "./replay/ReplayMobile.vue";
 
-import { rootStore } from '../state/store';
-import { authStore } from '../state/AuthStore';
-import { formatStore, FormatStore } from '../state/FormatStore';
-import { replayStore } from '../state/ReplayStore';
-import { draftStore, DraftStore } from '../state/DraftStore';
-import { applyReplayUrlState, parseDraftUrl, pushDraftUrlFromState } from '../router/url_manipulation';
-import { globalClickTracker } from './infra/globalClickTracker';
-import { getPlayerSeat } from '../state/util/userIsSeated';
-import { tuple } from '../util/tuple';
-import { fetchEndpoint } from '../fetch/fetchEndpoint';
-import { routeDraft } from '../rest/api/draft/draft';
-import { FetchStatus } from './infra/FetchStatus';
-import { isAuthedUserSelected } from './replay/isAuthedUserSelected';
-import DraftPicker from "./replay/DraftPicker.vue";
-
+import { rootStore } from "@/state/store";
+import { authStore } from "@/state/AuthStore";
+import { formatStore, type FormatStore } from "@/state/FormatStore";
+import { replayStore } from "@/state/ReplayStore";
+import { draftStore } from "@/state/DraftStore";
+import {
+  parseDraftUrl,
+  applyReplayUrlState,
+  pushDraftUrlFromState,
+} from "@/router/url_manipulation";
+import { globalClickTracker } from "./infra/globalClickTracker";
+import { getPlayerSeat } from "@/state/util/userIsSeated";
+import { tuple } from "@/util/tuple";
+import { fetchEndpoint } from "@/fetch/fetchEndpoint";
+import { routeDraft } from "@/rest/api/draft/draft";
+import type { FetchStatus } from "./infra/FetchStatus";
+import { isAuthedUserSelected } from "./replay/isAuthedUserSelected";
 
 export default defineComponent({
   components: {
-    DraftPicker,
     ReplayMobile,
     ReplayDesktop,
   },
@@ -50,7 +44,7 @@ export default defineComponent({
   data() {
     return {
       targetDraftId: -1,
-      status: 'missing' as FetchStatus,
+      status: "missing" as FetchStatus,
       isFreshBundle: false,
       unwatchDraftStore: null as null | (() => void),
     };
@@ -58,21 +52,21 @@ export default defineComponent({
 
   created() {
     this.unwatchDraftStore = rootStore.watch(
-      (state) => tuple(draftStore.initialState, draftStore.events),
-      (newProps, oldProps) => this.onDraftStoreChanged(),
+      (_state) => tuple(draftStore.initialState, draftStore.events),
+      (_newProps, _oldProps) => this.onDraftStoreChanged(),
     );
 
     this.applyCurrentRoute();
   },
 
-  destroyed() {
+  unmounted() {
     if (this.unwatchDraftStore) {
       this.unwatchDraftStore();
     }
   },
 
   watch: {
-    $route(to, from) {
+    $route(_to, _from) {
       this.applyCurrentRoute();
     },
   },
@@ -83,14 +77,16 @@ export default defineComponent({
     },
 
     showDraftPicker(): boolean {
-      return draftStore.isFilteredDraft
-          && replayStore.eventPos == replayStore.events.length
-          && isAuthedUserSelected(authStore, draftStore, replayStore);
+      return (
+        draftStore.isFilteredDraft &&
+        replayStore.eventPos == replayStore.events.length &&
+        isAuthedUserSelected(authStore, draftStore, replayStore)
+      );
     },
 
     inPersonDraft(): boolean {
       return draftStore.isInPersonDraft;
-    }
+    },
   },
 
   methods: {
@@ -104,12 +100,12 @@ export default defineComponent({
     },
 
     async fetchDraft(draftId: number) {
-      this.status = 'fetching';
+      this.status = "fetching";
       this.targetDraftId = draftId;
 
       // TODO: Handle errors
       const payload = await fetchEndpoint(routeDraft, {
-        id: draftId,
+        id: draftId.toString(),
         as: authStore.user?.id,
       });
 
@@ -122,26 +118,26 @@ export default defineComponent({
       document.title = `${draftStore.draftName}`;
 
       this.isFreshBundle = true;
-      this.status = 'loaded';
+      this.status = "loaded";
 
       // onDraftStoreChanged will fire afterwards
     },
 
     onDraftStoreChanged() {
-      console.log('Draft state changed, resyncing replay');
+      console.log("Draft state changed, resyncing replay");
       replayStore.sync();
 
       if (this.isFreshBundle) {
-        console.log('Syncing state to URL...');
+        console.log("Syncing state to URL...");
         if (replayStore.selection == null) {
           replayStore.setSelection({
-            type: 'seat',
+            type: "seat",
             id: this.getDefaultSeatSelection(),
           });
         }
         applyReplayUrlState(replayStore, this.$route);
       } else {
-        console.log('Syncing URL to state...');
+        console.log("Syncing URL to state...");
         pushDraftUrlFromState(this, draftStore, replayStore);
       }
       this.isFreshBundle = false;
@@ -156,12 +152,11 @@ export default defineComponent({
     },
 
     getDefaultSeatSelection(): number {
-      let seat = getPlayerSeat(authStore.user?.id, draftStore.currentState);
+      const seat = getPlayerSeat(authStore.user?.id, draftStore.currentState);
       return seat?.position || 0;
     },
   },
 });
-
 </script>
 
 <style scoped>

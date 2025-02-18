@@ -1,4 +1,4 @@
-import { ScryfallColor, ScryfallRarity, ScryfallLayout } from '../draft/scryfall';
+import type { ScryfallColor, ScryfallRarity, ScryfallLayout } from "@/draft/scryfall";
 
 export interface SourceData {
   draftId: number;
@@ -72,19 +72,19 @@ export interface HiddenCard {
 export type SourceEvent = NormalPickEvent | SecretPickEvent | ShadowPickEvent;
 
 export interface NormalPickEvent extends BaseEvent {
-  type: 'Pick';
+  type: "Pick";
   cards: number[];
   playerModified: number;
 }
 
 export interface SecretPickEvent extends BaseEvent {
-  type: 'SecretPick';
+  type: "SecretPick";
   draftModified: number;
   playerModified: number;
 }
 
 export interface ShadowPickEvent extends BaseEvent {
-  type: 'ShadowPick';
+  type: "ShadowPick";
   cards: number[];
 }
 

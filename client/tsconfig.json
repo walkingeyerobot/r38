@@ -1,38 +1,14 @@
 {
-  "compilerOptions": {
-    "target": "es2018",
-    "module": "esnext",
-
-    "strict": true,
-    "noImplicitReturns": true,
-    "alwaysStrict": true,
-    "forceConsistentCasingInFileNames": true,
-
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-
-    "jsx": "preserve",
-    "importHelpers": true,
-    "moduleResolution": "node",
-    "sourceMap": true,
-
-    "lib": [
-      "esnext",
-      "dom",
-      "dom.iterable",
-      "scripthost"
-    ]
-  },
-  "include": [
-    "src/**/*.ts",
-    "src/**/*.tsx",
-    "src/**/*.vue",
-    "test/**/*.ts",
-    "test/**/*.tsx",
-    "test/**/*.vue",
-  ],
-  "exclude": [
-    "node_modules",
-    "**/*.stub.ts",
-  ],
+  "files": [],
+  "references": [
+    {
+      "path": "./tsconfig.node.json"
+    },
+    {
+      "path": "./tsconfig.app.json"
+    },
+    {
+      "path": "./tsconfig.vitest.json"
+    }
+  ]
 }

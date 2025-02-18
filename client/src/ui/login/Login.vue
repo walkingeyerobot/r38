@@ -1,3 +1,4 @@
+<!-- eslint-disable vue/multi-word-component-names -->
 <template>
   <div class="_login">
     <div class="login-cnt">
@@ -5,7 +6,7 @@
       <div class="content-cnt">
         <a class="login-button" href="/auth/discord/login">
           Log in with
-          <img class="discord-logo" src="./discord_wordmark_white.png">
+          <img class="discord-logo" src="./discord_wordmark_white.png" />
         </a>
       </div>
     </div>
@@ -13,11 +14,9 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
+import { defineComponent } from "vue";
 
-export default defineComponent({
-});
-
+export default defineComponent({});
 </script>
 
 <style scoped>
@@ -35,7 +34,7 @@ export default defineComponent({
 
   padding: 25px;
   border-radius: 3px;
-  border: 1px solid #F39AC1;
+  border: 1px solid #f39ac1;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
 
   display: flex;
@@ -45,7 +44,7 @@ export default defineComponent({
 .title {
   text-align: center;
   font-size: 18px;
-  color: #EB028C;
+  color: #eb028c;
 }
 
 .content-cnt {
@@ -58,12 +57,12 @@ export default defineComponent({
 
 .login-button {
   display: inline-block;
-  background: #7289DA;
+  background: #7289da;
   padding: 5px 25px;
 
   border-radius: 3px;
 
-  color: #FFF;
+  color: #fff;
   font-size: 15px;
   font-weight: bold;
   text-decoration: none;

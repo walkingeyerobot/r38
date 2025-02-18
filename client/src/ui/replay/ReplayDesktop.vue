@@ -10,22 +10,22 @@ Root component for desktop layout
     <div class="main">
       <PlayerSelector class="table" />
       <DraftPicker
-          v-if="showDraftPicker"
-          class="picker"
-          :showDeckBuilder="true"
-          :inPersonDraft="inPersonDraft"
-          />
+        v-if="showDraftPicker"
+        class="picker"
+        :showDeckBuilder="true"
+        :inPersonDraft="inPersonDraft"
+      />
       <DraftView v-else class="grid" />
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue'
-import ControlsRow from './ControlsRow.vue';
-import PlayerSelector from './player_selector/PlayerSelector.vue';
-import DraftPicker from './DraftPicker.vue';
-import DraftView from './DraftView.vue';
+import { defineComponent } from "vue";
+import ControlsRow from "./ControlsRow.vue";
+import PlayerSelector from "./player_selector/PlayerSelector.vue";
+import DraftPicker from "./DraftPicker.vue";
+import DraftView from "./DraftView.vue";
 
 export default defineComponent({
   components: {
@@ -45,8 +45,7 @@ export default defineComponent({
       required: true,
     },
   },
-})
-
+});
 </script>
 
 <style scoped>
@@ -68,8 +67,8 @@ export default defineComponent({
   flex: 0 0 auto;
 }
 
-.grid, .picker {
+.grid,
+.picker {
   flex: 1;
 }
 </style>
-

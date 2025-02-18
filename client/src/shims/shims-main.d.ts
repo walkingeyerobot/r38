@@ -1,4 +1,4 @@
-import { SourceData } from '../parse/SourceData';
+import { SourceData } from "@/parse/SourceData";
 
 export {};
 

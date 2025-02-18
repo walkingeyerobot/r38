@@ -1,42 +1,39 @@
+<!-- eslint-disable vue/no-mutating-props -->
 <template>
-  <label
-      class="_prefs-item"
-      :for="pref.format"
-  >
+  <label class="_prefs-item" :for="pref.format">
     {{ pref.format }}
     <input
-        :id="pref.format"
-        type="checkbox"
-        class="checkbox"
-        v-model="pref.elig"
-        @change="toggle"
+      :id="pref.format"
+      type="checkbox"
+      class="checkbox"
+      v-model="pref.elig"
+      @change="toggle"
     />
-    <span class="styled-checkbox"/>
+    <span class="styled-checkbox" />
   </label>
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
-import { routeSetPref, UserPrefDescriptor } from '../../rest/api/prefs/prefs';
-import { fetchEndpoint } from '../../fetch/fetchEndpoint';
+import { defineComponent } from "vue";
+import { routeSetPref, type UserPrefDescriptor } from "@/rest/api/prefs/prefs";
+import { fetchEndpoint } from "@/fetch/fetchEndpoint";
 
 export default defineComponent({
   props: {
     pref: {
       type: Object as () => UserPrefDescriptor,
       required: true,
-    }
+    },
   },
 
   methods: {
     async toggle() {
-      await fetchEndpoint(routeSetPref,
-          {
-            pref: {format: this.pref.format, elig: this.pref.elig},
-            mtgoName: undefined
-          });
-    }
-  }
+      await fetchEndpoint(routeSetPref, {
+        pref: { ...this.pref },
+        mtgoName: undefined,
+      });
+    },
+  },
 });
 </script>
 
@@ -69,7 +66,7 @@ export default defineComponent({
 }
 
 .styled-checkbox::after {
-  content: '';
+  content: "";
   position: absolute;
   left: 3px;
   top: 3px;
@@ -83,5 +80,4 @@ export default defineComponent({
 .checkbox:checked ~ .styled-checkbox::after {
   transform: translateX(20px);
 }
-
 </style>

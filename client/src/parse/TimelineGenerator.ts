@@ -1,11 +1,16 @@
-import { SourceEvent, SecretPickEvent, NormalPickEvent, ShadowPickEvent } from './SourceData';
-import { commitTimelineEvent } from '../draft/mutate';
-import { DraftState, CardPack, DraftSeat, DraftCard, MtgCard } from '../draft/DraftState';
-import { TimelineEvent, TimelineEventType, ActionMovePack, ActionIncrementPickedColors } from '../draft/TimelineEvent';
-import { ParseError } from './ParseError';
-import { checkExhaustive } from '../util/checkExhaustive';
-import { checkNotNil } from '../util/checkNotNil';
-import { getActivePackForSeat } from '../state/util/getters';
+import type { SourceEvent, NormalPickEvent, SecretPickEvent, ShadowPickEvent } from "./SourceData";
+import { commitTimelineEvent } from "@/draft/mutate";
+import type { DraftState, DraftCard, DraftSeat, CardPack, MtgCard } from "@/draft/DraftState";
+import type {
+  TimelineEvent,
+  ActionMovePack,
+  TimelineEventType,
+  ActionIncrementPickedColors,
+} from "@/draft/TimelineEvent";
+import { ParseError } from "./ParseError";
+import { checkExhaustive } from "@/util/checkExhaustive";
+import { checkNotNil } from "@/util/checkNotNil";
+import { getActivePackForSeat } from "@/state/util/getters";
 
 export class TimelineGenerator {
   private _state: DraftState;
@@ -40,13 +45,13 @@ export class TimelineGenerator {
 
   parseEvent(srcEvent: SourceEvent) {
     switch (srcEvent.type) {
-      case 'Pick':
+      case "Pick":
         this.parsePickEvent(srcEvent);
         break;
-      case 'SecretPick':
+      case "SecretPick":
         this.parsePickEvent(srcEvent);
         break;
-      case 'ShadowPick':
+      case "ShadowPick":
         this.parseShadowPickEvent(srcEvent);
         break;
       default:
@@ -55,7 +60,7 @@ export class TimelineGenerator {
   }
 
   isDraftComplete() {
-    for (let seat of this._state.seats) {
+    for (const seat of this._state.seats) {
       if (seat.queuedPacks.packs.length > 0) {
         return false;
       }
@@ -67,44 +72,41 @@ export class TimelineGenerator {
     const seat = checkNotNil(this._state.seats[srcEvent.position]);
     const playerData = this.getPlayerData(srcEvent.position);
 
-    if (srcEvent.round != playerData.currentRound ) {
+    if (srcEvent.round != playerData.currentRound) {
       throw new ParseError(
-          `Seat ${srcEvent.position} is in round ${playerData.currentRound} `
-          + `but event is round ${srcEvent.round}; `
-          + `event=${JSON.stringify(srcEvent)}`);
+        `Seat ${srcEvent.position} is in round ${playerData.currentRound} ` +
+          `but event is round ${srcEvent.round}; ` +
+          `event=${JSON.stringify(srcEvent)}`,
+      );
     }
 
     const activePack = getActivePackForSeat(this._state, seat.position);
     if (activePack == null) {
-      throw new ParseError(
-          `Seat ${seat.position} doesn't have a pack to pick from`);
+      throw new ParseError(`Seat ${seat.position} doesn't have a pack to pick from`);
     }
 
     let event: TimelineEvent;
     let netPickCount = 0;
     switch (srcEvent.type) {
-      case 'Pick':
-        event = this.createEvent('pick', playerData);
-        for (let cardId of srcEvent.cards) {
+      case "Pick":
+        event = this.createEvent("pick", playerData);
+        for (const cardId of srcEvent.cards) {
           const card = this.getCard(cardId);
           event.actions.push(
             {
-              type: 'move-card',
-              subtype: 'pick-card',
+              type: "move-card",
+              subtype: "pick-card",
               card: cardId,
               cardName: card.definition.name,
               from: activePack.id,
-              to: seat.picks.id
-            }, {
-              type: 'mark-transfer',
+              to: seat.picks.id,
+            },
+            {
+              type: "mark-transfer",
               from: activePack.id,
               to: seat.picks.id,
             },
-            buildIncrementPickedColorsAction(
-                seat.position,
-                [card.definition],
-                [],
-            ),
+            buildIncrementPickedColorsAction(seat.position, [card.definition], []),
           );
 
           // TODO: Do we really need to embed all this info? Can we just get it
@@ -121,10 +123,10 @@ export class TimelineGenerator {
         }
         break;
 
-      case 'SecretPick':
-        event = this.createEvent('hidden-pick', playerData);
+      case "SecretPick":
+        event = this.createEvent("hidden-pick", playerData);
         event.actions.push({
-          type: 'mark-transfer',
+          type: "mark-transfer",
           from: activePack.id,
           to: seat.picks.id,
         });
@@ -136,8 +138,7 @@ export class TimelineGenerator {
     playerData.nextPick++;
 
     // Pass the pack to the next player
-    event.actions.push(
-        this.buildPassAction(seat, playerData, activePack, netPickCount));
+    event.actions.push(this.buildPassAction(seat, playerData, activePack, netPickCount));
 
     this.commitEvent(event);
 
@@ -152,26 +153,26 @@ export class TimelineGenerator {
   ): ActionMovePack {
     if (pack.cards.length <= pickCount) {
       return {
-        type: 'move-pack',
-        subtype: 'discard',
+        type: "move-pack",
+        subtype: "discard",
         pack: pack.id,
         from: seat.queuedPacks.id,
         to: this._state.deadPacks.id,
-        epoch: 'increment',
+        epoch: "increment",
       };
     } else {
-      const seatId =
-          getSeatToPassTo(
-              seat.position,
-              this._state.seats.length,
-              playerData.currentRound);
+      const seatId = getSeatToPassTo(
+        seat.position,
+        this._state.seats.length,
+        playerData.currentRound,
+      );
       return {
-        type: 'move-pack',
-        subtype: 'pass',
+        type: "move-pack",
+        subtype: "pass",
         pack: pack.id,
         from: seat.queuedPacks.id,
         to: this._state.seats[seatId].queuedPacks.id,
-        epoch: 'increment',
+        epoch: "increment",
       };
     }
   }
@@ -183,7 +184,7 @@ export class TimelineGenerator {
     // How many cards are picked from each pack
     const packPickCounts = new Map<CardPack, number>();
 
-    for (let cardId of srcEvent.cards) {
+    for (const cardId of srcEvent.cards) {
       const card = this.getCard(cardId);
       const { pack, seat } = this.findPackContainingCard(cardId);
 
@@ -191,8 +192,8 @@ export class TimelineGenerator {
       packPickCounts.set(pack, pickCount);
 
       outEvent.actions.push({
-        type: 'move-card',
-        subtype: 'shadow-pick',
+        type: "move-card",
+        subtype: "shadow-pick",
         cardName: cardDisplayName(card),
         card: cardId,
         from: pack.id,
@@ -210,12 +211,12 @@ export class TimelineGenerator {
       // If the pack no longer has cards in it, banish it to the SHADOW REALM
       if (pack.cards.length == pickCount) {
         outEvent.actions.push({
-          type: 'move-pack',
-          subtype: 'discard',
+          type: "move-pack",
+          subtype: "discard",
           pack: pack.id,
           from: seat.queuedPacks.id,
           to: this._state.deadPacks.id,
-          epoch: 'increment',
+          epoch: "increment",
         });
       }
     }
@@ -223,10 +224,7 @@ export class TimelineGenerator {
     this.commitEvent(outEvent);
   }
 
-  private maybeAdvancePlayerToNextRound(
-    seat: DraftSeat,
-    playerData: PlayerTracker,
-  ) {
+  private maybeAdvancePlayerToNextRound(seat: DraftSeat, playerData: PlayerTracker) {
     // TODO: This can be fooled by drafts that introduce more packs or that
     // have packs that aren't 15 cards
     if (![15, 30].includes(seat.picks.count)) {
@@ -237,18 +235,15 @@ export class TimelineGenerator {
     playerData.nextEpoch = 0;
     playerData.nextPick = 0;
 
-    const event = this.createEvent('advance-round', playerData);
+    const event = this.createEvent("advance-round", playerData);
     event.actions.push({
-      type: 'increment-seat-round',
+      type: "increment-seat-round",
       seat: seat.position,
     });
     this.commitEvent(event);
   }
 
-  private createEvent(
-      type: TimelineEventType,
-      playerData: PlayerTracker,
-  ): TimelineEvent {
+  private createEvent(type: TimelineEventType, playerData: PlayerTracker): TimelineEvent {
     return Object.freeze({
       id: this._nextTimelineId++,
       type: type,
@@ -269,7 +264,7 @@ export class TimelineGenerator {
 
     return Object.freeze({
       id: this._nextTimelineId++,
-      type: 'shadow-pick',
+      type: "shadow-pick",
       associatedSeat: -1,
       round: shadowedEvent.round,
       roundEpoch: shadowedEvent.roundEpoch,
@@ -285,22 +280,22 @@ export class TimelineGenerator {
         return event;
       }
     }
-    throw new ParseError(
-        `No event to shadow; event list is ${this._outEvents.length} long`);
+    throw new ParseError(`No event to shadow; event list is ${this._outEvents.length} long`);
   }
 
   private findPackContainingCard(cardId: number) {
     // TODO: This is not super efficient
-    for (let seat of this._state.seats) {
-      for (let pack of seat.queuedPacks.packs) {
+    for (const seat of this._state.seats) {
+      for (const pack of seat.queuedPacks.packs) {
         if (pack.cards.includes(cardId)) {
           return { seat, pack };
         }
       }
     }
     throw new ParseError(
-        `Cannot find a pack to pick card ${cardId}:`
-            + `"${cardDisplayName(this.getCard(cardId))}" from`);
+      `Cannot find a pack to pick card ${cardId}:` +
+        `"${cardDisplayName(this.getCard(cardId))}" from`,
+    );
   }
 
   private commitEvent(event: TimelineEvent) {
@@ -322,14 +317,8 @@ export class TimelineGenerator {
   }
 }
 
-function getSeatToPassTo(
-    currentSeatPosition: number,
-    numSeats: number,
-    round: number,
-) {
-  let nextSeatId = round % 2 == 1
-        ? currentSeatPosition + 1
-        : currentSeatPosition - 1;
+function getSeatToPassTo(currentSeatPosition: number, numSeats: number, round: number) {
+  let nextSeatId = round % 2 == 1 ? currentSeatPosition + 1 : currentSeatPosition - 1;
 
   // Equivalent to (nextSeatId % numSeats), but also works for negative numbers
   nextSeatId = ((nextSeatId % numSeats) + numSeats) % numSeats;
@@ -347,7 +336,7 @@ function buildIncrementPickedColorsAction(
   lostCards: MtgCard[],
 ) {
   const action: ActionIncrementPickedColors = {
-    type: 'increment-picked-colors',
+    type: "increment-picked-colors",
     seat,
     w: 0,
     u: 0,
@@ -356,38 +345,38 @@ function buildIncrementPickedColorsAction(
     g: 0,
   };
 
-  for (let gainedCard of gainedCards) {
-    if (gainedCard.color_identity.includes('W')) {
+  for (const gainedCard of gainedCards) {
+    if (gainedCard.color_identity.includes("W")) {
       action.w++;
     }
-    if (gainedCard.color_identity.includes('U')) {
+    if (gainedCard.color_identity.includes("U")) {
       action.u++;
     }
-    if (gainedCard.color_identity.includes('B')) {
+    if (gainedCard.color_identity.includes("B")) {
       action.b++;
     }
-    if (gainedCard.color_identity.includes('R')) {
+    if (gainedCard.color_identity.includes("R")) {
       action.r++;
     }
-    if (gainedCard.color_identity.includes('G')) {
+    if (gainedCard.color_identity.includes("G")) {
       action.g++;
     }
   }
 
-  for (let gainedCard of lostCards) {
-    if (gainedCard.color_identity.includes('W')) {
+  for (const gainedCard of lostCards) {
+    if (gainedCard.color_identity.includes("W")) {
       action.w--;
     }
-    if (gainedCard.color_identity.includes('U')) {
+    if (gainedCard.color_identity.includes("U")) {
       action.u--;
     }
-    if (gainedCard.color_identity.includes('B')) {
+    if (gainedCard.color_identity.includes("B")) {
       action.b--;
     }
-    if (gainedCard.color_identity.includes('R')) {
+    if (gainedCard.color_identity.includes("R")) {
       action.r--;
     }
-    if (gainedCard.color_identity.includes('G')) {
+    if (gainedCard.color_identity.includes("G")) {
       action.g--;
     }
   }

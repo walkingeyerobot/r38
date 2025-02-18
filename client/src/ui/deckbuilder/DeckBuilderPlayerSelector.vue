@@ -1,22 +1,25 @@
 <template>
   <div class="_deckbuilder-player-selector">
     <div
-        v-for="(name, index) in state.names"
-        :key="index"
-        class="player"
-        :class="{
-          selected: index === state.selectedSeat
-        }"
-        @click="onPlayerClick(index)"
-        >
+      v-for="(name, index) in state.names"
+      :key="index"
+      class="player"
+      :class="{
+        selected: index === state.selectedSeat,
+      }"
+      @click="onPlayerClick(index)"
+    >
       {{ name }}
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
-import { deckBuilderStore as store, DeckBuilderStore } from '../../state/DeckBuilderModule';
+import { defineComponent } from "vue";
+import { deckBuilderStore as store, type DeckBuilderStore } from "@/state/DeckBuilderModule";
+
+// import { defineComponent } from 'vue';
+// import { deckBuilderStore as store, DeckBuilderStore } from '../../state/DeckBuilderModule';
 
 export default defineComponent({
   computed: {
@@ -35,7 +38,7 @@ export default defineComponent({
 
 <style scoped>
 ._deckbuilder-player-selector {
-  border-right: 1px solid #EAEAEA;
+  border-right: 1px solid #eaeaea;
 }
 
 .player {
@@ -45,6 +48,6 @@ export default defineComponent({
 }
 
 .player.selected {
-  background: #EAEAEA;
+  background: #eaeaea;
 }
 </style>

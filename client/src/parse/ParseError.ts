@@ -1,4 +1,4 @@
-import { ExtensibleError } from '../util/ExtensibleError';
+import { ExtensibleError } from "@/util/ExtensibleError";
 
 export class ParseError extends ExtensibleError {
   constructor(message: string) {

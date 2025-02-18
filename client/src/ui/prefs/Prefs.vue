@@ -1,47 +1,34 @@
+<!-- eslint-disable vue/multi-word-component-names -->
 <template>
   <div class="_prefs">
     <div class="header">
-      <img class="user-img" :src="authStore.user.picture">
-      {{ authStore.user.name }}
+      <img class="user-img" :src="user.picture" />
+      {{ user.name }}
     </div>
     <div class="list-item">
-      <label
-          for="mtgoName"
-          class="mtgo-label"
-      >
-        MTGO name:
-      </label>
+      <label for="mtgoName" class="mtgo-label"> MTGO name: </label>
       <input
-          type="text"
-          id="mtgoName"
-          class="mtgo-input"
-          v-model="authStore.user.mtgoName"
-          @change="onMtgoNameChanged"
-          @input="confirmed = false"
-          @keyup.enter="$event.target.blur()"
+        type="text"
+        id="mtgoName"
+        class="mtgo-input"
+        v-model="user.mtgoName"
+        @change="onMtgoNameChanged"
+        @input="confirmed = false"
+        @keyup.enter="($event.target! as HTMLInputElement).blur()"
       />
-      <span
-          class="confirm"
-          :hidden="!confirmed"
-      >
-        ✓
-      </span>
+      <span class="confirm" :hidden="!confirmed"> ✓ </span>
     </div>
-    <PrefsItem
-        v-for="pref in prefs"
-        class="list-item"
-        :key="pref.name"
-        :pref="pref"
-    />
+    <PrefsItem v-for="pref in prefs" class="list-item" :key="pref.name" :pref="pref" />
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
-import { routePrefs, routeSetPref, UserPrefDescriptor } from '../../rest/api/prefs/prefs';
-import { fetchEndpoint } from '../../fetch/fetchEndpoint';
-import { AuthStore, authStore } from '../../state/AuthStore';
-import PrefsItem from './PrefsItem.vue';
+import { defineComponent } from "vue";
+import PrefsItem from "./PrefsItem.vue";
+
+import { type UserPrefDescriptor, routePrefs, routeSetPref } from "@/rest/api/prefs/prefs";
+import { fetchEndpoint } from "@/fetch/fetchEndpoint";
+import { authStore, type AuthenticatedUser, type AuthStore } from "@/state/AuthStore";
 
 export default defineComponent({
   components: {
@@ -52,20 +39,30 @@ export default defineComponent({
     return {
       prefs: [] as UserPrefDescriptor[],
       confirmed: false,
-    }
+    };
   },
 
   computed: {
     authStore(): AuthStore {
       return authStore;
     },
+
+    user(): AuthenticatedUser {
+      return (
+        authStore.user ?? {
+          id: -1,
+          mtgoName: "Unknown user",
+          name: "Unknown user",
+          picture: "__unknown_image",
+        }
+      );
+    },
   },
 
   async created() {
-    const response =
-        await fetchEndpoint(routePrefs, {
-          as: authStore.user?.id,
-        });
+    const response = await fetchEndpoint(routePrefs, {
+      as: authStore.user?.id,
+    });
     // TODO: catch and show error
     this.prefs = response.prefs;
   },
@@ -73,12 +70,11 @@ export default defineComponent({
   methods: {
     async onMtgoNameChanged() {
       if (authStore.user) {
-        await fetchEndpoint(routeSetPref,
-            {pref: undefined, mtgoName: authStore.user.mtgoName});
+        await fetchEndpoint(routeSetPref, { pref: undefined, mtgoName: authStore.user.mtgoName });
         this.confirmed = true;
       }
-    }
-  }
+    },
+  },
 });
 </script>
 

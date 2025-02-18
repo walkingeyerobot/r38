@@ -1,37 +1,34 @@
-import axios, { AxiosRequestConfig } from 'axios';
+import axios, { type AxiosRequestConfig } from "axios";
 
-import { RestEndpoint } from '../rest/RestEndpoint';
-import { MixedCollection } from '../util/MixedCollection';
-import { DefaultEmpty } from '../util/DefaultEmpty';
+import type { RestEndpoint } from "@/rest/RestEndpoint";
+import type { MixedCollection } from "@/util/MixedCollection";
+import type { DefaultEmpty } from "@/util/DefaultEmpty";
 
 export async function fetchEndpoint<T extends RestEndpoint>(
-    endpoint: T,
-    params: EndpointParams<T>,
-): Promise<T['response']> {
+  endpoint: T,
+  params: EndpointParams<T>,
+): Promise<T["response"]> {
   const response = await axios(buildFetchConfig(endpoint, params));
   return response.data;
 }
 
-export type EndpointParams<T extends RestEndpoint> =
-    & DefaultEmpty<T['pathVars']>
-    & DefaultEmpty<T['queryVars']>
-    & DefaultEmpty<T['bodyVars']>;
-
+export type EndpointParams<T extends RestEndpoint> = DefaultEmpty<T["pathVars"]> &
+  DefaultEmpty<T["queryVars"]> &
+  DefaultEmpty<T["bodyVars"]>;
 
 function buildFetchConfig<T extends RestEndpoint>(
-    endpoint: T,
-    params: EndpointParams<T>,
+  endpoint: T,
+  params: EndpointParams<T>,
 ): AxiosRequestConfig {
-
-  let config: AxiosRequestConfig = {
+  const config: AxiosRequestConfig = {
     url: endpoint.routeBinder(params),
     method: endpoint.method,
     headers: {
-      'Accept': 'application/json',
+      Accept: "application/json",
     },
   };
 
-  for (let v in endpoint.queryVars) {
+  for (const v in endpoint.queryVars) {
     if (config.params == undefined) {
       config.params = {};
     }
@@ -40,7 +37,7 @@ function buildFetchConfig<T extends RestEndpoint>(
 
   let hasBodyVars = false;
   const body = {} as MixedCollection;
-  for (let v in endpoint.bodyVars) {
+  for (const v in endpoint.bodyVars) {
     body[v] = (params as MixedCollection)[v];
     hasBodyVars = true;
   }

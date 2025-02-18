@@ -1,9 +1,6 @@
-import { RestEndpoint } from './RestEndpoint';
+import type { RestEndpoint } from "./RestEndpoint";
 
 /** Type-checks that [stub] matches the response type of [endpoint] */
-export function stub<T extends RestEndpoint>(
-  endpoint: T,
-  stub: T['response'],
-) {
+export function stub<T extends RestEndpoint>(_endpoint: T, stub: T["response"]) {
   return stub;
 }

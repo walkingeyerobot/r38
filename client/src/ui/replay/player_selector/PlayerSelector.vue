@@ -1,25 +1,18 @@
 <template>
-<div class="_player-selector">
-  <PlaybackControls class="playback-controls" />
+  <div class="_player-selector">
+    <PlaybackControls class="playback-controls" />
 
-  <draft-seat-component
-      v-for="seat in draft.seats"
-      :key="seat.position"
-      :seat="seat"
-      />
-</div>
+    <draft-seat-component v-for="seat in draft.seats" :key="seat.position" :seat="seat" />
+  </div>
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
-import DraftSeatComponent from './DraftSeat.vue'
-import PlaybackControls from './PlaybackControls.vue';
+import { defineComponent } from "vue";
+import DraftSeatComponent from "./DraftSeat.vue";
+import PlaybackControls from "./PlaybackControls.vue";
 
-import { replayStore } from '../../../state/ReplayStore';
-import { draftStore } from '../../../state/DraftStore';
-
-import { DraftState } from '../../../draft/DraftState';
-
+import { replayStore } from "@/state/ReplayStore";
+import type { DraftState } from "@/draft/DraftState";
 
 export default defineComponent({
   components: {
@@ -44,7 +37,7 @@ export default defineComponent({
   flex-direction: column;
   overflow-y: auto;
 
-  border-right: 1px solid #EAEAEA;
+  border-right: 1px solid #eaeaea;
 }
 
 .playback-controls {

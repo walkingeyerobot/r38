@@ -1,28 +1,28 @@
-import { vuexModule } from './vuex/vuexModule';
-import { rootStore } from './store';
-import { buildEmptyDraftState } from '../draft/buildEmptyDraftState';
-import { DraftCard, DraftState } from '../draft/DraftState';
-import { deepCopy } from '../util/deepCopy';
-import { TimelineEvent } from '../draft/TimelineEvent';
-import { SourceData, SourceEvent } from '../parse/SourceData';
-import { parseInitialState } from '../parse/parseInitialState';
-import { ParseError } from '../parse/ParseError';
-import { MutationError } from '../draft/MutationError';
-import { TimelineGenerator } from '../parse/TimelineGenerator';
+import { vuexModule } from "./vuex/vuexModule";
+import { rootStore } from "./store";
+import { buildEmptyDraftState } from "@/draft/buildEmptyDraftState";
+import type { DraftCard, DraftState } from "@/draft/DraftState";
+import { deepCopy } from "@/util/deepCopy";
+import type { TimelineEvent } from "@/draft/TimelineEvent";
+import type { SourceData, SourceEvent } from "@/parse/SourceData";
+import { MutationError } from "@/draft/MutationError";
+import { parseInitialState } from "@/parse/parseInitialState";
+import { ParseError } from "@/parse/ParseError";
+import { TimelineGenerator } from "@/parse/TimelineGenerator";
 
-import { authStore } from './AuthStore';
-import { checkNotNil } from '../util/checkNotNil';
-import { userIsSeated } from './util/userIsSeated';
+import { authStore } from "./AuthStore";
+import { checkNotNil } from "@/util/checkNotNil";
+import { userIsSeated } from "./util/userIsSeated";
 
 let timelineGenerator: TimelineGenerator;
 
 export const draftStore = vuexModule(
   rootStore,
-  'draft',
+  "draft",
   {
     draftId: 0,
-    draftName: 'Unknown draft',
-    pickXsrf: '',
+    draftName: "Unknown draft",
+    pickXsrf: "",
     initialState: buildEmptyDraftState(),
     currentState: buildEmptyDraftState(),
     cards: new Map<number, DraftCard>(),
@@ -30,15 +30,10 @@ export const draftStore = vuexModule(
     isComplete: false,
     inPerson: false,
     parseError: null,
-
   } as State,
   {
     mutations: {
-
-      loadDraft(
-        state: State,
-        payload: SourceData,
-      ) {
+      loadDraft(state: State, payload: SourceData) {
         // For debugging purposes
         window.draftData = payload;
 
@@ -51,14 +46,14 @@ export const draftStore = vuexModule(
         const currentState = deepCopy(parsed.state);
         const events = [] as TimelineEvent[];
 
-        console.log('Player ID is', payload.playerId);
+        console.log("Player ID is", payload.playerId);
 
-        timelineGenerator =
-            new TimelineGenerator(
-                currentState,
-                parsed.cards,
-                events,
-                payload.playerId || null);
+        timelineGenerator = new TimelineGenerator(
+          currentState,
+          parsed.cards,
+          events,
+          payload.playerId || null,
+        );
 
         const start = performance.now();
         for (let i = 0; i < payload.events.length; i++) {
@@ -67,7 +62,7 @@ export const draftStore = vuexModule(
             timelineGenerator.parseEvent(srcEvent);
           } catch (e) {
             if (e instanceof ParseError || e instanceof MutationError) {
-              console.error('Error while parsing event', srcEvent, e);
+              console.error("Error while parsing event", srcEvent, e);
               state.parseError = e;
               break;
             } else {
@@ -91,9 +86,11 @@ export const draftStore = vuexModule(
 
     getters: {
       isFilteredDraft(): boolean {
-        return !draftStore.isComplete
-            && authStore.user != null
-            && userIsSeated(authStore.user.id, draftStore.currentState);
+        return (
+          !draftStore.isComplete &&
+          authStore.user != null &&
+          userIsSeated(authStore.user.id, draftStore.currentState)
+        );
       },
 
       isInPersonDraft(): boolean {
@@ -106,27 +103,22 @@ export const draftStore = vuexModule(
     },
 
     actions: {},
-  }
-)
+  },
+);
 
 export type DraftStore = typeof draftStore;
 
 interface State {
-  draftId: number,
-  draftName: string,
-  pickXsrf: string,
-  initialState: DraftState,
-  currentState: DraftState,
-  cards: Map<number, DraftCard>,
-  events: TimelineEvent[],
-  isComplete: boolean,
-  inPerson: boolean,
+  draftId: number;
+  draftName: string;
+  pickXsrf: string;
+  initialState: DraftState;
+  currentState: DraftState;
+  cards: Map<number, DraftCard>;
+  events: TimelineEvent[];
+  isComplete: boolean;
+  inPerson: boolean;
 
   /** Non-null if there was an error while parsing the event stream */
-  parseError: Error | null,
-}
-
-interface PickCardPayload {
-  seatId: number,
-  cardId: number,
+  parseError: Error | null;
 }

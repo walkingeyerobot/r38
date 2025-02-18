@@ -1,11 +1,11 @@
 export type SelectedView = SelectedPack | SelectedPlayer;
 
 export interface SelectedPack {
-  type: 'pack';
+  type: "pack";
   id: number;
 }
 
 export interface SelectedPlayer {
-  type: 'seat';
+  type: "seat";
   id: number;
 }

@@ -1,8 +1,8 @@
-import { endpoint } from '../../endpoint';
+import { endpoint } from "@/rest/endpoint";
 
 export const routePrefs = endpoint({
-  route: '/api/prefs/',
-  method: 'get',
+  route: "/api/prefs/",
+  method: "get",
   queryVars: {},
   response: {} as {
     prefs: UserPrefDescriptor[];
@@ -10,11 +10,11 @@ export const routePrefs = endpoint({
 });
 
 export const routeSetPref = endpoint({
-  route: '/api/setpref/',
-  method: 'post',
+  route: "/api/setpref/",
+  method: "post",
   bodyVars: {
     pref: {} as UserPrefDescriptor | undefined,
-    mtgoName: '' as string | undefined,
+    mtgoName: "" as string | undefined,
   },
   response: {},
 });
@@ -22,4 +22,5 @@ export const routeSetPref = endpoint({
 export interface UserPrefDescriptor {
   format: string;
   elig: boolean;
+  name: string;
 }

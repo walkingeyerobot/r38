@@ -15,39 +15,37 @@ gets its own entry.
     <div class="list-cnt">
       <template v-for="entry in listEntries">
         <div
-            v-if="entry.type == 'synchronized-header'"
-            :key="`round_${entry.round}`"
-            class="sync-header"
-            >
+          v-if="entry.type == 'synchronized-header'"
+          :key="`round_${entry.round}`"
+          class="sync-header"
+        >
           Pack {{ entry.round }}
         </div>
 
         <div
-            v-else-if="entry.type == 'synchronized-pick'"
-            :key="`synpick-${entry.eventId}`"
-            class="sync-pick"
-            :class="{
-              selected: entry.eventId == currentEventId
-            }"
-            @click="onSyncPickClicked(entry.eventId)"
-            >
+          v-else-if="entry.type == 'synchronized-pick'"
+          :key="`synpick-${entry.eventId}`"
+          class="sync-pick"
+          :class="{
+            selected: entry.eventId == currentEventId,
+          }"
+          @click="onSyncPickClicked(entry.eventId)"
+        >
           Pick {{ entry.pick + 1 }}
         </div>
 
         <div
-            v-else-if="entry.type == 'temporal-pick'"
-            :key="`tpick-${entry.eventId}`"
-            class="temp-pick"
-            :class="{
-              selected: entry.eventId == currentEventId
-            }"
-            @click="onTempPickClicked(entry.eventId, entry.seatId)"
-            >
+          v-else-if="entry.type == 'temporal-pick'"
+          :key="`tpick-${entry.eventId}`"
+          class="temp-pick"
+          :class="{
+            selected: entry.eventId == currentEventId,
+          }"
+          @click="onTempPickClicked(entry.eventId, entry.seatId)"
+        >
           <div class="event-id">{{ entry.eventId }}</div>
           <div class="temp-pick-message">
-            <span class="temp-pick-pack">
-              p{{ entry.round }}p{{ entry.pick + 1 }}
-            </span>
+            <span class="temp-pick-pack"> p{{ entry.round }}p{{ entry.pick + 1 }} </span>
             {{ entry.playerName }}
             picked
             <span class="picked-card-name">{{ entry.cardName }}</span>
@@ -55,10 +53,10 @@ gets its own entry.
         </div>
 
         <div
-            v-else-if="entry.type == 'temporal-other'"
-            :key="`tother-${entry.eventId}`"
-            class="temp-other"
-            >
+          v-else-if="entry.type == 'temporal-other'"
+          :key="`tother-${entry.eventId}`"
+          class="temp-other"
+        >
           <span class="event-id">{{ entry.eventId }}</span>
           Nothing picked
         </div>
@@ -66,48 +64,38 @@ gets its own entry.
     </div>
 
     <div class="synchronized-cnt">
-      <input
-          type="checkbox"
-          id="synchronize-checkbox"
-          v-model="synchronizeTimeline">
-      <label
-          for="synchronize-checkbox"
-          class="synchronize-label"
-          >
-        Synchronize timeline
-      </label>
+      <input type="checkbox" id="synchronize-checkbox" v-model="synchronizeTimeline" />
+      <label for="synchronize-checkbox" class="synchronize-label"> Synchronize timeline </label>
     </div>
-
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
-import { TimeMode, replayStore } from '../../../state/ReplayStore';
-import { draftStore } from '../../../state/DraftStore';
+import { defineComponent } from "vue";
 
-import { pushDraftUrlRelative, pushDraftUrlFromState } from '../../../router/url_manipulation';
-import { isPickEvent } from '../../../state/util/isPickEvent';
-import { eventToString } from '../../../state/util/eventToString';
-import { indexOf } from '../../../util/collection';
-import { TimelineEvent, ActionMoveCard, ActionMovePack } from '../../../draft/TimelineEvent';
-
+import { replayStore, type TimeMode } from "@/state/ReplayStore";
+import { draftStore } from "@/state/DraftStore";
+import { pushDraftUrlFromState, pushDraftUrlRelative } from "@/router/url_manipulation";
+import { isPickEvent } from "@/state/util/isPickEvent";
+import { eventToString } from "@/state/util/eventToString";
+import { indexOf } from "@/util/collection";
+import type { TimelineEvent } from "@/draft/TimelineEvent";
 
 export default defineComponent({
   computed: {
     synchronizeTimeline: {
       get() {
-        return replayStore.timeMode == 'synchronized';
+        return replayStore.timeMode == "synchronized";
       },
 
       set(value: TimeMode) {
-        replayStore.setTimeMode(value ? 'synchronized' : 'original');
+        replayStore.setTimeMode(value ? "synchronized" : "original");
         pushDraftUrlFromState(this, draftStore, replayStore);
-      }
+      },
     },
 
     listEntries(): ListEntry[] {
-      if (replayStore.timeMode == 'synchronized') {
+      if (replayStore.timeMode == "synchronized") {
         return this.computeSynchronizedList();
       } else {
         return this.computeTemporalList();
@@ -117,7 +105,7 @@ export default defineComponent({
     currentEventId(): number {
       const event = replayStore.events[replayStore.eventPos];
       return event != undefined ? event.id : -1;
-    }
+    },
   },
 
   methods: {
@@ -138,9 +126,9 @@ export default defineComponent({
         pushDraftUrlRelative(this, {
           eventIndex: index,
           selection: {
-            type: 'seat',
+            type: "seat",
             id: seatId,
-          }
+          },
         });
       } else {
         console.warn(`Can't find event ID`, eventId);
@@ -152,10 +140,10 @@ export default defineComponent({
       let currentPick = -1;
       const entries = [] as ListEntry[];
 
-      for (let event of replayStore.events) {
+      for (const event of replayStore.events) {
         if (event.round != currentRound) {
           entries.push({
-            type: 'synchronized-header',
+            type: "synchronized-header",
             round: event.round,
           });
           currentRound++;
@@ -164,7 +152,7 @@ export default defineComponent({
 
         if (event.pick != currentPick && isPickEvent(event)) {
           entries.push({
-            type: 'synchronized-pick',
+            type: "synchronized-pick",
             pick: event.pick,
             eventId: event.id,
           });
@@ -176,18 +164,18 @@ export default defineComponent({
     },
 
     computeTemporalList() {
-      return replayStore.events.map(event => eventToTemporalListEntry(event));
+      return replayStore.events.map((event) => eventToTemporalListEntry(event));
     },
   },
 });
 
 function eventToTemporalListEntry(event: TimelineEvent): ListEntry {
-  if (event.type == 'pick') {
+  if (event.type == "pick") {
     // TODO: Support multi-pick and returned cards
     const pickAction = getFirstPickAction(event);
 
     return {
-      type: 'temporal-pick',
+      type: "temporal-pick",
       eventId: event.id,
       round: event.round,
       seatId: event.associatedSeat,
@@ -195,29 +183,27 @@ function eventToTemporalListEntry(event: TimelineEvent): ListEntry {
       playerName: replayStore.draft.seats[event.associatedSeat].player.name,
       cardName: pickAction.cardName,
     };
-
-  } else if (event.type == 'hidden-pick') {
+  } else if (event.type == "hidden-pick") {
     return {
-      type: 'temporal-pick',
+      type: "temporal-pick",
       eventId: event.id,
       round: event.round,
       seatId: event.associatedSeat,
       pick: event.pick,
       playerName: replayStore.draft.seats[event.associatedSeat].player.name,
-      cardName: 'a card',
+      cardName: "a card",
     };
-
   } else {
     return {
-      type: 'temporal-other',
+      type: "temporal-other",
       eventId: event.id,
     };
   }
 }
 
 function getFirstPickAction(event: TimelineEvent) {
-  for (let action of event.actions) {
-    if (action.type == 'move-card' && action.subtype == 'pick-card') {
+  for (const action of event.actions) {
+    if (action.type == "move-card" && action.subtype == "pick-card") {
       return action;
     }
   }
@@ -225,42 +211,39 @@ function getFirstPickAction(event: TimelineEvent) {
 }
 
 type ListEntry =
-    | SynchronizedHeaderEntry
-    | SynchronizedPickEntry
-    | TemporalPickEntry
-    | TemporalOtherEntry
-    ;
+  | SynchronizedHeaderEntry
+  | SynchronizedPickEntry
+  | TemporalPickEntry
+  | TemporalOtherEntry;
 
 interface SynchronizedHeaderEntry {
-  type: 'synchronized-header',
-  round: number,
+  type: "synchronized-header";
+  round: number;
 }
 
 interface SynchronizedPickEntry {
-  type: 'synchronized-pick',
-  pick: number,
-  eventId: number,
+  type: "synchronized-pick";
+  pick: number;
+  eventId: number;
 }
 
 interface TemporalPickEntry {
-  type: 'temporal-pick',
-  eventId: number,
-  round: number,
-  pick: number,
-  playerName: string,
-  cardName: string,
-  seatId: number,
+  type: "temporal-pick";
+  eventId: number;
+  round: number;
+  pick: number;
+  playerName: string;
+  cardName: string;
+  seatId: number;
 }
 
 interface TemporalOtherEntry {
-  type: 'temporal-other',
-  eventId: number,
+  type: "temporal-other";
+  eventId: number;
 }
-
 </script>
 
 <style scoped>
-
 .title {
   font-size: 14px;
   margin-top: 8px;
@@ -309,7 +292,8 @@ interface TemporalOtherEntry {
   padding: 10px 10px;
 }
 
-.temp-pick, .temp-other {
+.temp-pick,
+.temp-other {
   font-size: 14px;
   padding: 3px 0 3px 5px;
 }
@@ -324,7 +308,9 @@ interface TemporalOtherEntry {
   flex: 0 0 auto;
 }
 
-.event-id, .temp-pick-pack, .temp-other {
+.event-id,
+.temp-pick-pack,
+.temp-other {
   color: #aaa;
 }
 
@@ -335,5 +321,4 @@ interface TemporalOtherEntry {
 .temp-pick-message {
   margin-left: 5px;
 }
-
 </style>

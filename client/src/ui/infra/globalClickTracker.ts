@@ -1,4 +1,3 @@
-
 /**
  * Tracks clicks in order to know whether to close any popovers or other
  * dismissable UI elements.
@@ -9,7 +8,6 @@
  * nothing should be dismissed.
  */
 class GlobalClickTracker {
-
   private _clickWasHandled: boolean = false;
   private _listeners: UnhandledClickListener[] = [];
 

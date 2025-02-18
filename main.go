@@ -213,8 +213,8 @@ func NewHandler(database *sql.DB, useAuth bool) http.Handler {
 		mux.Handle(route, handler)
 	}
 
-	fs := http.FileServer(http.Dir("static"))
-	mux.Handle("/static/", http.StripPrefix("/static/", fs))
+	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+	mux.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir("client-dist/assets"))))
 
 	if useAuth {
 		log.Printf("setting up auth routes...")
@@ -235,9 +235,13 @@ func NewHandler(database *sql.DB, useAuth bool) http.Handler {
 
 	addHandler("/api/dev/forceEnd/", ServeAPIForceEnd, false)
 
-	addHandler("/", ServeVueApp, true)
+	mux.Handle("/", http.HandlerFunc(HandleIndex))
 
 	return mux
+}
+
+func HandleIndex(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "client-dist/index.html")
 }
 
 func HandleLogin(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx) error {
@@ -1251,7 +1255,7 @@ func NotifyEndOfDraft(tx *sql.Tx, draftID int64) error {
 }
 
 func GetDraftName(tx *sql.Tx, draftID int64) (string, error) {
-	query := `select 
+	query := `select
 					name
 				  from drafts
 				  where drafts.id = ?`
@@ -1725,7 +1729,7 @@ func GetDraftListEntry(userID int64, tx *sql.Tx, draftID int64) (DraftListEntry,
 func GetUserPrefs(userID int64, tx *sql.Tx) (UserFormatPrefs, error) {
 	var prefs UserFormatPrefs
 
-	query := `select 
+	query := `select
 				format, elig
 				from userformats
 				where user = ?`
@@ -1971,11 +1975,11 @@ func CheckNextRoundPairings(tx *sql.Tx, draftID int64, round int) {
 		if round == 1 {
 			// Pair round 2
 			result, err := tx.Query(
-				`select 
-							users.discord_name, users.discord_id, win, seats.position 
-							from results 
+				`select
+							users.discord_name, users.discord_id, win, seats.position
+							from results
 							join seats on seats.draft = results.draft and seats.user = results.user
-							join users on users.id = results.user 
+							join users on users.id = results.user
 							where results.draft = ? and results.round = ?`,
 				draftID, round)
 			if err != nil {
@@ -2014,11 +2018,11 @@ func CheckNextRoundPairings(tx *sql.Tx, draftID int64, round int) {
 			}
 		} else if round == 2 {
 			// Pair round 3
-			result, err := tx.Query(`select 
-						users.discord_name, users.discord_id, sum(win), seats.position 
-						from results 
+			result, err := tx.Query(`select
+						users.discord_name, users.discord_id, sum(win), seats.position
+						from results
 						join seats on seats.draft = results.draft and seats.user = results.user
-						join users on users.id = results.user 
+						join users on users.id = results.user
 						where results.draft = ? and results.round <= ?
 						group by results.user`,
 				draftID, round)
@@ -2064,11 +2068,11 @@ func CheckNextRoundPairings(tx *sql.Tx, draftID int64, round int) {
 			}
 		} else if round == 3 {
 			if dg != nil {
-				row := tx.QueryRow(`select 
-							users.discord_name, users.discord_id 
-							from results 
+				row := tx.QueryRow(`select
+							users.discord_name, users.discord_id
+							from results
 							join seats on seats.draft = results.draft and seats.user = results.user
-							join users on users.id = results.user 
+							join users on users.id = results.user
 							where results.draft = ?
 							group by results.user
 							having sum(win) = 3`,
@@ -2144,7 +2148,7 @@ func ArchiveSpectatorChannels(db *sql.DB) error {
 		}
 		defer tx.Rollback()
 
-		query := `select 
+		query := `select
 				spectatorchannelid
 				from drafts
 				join results on results.draft = drafts.id

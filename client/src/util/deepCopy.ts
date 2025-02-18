@@ -26,29 +26,31 @@ function dc<T>(src: T, seen: Map<object, object>): T {
   }
 
   if (seen.has(src)) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return seen.get(src) as any;
   }
 
   let dst: object;
 
   if (Array.isArray(src)) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const arr: any[] = [];
     seen.set(src, arr);
-    for (let child of src) {
+    for (const child of src) {
       arr.push(dc(child, seen));
     }
     dst = arr;
   } else if (src instanceof Map) {
     const map = new Map();
     seen.set(src, map);
-    for (let key of src.keys()) {
+    for (const key of src.keys()) {
       map.set(dc(key, seen), dc(src.get(key), seen));
     }
     dst = map;
   } else if (src instanceof Set) {
     const set = new Set();
     seen.set(src, set);
-    for (let member of set.values()) {
+    for (const member of set.values()) {
       set.add(dc(member, seen));
     }
     dst = set;
@@ -65,15 +67,16 @@ function dc<T>(src: T, seen: Map<object, object>): T {
   } else {
     const obj = {} as T & object;
     seen.set(src, obj);
-    for (let v in src) {
+    for (const v in src) {
       obj[v] = dc(src[v], seen);
     }
     dst = obj;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return dst as any;
 }
 
-function isObject(x: any): x is object {
-  return typeof x == 'object' && x != null;
+function isObject(x: unknown): x is object {
+  return typeof x == "object" && x != null;
 }

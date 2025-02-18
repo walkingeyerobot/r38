@@ -8,42 +8,26 @@ the timeline.
 -->
 
 <template>
-  <div
-      class="_timeline-button"
-      @mousedown.capture="onRootMouseDown"
-      >
-    <button
-        class="button"
-        @click="onButtonClick"
-        >
+  <div class="_timeline-button" @mousedown.capture="onRootMouseDown">
+    <button class="button" @click="onButtonClick">
       <div class="location-p1">{{ labels[0] }}</div>
       <div v-if="labels[1]" class="location-p2">
         {{ labels[1] }}
       </div>
     </button>
-    <TimelineSelector
-        v-if="timelineOpen"
-        class="popover"
-        :class="popoverClasses"
-        />
+    <TimelineSelector v-if="timelineOpen" class="popover" :class="popoverClasses" />
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
-import TimelineSelector from './TimelineSelector.vue';
-import { globalClickTracker, UnhandledClickListener } from '../../infra/globalClickTracker';
-import { TimelineEvent } from '../../../draft/TimelineEvent';
+import { defineComponent } from "vue";
 
-import { replayStore as store, ReplayStore, replayStore } from '../../../state/ReplayStore';
-import { CardPack, DraftSeat, DraftState } from '../../../draft/DraftState';
-import { draftStore } from '../../../state/DraftStore';
-import { find } from '../../../util/collection';
-import { isPickEvent } from '../../../state/util/isPickEvent';
-import { getPack, getSeat } from '../../../state/util/getters';
-import { checkNotNil } from '../../../util/checkNotNil';
-import { eventToString } from '../../../state/util/eventToString';
-
+import { globalClickTracker, type UnhandledClickListener } from "@/ui/infra/globalClickTracker";
+import TimelineSelector from "./TimelineSelector.vue";
+import { replayStore, type ReplayStore } from "@/state/ReplayStore";
+import { draftStore } from "@/state/DraftStore";
+import { isPickEvent } from "@/state/util/isPickEvent";
+import { getPack, getSeat } from "@/state/util/getters";
 
 export default defineComponent({
   components: {
@@ -73,25 +57,18 @@ export default defineComponent({
       //    recent pack and pick was
       // If nothing is selected, just show the event number I guess
 
-      if (draftStore.isComplete
-          && replayStore.eventPos == replayStore.events.length) {
-        return ['End of draft', null];
-
-      } else if (replayStore.selection?.type == 'pack') {
+      if (draftStore.isComplete && replayStore.eventPos == replayStore.events.length) {
+        return ["End of draft", null];
+      } else if (replayStore.selection?.type == "pack") {
         const pack = getPack(replayStore.draft, replayStore.selection.id);
 
         // TODO: Don't hard-code pack size
         return [`Pack ${pack.round}`, `Pick ${15 - pack.cards.length + 1}`];
-
-      } else if (replayStore.selection?.type == 'seat') {
+      } else if (replayStore.selection?.type == "seat") {
         const seat = getSeat(replayStore.draft, replayStore.selection.id);
         const queuedPack = seat.queuedPacks.packs[0];
         if (queuedPack != undefined) {
-          const pick =
-              getPickCountForPlayer(
-                  replayStore,
-                  seat.position,
-                  queuedPack.round);
+          const pick = getPickCountForPlayer(replayStore, seat.position, queuedPack.round);
           return [`Pack ${queuedPack.round}`, `Pick ${pick + 1}`];
         } else {
           const event = getMostRecentPickEvent(replayStore, seat.position);
@@ -102,35 +79,30 @@ export default defineComponent({
             return [`Pack 1`, `Pick 1`];
           }
         }
-
       } else {
         return [`Event ${replayStore.eventPos}`, null];
-
       }
     },
 
     popoverClasses(): string[] {
-      if (this.popoverAlignment == 'left below') {
-        return ['left-below'];
-      } else if (this.popoverAlignment == 'center above') {
-        return ['center-above'];
+      if (this.popoverAlignment == "left below") {
+        return ["left-below"];
+      } else if (this.popoverAlignment == "center above") {
+        return ["center-above"];
       } else {
-        throw new Error(
-            `Unrecognized popoverAlignment: ${this.popoverAlignment}`);
+        throw new Error(`Unrecognized popoverAlignment: ${this.popoverAlignment}`);
       }
     },
   },
 
   created() {
     this.globalMouseDownListener = () => this.onGlobalMouseDown();
-    globalClickTracker
-        .registerUnhandledClickListener(this.globalMouseDownListener);
+    globalClickTracker.registerUnhandledClickListener(this.globalMouseDownListener);
   },
 
-  destroyed() {
+  unmounted() {
     if (this.globalMouseDownListener != null) {
-      globalClickTracker
-          .unregisterUnhandledClickListener(this.globalMouseDownListener);
+      globalClickTracker.unregisterUnhandledClickListener(this.globalMouseDownListener);
     }
   },
 
@@ -147,14 +119,9 @@ export default defineComponent({
       this.timelineOpen = false;
     },
   },
-
 });
 
-function getPickCountForPlayer(
-    store: ReplayStore,
-    seat: number,
-    round: number,
-) {
+function getPickCountForPlayer(store: ReplayStore, seat: number, round: number) {
   let count = 0;
   for (let i = store.eventPos - 1; i >= 0; i--) {
     const event = store.events[i];
@@ -180,7 +147,6 @@ function getMostRecentPickEvent(store: ReplayStore, seatId: number) {
 </script>
 
 <style scoped>
-
 ._timeline-button {
   font-size: 14px;
   flex: 0 0 auto;
@@ -204,11 +170,12 @@ function getMostRecentPickEvent(store: ReplayStore, seatId: number) {
 }
 
 .button:focus {
-  border-color: #D0D0D0;
+  border-color: #d0d0d0;
   outline: none;
 }
 
-.location-p1, .location-p2 {
+.location-p1,
+.location-p2 {
   flex: 1 0 0;
   white-space: nowrap;
 }
@@ -221,7 +188,7 @@ function getMostRecentPickEvent(store: ReplayStore, seatId: number) {
   position: absolute;
   width: 300px;
   height: calc(100vh - 100px);
-  background-color: #FFF;
+  background-color: #fff;
   border-radius: 5px;
   box-shadow: 0px 1px 4px rgba(0, 0, 0, 0.3);
   border: 1px solid #ccc;
@@ -236,5 +203,4 @@ function getMostRecentPickEvent(store: ReplayStore, seatId: number) {
   left: 0;
   top: calc(100% + 5px);
 }
-
 </style>
