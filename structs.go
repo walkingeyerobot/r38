@@ -108,6 +108,12 @@ type PostedRfidPick struct {
 	XsrfToken string   `json:"xsrfToken"`
 }
 
+// PostedUndo is JSON accepted from the client when a user undoes their last pick.
+type PostedUndo struct {
+	DraftId   int64  `json:"draftId"`
+	XsrfToken string `json:"xsrfToken"`
+}
+
 // PostedJoin is JSON accepted from the client when a user joins a draft.
 type PostedJoin struct {
 	ID       int64 `json:"id"`

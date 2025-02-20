@@ -15,6 +15,7 @@ var Migrations = []migration.Migrator{
 	addDraftFormat,
 	addCardData,
 	addEventPosition,
+	addEventUndoData,
 }
 
 func initialSchema(tx migration.LimitedTx) error {
@@ -81,5 +82,11 @@ func addCardData(tx migration.LimitedTx) error {
 
 func addEventPosition(tx migration.LimitedTx) error {
 	_, err := tx.Exec(`ALTER TABLE events ADD COLUMN position string`)
+	return err
+}
+
+func addEventUndoData(tx migration.LimitedTx) error {
+	_, err := tx.Exec(`ALTER TABLE events ADD COLUMN pack integer;
+		ALTER TABLE events ADD COLUMN seat integer;`)
 	return err
 }

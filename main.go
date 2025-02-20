@@ -230,6 +230,7 @@ func NewHandler(database *sql.DB, useAuth bool) http.Handler {
 	addHandler("/api/skip/", ServeAPISkip, false)
 	addHandler("/api/prefs/", ServeAPIPrefs, true)
 	addHandler("/api/setpref/", ServeAPISetPref, false)
+	addHandler("/api/undopick/", ServeAPIUndoPick, false)
 
 	addHandler("/api/dev/forceEnd/", ServeAPIForceEnd, false)
 
@@ -452,6 +453,74 @@ func doHandlePostedPick(w http.ResponseWriter, pick PostedPick, userID int64, tx
 	}
 
 	fmt.Fprint(w, draftJSON)
+	return nil
+}
+
+// ServeAPIUndoPick serves the /api/undopick endpoint.
+func ServeAPIUndoPick(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx) error {
+	if r.Method != "POST" {
+		// we have to return an error manually here because we want to return
+		// a different http status code.
+		tx.Rollback()
+		http.Error(w, "invalid request method", http.StatusMethodNotAllowed)
+		return nil
+	}
+
+	bodyBytes, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		return fmt.Errorf("error reading post body: %s", err.Error())
+	}
+	var undo PostedUndo
+	err = json.Unmarshal(bodyBytes, &undo)
+	if err != nil {
+		return fmt.Errorf("error parsing post body: %s", err.Error())
+	}
+
+	if !xsrftoken.Valid(undo.XsrfToken, xsrfKey, strconv.FormatInt(userID, 16), fmt.Sprintf("pick%d", undo.DraftId)) {
+		err = fmt.Errorf("invalid XSRF token")
+	}
+
+	query := `select
+				events.id, events.round, events.position, events.card1, events.pack, events.seat
+				from events
+				join seats on seats.draft = events.draft and seats.position = events.position
+				where events.draft = ?
+				and seats.user = ?
+				and events.round = seats.round
+				order by events.id desc`
+	row := tx.QueryRow(query, undo.DraftId, userID)
+	var eventID int64
+	var round int64
+	var position int64
+	var cardID int64
+	var packID int64
+	var seatID int64
+	err = row.Scan(&eventID, &round, &position, &cardID, &packID, &seatID)
+	if err != nil {
+		return fmt.Errorf("couldn't undo pick: %s", err.Error())
+	}
+
+	query = `delete from events where id = ?`
+	_, err = tx.Exec(query, eventID)
+	if err != nil {
+		return fmt.Errorf("couldn't undo pick: %s", err.Error())
+	}
+
+	// Put the picked card into the player's picks.
+	query = `update cards set pack = ? where id = ?`
+
+	_, err = tx.Exec(query, packID, cardID)
+	if err != nil {
+		return fmt.Errorf("couldn't undo pick: %s", err.Error())
+	}
+
+	// Move the pack to the next Position.
+	query = `update packs set seat = ? where id = ?`
+	_, err = tx.Exec(query, seatID, packID)
+	if err != nil {
+		return fmt.Errorf("couldn't undo pick: %s", err.Error())
+	}
+
 	return nil
 }
 
@@ -842,11 +911,11 @@ func findCardByRfid(tx *sql.Tx, cardRfid string, userID int64, draftID int64) (i
 
 // doSinglePick performs a normal pick based on a user id and a card id. It returns the draft id and an error.
 func doSinglePick(tx *sql.Tx, userID int64, cardID int64) (int64, error) {
-	draftID, _, announcements, round, err := doPick(tx, userID, cardID, true)
+	draftID, packID, announcements, round, seatID, err := doPick(tx, userID, cardID, true)
 	if err != nil {
 		return draftID, err
 	}
-	err = doEvent(tx, draftID, userID, announcements, cardID, sql.NullInt64{}, round)
+	err = doEvent(tx, draftID, userID, announcements, cardID, sql.NullInt64{}, packID, seatID, round)
 	if err != nil {
 		return draftID, err
 	}
@@ -857,7 +926,7 @@ func doSinglePick(tx *sql.Tx, userID int64, cardID int64) (int64, error) {
 // It returns the draftID, packID, announcements, round, and an error.
 // Of those return values, packID and announcements are only really relevant for Cogwork Librarian,
 // which is not currently fully implemented, but we leave them here anyway for when we want to do that.
-func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool) (int64, int64, []string, int64, error) {
+func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool) (int64, int64, []string, int64, int64, error) {
 	announcements := []string{}
 
 	// First we need information about the card. Determine which pack the card is in,
@@ -868,7 +937,8 @@ func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool) (int64, int64, []
                    seats.position,
                    seats.draft,
                    seats.user,
-                   seats.round
+                   seats.round,
+                   seats.id
                  from cards
                  join packs on cards.pack = packs.id
                  join seats on packs.seat = seats.id
@@ -880,14 +950,15 @@ func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool) (int64, int64, []
 	var draftID int64
 	var userID2 sql.NullInt64
 	var round int64
-	err := row.Scan(&myPackID, &position, &draftID, &userID2, &round)
+	var seatID int64
+	err := row.Scan(&myPackID, &position, &draftID, &userID2, &round, &seatID)
 
 	if err != nil {
-		return draftID, myPackID, announcements, round, err
+		return draftID, myPackID, announcements, round, seatID, err
 	} else if userID2.Valid && userID != userID2.Int64 {
-		return draftID, myPackID, announcements, round, fmt.Errorf("card does not belong to the user")
+		return draftID, myPackID, announcements, round, seatID, fmt.Errorf("card does not belong to the user")
 	} else if round == 0 {
-		return draftID, myPackID, announcements, round, fmt.Errorf("card has already been picked")
+		return draftID, myPackID, announcements, round, seatID, fmt.Errorf("card has already been picked")
 	}
 
 	// Now get the pack id that the user is allowed to pick from in the draft that the
@@ -907,9 +978,9 @@ func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool) (int64, int64, []
 	err = row.Scan(&myPackID2)
 
 	if err != nil {
-		return draftID, myPackID, announcements, round, err
+		return draftID, myPackID, announcements, round, seatID, err
 	} else if myPackID != myPackID2 {
-		return draftID, myPackID, announcements, round,
+		return draftID, myPackID, announcements, round, seatID,
 			fmt.Errorf("card is not in the next available pack (in pack %d but expecting pack %d)", myPackID, myPackID2)
 	}
 
@@ -931,7 +1002,7 @@ func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool) (int64, int64, []
 	err = row.Scan(&myPicksID, &myCount)
 
 	if err != nil {
-		return draftID, myPackID, announcements, round, err
+		return draftID, myPackID, announcements, round, seatID, err
 	}
 
 	// Are we passing the pack after we've picked the card?
@@ -964,7 +1035,7 @@ func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool) (int64, int64, []
 		var newPositionDiscordID sql.NullString
 		err = row.Scan(&newPositionID, &newPositionDiscordID)
 		if err != nil {
-			return draftID, myPackID, announcements, round, err
+			return draftID, myPackID, announcements, round, seatID, err
 		}
 
 		// Put the picked card into the player's picks.
@@ -972,14 +1043,14 @@ func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool) (int64, int64, []
 
 		_, err = tx.Exec(query, myPicksID, cardID)
 		if err != nil {
-			return draftID, myPackID, announcements, round, err
+			return draftID, myPackID, announcements, round, seatID, err
 		}
 
 		// Move the pack to the next Position.
 		query = `update packs set seat = ? where id = ?`
 		_, err = tx.Exec(query, newPositionID, myPackID)
 		if err != nil {
-			return draftID, myPackID, announcements, round, err
+			return draftID, myPackID, announcements, round, seatID, err
 		}
 		log.Printf("moved pack %d to seat %d", myPackID, newPositionID)
 
@@ -996,7 +1067,7 @@ func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool) (int64, int64, []
 		var packsLeftInSeat int64
 		err = row.Scan(&packsLeftInSeat)
 		if err != nil {
-			return draftID, myPackID, announcements, round, err
+			return draftID, myPackID, announcements, round, seatID, err
 		}
 
 		if packsLeftInSeat == 0 {
@@ -1035,7 +1106,7 @@ func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool) (int64, int64, []
 
 			_, err = tx.Exec(query, (myCount+1)/15+1, userID, draftID)
 			if err != nil {
-				return draftID, myPackID, announcements, round, err
+				return draftID, myPackID, announcements, round, seatID, err
 			}
 
 			// If the rounds do NOT match from earlier, we have a situation where players are in different
@@ -1122,14 +1193,14 @@ func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool) (int64, int64, []
 
 		_, err = tx.Exec(query, myPicksID, cardID)
 		if err != nil {
-			return draftID, myPackID, announcements, round, err
+			return draftID, myPackID, announcements, round, seatID, err
 		}
 	}
 
 	log.Printf("player %d in draft %d (position %d) took card %d from pack %d",
 		userID, draftID, position+1, cardID, myPackID)
 
-	return draftID, myPackID, announcements, round, nil
+	return draftID, myPackID, announcements, round, seatID, nil
 }
 
 // NotifyByDraftAndDiscordID sends a discord alert to a user.
@@ -1388,6 +1459,9 @@ func GetJSONObject(tx *sql.Tx, draftID int64) (DraftJSON, error) {
 			dataObj["id"] = cardID.Int64
 
 			nextIndex := indices[position][packRound.Int64-1]
+			if nextIndex >= 15 {
+				return draft, fmt.Errorf("too many cards for seat %d round %d", position, packRound.Int64)
+			}
 
 			draft.Seats[position].Packs[packRound.Int64-1][nextIndex] = dataObj
 
@@ -1523,7 +1597,7 @@ func GetFilteredJSON(tx *sql.Tx, draftID int64, userID int64) (string, error) {
 }
 
 // doEvent records an event (pick) into the database.
-func doEvent(tx *sql.Tx, draftID int64, userID int64, announcements []string, cardID1 int64, cardID2 sql.NullInt64, round int64) error {
+func doEvent(tx *sql.Tx, draftID int64, userID int64, announcements []string, cardID1 int64, cardID2 sql.NullInt64, packID int64, seatID int64, round int64) error {
 	query := `select
                     v_packs.count,
                     seats.position
@@ -1541,11 +1615,11 @@ func doEvent(tx *sql.Tx, draftID int64, userID int64, announcements []string, ca
 	}
 
 	if cardID2.Valid {
-		query = `insert into events (round, draft, position, announcement, card1, card2, modified) VALUES (?, ?, ?, ?, ?, ?, ?)`
-		_, err = tx.Exec(query, round, draftID, position, strings.Join(announcements, "\n"), cardID1, cardID2.Int64, count)
+		query = `insert into events (round, draft, position, announcement, card1, card2, pack, seat, modified) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+		_, err = tx.Exec(query, round, draftID, position, strings.Join(announcements, "\n"), cardID1, cardID2.Int64, packID, seatID, count)
 	} else {
-		query = `insert into events (round, draft, position, announcement, card1, card2, modified) VALUES (?, ?, ?, ?, ?, null, ?)`
-		_, err = tx.Exec(query, round, draftID, position, strings.Join(announcements, "\n"), cardID1, count)
+		query = `insert into events (round, draft, position, announcement, card1, card2, pack, seat, modified) VALUES (?, ?, ?, ?, ?, null, ?, ?, ?)`
+		_, err = tx.Exec(query, round, draftID, position, strings.Join(announcements, "\n"), cardID1, packID, seatID, count)
 	}
 
 	return err
