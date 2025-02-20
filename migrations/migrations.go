@@ -12,9 +12,6 @@ var Migrations = []migration.Migrator{
 	addCardId,
 	addInPersonFlag,
 	addSounds,
-	addDraftFormat,
-	addCardData,
-	addEventPosition,
 	addEventUndoData,
 }
 
@@ -23,10 +20,10 @@ func initialSchema(tx migration.LimitedTx) error {
 		CREATE TABLE IF NOT EXISTS "users_old"( id integer primary key autoincrement, google_id text unique, email text, picture text, slack string, discord string, webhook string);
 		CREATE TABLE IF NOT EXISTS seats( id integer primary key autoincrement, position number, user number, draft number, round number default 1);
 		CREATE TABLE IF NOT EXISTS packs( id integer primary key autoincrement, seat number, modified number, round number , original_seat number);
-		CREATE TABLE IF NOT EXISTS cards( id integer primary key autoincrement, pack number, edition text, number text, tags text, name text, faceup number default false, original_pack number, cmc number, type text, color text, modified number default 0, mtgo string);
-		CREATE TABLE IF NOT EXISTS drafts( id integer primary key autoincrement, name text);
+		CREATE TABLE IF NOT EXISTS cards( id integer primary key autoincrement, pack number, edition text, number text, tags text, name text, faceup number default false, original_pack number, cmc number, type text, color text, modified number default 0, mtgo string, data string);
+		CREATE TABLE IF NOT EXISTS drafts( id integer primary key autoincrement, name text, format string);
 		CREATE TABLE IF NOT EXISTS revealed( id integer primary key autoincrement, draft number, message text);
-		CREATE TABLE IF NOT EXISTS events( id integer primary key autoincrement, draft number, user number, announcement text, card1 number, card2 number, modified number, round number);
+		CREATE TABLE IF NOT EXISTS events( id integer primary key autoincrement, draft number, user number, announcement text, card1 number, card2 number, modified number, round number, position number);
 		CREATE VIEW IF NOT EXISTS v_packs as select packs.*, count(cards.id) as count from packs left join cards on packs.id=cards.pack group by packs.id
 		/* v_packs(id,seat,modified,round,original_seat,count) */;`)
 	return err
@@ -67,21 +64,6 @@ func addInPersonFlag(tx migration.LimitedTx) error {
 func addSounds(tx migration.LimitedTx) error {
 	_, err := tx.Exec(`ALTER TABLE seats ADD COLUMN scansound number DEFAULT 0;
 		ALTER TABLE seats ADD COLUMN errorsound number DEFAULT 0;`)
-	return err
-}
-
-func addDraftFormat(tx migration.LimitedTx) error {
-	_, err := tx.Exec(`ALTER TABLE drafts ADD COLUMN format string`)
-	return err
-}
-
-func addCardData(tx migration.LimitedTx) error {
-	_, err := tx.Exec(`ALTER TABLE cards ADD COLUMN data string`)
-	return err
-}
-
-func addEventPosition(tx migration.LimitedTx) error {
-	_, err := tx.Exec(`ALTER TABLE events ADD COLUMN position string`)
 	return err
 }
 
