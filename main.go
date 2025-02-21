@@ -231,6 +231,7 @@ func NewHandler(database *sql.DB, useAuth bool) http.Handler {
 	addHandler("/api/prefs/", ServeAPIPrefs, true)
 	addHandler("/api/setpref/", ServeAPISetPref, false)
 	addHandler("/api/undopick/", ServeAPIUndoPick, false)
+	addHandler("/api/userinfo/", ServeAPIUserInfo, false)
 
 	addHandler("/api/dev/forceEnd/", ServeAPIForceEnd, false)
 
@@ -817,6 +818,31 @@ func ServeAPIForceEnd(_ http.ResponseWriter, r *http.Request, userID int64, tx *
 
 // ServeVueApp serves to vue.
 func ServeVueApp(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx) error {
+	userInfoJSON, err := getUserJSON(userID, tx)
+	if err != nil {
+		return err
+	}
+
+	data := VuePageData{UserJSON: string(userInfoJSON)}
+
+	t := template.Must(template.ParseFiles("vue.tmpl"))
+
+	t.Execute(w, data)
+	return nil
+}
+
+// ServeAPIUserInfo serves the /api/userinfo endpoint.
+func ServeAPIUserInfo(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx) error {
+	userInfoJSON, err := getUserJSON(userID, tx)
+	if err != nil {
+		return err
+	}
+
+	w.Write(userInfoJSON)
+	return nil
+}
+
+func getUserJSON(userID int64, tx *sql.Tx) ([]byte, error) {
 	var userInfo UserInfo
 
 	if userID != 0 {
@@ -831,7 +857,7 @@ func ServeVueApp(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.T
 		var mtgoName sql.NullString
 		err := row.Scan(&userInfo.ID, &userInfo.Name, &mtgoName, &userInfo.Picture)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		if mtgoName.Valid {
 			userInfo.MtgoName = mtgoName.String
@@ -840,15 +866,9 @@ func ServeVueApp(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.T
 
 	userInfoJSON, err := json.Marshal(userInfo)
 	if err != nil {
-		return err
+		return nil, err
 	}
-
-	data := VuePageData{UserJSON: string(userInfoJSON)}
-
-	t := template.Must(template.ParseFiles("vue.tmpl"))
-
-	t.Execute(w, data)
-	return nil
+	return userInfoJSON, nil
 }
 
 func findCardByRfid(tx *sql.Tx, cardRfid string, userID int64, draftID int64) (int64, error) {
