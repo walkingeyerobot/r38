@@ -383,7 +383,7 @@ func ServeAPIPick(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.
 		return fmt.Errorf("error parsing post body: %s", err.Error())
 	}
 
-	err = doHandlePostedPick(w, pick, userID, tx)
+	err = doHandlePostedPick(w, pick, userID, false, tx)
 	if err != nil {
 		return err
 	}
@@ -424,18 +424,18 @@ func ServeAPIPickRfid(w http.ResponseWriter, r *http.Request, userID int64, tx *
 		XsrfToken: rfidPick.XsrfToken,
 	}
 
-	err = doHandlePostedPick(w, pick, userID, tx)
+	err = doHandlePostedPick(w, pick, userID, true, tx)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func doHandlePostedPick(w http.ResponseWriter, pick PostedPick, userID int64, tx *sql.Tx) error {
+func doHandlePostedPick(w http.ResponseWriter, pick PostedPick, userID int64, zoneDrafting bool, tx *sql.Tx) error {
 	var draftID int64
 	var err error
 	if len(pick.CardIds) == 1 {
-		draftID, err = doSinglePick(tx, userID, pick.CardIds[0])
+		draftID, err = doSinglePick(tx, userID, pick.CardIds[0], zoneDrafting)
 		if err == nil && !xsrftoken.Valid(pick.XsrfToken, xsrfKey, strconv.FormatInt(userID, 16), fmt.Sprintf("pick%d", draftID)) {
 			err = fmt.Errorf("invalid XSRF token")
 		}
@@ -934,8 +934,8 @@ func findCardByRfid(tx *sql.Tx, cardRfid string, userID int64, draftID int64) (i
 }
 
 // doSinglePick performs a normal pick based on a user id and a card id. It returns the draft id and an error.
-func doSinglePick(tx *sql.Tx, userID int64, cardID int64) (int64, error) {
-	draftID, packID, announcements, round, seatID, err := doPick(tx, userID, cardID, true)
+func doSinglePick(tx *sql.Tx, userID int64, cardID int64, zoneDrafting bool) (int64, error) {
+	draftID, packID, announcements, round, seatID, err := doPick(tx, userID, cardID, true, zoneDrafting)
 	if err != nil {
 		return draftID, err
 	}
@@ -950,7 +950,7 @@ func doSinglePick(tx *sql.Tx, userID int64, cardID int64) (int64, error) {
 // It returns the draftID, packID, announcements, round, and an error.
 // Of those return values, packID and announcements are only really relevant for Cogwork Librarian,
 // which is not currently fully implemented, but we leave them here anyway for when we want to do that.
-func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool) (int64, int64, []string, int64, int64, error) {
+func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool, zoneDrafting bool) (int64, int64, []string, int64, int64, error) {
 	announcements := []string{}
 
 	// First we need information about the card. Determine which pack the card is in,
@@ -1062,6 +1062,38 @@ func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool) (int64, int64, []
 			return draftID, myPackID, announcements, round, seatID, err
 		}
 
+		if zoneDrafting {
+			// Enforce zone drafting: can't pass yet if there are two packs
+			// belonging to the new position.
+			query = `select count(*) from packs where seat = ? and round = ?`
+			row = tx.QueryRow(query, newPositionID, round)
+			var packsCount int64
+			err = row.Scan(&packsCount)
+			if err != nil {
+				return draftID, myPackID, announcements, round, seatID, err
+			}
+			log.Printf("zone draft check: seat %d has %d packs", newPosition+1, packsCount)
+			if packsCount >= 2 {
+				return draftID, myPackID, announcements, round, seatID,
+					fmt.Errorf("zone draft violation: seat %d (position %d) already has %d packs",
+						newPositionID, newPosition, packsCount)
+			}
+			if packsCount == 1 {
+				// Check to see if new position is still picking from their first pack
+				query = `select count(*) from packs where original_seat = ? and round = ?`
+				row = tx.QueryRow(query, newPositionID, round)
+				err = row.Scan(&packsCount)
+				if err != nil {
+					return draftID, myPackID, announcements, round, seatID, err
+				}
+				if packsCount == 0 {
+					return draftID, myPackID, announcements, round, seatID,
+						fmt.Errorf("zone draft violation: seat %d (position %d) already has 2 packs (including unclaimed first pack)",
+							newPositionID, newPosition)
+				}
+			}
+		}
+
 		// Put the picked card into the player's picks.
 		query = `update cards set pack = ? where id = ?`
 
@@ -1076,7 +1108,7 @@ func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool) (int64, int64, []
 		if err != nil {
 			return draftID, myPackID, announcements, round, seatID, err
 		}
-		log.Printf("moved pack %d to seat %d", myPackID, newPositionID)
+		log.Printf("will move pack %d to seat %d (position %d)", myPackID, newPositionID, newPosition)
 
 		// Get the number of remaining packs in the Position.
 		query = `select
@@ -1222,7 +1254,7 @@ func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool) (int64, int64, []
 	}
 
 	log.Printf("player %d in draft %d (position %d) took card %d from pack %d",
-		userID, draftID, position+1, cardID, myPackID)
+		userID, draftID, position, cardID, myPackID)
 
 	return draftID, myPackID, announcements, round, seatID, nil
 }
