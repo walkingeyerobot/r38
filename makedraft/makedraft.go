@@ -437,7 +437,9 @@ func okPack(pack [15]Card, settings Settings) bool {
 	var ratings []float64
 	totalCommons := 0
 	for _, card := range pack {
-		log.Printf("%v %v", card, settings.DfcMode)
+		if *settings.Verbose {
+			log.Printf("%v %v", card, settings.DfcMode)
+		}
 		if card.Foil || (*settings.DfcMode && card.Dfc) {
 			continue
 		}
