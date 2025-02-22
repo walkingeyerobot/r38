@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
@@ -365,5 +366,144 @@ func TestInPersonDraftUndoSubsequentPick(t *testing.T) {
 	}
 	if seatID != origSeatID {
 		t.Errorf("didn't reset pack's seat (was %d, expected %d)", seatID, origSeatID)
+	}
+}
+
+func TestInPersonDraftEnforceZoneDraftingNextPlayerMakingFirstPick(t *testing.T) {
+	filterListener, db, err := doSetup(t)
+	defer func() { unix.Unlink(sock) }()
+	defer filterListener.Close()
+	defer db.Close()
+
+	makeDraft(t, err, db)
+
+	handlers := NewHandler(db, false)
+
+	players, seats := populateDraft(t, handlers)
+
+	player := players[0] + 1
+	seat := seats[0]
+	previousSeat := seat - 1
+	if previousSeat < 0 {
+		previousSeat += 8
+	}
+	previousSeatIndex := slices.Index(seats, previousSeat)
+	previousPlayer := players[previousSeatIndex] + 1
+
+	token := xsrftoken.Generate(xsrfKey, strconv.FormatInt(int64(player), 16), "pick1")
+
+	// test player makes first pick
+	cardId := findCardToPick(t, db, player, 0, 0)
+	handlers.ServeHTTP(httptest.NewRecorder(),
+		httptest.NewRequest("POST", fmt.Sprintf("/api/pickrfid/?as=%d", player),
+			strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cardRfids": ["%s"], "xsrfToken": "%s"}`, cardId, token))))
+
+	// player before test player makes first pick
+	cardId = findCardToPick(t, db, previousPlayer, 0, 0)
+	prevToken := xsrftoken.Generate(xsrfKey, strconv.FormatInt(int64(previousPlayer), 16), "pick1")
+	handlers.ServeHTTP(httptest.NewRecorder(),
+		httptest.NewRequest("POST", fmt.Sprintf("/api/pickrfid/?as=%d", previousPlayer),
+			strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cardRfids": ["%s"], "xsrfToken": "%s"}`, cardId, prevToken))))
+
+	// test player makes second pick in violation
+	cardId = findCardToPick(t, db, player, 0, 1)
+	w := httptest.NewRecorder()
+	handlers.ServeHTTP(w,
+		httptest.NewRequest("POST", fmt.Sprintf("/api/pickrfid/?as=%d", player),
+			strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cardRfids": ["%s"], "xsrfToken": "%s"}`, cardId, token))))
+
+	res := w.Result()
+	if res.StatusCode == http.StatusOK {
+		t.Error("expected pick to fail due to zone drafting violation, but pick succeeded")
+	}
+}
+
+func TestInPersonDraftEnforceZoneDraftingNextPlayerMakingSubsequentPick(t *testing.T) {
+	filterListener, db, err := doSetup(t)
+	defer func() { unix.Unlink(sock) }()
+	defer filterListener.Close()
+	defer db.Close()
+
+	makeDraft(t, err, db)
+
+	handlers := NewHandler(db, false)
+
+	players, seats := populateDraft(t, handlers)
+
+	player := players[0] + 1
+	seat := seats[0]
+
+	previousSeat := seat - 1
+	if previousSeat < 0 {
+		previousSeat += 8
+	}
+	previousSeatIndex := slices.Index(seats, previousSeat)
+	previousPlayer := players[previousSeatIndex] + 1
+	prevToken := xsrftoken.Generate(xsrfKey, strconv.FormatInt(int64(previousPlayer), 16), "pick1")
+
+	prevPrevSeat := seat - 2
+	if prevPrevSeat < 0 {
+		prevPrevSeat += 8
+	}
+	prevPrevSeatIndex := slices.Index(seats, prevPrevSeat)
+	prevPrevPlayer := players[prevPrevSeatIndex] + 1
+	prevPrevToken := xsrftoken.Generate(xsrfKey, strconv.FormatInt(int64(prevPrevPlayer), 16), "pick1")
+
+	nextSeat := seat + 1
+	if nextSeat > 7 {
+		nextSeat -= 8
+	}
+	nextSeatIndex := slices.Index(seats, nextSeat)
+	nextPlayer := players[nextSeatIndex] + 1
+	nextToken := xsrftoken.Generate(xsrfKey, strconv.FormatInt(int64(nextPlayer), 16), "pick1")
+
+	token := xsrftoken.Generate(xsrfKey, strconv.FormatInt(int64(player), 16), "pick1")
+
+	t.Logf("player %d making first pick", player)
+	cardId := findCardToPick(t, db, player, 0, 0)
+	handlers.ServeHTTP(httptest.NewRecorder(),
+		httptest.NewRequest("POST", fmt.Sprintf("/api/pickrfid/?as=%d", player),
+			strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cardRfids": ["%s"], "xsrfToken": "%s"}`, cardId, token))))
+
+	t.Logf("left player %d making first pick", previousPlayer)
+	cardId = findCardToPick(t, db, previousPlayer, 0, 0)
+	handlers.ServeHTTP(httptest.NewRecorder(),
+		httptest.NewRequest("POST", fmt.Sprintf("/api/pickrfid/?as=%d", previousPlayer),
+			strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cardRfids": ["%s"], "xsrfToken": "%s"}`, cardId, prevToken))))
+
+	t.Logf("right player %d making first pick", nextPlayer)
+	cardId = findCardToPick(t, db, nextPlayer, 0, 0)
+	handlers.ServeHTTP(httptest.NewRecorder(),
+		httptest.NewRequest("POST", fmt.Sprintf("/api/pickrfid/?as=%d", nextPlayer),
+			strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cardRfids": ["%s"], "xsrfToken": "%s"}`, cardId, nextToken))))
+
+	t.Logf("player %d making second pick", player)
+	cardId = findCardToPick(t, db, player, 0, 1)
+	handlers.ServeHTTP(httptest.NewRecorder(),
+		httptest.NewRequest("POST", fmt.Sprintf("/api/pickrfid/?as=%d", player),
+			strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cardRfids": ["%s"], "xsrfToken": "%s"}`, cardId, token))))
+
+	t.Logf("2 left player %d making first pick", prevPrevPlayer)
+	cardId = findCardToPick(t, db, prevPrevPlayer, 0, 0)
+	handlers.ServeHTTP(httptest.NewRecorder(),
+		httptest.NewRequest("POST", fmt.Sprintf("/api/pickrfid/?as=%d", prevPrevPlayer),
+			strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cardRfids": ["%s"], "xsrfToken": "%s"}`, cardId, prevPrevToken))))
+
+	t.Logf("left player %d making second pick", previousPlayer)
+	cardId = findCardToPick(t, db, previousPlayer, 0, 1)
+	handlers.ServeHTTP(httptest.NewRecorder(),
+		httptest.NewRequest("POST", fmt.Sprintf("/api/pickrfid/?as=%d", previousPlayer),
+			strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cardRfids": ["%s"], "xsrfToken": "%s"}`, cardId, prevToken))))
+
+	t.Logf("player %d making third pick", player)
+	cardId = findCardToPick(t, db, player, 0, 2)
+	w := httptest.NewRecorder()
+	handlers.ServeHTTP(w,
+		httptest.NewRequest("POST", fmt.Sprintf("/api/pickrfid/?as=%d", player),
+			strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cardRfids": ["%s"], "xsrfToken": "%s"}`, cardId, token))))
+
+	res := w.Result()
+	if res.StatusCode == http.StatusOK {
+		t.Error("expected pick to fail due to zone drafting violation, but pick succeeded")
 	}
 }
