@@ -7,10 +7,8 @@ import (
 	"github.com/walkingeyerobot/r38/makedraft"
 	"github.com/walkingeyerobot/r38/migrations"
 	"golang.org/x/net/xsrftoken"
-	"golang.org/x/sys/unix"
 	"io"
 	"math/rand"
-	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -26,27 +24,9 @@ func ptr[T any](v T) *T {
 
 var SEED = 677483
 
-func doSetup(t *testing.T) (net.Listener, *sql.DB, error) {
+func doSetup(t *testing.T, seed int) (*sql.DB, error) {
 	xsrfKey = "test"
-	sock = "test.sock"
-
-	unix.Unlink(sock)
-	filterListener, err := net.Listen("unix", sock)
-	if err != nil {
-		t.Error(err)
-	}
-	go func() {
-		for {
-			conn, filterErr := filterListener.Accept()
-			if filterErr != nil {
-				break
-			}
-			filterErr = conn.Close()
-			if filterErr != nil {
-				break
-			}
-		}
-	}()
+	sock = ""
 
 	db, err := migration.Open("sqlite3", "file::memory:?cache=shared", migrations.Migrations)
 	if err != nil {
@@ -64,11 +44,11 @@ func doSetup(t *testing.T) (net.Listener, *sql.DB, error) {
 		t.Error(err)
 	}
 
-	rand.Seed(int64(SEED))
-	return filterListener, db, err
+	rand.Seed(int64(seed))
+	return db, err
 }
 
-func makeDraft(t *testing.T, err error, db *sql.DB) {
+func makeDraft(t *testing.T, err error, db *sql.DB, seed int) {
 	var tx *sql.Tx
 
 	tx, err = db.Begin()
@@ -78,7 +58,7 @@ func makeDraft(t *testing.T, err error, db *sql.DB) {
 	err = makedraft.MakeDraft(makedraft.Settings{
 		Set:                              ptr("sets/cube.json"),
 		Database:                         ptr(""),
-		Seed:                             &SEED,
+		Seed:                             &seed,
 		InPerson:                         ptr(true),
 		Verbose:                          ptr(false),
 		Simulate:                         ptr(false),
@@ -165,50 +145,49 @@ func findCardToPick(t *testing.T, db *sql.DB, player int, round int, card int) s
 	return cardId
 }
 
-func TestInPersonDraft(t *testing.T) {
-	filterListener, db, err := doSetup(t)
-	defer func() { unix.Unlink(sock) }()
-	defer filterListener.Close()
-	defer db.Close()
+func FuzzInPersonDraft(f *testing.F) {
+	f.Add(SEED)
+	f.Fuzz(func(t *testing.T, seed int) {
+		db, err := doSetup(t, seed)
+		defer db.Close()
 
-	makeDraft(t, err, db)
+		makeDraft(t, err, db, seed)
 
-	handlers := NewHandler(db, false)
+		handlers := NewHandler(db, false)
 
-	players, seats := populateDraft(t, handlers)
+		players, seats := populateDraft(t, handlers)
 
-	for round := range 3 {
-		for card := range 15 {
-			for _, seat := range rand.Perm(8) {
-				player := players[seat] + 1
+		for round := range 3 {
+			for card := range 15 {
+				for _, seat := range rand.Perm(8) {
+					player := players[seat] + 1
 
-				cardId := findCardToPick(t, db, player, round, card)
+					cardId := findCardToPick(t, db, player, round, card)
 
-				token := xsrftoken.Generate(xsrfKey, strconv.FormatInt(int64(player), 16), "pick1")
+					token := xsrftoken.Generate(xsrfKey, strconv.FormatInt(int64(player), 16), "pick1")
 
-				t.Logf("pack %d pick %d: player %d (position %d) picking card %s", round+1, card+1, player, seats[seat]+1, cardId)
-				w := httptest.NewRecorder()
-				handlers.ServeHTTP(w,
-					httptest.NewRequest("POST", fmt.Sprintf("/api/pickrfid/?as=%d", player),
-						strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cardRfids": ["%s"], "xsrfToken": "%s"}`, cardId, token))))
-				res := w.Result()
-				if res.StatusCode != http.StatusOK {
-					body, _ := io.ReadAll(res.Body)
-					t.Errorf("pick failed: %s", body)
+					t.Logf("pack %d pick %d: player %d (position %d) picking card %s", round+1, card+1, player, seats[seat]+1, cardId)
+					w := httptest.NewRecorder()
+					handlers.ServeHTTP(w,
+						httptest.NewRequest("POST", fmt.Sprintf("/api/pickrfid/?as=%d", player),
+							strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cardRfids": ["%s"], "xsrfToken": "%s"}`, cardId, token))))
+					res := w.Result()
+					if res.StatusCode != http.StatusOK {
+						body, _ := io.ReadAll(res.Body)
+						t.Errorf("pick failed: %s", body)
+					}
 				}
-			}
 
+			}
 		}
-	}
+	})
 }
 
 func TestInPersonDraftUndoFirstPick(t *testing.T) {
-	filterListener, db, err := doSetup(t)
-	defer func() { unix.Unlink(sock) }()
-	defer filterListener.Close()
+	db, err := doSetup(t, SEED)
 	defer db.Close()
 
-	makeDraft(t, err, db)
+	makeDraft(t, err, db, SEED)
 
 	handlers := NewHandler(db, false)
 
@@ -279,12 +258,10 @@ func TestInPersonDraftUndoFirstPick(t *testing.T) {
 }
 
 func TestInPersonDraftUndoSubsequentPick(t *testing.T) {
-	filterListener, db, err := doSetup(t)
-	defer func() { unix.Unlink(sock) }()
-	defer filterListener.Close()
+	db, err := doSetup(t, SEED)
 	defer db.Close()
 
-	makeDraft(t, err, db)
+	makeDraft(t, err, db, SEED)
 
 	handlers := NewHandler(db, false)
 
@@ -370,12 +347,10 @@ func TestInPersonDraftUndoSubsequentPick(t *testing.T) {
 }
 
 func TestInPersonDraftEnforceZoneDraftingNextPlayerMakingFirstPick(t *testing.T) {
-	filterListener, db, err := doSetup(t)
-	defer func() { unix.Unlink(sock) }()
-	defer filterListener.Close()
+	db, err := doSetup(t, SEED)
 	defer db.Close()
 
-	makeDraft(t, err, db)
+	makeDraft(t, err, db, SEED)
 
 	handlers := NewHandler(db, false)
 
@@ -419,12 +394,10 @@ func TestInPersonDraftEnforceZoneDraftingNextPlayerMakingFirstPick(t *testing.T)
 }
 
 func TestInPersonDraftEnforceZoneDraftingNextPlayerMakingSubsequentPick(t *testing.T) {
-	filterListener, db, err := doSetup(t)
-	defer func() { unix.Unlink(sock) }()
-	defer filterListener.Close()
+	db, err := doSetup(t, SEED)
 	defer db.Close()
 
-	makeDraft(t, err, db)
+	makeDraft(t, err, db, SEED)
 
 	handlers := NewHandler(db, false)
 

@@ -1630,24 +1630,26 @@ func GetFilteredJSON(tx *sql.Tx, draftID int64, userID int64) (string, error) {
 		return string(ret), nil
 	}
 
-	conn, err := net.Dial("unix", sock)
-	if err != nil {
-		return "", fmt.Errorf("error connecting to filter service: %s", err.Error())
-	}
-	defer conn.Close()
-
-	ret, err := json.Marshal(Perspective{User: userID, Draft: draft})
-	if err != nil {
-		return "", fmt.Errorf("error marshalling filter service request: %s", err.Error())
-	}
-
-	stop := "\r\n\r\n"
-
-	conn.Write([]byte(ret))
-	conn.Write([]byte(stop))
-
 	var buff bytes.Buffer
-	io.Copy(&buff, conn)
+	if sock != "" {
+		conn, err := net.Dial("unix", sock)
+		if err != nil {
+			return "", fmt.Errorf("error connecting to filter service: %s", err.Error())
+		}
+		defer conn.Close()
+
+		ret, err := json.Marshal(Perspective{User: userID, Draft: draft})
+		if err != nil {
+			return "", fmt.Errorf("error marshalling filter service request: %s", err.Error())
+		}
+
+		stop := "\r\n\r\n"
+
+		conn.Write(ret)
+		conn.Write([]byte(stop))
+
+		io.Copy(&buff, conn)
+	}
 
 	return buff.String(), nil
 }
