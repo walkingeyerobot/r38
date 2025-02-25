@@ -32,6 +32,7 @@ import type { CardPack, DraftSeat } from "@/draft/DraftState";
 import { fetchEndpoint } from "@/fetch/fetchEndpoint";
 import { routePick } from "@/rest/api/pick/pick";
 import { delay } from "@/util/delay";
+import { routePickRfid } from "@/rest/api/pickrfid/pickrfid.ts";
 
 export default defineComponent({
   components: {
@@ -60,6 +61,7 @@ export default defineComponent({
       animationDelays,
       submittingPick: false,
       pickedCardId: null as number | null,
+      scanListener: this.onRfidScan as EventListener,
     };
   },
 
@@ -118,6 +120,28 @@ export default defineComponent({
       this.pickedCardId = null;
     },
 
+    async onRfidScan(event: CustomEvent) {
+      if (this.submittingPick) {
+        return;
+      }
+      this.submittingPick = true;
+
+      const start = Date.now();
+      // TODO: Error handling
+      const response = await fetchEndpoint(routePickRfid, {
+        draftId: draftStore.draftId,
+        cardRfids: [event.detail as string],
+        xsrfToken: draftStore.pickXsrf,
+        as: authStore.user?.id,
+      });
+      const elapsed = Date.now() - start;
+      await delay(500 - elapsed);
+
+      draftStore.loadDraft(response);
+
+      this.submittingPick = false;
+    },
+
     getCardCssClass(cardId: number) {
       const isPicked = cardId == this.pickedCardId;
       return {
@@ -126,6 +150,14 @@ export default defineComponent({
       };
     },
   },
+
+  mounted() {
+    document.body.addEventListener("rfidScan", this.scanListener);
+  },
+
+  beforeUnmount() {
+    document.body.removeEventListener("rfidScan", this.scanListener);
+  }
 });
 </script>
 
