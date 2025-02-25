@@ -25,7 +25,6 @@ import { fetchEndpoint } from "@/fetch/fetchEndpoint";
 import { routeDraft } from "@/rest/api/draft/draft";
 import type { FetchStatus } from "./infra/FetchStatus";
 import { globalClickTracker } from "./infra/globalClickTracker";
-import { routeParam } from "@/util/routeParam";
 
 export default defineComponent({
   components: {
@@ -40,7 +39,7 @@ export default defineComponent({
   },
 
   created() {
-    const draftId = parseInt(routeParam(this.$route, "draftId"));
+    const draftId = parseInt(this.$route.params["draftId"] as string);
     this.fetchDraft(draftId);
   },
 
