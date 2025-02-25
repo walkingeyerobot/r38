@@ -4,7 +4,6 @@ import type { ReplayStore, TimeMode } from "@/state/ReplayStore";
 import type { DraftStore } from "@/state/DraftStore";
 import { checkNotNil } from "@/util/checkNotNil";
 import { checkExhaustive } from "@/util/checkExhaustive";
-import { routeParam } from "@/util/routeParam";
 
 interface RouteProvider {
   $route: RouteLocationNormalizedLoaded;
@@ -99,11 +98,10 @@ export function applyReplayUrlState(replayStore: ReplayStore, route: RouteLocati
 
 export function parseDraftUrl(route: RouteLocationNormalized) {
   const parsedUrl: DraftUrlState = {
-    draftId: parseInt(routeParam(route, "draftId")),
+    draftId: parseInt(route.params["draftId"] as string),
   };
 
-  const rawParams = routeParam(route, "param") || "";
-  const params = rawParams.split("/");
+  const params = route.params["param"];
 
   for (let i = 0; i < params.length; i++) {
     const param = params[i];
