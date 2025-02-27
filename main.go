@@ -231,7 +231,8 @@ func NewHandler(database *sql.DB, useAuth bool) http.Handler {
 	addHandler("/api/prefs/", ServeAPIPrefs, true)
 	addHandler("/api/setpref/", ServeAPISetPref, false)
 	addHandler("/api/undopick/", ServeAPIUndoPick, false)
-	addHandler("/api/userinfo/", ServeAPIUserInfo, false)
+	addHandler("/api/userinfo/", ServeAPIUserInfo, true)
+	addHandler("/api/getcardpack/", ServeAPIGetCardPack, true)
 
 	addHandler("/api/dev/forceEnd/", ServeAPIForceEnd, false)
 
@@ -844,6 +845,66 @@ func ServeAPIUserInfo(w http.ResponseWriter, r *http.Request, userID int64, tx *
 
 	w.Write(userInfoJSON)
 	return nil
+}
+
+// ServeAPIGetCardPack serves the /api/getcardpack endpoint.
+func ServeAPIGetCardPack(w http.ResponseWriter, r *http.Request, _ int64, tx *sql.Tx) error {
+	bodyBytes, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		return fmt.Errorf("error reading post body: %s", err.Error())
+	}
+	var getCardPack PostedGetCardPack
+	err = json.Unmarshal(bodyBytes, &getCardPack)
+	if err != nil {
+		return fmt.Errorf("error parsing post body: %s", err.Error())
+	}
+
+	query := `select pack from cards
+		join packs on cards.pack = packs.id
+		join seats on packs.seat = seats.id
+		where seats.draft = ?
+		and cards.cardid = ?`
+	var packId int64
+	row := tx.QueryRow(query, getCardPack.DraftID, getCardPack.CardRfid)
+	err = row.Scan(&packId)
+	if errors.Is(err, sql.ErrNoRows) {
+		_, err = io.WriteString(w, "{\"pack\": 0}")
+		if err != nil {
+			return fmt.Errorf("error writing response: %s", err.Error())
+		}
+		return nil
+	} else if err != nil {
+		return fmt.Errorf("error finding pack for card: %s", err.Error())
+	}
+
+	query = `select id from packs
+		join seats on packs.seat = seats.id
+		where seats.draft = ?`
+
+	var rows *sql.Rows
+	rows, err = tx.Query(query, getCardPack.DraftID)
+	if err != nil {
+		return fmt.Errorf("error finding packs in draft: %s", err.Error())
+	}
+	defer rows.Close()
+	var packIndex = 1
+	for rows.Next() {
+		var packIdAtIndex int64
+		err = rows.Scan(&packIdAtIndex)
+		if err != nil {
+			return fmt.Errorf("error finding packs in draft: %s", err.Error())
+		}
+		if packIdAtIndex == packId {
+			_, err = fmt.Fprintf(w, "{\"pack\": %d}", packIndex)
+			if err != nil {
+				return fmt.Errorf("error writing response: %s", err.Error())
+			}
+			return nil
+		}
+		packIndex++
+	}
+
+	return errors.New("didn't find pack in draft")
 }
 
 func getUserJSON(userID int64, tx *sql.Tx) ([]byte, error) {
