@@ -38,6 +38,12 @@ const router = createRouter({
       name: "deckbuilder",
       component: () => import("../ui/DeckBuilder.vue"),
     },
+    {
+      path: "/shuffler/:draftId(\\d+)",
+      name: "shuffler",
+      component: () => import("../ui/Shuffler.vue"),
+      props: true,
+    },
   ],
 });
 

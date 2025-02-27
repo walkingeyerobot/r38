@@ -877,7 +877,7 @@ func ServeAPIGetCardPack(w http.ResponseWriter, r *http.Request, _ int64, tx *sq
 		return fmt.Errorf("error finding pack for card: %s", err.Error())
 	}
 
-	query = `select id from packs
+	query = `select packs.id from packs
 		join seats on packs.seat = seats.id
 		where seats.draft = ?`
 
