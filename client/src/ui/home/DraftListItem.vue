@@ -53,6 +53,13 @@ Represents one entry in the list of drafts that a user might view/join
     >
       Skip
     </button>
+    <button
+      v-if="isShufflable"
+      class="join-btn"
+      @click.stop="onShuffleClicked()"
+    >
+      Shuffle
+    </button>
   </div>
 </template>
 
@@ -64,6 +71,7 @@ import { fetchEndpoint } from "@/fetch/fetchEndpoint";
 import { pushDraftUrl } from "@/router/url_manipulation";
 import { ROUTE_JOIN_DRAFT } from "@/rest/api/join/join";
 import { ROUTE_SKIP_DRAFT } from "@/rest/api/skip/skip";
+import { authStore } from "@/state/AuthStore.ts";
 
 export default defineComponent({
   props: {
@@ -88,6 +96,11 @@ export default defineComponent({
       return this.descriptor.status == "reserved";
     },
 
+    isShufflable(): boolean {
+      return this.descriptor.inPerson && !this.descriptor.finished
+        && authStore.user?.id === 1;
+    },
+
     isViewable(): boolean {
       return (
         this.descriptor.status != "joinable" &&
@@ -102,6 +115,10 @@ export default defineComponent({
       if (this.isViewable) {
         this.$router.push(`/draft/${this.descriptor.id}`);
       }
+    },
+
+    onShuffleClicked() {
+      this.$router.push(`/shuffle/${this.descriptor.id}`);
     },
 
     async onJoinClicked(draftId: number) {
