@@ -126,6 +126,12 @@ type PostedPref struct {
 	FormatPref UserFormatPref `json:"pref"`
 }
 
+// PostedGetCardPack is JSON accepted from the client to request the pack for a scanned card.
+type PostedGetCardPack struct {
+	DraftID  int64  `json:"draftId"`
+	CardRfid string `json:"cardRfid"`
+}
+
 // These structs are for exporting in bulk to .dek files.
 
 // BulkMTGOExport is used to bulk export .dek files for the admin.
