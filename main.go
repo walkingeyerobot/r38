@@ -527,6 +527,14 @@ func ServeAPIUndoPick(w http.ResponseWriter, r *http.Request, userID int64, tx *
 		return fmt.Errorf("couldn't undo pick: %s", err.Error())
 	}
 
+	var draftJSON string
+	draftJSON, err = GetFilteredJSON(tx, undo.DraftId, userID)
+	if err != nil {
+		return fmt.Errorf("error getting json: %s", err.Error())
+	}
+
+	fmt.Fprint(w, draftJSON)
+
 	return nil
 }
 

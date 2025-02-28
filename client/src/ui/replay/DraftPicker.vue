@@ -3,6 +3,10 @@
   <div class="_draft-picker">
     <div v-if="inPersonDraft" class="main-content scan">
       Scan now
+      <button
+      @click.native="onUndoPickClicked()">
+        Undo last pick
+      </button>
     </div>
     <div v-else-if="availablePack" class="main-content picks">
       <CardView
@@ -33,6 +37,7 @@ import { fetchEndpoint } from "@/fetch/fetchEndpoint";
 import { routePick } from "@/rest/api/pick/pick";
 import { delay } from "@/util/delay";
 import { routePickRfid } from "@/rest/api/pickrfid/pickrfid.ts";
+import { routeUndoPick } from "@/rest/api/undopick/undopick.ts";
 
 export default defineComponent({
   components: {
@@ -142,6 +147,15 @@ export default defineComponent({
       this.submittingPick = false;
     },
 
+    async onUndoPickClicked() {
+      const response = await fetchEndpoint(routeUndoPick, {
+        draftId: draftStore.draftId,
+        xsrfToken: draftStore.pickXsrf,
+        as: authStore.user?.id,
+      });
+      draftStore.loadDraft(response);
+    },
+
     getCardCssClass(cardId: number) {
       const isPicked = cardId == this.pickedCardId;
       return {
@@ -185,11 +199,24 @@ export default defineComponent({
 
 .scan {
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
   text-transform: uppercase;
   color: white;
   font-size: 300%;
+}
+
+.scan > button {
+  margin: 30px;
+  padding: 5px 15px;
+
+  font-size: 50%;
+  font-family: inherit;
+  border: 1px solid #c54818;
+  border-radius: 5px;
+  background: white;
+  color: #c54818;
 }
 
 .no-picks {
