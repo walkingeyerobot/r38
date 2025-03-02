@@ -79,6 +79,8 @@ class StateParser {
         mtgoName: src.mtgoName,
         iconUrl: src.playerImage || DefaultAvatar,
         seatPosition: position,
+        scanSound: src.scanSound,
+        errorSound: src.errorSound,
       },
       picks: playerPicks,
       originalPacks: [],

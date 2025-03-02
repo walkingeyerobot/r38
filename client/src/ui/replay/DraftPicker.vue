@@ -31,8 +31,6 @@
 import { defineComponent } from "vue";
 import CardView from "./CardView.vue";
 import DeckBuilderMain from "../deckbuilder/DeckBuilderMain.vue";
-import beep from '../../sfx/beep.mp3'
-import error from '../../sfx/error.mp3'
 
 import { authStore } from "@/state/AuthStore";
 import { draftStore, type DraftStore } from "@/state/DraftStore";
@@ -43,7 +41,7 @@ import { routePick } from "@/rest/api/pick/pick";
 import { delay } from "@/util/delay";
 import { routePickRfid } from "@/rest/api/pickrfid/pickrfid.ts";
 import { routeUndoPick } from "@/rest/api/undopick/undopick.ts";
-import { useSound } from '@vueuse/sound'
+import { playErrorSound, playScanSound } from "@/sfx/sfx.ts";
 
 export default defineComponent({
   components: {
@@ -73,8 +71,6 @@ export default defineComponent({
       submittingPick: false,
       pickedCardId: null as number | null,
       scanListener: this.onRfidScan as EventListener,
-      beep: useSound(beep),
-      error: useSound(error),
     };
   },
 
@@ -152,13 +148,13 @@ export default defineComponent({
           xsrfToken: draftStore.pickXsrf,
           as: authStore.user?.id,
         });
-        this.beep.play();
+        playScanSound(this.currentSeat.player);
         const elapsed = Date.now() - start;
         await delay(500 - elapsed);
 
         draftStore.loadDraft(response);
       } catch (e) {
-        this.error.play();
+        playErrorSound(this.currentSeat.player);
       }
 
       this.submittingPick = false;

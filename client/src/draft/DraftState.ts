@@ -59,6 +59,8 @@ export interface DraftPlayer {
   mtgoName: string;
   iconUrl: string;
   seatPosition: number;
+  scanSound: number;
+  errorSound: number;
 }
 
 export interface DraftCard {
