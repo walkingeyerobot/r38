@@ -31,6 +31,8 @@
 import { defineComponent } from "vue";
 import CardView from "./CardView.vue";
 import DeckBuilderMain from "../deckbuilder/DeckBuilderMain.vue";
+import beep from '../../sfx/beep.mp3'
+import error from '../../sfx/error.mp3'
 
 import { authStore } from "@/state/AuthStore";
 import { draftStore, type DraftStore } from "@/state/DraftStore";
@@ -41,6 +43,7 @@ import { routePick } from "@/rest/api/pick/pick";
 import { delay } from "@/util/delay";
 import { routePickRfid } from "@/rest/api/pickrfid/pickrfid.ts";
 import { routeUndoPick } from "@/rest/api/undopick/undopick.ts";
+import { useSound } from '@vueuse/sound'
 
 export default defineComponent({
   components: {
@@ -70,6 +73,8 @@ export default defineComponent({
       submittingPick: false,
       pickedCardId: null as number | null,
       scanListener: this.onRfidScan as EventListener,
+      beep: useSound(beep),
+      error: useSound(error),
     };
   },
 
@@ -140,17 +145,21 @@ export default defineComponent({
         .join(''));
 
       const start = Date.now();
-      // TODO: Error handling
-      const response = await fetchEndpoint(routePickRfid, {
-        draftId: draftStore.draftId,
-        cardRfids: [cardRfid],
-        xsrfToken: draftStore.pickXsrf,
-        as: authStore.user?.id,
-      });
-      const elapsed = Date.now() - start;
-      await delay(500 - elapsed);
+      try {
+        const response = await fetchEndpoint(routePickRfid, {
+          draftId: draftStore.draftId,
+          cardRfids: [cardRfid],
+          xsrfToken: draftStore.pickXsrf,
+          as: authStore.user?.id,
+        });
+        this.beep.play();
+        const elapsed = Date.now() - start;
+        await delay(500 - elapsed);
 
-      draftStore.loadDraft(response);
+        draftStore.loadDraft(response);
+      } catch (e) {
+        this.error.play();
+      }
 
       this.submittingPick = false;
     },
