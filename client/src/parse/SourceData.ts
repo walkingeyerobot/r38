@@ -19,6 +19,8 @@ export interface SourceSeat {
   mtgoName: string;
   playerImage: string;
   packs: SourcePack[];
+  scanSound: number;
+  errorSound: number;
 }
 
 export type SourcePack = SourceCard[];
