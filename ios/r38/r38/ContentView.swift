@@ -3,14 +3,15 @@ import CoreNFC
 
 struct ContentView: View {
 	private var webView: WebView
-	private var delegate: NFCReaderDelegate
-	private var nfcSession: NFCNDEFReaderSession
+	@State private var viewModel: ContentViewModel
 	
 	init() {
-		self.webView = WebView(url: URL(string: "https://draft.thefoley.net")!)
-		//	self.webView = WebView(url: URL(string: "http://localhost:5173")!)
-		self.delegate = NFCReaderDelegate(webView: webView)
-		self.nfcSession = NFCNDEFReaderSession(delegate: delegate, queue: nil, invalidateAfterFirstRead: false)
+		let viewModel = ContentViewModel()
+		self.viewModel = viewModel
+		self.webView = WebView(url: URL(string: "https://draft.thefoley.net")!,
+		//	self.webView = WebView(url: URL(string: "http://localhost:5173")!,
+							   webViewDelegate: viewModel)
+		viewModel.registerWebView(webView: webView)
 	}
 	
 	var body: some View {
@@ -46,6 +47,7 @@ struct ContentView: View {
 		  }
 		}
 	  }
+	  .preferredColorScheme(.light)
 	}
 }
 

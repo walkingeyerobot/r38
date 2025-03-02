@@ -5,9 +5,12 @@ struct WebView: UIViewRepresentable {
 	let url: URL
 	private var webView: WKWebView
 	
-	init(url: URL) {
+	init(url: URL, webViewDelegate: WKScriptMessageHandler) {
 		self.url = url
 		self.webView = WKWebView()
+		self.webView.allowsBackForwardNavigationGestures = true
+		self.webView.allowsLinkPreview = true
+		self.webView.configuration.userContentController.add(webViewDelegate, name: "scanner")
 	}
 	
 	func makeUIView(context: Context) -> WKWebView {
@@ -33,10 +36,6 @@ struct WebView: UIViewRepresentable {
 	
 	func emitNfcScan(payload: String) {
 		self.webView.evaluateJavaScript(
-			"document.body.dispatchEvent(new CustomEvent('rfidScan', {detail: '\(payload)}))")
+			"document.body.dispatchEvent(new CustomEvent('rfidScan', {detail: '\(payload)'}))")
 	}
-}
-
-#Preview {
-	WebView(url: URL(string: "https://draft.thefoley.net")!)
 }
