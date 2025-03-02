@@ -2,9 +2,12 @@
 <template>
   <div class="_draft-picker">
     <div v-if="inPersonDraft" class="main-content scan">
-      Scan now
+      <span
+        @click.native="postScanMessage()">
+        Scan now
+      </span>
       <button
-      @click.native="onUndoPickClicked()">
+        @click.native="onUndoPickClicked()">
         Undo last pick
       </button>
     </div>
@@ -20,7 +23,7 @@
       />
     </div>
     <div v-else class="main-content no-picks">You don't have any picks (yet)</div>
-    <DeckBuilderMain v-if="showDeckBuilder" class="pool" :horizontal="true" />
+    <DeckBuilderMain v-if="showDeckBuilder" class="pool" :horizontal="true"/>
   </div>
 </template>
 
@@ -131,11 +134,16 @@ export default defineComponent({
       }
       this.submittingPick = true;
 
+      const cardRfid = decodeURIComponent(Array.prototype.map.call(atob(event.detail),
+        c => `%${(`00${c.charCodeAt(0).toString(16)}`).slice(-2)}`)
+        .slice(3)
+        .join(''));
+
       const start = Date.now();
       // TODO: Error handling
       const response = await fetchEndpoint(routePickRfid, {
         draftId: draftStore.draftId,
-        cardRfids: [event.detail as string],
+        cardRfids: [cardRfid],
         xsrfToken: draftStore.pickXsrf,
         as: authStore.user?.id,
       });
@@ -156,6 +164,11 @@ export default defineComponent({
       draftStore.loadDraft(response);
     },
 
+    postScanMessage() {
+      postMessage("scan");
+      window?.webkit?.messageHandlers?.scanner?.postMessage("scan");
+    },
+
     getCardCssClass(cardId: number) {
       const isPicked = cardId == this.pickedCardId;
       return {
@@ -167,6 +180,7 @@ export default defineComponent({
 
   mounted() {
     document.body.addEventListener("rfidScan", this.scanListener);
+    this.postScanMessage();
   },
 
   beforeUnmount() {
