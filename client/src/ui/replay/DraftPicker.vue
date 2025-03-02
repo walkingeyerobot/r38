@@ -175,7 +175,7 @@ export default defineComponent({
 
     postScanMessage() {
       postMessage("scan");
-      window?.webkit?.messageHandlers?.scanner?.postMessage("scan");
+      (window as any).webkit?.messageHandlers?.scanner?.postMessage("scan");
     },
 
     getCardCssClass(cardId: number) {
