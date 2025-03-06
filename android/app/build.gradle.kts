@@ -10,7 +10,7 @@ android {
 
     defaultConfig {
         applicationId = "net.thefoley.r38"
-        minSdk = 24
+        minSdk = 33
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
@@ -57,5 +57,5 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.activity.compose)
 
-    implementation(libs.compose.webview)
+    implementation(libs.compose.webview.multiplatform)
 }
