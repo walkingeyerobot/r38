@@ -829,21 +829,6 @@ func ServeAPIForceEnd(_ http.ResponseWriter, r *http.Request, userID int64, tx *
 	}
 }
 
-// ServeVueApp serves to vue.
-func ServeVueApp(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx) error {
-	userInfoJSON, err := getUserJSON(userID, tx)
-	if err != nil {
-		return err
-	}
-
-	data := VuePageData{UserJSON: string(userInfoJSON)}
-
-	t := template.Must(template.ParseFiles("vue.tmpl"))
-
-	t.Execute(w, data)
-	return nil
-}
-
 // ServeAPIUserInfo serves the /api/userinfo endpoint.
 func ServeAPIUserInfo(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx) error {
 	userInfoJSON, err := getUserJSON(userID, tx)
