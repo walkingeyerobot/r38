@@ -9,5 +9,9 @@
     "source.fixAll": "explicit"
   },
   "editor.formatOnSave": true,
-  "editor.defaultFormatter": "esbenp.prettier-vscode"
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+
+  // Points the ESLint VSCode extension to the correct location of our
+  // eslint.config.ts
+  "eslint.workingDirectories": ["./client"]
 }
