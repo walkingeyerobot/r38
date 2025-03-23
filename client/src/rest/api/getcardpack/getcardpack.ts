@@ -8,5 +8,5 @@ export const routeGetCardPack = endpoint({
     draftId: 0,
     cardRfid: "",
   } as { draftId: number; cardRfid: string },
-  response: {} as {pack: number},
+  response: {} as { pack: number },
 });

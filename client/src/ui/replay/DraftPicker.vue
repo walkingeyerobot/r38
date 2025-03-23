@@ -2,14 +2,8 @@
 <template>
   <div class="_draft-picker">
     <div v-if="inPersonDraft" class="main-content scan">
-      <span
-        @click.native="postScanMessage()">
-        Scan now
-      </span>
-      <button
-        @click.native="onUndoPickClicked()">
-        Undo last pick
-      </button>
+      <span @click.native="postScanMessage()"> Scan now </span>
+      <button @click.native="onUndoPickClicked()">Undo last pick</button>
     </div>
     <div v-else-if="availablePack" class="main-content picks">
       <CardView
@@ -23,7 +17,7 @@
       />
     </div>
     <div v-else class="main-content no-picks">You don't have any picks (yet)</div>
-    <DeckBuilderMain v-if="showDeckBuilder" class="pool" :horizontal="true"/>
+    <DeckBuilderMain v-if="showDeckBuilder" class="pool" :horizontal="true" />
   </div>
 </template>
 
@@ -135,10 +129,12 @@ export default defineComponent({
       }
       this.submittingPick = true;
 
-      const cardRfid = decodeURIComponent(Array.prototype.map.call(atob(event.detail),
-        c => `%${(`00${c.charCodeAt(0).toString(16)}`).slice(-2)}`)
-        .slice(3)
-        .join(''));
+      const cardRfid = decodeURIComponent(
+        Array.prototype.map
+          .call(atob(event.detail), (c) => `%${`00${c.charCodeAt(0).toString(16)}`.slice(-2)}`)
+          .slice(3)
+          .join(""),
+      );
 
       const start = Date.now();
       try {
@@ -190,7 +186,7 @@ export default defineComponent({
 
   beforeUnmount() {
     document.body.removeEventListener("rfidScan", this.scanListener);
-  }
+  },
 });
 </script>
 

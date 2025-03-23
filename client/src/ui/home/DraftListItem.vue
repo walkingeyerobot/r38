@@ -53,13 +53,7 @@ Represents one entry in the list of drafts that a user might view/join
     >
       Skip
     </button>
-    <button
-      v-if="isShufflable"
-      class="join-btn"
-      @click.stop="onShuffleClicked()"
-    >
-      Shuffle
-    </button>
+    <button v-if="isShufflable" class="join-btn" @click.stop="onShuffleClicked()">Shuffle</button>
   </div>
 </template>
 
@@ -97,8 +91,7 @@ export default defineComponent({
     },
 
     isShufflable(): boolean {
-      return this.descriptor.inPerson && !this.descriptor.finished
-        && authStore.user?.id === 1;
+      return this.descriptor.inPerson && !this.descriptor.finished && authStore.user?.id === 1;
     },
 
     isViewable(): boolean {
