@@ -8,5 +8,9 @@ node_modules/
 /client_toolchain/stats.json
 /client_toolchain/dev_server/dist
 static/dist
-settings.json
-launch.json
+
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
