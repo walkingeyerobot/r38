@@ -9,10 +9,8 @@ on:
     branches:
       - main
       - master
-  workflow_dispatch:
-    branches:
-      - main
-      - master
+    paths:
+      - '**.go'
 
 jobs:
 
