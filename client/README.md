@@ -20,7 +20,7 @@ To build the production version of the client, run:
 $ npm run build
 ```
 
-The build artifacts will be placed in `<git root>/static/dist`.
+The build artifacts will be placed in `<git root>/client-dist`.
 
 ## Development
 
