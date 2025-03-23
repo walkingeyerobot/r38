@@ -1,6 +1,6 @@
-import { useSound } from '@vueuse/sound'
-import beep from './beep.mp3'
-import error from './error.mp3'
+import { useSound } from "@vueuse/sound";
+import beep from "./beep.mp3";
+import error from "./error.mp3";
 import type { DraftPlayer } from "@/draft/DraftState.ts";
 
 const scanSounds = [

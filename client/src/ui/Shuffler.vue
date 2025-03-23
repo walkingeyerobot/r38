@@ -7,11 +7,11 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue'
+import { defineComponent } from "vue";
 import { fetchEndpoint } from "@/fetch/fetchEndpoint.ts";
 import { routeGetCardPack } from "@/rest/api/getcardpack/getcardpack.ts";
-import { useSound } from '@vueuse/sound'
-import beep from '../sfx/beep.mp3'
+import { useSound } from "@vueuse/sound";
+import beep from "../sfx/beep.mp3";
 
 export default defineComponent({
   name: "Shuffler",
@@ -28,19 +28,17 @@ export default defineComponent({
       pack: "SCAN NOW",
       scanListener: this.onRfidScan as EventListener,
       beep: useSound(beep),
-    }
+    };
   },
 
   methods: {
     async onRfidScan(event: CustomEvent) {
-      this.pack = ""
+      this.pack = "";
       const response = await fetchEndpoint(routeGetCardPack, {
         draftId: Number(this.draftId),
         cardRfid: event.detail as string,
       });
-      this.pack = response.pack === 0
-        ? "DISCARD"
-        : `PACK ${response.pack}`;
+      this.pack = response.pack === 0 ? "DISCARD" : `PACK ${response.pack}`;
       this.beep.play();
     },
   },
@@ -51,8 +49,8 @@ export default defineComponent({
 
   beforeUnmount() {
     document.body.removeEventListener("rfidScan", this.scanListener);
-  }
-})
+  },
+});
 </script>
 
 <style scoped>
@@ -83,6 +81,4 @@ export default defineComponent({
 .v-leave-to {
   opacity: 0;
 }
-
-
 </style>
