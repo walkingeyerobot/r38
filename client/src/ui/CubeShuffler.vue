@@ -14,7 +14,7 @@ import { useSound } from "@vueuse/sound";
 import beep from "../sfx/beep.mp3";
 
 export default defineComponent({
-  name: "Shuffler",
+  name: "CubeShuffler",
 
   props: {
     draftId: {

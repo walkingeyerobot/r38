@@ -45,3 +45,20 @@ the (entire) project.
 
 Install the extensions that it prompts you to install, the most important of
 them being the one named "Vue - Official".
+
+## Notable commands
+
+You can format the entire codebase with:
+
+```
+$ npm run format
+```
+
+You can also check for linting errors with:
+
+```
+$ npm run lint
+```
+
+Both of these commands must pass with no warnings or errors before a change can
+be merged to the codebase.

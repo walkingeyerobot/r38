@@ -41,7 +41,7 @@ const router = createRouter({
     {
       path: "/shuffler/:draftId(\\d+)",
       name: "shuffler",
-      component: () => import("../ui/Shuffler.vue"),
+      component: () => import("../ui/CubeShuffler.vue"),
       props: true,
     },
   ],

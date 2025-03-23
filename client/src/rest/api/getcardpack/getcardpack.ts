@@ -1,5 +1,4 @@
 import { endpoint } from "@/rest/endpoint";
-import type { SourceData } from "@/parse/SourceData";
 
 export const routeGetCardPack = endpoint({
   route: "/api/getcardpack/",

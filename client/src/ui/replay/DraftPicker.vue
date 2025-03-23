@@ -149,7 +149,7 @@ export default defineComponent({
         await delay(500 - elapsed);
 
         draftStore.loadDraft(response);
-      } catch (e) {
+      } catch (_e) {
         playErrorSound(this.currentSeat.player);
       }
 
@@ -167,6 +167,7 @@ export default defineComponent({
 
     postScanMessage() {
       postMessage("scan");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (window as any).webkit?.messageHandlers?.scanner?.postMessage("scan");
     },
 
