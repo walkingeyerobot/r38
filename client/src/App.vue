@@ -1,6 +1,9 @@
 <template>
   <div id="app">
-    <router-view />
+    <router-view v-if="status == 'ready'" />
+    <div v-else-if="status == 'error'" class="error-msg">
+      There was an error loading user info; please try refreshing
+    </div>
   </div>
 </template>
 
@@ -10,6 +13,8 @@ import DefaultAvatar from "./ui/shared/avatars/default_avatar.png";
 
 import { authStore } from "./state/AuthStore";
 import { formatStore, type LayoutFormFactor } from "./state/FormatStore";
+import { fetchEndpoint } from "./fetch/fetchEndpoint";
+import { routeUserInfo, type SourceUserInfo } from "./rest/api/userinfo/userinfo";
 
 export default defineComponent({
   created() {
@@ -17,17 +22,31 @@ export default defineComponent({
     this.initFormat();
   },
 
+  data() {
+    return {
+      status: "init" as "init" | "ready" | "error",
+    };
+  },
+
   methods: {
-    loadAuthInfo() {
-      if (window.UserInfo != undefined) {
-        const parsed = JSON.parse(window.UserInfo) as SourceUserInfo;
-        authStore.setUser({
-          id: parsed.userId,
-          name: parsed.name,
-          picture: parsed.picture || DefaultAvatar,
-          mtgoName: parsed.mtgoName,
-        });
+    async loadAuthInfo() {
+      let result: SourceUserInfo;
+
+      try {
+        result = await fetchEndpoint(routeUserInfo, {});
+        this.status = "ready";
+      } catch (e) {
+        console.error("Error fetching user info:", e);
+        this.status = "error";
+        return;
       }
+
+      authStore.setUser({
+        id: result.userId,
+        name: result.name,
+        picture: result.picture || DefaultAvatar,
+        mtgoName: result.mtgoName,
+      });
     },
 
     initFormat() {
@@ -49,13 +68,6 @@ export default defineComponent({
 
 function getLayoutFormFactor(): LayoutFormFactor {
   return window.innerWidth >= 768 ? "desktop" : "mobile";
-}
-
-interface SourceUserInfo {
-  name: string;
-  picture: string;
-  userId: number;
-  mtgoName: string;
 }
 </script>
 
