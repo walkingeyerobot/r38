@@ -17,7 +17,9 @@ import { fetchEndpoint } from "./fetch/fetchEndpoint";
 import { routeUserInfo, type SourceUserInfo } from "./rest/api/userinfo/userinfo";
 
 export default defineComponent({
-  created() {
+  created() {},
+
+  mounted() {
     this.loadAuthInfo();
     this.initFormat();
   },
@@ -32,8 +34,11 @@ export default defineComponent({
     async loadAuthInfo() {
       let result: SourceUserInfo;
 
+      const asPlayer = parseInt(unwrapQuery(this.$route.query.as) ?? "NaN");
+      const asPlayerId = isNaN(asPlayer) ? undefined : asPlayer;
+
       try {
-        result = await fetchEndpoint(routeUserInfo, {});
+        result = await fetchEndpoint(routeUserInfo, { as: asPlayerId });
         this.status = "ready";
       } catch (e) {
         console.error("Error fetching user info:", e);
@@ -68,6 +73,14 @@ export default defineComponent({
 
 function getLayoutFormFactor(): LayoutFormFactor {
   return window.innerWidth >= 768 ? "desktop" : "mobile";
+}
+
+function unwrapQuery<T>(value: T | T[]): T {
+  if (value instanceof Array) {
+    return value[0];
+  } else {
+    return value;
+  }
 }
 </script>
 

@@ -12,7 +12,7 @@ import { TimelineGenerator } from "@/parse/TimelineGenerator";
 
 import { authStore } from "./AuthStore";
 import { checkNotNil } from "@/util/checkNotNil";
-import { userIsSeated } from "./util/userIsSeated";
+import { userIsSeated } from "@/state/util/userIsSeated";
 
 let timelineGenerator: TimelineGenerator;
 
