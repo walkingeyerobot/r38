@@ -3,6 +3,9 @@ import { endpoint } from "@/rest/endpoint";
 export const routeUserInfo = endpoint({
   route: "/api/userinfo/",
   method: "get",
+  queryVars: {
+    as: 0,
+  } as { as?: number },
   response: {} as SourceUserInfo,
 });
 

@@ -13,5 +13,11 @@
 
   // Points the ESLint VSCode extension to the correct location of our
   // eslint.config.ts
-  "eslint.workingDirectories": ["./client"]
+  "eslint.workingDirectories": ["./client"],
+
+  // Always show yellow squigglies under eslint errors rather than red ones
+  "eslint.rules.customizations": [{ "rule": "*", "severity": "warn" }],
+
+  // Always prefer "@/foo/bar"-style imports in the client when available
+  "typescript.preferences.importModuleSpecifier": "non-relative"
 }

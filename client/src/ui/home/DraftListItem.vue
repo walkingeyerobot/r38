@@ -106,7 +106,11 @@ export default defineComponent({
   methods: {
     onRootClick() {
       if (this.isViewable) {
-        this.$router.push(`/draft/${this.descriptor.id}`);
+        let path = `/draft/${this.descriptor.id}`;
+        if (this.$route.query.as != undefined) {
+          path += `/?as=${this.$route.query.as}`;
+        }
+        this.$router.push(path);
       }
     },
 
