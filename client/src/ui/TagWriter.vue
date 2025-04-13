@@ -38,8 +38,13 @@ export default defineComponent({
     },
 
     setCard(card: string | null) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       if ((window as any).kmpJsBridge) {
-        (window as any).kmpJsBridge.callNative("setCard", card ? `{card: "${card}"}` : "{card: null}");
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (window as any).kmpJsBridge.callNative(
+          "setCard",
+          card ? `{card: "${card}"}` : "{card: null}",
+        );
       }
     },
   },
