@@ -1316,7 +1316,7 @@ func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool, zoneDrafting bool
 // NotifyByDraftAndDiscordID sends a discord alert to a user.
 func NotifyByDraftAndDiscordID(draftID int64, discordID string) error {
 	return DiscordNotify(os.Getenv("PICK_ALERTS_CHANNEL_ID"),
-		fmt.Sprintf(`<@%s> you have new picks <http://draft.thefoley.net/draft/%d>`, discordID, draftID))
+		fmt.Sprintf(`<@%s> you have new picks <http://draftcu.be/draft/%d>`, discordID, draftID))
 }
 
 func NotifyEndOfDraft(tx *sql.Tx, draftID int64) error {

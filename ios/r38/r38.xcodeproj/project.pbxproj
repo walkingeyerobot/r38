@@ -24,18 +24,18 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		7896C87B2D6EA02B00C040FA /* r38.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = r38.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		7896C87B2D6EA02B00C040FA /* Coach's Bauble.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Coach's Bauble.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		7896C88B2D6EA02D00C040FA /* r38Tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = r38Tests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		7896C8952D6EA02D00C040FA /* r38UITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = r38UITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		784593212D73B90700D1087A /* Exceptions for "r38" folder in "r38" target */ = {
+		784593212D73B90700D1087A /* Exceptions for "r38" folder in "Coach's Bauble" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
 			);
-			target = 7896C87A2D6EA02B00C040FA /* r38 */;
+			target = 7896C87A2D6EA02B00C040FA /* Coach's Bauble */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -43,7 +43,7 @@
 		7896C87D2D6EA02B00C040FA /* r38 */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				784593212D73B90700D1087A /* Exceptions for "r38" folder in "r38" target */,
+				784593212D73B90700D1087A /* Exceptions for "r38" folder in "Coach's Bauble" target */,
 			);
 			path = r38;
 			sourceTree = "<group>";
@@ -98,7 +98,7 @@
 		7896C87C2D6EA02B00C040FA /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				7896C87B2D6EA02B00C040FA /* r38.app */,
+				7896C87B2D6EA02B00C040FA /* Coach's Bauble.app */,
 				7896C88B2D6EA02D00C040FA /* r38Tests.xctest */,
 				7896C8952D6EA02D00C040FA /* r38UITests.xctest */,
 			);
@@ -108,9 +108,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		7896C87A2D6EA02B00C040FA /* r38 */ = {
+		7896C87A2D6EA02B00C040FA /* Coach's Bauble */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 7896C89F2D6EA02D00C040FA /* Build configuration list for PBXNativeTarget "r38" */;
+			buildConfigurationList = 7896C89F2D6EA02D00C040FA /* Build configuration list for PBXNativeTarget "Coach's Bauble" */;
 			buildPhases = (
 				7896C8772D6EA02B00C040FA /* Sources */,
 				7896C8782D6EA02B00C040FA /* Frameworks */,
@@ -123,11 +123,11 @@
 			fileSystemSynchronizedGroups = (
 				7896C87D2D6EA02B00C040FA /* r38 */,
 			);
-			name = r38;
+			name = "Coach's Bauble";
 			packageProductDependencies = (
 			);
 			productName = r38;
-			productReference = 7896C87B2D6EA02B00C040FA /* r38.app */;
+			productReference = 7896C87B2D6EA02B00C040FA /* Coach's Bauble.app */;
 			productType = "com.apple.product-type.application";
 		};
 		7896C88A2D6EA02D00C040FA /* r38Tests */ = {
@@ -213,7 +213,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				7896C87A2D6EA02B00C040FA /* r38 */,
+				7896C87A2D6EA02B00C040FA /* Coach's Bauble */,
 				7896C88A2D6EA02D00C040FA /* r38Tests */,
 				7896C8942D6EA02D00C040FA /* r38UITests */,
 			);
@@ -271,12 +271,12 @@
 /* Begin PBXTargetDependency section */
 		7896C88D2D6EA02D00C040FA /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 7896C87A2D6EA02B00C040FA /* r38 */;
+			target = 7896C87A2D6EA02B00C040FA /* Coach's Bauble */;
 			targetProxy = 7896C88C2D6EA02D00C040FA /* PBXContainerItemProxy */;
 		};
 		7896C8972D6EA02D00C040FA /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 7896C87A2D6EA02B00C040FA /* r38 */;
+			target = 7896C87A2D6EA02B00C040FA /* Coach's Bauble */;
 			targetProxy = 7896C8962D6EA02D00C040FA /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -547,7 +547,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		7896C89F2D6EA02D00C040FA /* Build configuration list for PBXNativeTarget "r38" */ = {
+		7896C89F2D6EA02D00C040FA /* Build configuration list for PBXNativeTarget "Coach's Bauble" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				7896C8A02D6EA02D00C040FA /* Debug */,

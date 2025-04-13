@@ -340,7 +340,7 @@ func generateEmptyDraft(tx *sql.Tx, name string, format string, inPerson bool, s
 
 	if dg != nil {
 		_, err = dg.ChannelEditComplex(channel.ID, &discordgo.ChannelEdit{
-			Topic:    fmt.Sprintf("<http://draft.thefoley.net/draft/%d>", draftID),
+			Topic:    fmt.Sprintf("<http://draftcu.be/draft/%d>", draftID),
 			ParentID: SPECTATORS_CATEGORY_ID,
 		})
 		if err != nil {

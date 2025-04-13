@@ -8,7 +8,7 @@ struct ContentView: View {
 	init() {
 		let viewModel = ContentViewModel()
 		self.viewModel = viewModel
-		self.webView = WebView(url: URL(string: "https://draft.thefoley.net")!,
+		self.webView = WebView(url: URL(string: "https://draftcu.be")!,
 		//	self.webView = WebView(url: URL(string: "http://localhost:5173")!,
 							   webViewDelegate: viewModel)
 		viewModel.registerWebView(webView: webView)

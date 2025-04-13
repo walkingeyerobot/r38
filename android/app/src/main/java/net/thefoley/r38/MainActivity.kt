@@ -26,7 +26,7 @@ class MainActivity : ComponentActivity() {
     @SuppressLint("SetJavaScriptEnabled")
     @Composable
     fun Content() {
-        val state = rememberWebViewState("https://draft.thefoley.net")
+        val state = rememberWebViewState("https://draftcu.be")
 //    val state = rememberWebViewState("http://10.0.2.2:5173")
         val navigator = rememberWebViewNavigator()
 
