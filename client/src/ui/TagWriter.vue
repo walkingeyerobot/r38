@@ -38,8 +38,8 @@ export default defineComponent({
     },
 
     setCard(card: string | null) {
-      if (window.kmpJsBridge) {
-        window.kmpJsBridge.callNative("setCard", card ? `{card: "${card}"}` : "{card: null}");
+      if ((window as any).kmpJsBridge) {
+        (window as any).kmpJsBridge.callNative("setCard", card ? `{card: "${card}"}` : "{card: null}");
       }
     },
   },
