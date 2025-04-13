@@ -12,6 +12,8 @@
       </div>
     </div>
 
+    <div class="admin-link" v-if="admin"><a href="/tagwriter/cube">Tag writer</a></div>
+
     <div class="drafts-cnt">
       <div v-if="listFetchStatus == 'fetching'" class="loading-msg">Loading...</div>
 
@@ -77,6 +79,10 @@ export default defineComponent({
       return authStore.user?.id != 0;
     },
 
+    admin(): boolean {
+      return authStore.user?.id === 1;
+    },
+
     userPic(): string | undefined {
       return authStore.user?.picture;
     },
@@ -138,6 +144,11 @@ export default defineComponent({
   border-radius: 4px;
   text-decoration: none;
   padding: 0 20px;
+}
+
+.admin-link {
+  margin-top: 50px;
+  margin-left: 30px;
 }
 
 .drafts-cnt {

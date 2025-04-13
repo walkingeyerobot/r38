@@ -233,6 +233,7 @@ func NewHandler(database *sql.DB, useAuth bool) http.Handler {
 	addHandler("/api/undopick/", ServeAPIUndoPick, false)
 	addHandler("/api/userinfo/", ServeAPIUserInfo, true)
 	addHandler("/api/getcardpack/", ServeAPIGetCardPack, true)
+	addHandler("/api/set/", ServeAPISet, true)
 
 	addHandler("/api/dev/forceEnd/", ServeAPIForceEnd, false)
 
@@ -898,6 +899,56 @@ func ServeAPIGetCardPack(w http.ResponseWriter, r *http.Request, _ int64, tx *sq
 	}
 
 	return errors.New("didn't find pack in draft")
+}
+
+// ServeAPISet serves the /api/set endpoint.
+func ServeAPISet(w http.ResponseWriter, r *http.Request, _ int64, tx *sql.Tx) error {
+	bodyBytes, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		return fmt.Errorf("error reading post body: %s", err.Error())
+	}
+	var setRequest PostedSet
+	err = json.Unmarshal(bodyBytes, &setRequest)
+	if err != nil {
+		return fmt.Errorf("error parsing post body: %s", err.Error())
+	}
+
+	jsonFile, err := os.Open("sets/" + setRequest.Set + ".json")
+	if err != nil {
+		return fmt.Errorf("error opening json file: %s", err.Error())
+	}
+	defer jsonFile.Close()
+
+	byteValue, err := ioutil.ReadAll(jsonFile)
+	if err != nil {
+		return fmt.Errorf("error readalling: %s", err.Error())
+	}
+
+	var cfg makedraft.DraftConfig
+	err = json.Unmarshal(byteValue, &cfg)
+	if err != nil {
+		return fmt.Errorf("error unmarshalling: %s", err.Error())
+	}
+
+	var cards []SetCardData
+	for _, card := range cfg.Cards {
+		var cardData R38CardData
+		err = json.Unmarshal([]byte(card.Data), &cardData)
+		if err != nil {
+			return fmt.Errorf("error unmarshalling: %s", err.Error())
+		}
+		cards = append(cards, SetCardData{
+			Id:   card.ID,
+			Data: cardData,
+		})
+	}
+
+	err = json.NewEncoder(w).Encode(cards)
+	if err != nil {
+		return fmt.Errorf("error marshalling: %s", err.Error())
+	}
+
+	return nil
 }
 
 func getUserJSON(userID int64, tx *sql.Tx) ([]byte, error) {

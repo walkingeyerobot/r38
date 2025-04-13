@@ -132,6 +132,11 @@ type PostedGetCardPack struct {
 	CardRfid string `json:"cardRfid"`
 }
 
+// PostedSet is JSON accepted from the client to request the cards in a set.
+type PostedSet struct {
+	Set string `json:"set"`
+}
+
 // These structs are for exporting in bulk to .dek files.
 
 // BulkMTGOExport is used to bulk export .dek files for the admin.
@@ -151,12 +156,19 @@ type NameAndQuantity struct {
 // R38CardData is the JSON passed to the client for card data.
 // Note that this does not describe everything that is in the data, just what we need
 type R38CardData struct {
-	MTGO     int64            `json:"mtgo_id"`
-	Scryfall ScryfallCardData `json:"scryfall"`
+	MTGO      int64            `json:"mtgo_id"`
+	ImageUris []string         `json:"image_uris"`
+	Scryfall  ScryfallCardData `json:"scryfall"`
 }
 
 // ScryfallCardData is more JSON passed to the client for card data.
 // Note that this does not describe everything that is in the data, just what we need
 type ScryfallCardData struct {
 	Name string `json:"name"`
+}
+
+// SetCardData is the JSON data needed to write tags for each card in a set.
+type SetCardData struct {
+	Id   string      `json:"id"`
+	Data R38CardData `json:"data"`
 }
