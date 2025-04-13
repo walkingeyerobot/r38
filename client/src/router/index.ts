@@ -44,6 +44,12 @@ const router = createRouter({
       component: () => import("../ui/CubeShuffler.vue"),
       props: true,
     },
+    {
+      path: "/tagwriter/:set",
+      name: "tagwriter",
+      component: () => import("../ui/TagWriter.vue"),
+      props: true,
+    },
   ],
 });
 

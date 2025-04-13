@@ -97,3 +97,10 @@ export interface BaseEvent {
   draftModified: number;
   librarian: boolean;
 }
+
+export type SourceSet = SetCard[];
+
+export interface SetCard {
+  id: string;
+  data: KnownCard;
+}
