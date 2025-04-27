@@ -5,109 +5,114 @@ The primary page for making picks during an active draft
 -->
 <template>
   <div class="_picker-page">
-    <template v-if="loaded">
-      <div class="header">
-        {{ draftStore.draftName }}
-      </div>
-
-      <div class="player-list">
-        <a
-          v-for="seat in draftStore.currentState.seats"
-          :key="seat.position"
-          class="seated-player"
-          :href="`${route.path}?as=${seat.player.id}`"
-        >
-          <img
-            class="player-icon"
-            :src="seat.player.iconUrl"
-            :title="seat.player.name"
-            :class="{ active: seat.player.id == authStore.user?.id }"
-          />
-        </a>
-      </div>
-
-      <div class="pick-count" v-if="nextPick.kind == 'ActivePosition'">
-        <div class="pc-round">
-          <div class="pc-round-label">Pack</div>
-          <div class="pc-round-count">{{ nextPick.round }}</div>
+    <div class="container">
+      <template v-if="loaded">
+        <div class="header">
+          {{ draftStore.draftName }}
         </div>
-        <div class="pc-pick">
-          <div class="pc-pick-label">Pick</div>
-          <div class="pc-pick-count">{{ nextPick.pick + 1 }}</div>
-        </div>
-      </div>
-      <div class="pick-count-error" v-else-if="nextPick.kind == 'Error'">
-        {{ nextPick.message }}
-      </div>
 
-      <div class="active-pack">
-        <template v-if="activePack">
-          <div class="active-pack-label">Current pack</div>
-          <div class="active-pack-cnt">
-            <div
-              v-for="card in activePack"
-              :key="card.id"
-              class="card-slate"
-              @click="onCardClick(card)"
-            >
-              <div class="card-name">{{ card.definition.name }}</div>
-              <div class="card-cost">
-                <ManaSymbol
-                  v-for="(msymb, i) in card.definition.mana_cost"
-                  :key="i"
-                  :code="msymb"
-                  class="mana-symbol"
-                />
+        <div class="player-list">
+          <a
+            v-for="seat in draftStore.currentState.seats"
+            :key="seat.position"
+            class="seated-player"
+            :href="`${route.path}?as=${seat.player.id}`"
+          >
+            <img
+              class="player-icon"
+              :src="seat.player.iconUrl"
+              :title="seat.player.name"
+              :class="{ active: seat.player.id == authStore.user?.id }"
+            />
+          </a>
+        </div>
+
+        <div class="pick-count" v-if="nextPick.kind == 'ActivePosition'">
+          <div class="pc-round">
+            <div class="pc-round-label">Pack</div>
+            <div class="pc-round-count">{{ nextPick.round }}</div>
+          </div>
+          <div class="pc-pick">
+            <div class="pc-pick-label">Pick</div>
+            <div class="pc-pick-count">{{ nextPick.pick + 1 }}</div>
+          </div>
+        </div>
+        <div class="pick-count-error" v-else-if="nextPick.kind == 'Error'">
+          {{ nextPick.message }}
+        </div>
+
+        <div class="active-pack">
+          <template v-if="activePack">
+            <div class="active-pack-label">Current pack</div>
+            <div class="active-pack-cnt">
+              <div
+                v-for="card in activePack"
+                :key="card.id"
+                class="card-slate"
+                @click="onCardClick(card)"
+              >
+                <div class="card-name">{{ card.definition.name }}</div>
+                <div class="card-cost">
+                  <ManaSymbol
+                    v-for="(msymb, i) in card.definition.mana_cost"
+                    :key="i"
+                    :code="msymb"
+                    class="mana-symbol"
+                  />
+                </div>
               </div>
             </div>
-          </div>
-        </template>
-        <template v-else><em>Waiting for pack</em></template>
-      </div>
+          </template>
+          <template v-else><em>Waiting for pack</em></template>
+        </div>
 
-      <div v-if="previousPicks" class="previous-pick" @click="onPreviousPickClick">
-        <div class="active-pack-label">Previous pick</div>
+        <div v-if="previousPicks" class="previous-pick" @click="onPreviousPickClick">
+          <div class="active-pack-label">Previous pick</div>
 
-        <div v-for="card in previousPicks" :key="card.id" class="card-slate previous">
-          <div class="card-name">{{ card.definition.name }}</div>
-          <div class="card-cost">
-            <ManaSymbol
-              v-for="(msymb, i) in card.definition.mana_cost"
-              :key="i"
-              :code="msymb"
-              class="mana-symbol"
-            />
+          <div v-for="card in previousPicks" :key="card.id" class="card-slate previous">
+            <div class="card-name">{{ card.definition.name }}</div>
+            <div class="card-cost">
+              <ManaSymbol
+                v-for="(msymb, i) in card.definition.mana_cost"
+                :key="i"
+                :code="msymb"
+                class="mana-symbol"
+              />
+            </div>
           </div>
         </div>
-      </div>
 
-      <CardDetailDialog
-        v-if="activeDialog?.kind == 'card-detail'"
-        :card="draftStore.getCard(activeDialog.cardId)"
-        class="fullscreen-page"
-        @close="activeDialog = null"
-        @pick="onPickCard"
-      />
-      <PreviousPickDialog
-        v-else-if="activeDialog?.kind == 'previous-pick'"
-        :cards="activeDialog.cards"
-        class="fullscreen-page"
-        @close="activeDialog = null"
-        @undo="onUndoPick"
-      />
-      <LoadingDialog v-else-if="activeDialog?.kind == 'loading-spinner'" class="fullscreen-page" />
-      <DismissableDialog
-        v-else-if="activeDialog?.kind == 'error-dialog'"
-        class="fullscreen-page"
-        @close="activeDialog = null"
-      >
-        <template #header>Flagrant System Error</template>
-        <div class="error-msg">{{ activeDialog.message }}</div>
-        <div v-if="activeDialog.escapedMessage" class="error-msg-escaped">
-          {{ activeDialog.escapedMessage }}
-        </div>
-      </DismissableDialog>
-    </template>
+        <CardDetailDialog
+          v-if="activeDialog?.kind == 'card-detail'"
+          :card="draftStore.getCard(activeDialog.cardId)"
+          class="fullscreen-page"
+          @close="activeDialog = null"
+          @pick="onPickCard"
+        />
+        <PreviousPickDialog
+          v-else-if="activeDialog?.kind == 'previous-pick'"
+          :cards="activeDialog.cards"
+          class="fullscreen-page"
+          @close="activeDialog = null"
+          @undo="onUndoPick"
+        />
+        <LoadingDialog
+          v-else-if="activeDialog?.kind == 'loading-spinner'"
+          class="fullscreen-page"
+        />
+        <DismissableDialog
+          v-else-if="activeDialog?.kind == 'error-dialog'"
+          class="fullscreen-page"
+          @close="activeDialog = null"
+        >
+          <template #header>Flagrant System Error</template>
+          <div class="error-msg">{{ activeDialog.message }}</div>
+          <div v-if="activeDialog.escapedMessage" class="error-msg-escaped">
+            {{ activeDialog.escapedMessage }}
+          </div>
+        </DismissableDialog>
+      </template>
+    </div>
   </div>
 </template>
 
@@ -405,14 +410,14 @@ function getErrorMessage(e: unknown): string {
     let message = `${axios.getUri(e.config)}\n\n${e.message}\n\n`;
     if (e.response) {
       message += `${e.response.status} ${e.response.statusText}\n\n`;
-      message += JSON.stringify(e.response.data);
+      message += JSON.stringify(e.response.data, undefined, 2);
     }
     return message;
   }
   if (e instanceof Error) {
     return e.message;
   } else {
-    return JSON.stringify(e);
+    return JSON.stringify(e, undefined, 2);
   }
 }
 
@@ -472,6 +477,14 @@ const CARDS_PER_PACK = 15;
 
   display: flex;
   flex-direction: column;
+  align-items: center;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  max-width: 450px;
+  width: 100%;
 }
 
 .header {
@@ -557,11 +570,6 @@ const CARDS_PER_PACK = 15;
   padding: 0 20px;
 }
 
-/* .active-pack-cnt {
-  display: flex;
-  flex-wrap: wrap;
-} */
-
 .active-pack-label {
   margin-bottom: 10px;
   font-style: italic;
@@ -578,6 +586,12 @@ const CARDS_PER_PACK = 15;
   padding: 20px;
   display: flex;
   align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.card-slate:hover {
+  outline: 1px solid #555;
 }
 
 .card-slate + .card-slate {
@@ -597,20 +611,6 @@ const CARDS_PER_PACK = 15;
   color: white;
   flex: 1;
 }
-
-/*
-.card {
-  width: 50%;
-  padding: 5px 10px;
-}
-
-.card:nth-child(odd) {
-  padding-right: 5px;
-}
-
-.card:nth-child(even) {
-  padding-left: 5px;
-} */
 
 .previous-pick {
   padding: 0 20px;

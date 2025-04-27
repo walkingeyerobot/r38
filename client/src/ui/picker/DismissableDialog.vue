@@ -37,6 +37,10 @@ defineEmits<{
 .scroller {
   overflow-y: auto;
   max-height: 100%;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .content {
@@ -45,6 +49,10 @@ defineEmits<{
 
   display: flex;
   flex-direction: column;
+
+  max-width: 450px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .header {
