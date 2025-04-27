@@ -1,7 +1,7 @@
 import { endpoint } from "@/rest/endpoint";
 import type { SourceData } from "@/parse/SourceData";
 
-export const routeDraft = endpoint({
+export const ROUTE_DRAFT = endpoint({
   route: "/api/draft/:id",
   method: "get",
   pathVars: {} as {

@@ -12,6 +12,21 @@ export async function fetchEndpoint<T extends RestEndpoint>(
   return response.data;
 }
 
+/**
+ * Wraps {@link fetchEndpoint} in a try statement and returns the result as a
+ * Go-style [response, error] tuple.
+ */
+export async function fetchEndpointEv<T extends RestEndpoint>(
+  endpoint: T,
+  params: EndpointParams<T>,
+) {
+  try {
+    return [await fetchEndpoint(endpoint, params), null] as const;
+  } catch (e) {
+    return [null, e as object] as const;
+  }
+}
+
 export type EndpointParams<T extends RestEndpoint> = DefaultEmpty<T["pathVars"]> &
   DefaultEmpty<T["queryVars"]> &
   DefaultEmpty<T["bodyVars"]>;

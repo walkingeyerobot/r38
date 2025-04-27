@@ -22,7 +22,7 @@ import { draftStore } from "@/state/DraftStore";
 import { deckBuilderStore as deckStore } from "@/state/DeckBuilderModule";
 
 import { fetchEndpoint } from "@/fetch/fetchEndpoint";
-import { routeDraft } from "@/rest/api/draft/draft";
+import { ROUTE_DRAFT } from "@/rest/api/draft/draft";
 import type { FetchStatus } from "./infra/FetchStatus";
 import { globalClickTracker } from "./infra/globalClickTracker";
 
@@ -45,7 +45,7 @@ export default defineComponent({
 
   methods: {
     async fetchDraft(draftId: number) {
-      const payload = await fetchEndpoint(routeDraft, {
+      const payload = await fetchEndpoint(ROUTE_DRAFT, {
         id: draftId.toString(),
         as: authStore.user?.id,
       });

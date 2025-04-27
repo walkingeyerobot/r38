@@ -35,4 +35,9 @@ export default defineConfig({
       },
     },
   },
+
+  // This is something that @vueuse/sound tells us to add
+  optimizeDeps: {
+    exclude: ["vue-demi"],
+  },
 });
