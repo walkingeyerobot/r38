@@ -388,8 +388,8 @@ func TestInPersonDraftEnforceZoneDraftingNextPlayerMakingFirstPick(t *testing.T)
 			strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cardRfids": ["%s"], "xsrfToken": "%s"}`, cardId, token))))
 
 	res := w.Result()
-	if res.StatusCode == http.StatusOK {
-		t.Error("expected pick to fail due to zone drafting violation, but pick succeeded")
+	if res.StatusCode != http.StatusBadRequest {
+		t.Errorf("expected pick to fail due to zone drafting violation, but status code was %d", res.StatusCode)
 	}
 }
 
@@ -476,7 +476,7 @@ func TestInPersonDraftEnforceZoneDraftingNextPlayerMakingSubsequentPick(t *testi
 			strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cardRfids": ["%s"], "xsrfToken": "%s"}`, cardId, token))))
 
 	res := w.Result()
-	if res.StatusCode == http.StatusOK {
-		t.Error("expected pick to fail due to zone drafting violation, but pick succeeded")
+	if res.StatusCode != http.StatusBadRequest {
+		t.Errorf("expected pick to fail due to zone drafting violation, but status code was %d", res.StatusCode)
 	}
 }
