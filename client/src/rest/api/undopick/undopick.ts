@@ -1,7 +1,7 @@
 import { endpoint } from "@/rest/endpoint";
 import type { SourceData } from "@/parse/SourceData";
 
-export const routeUndoPick = endpoint({
+export const ROUTE_UNDO_PICK = endpoint({
   route: "/api/undopick/",
   method: "post",
   queryVars: {

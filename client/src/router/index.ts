@@ -34,6 +34,11 @@ const router = createRouter({
       component: () => import("../ui/Replay.vue"),
     },
     {
+      path: `/picker/:draftId(\\d+)/`,
+      name: "picker",
+      component: () => import("../ui/PickerPage.vue"),
+    },
+    {
       path: "/deckbuilder/:draftId(\\d+)",
       name: "deckbuilder",
       component: () => import("../ui/DeckBuilder.vue"),

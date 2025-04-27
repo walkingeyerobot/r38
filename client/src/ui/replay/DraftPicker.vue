@@ -31,10 +31,10 @@ import { draftStore, type DraftStore } from "@/state/DraftStore";
 import { replayStore } from "@/state/ReplayStore";
 import type { CardPack, DraftSeat } from "@/draft/DraftState";
 import { fetchEndpoint } from "@/fetch/fetchEndpoint";
-import { routePick } from "@/rest/api/pick/pick";
+import { ROUTE_PICK } from "@/rest/api/pick/pick";
 import { delay } from "@/util/delay";
-import { routePickRfid } from "@/rest/api/pickrfid/pickrfid.ts";
-import { routeUndoPick } from "@/rest/api/undopick/undopick.ts";
+import { ROUTE_PICK_RFID } from "@/rest/api/pickrfid/pickrfid.ts";
+import { ROUTE_UNDO_PICK } from "@/rest/api/undopick/undopick.ts";
 import { playErrorSound, playScanSound } from "@/sfx/sfx.ts";
 
 export default defineComponent({
@@ -109,7 +109,7 @@ export default defineComponent({
 
       const start = Date.now();
       // TODO: Error handling
-      const response = await fetchEndpoint(routePick, {
+      const response = await fetchEndpoint(ROUTE_PICK, {
         cards: [cardId],
         xsrfToken: draftStore.pickXsrf,
         as: authStore.user?.id,
@@ -138,7 +138,7 @@ export default defineComponent({
 
       const start = Date.now();
       try {
-        const response = await fetchEndpoint(routePickRfid, {
+        const response = await fetchEndpoint(ROUTE_PICK_RFID, {
           draftId: draftStore.draftId,
           cardRfids: [cardRfid],
           xsrfToken: draftStore.pickXsrf,
@@ -157,7 +157,7 @@ export default defineComponent({
     },
 
     async onUndoPickClicked() {
-      const response = await fetchEndpoint(routeUndoPick, {
+      const response = await fetchEndpoint(ROUTE_UNDO_PICK, {
         draftId: draftStore.draftId,
         xsrfToken: draftStore.pickXsrf,
         as: authStore.user?.id,

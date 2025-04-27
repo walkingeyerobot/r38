@@ -1,7 +1,7 @@
 import { endpoint } from "@/rest/endpoint";
 import type { SourceData } from "@/parse/SourceData";
 
-export const routePickRfid = endpoint({
+export const ROUTE_PICK_RFID = endpoint({
   route: "/api/pickrfid/",
   method: "post",
   queryVars: {
