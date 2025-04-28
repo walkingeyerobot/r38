@@ -76,8 +76,19 @@ EOF
 
 ## Configure a draft
 
+MTGO draft:
 ```bash
-go run makedraft_cli/main.go
+go run makedraft_cli/*.go --name="name of draft"
+```
+
+Paper draft:
+```bash
+go run makedraft_cli/*.go --inPerson --name="name of draft"
+```
+
+Paper draft with automatic seat and/or pack assignment, for testing:
+```bash
+go run makedraft_cli/*.go --inPerson --name="name of draft" [--assignSeats] [--assignPakcs]
 ```
 
 ## Start the server

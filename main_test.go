@@ -60,6 +60,8 @@ func makeDraft(t *testing.T, err error, db *sql.DB, seed int) {
 		Database:                         ptr(""),
 		Seed:                             &seed,
 		InPerson:                         ptr(true),
+		AssignSeats:                      ptr(false),
+		AssignPacks:                      ptr(false),
 		Verbose:                          ptr(false),
 		Simulate:                         ptr(false),
 		Name:                             ptr("test draft"),
