@@ -30,6 +30,8 @@ type Settings struct {
 	Database                                  *string
 	Seed                                      *int
 	InPerson                                  *bool
+	AssignSeats                               *bool
+	AssignPacks                               *bool
 	Verbose                                   *bool
 	Simulate                                  *bool
 	Name                                      *string
@@ -270,7 +272,9 @@ func MakeDraft(settings Settings, tx *sql.Tx) error {
 
 	format := path.Base(*settings.Set)
 	format = strings.TrimSuffix(format, path.Ext(format))
-	packIDs, err = generateEmptyDraft(tx, *settings.Name, format, *settings.InPerson, *settings.Simulate)
+	assignSeats := *settings.AssignSeats || !*settings.InPerson
+	assignPacks := *settings.AssignPacks || !*settings.InPerson
+	packIDs, err = generateEmptyDraft(tx, *settings.Name, format, *settings.InPerson, assignSeats, assignPacks, *settings.Simulate)
 	if err != nil {
 		return err
 	}
@@ -295,10 +299,7 @@ func MakeDraft(settings Settings, tx *sql.Tx) error {
 	return nil
 }
 
-func generateEmptyDraft(tx *sql.Tx, name string, format string, inPerson bool, simulate bool) ([24]int64, error) {
-	assignSeats := !inPerson
-	assignPacks := !inPerson
-
+func generateEmptyDraft(tx *sql.Tx, name string, format string, inPerson bool, assignSeats bool, assignPacks bool, simulate bool) ([24]int64, error) {
 	var packIds [24]int64
 
 	var dg *discordgo.Session
