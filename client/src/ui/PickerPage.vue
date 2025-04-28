@@ -11,6 +11,8 @@ The primary page for making picks during an active draft
           {{ draftStore.draftName }}
         </div>
 
+        <TableSeating />
+
         <div class="player-list">
           <a
             v-for="seat in draftStore.currentState.seats"
@@ -138,6 +140,7 @@ import { draftStore, type DraftStore } from "@/state/DraftStore";
 import { isPickEvent } from "@/state/util/isPickEvent";
 import type { DraftCard, DraftState } from "@/draft/DraftState";
 import { PickerSounds } from "@/ui/picker/PickerSounds";
+import TableSeating from "@/ui/picker/TableSeating.vue";
 
 const route = useRoute();
 
