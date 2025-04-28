@@ -42,7 +42,7 @@ import DraftListItem from "./DraftListItem.vue";
 
 import { authStore } from "@/state/AuthStore";
 
-import { type HomeDraftDescriptor, routeDraftlist } from "@/rest/api/draftlist/draftlist";
+import { type HomeDraftDescriptor, ROUTE_DRAFT_LIST } from "@/rest/api/draftlist/draftlist";
 import { fetchEndpoint } from "@/fetch/fetchEndpoint";
 import type { FetchStatus } from "../infra/FetchStatus";
 
@@ -91,7 +91,7 @@ export default defineComponent({
   methods: {
     async refreshDraftList() {
       this.listFetchStatus = "fetching";
-      const response = await fetchEndpoint(routeDraftlist, {
+      const response = await fetchEndpoint(ROUTE_DRAFT_LIST, {
         as: authStore.user?.id,
       });
       this.listFetchStatus = "loaded";

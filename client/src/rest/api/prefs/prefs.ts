@@ -1,6 +1,6 @@
 import { endpoint } from "@/rest/endpoint";
 
-export const routePrefs = endpoint({
+export const ROUTE_PREFS = endpoint({
   route: "/api/prefs/",
   method: "get",
   queryVars: {},

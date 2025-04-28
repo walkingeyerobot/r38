@@ -26,7 +26,7 @@
 import { defineComponent } from "vue";
 import PrefsItem from "./PrefsItem.vue";
 
-import { type UserPrefDescriptor, routePrefs, routeSetPref } from "@/rest/api/prefs/prefs";
+import { type UserPrefDescriptor, ROUTE_PREFS, routeSetPref } from "@/rest/api/prefs/prefs";
 import { fetchEndpoint } from "@/fetch/fetchEndpoint";
 import { authStore, type AuthenticatedUser, type AuthStore } from "@/state/AuthStore";
 
@@ -60,7 +60,7 @@ export default defineComponent({
   },
 
   async created() {
-    const response = await fetchEndpoint(routePrefs, {
+    const response = await fetchEndpoint(ROUTE_PREFS, {
       as: authStore.user?.id,
     });
     // TODO: catch and show error
