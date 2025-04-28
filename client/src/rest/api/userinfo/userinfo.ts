@@ -1,6 +1,6 @@
 import { endpoint } from "@/rest/endpoint";
 
-export const routeUserInfo = endpoint({
+export const ROUTE_USER_INFO = endpoint({
   route: "/api/userinfo/",
   method: "get",
   queryVars: {

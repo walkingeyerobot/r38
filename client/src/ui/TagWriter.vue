@@ -11,7 +11,7 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import { fetchEndpoint } from "@/fetch/fetchEndpoint.ts";
-import { routeSet } from "@/rest/api/set/set.ts";
+import { ROUTE_SET } from "@/rest/api/set/set.ts";
 import type { SourceSet } from "@/parse/SourceData.ts";
 
 export default defineComponent({
@@ -50,7 +50,7 @@ export default defineComponent({
   },
 
   async mounted() {
-    this.cards = await fetchEndpoint(routeSet, { set: this.set });
+    this.cards = await fetchEndpoint(ROUTE_SET, { set: this.set });
     this.setCard(this.cards[0].id);
   },
 

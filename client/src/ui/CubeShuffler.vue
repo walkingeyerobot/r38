@@ -9,7 +9,7 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import { fetchEndpoint } from "@/fetch/fetchEndpoint.ts";
-import { routeGetCardPack } from "@/rest/api/getcardpack/getcardpack.ts";
+import { ROUTE_GET_CARD_PACK } from "@/rest/api/getcardpack/getcardpack.ts";
 import { useSound } from "@vueuse/sound";
 import beep from "../sfx/beep.mp3";
 
@@ -34,7 +34,7 @@ export default defineComponent({
   methods: {
     async onRfidScan(event: CustomEvent) {
       this.pack = "";
-      const response = await fetchEndpoint(routeGetCardPack, {
+      const response = await fetchEndpoint(ROUTE_GET_CARD_PACK, {
         draftId: Number(this.draftId),
         cardRfid: event.detail as string,
       });
