@@ -17,7 +17,7 @@
     <div class="drafts-cnt">
       <div v-if="listFetchStatus == 'fetching'" class="loading-msg">Loading...</div>
 
-      <DraftListItem
+      <DraftListItem2
         v-for="descriptor in joinableDrafts"
         class="list-item"
         :key="descriptor.id"
@@ -25,7 +25,7 @@
         v-on:refreshDraftList="refreshDraftList"
       />
 
-      <DraftListItem
+      <DraftListItem2
         v-for="descriptor in otherDrafts"
         class="list-item"
         :key="descriptor.id"
@@ -38,7 +38,7 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import DraftListItem from "./DraftListItem.vue";
+import DraftListItem2 from "./DraftListItem2.vue";
 
 import { authStore } from "@/state/AuthStore";
 
@@ -48,7 +48,7 @@ import type { FetchStatus } from "../infra/FetchStatus";
 
 export default defineComponent({
   components: {
-    DraftListItem,
+    DraftListItem2,
   },
 
   data() {
@@ -159,12 +159,13 @@ export default defineComponent({
 .list-item {
   margin-left: 30px;
   margin-right: 30px;
-  border-top: 1px solid #e0e0e0;
+  /* border-top: 1px solid #e0e0e0; */
+  margin-bottom: 20px;
 }
 
-.list-item:last-child {
+/* .list-item:last-child {
   border-bottom: 1px solid #e0e0e0;
-}
+} */
 
 .user-img {
   width: 28px;
