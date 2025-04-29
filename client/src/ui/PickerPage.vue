@@ -12,13 +12,14 @@ The primary page for making picks during an active draft
         </div>
 
         <TableSeating
-          v-if="nextPick.kind == 'NotSeated' || nextPick.kind == 'ReadyToStart'"
+          v-if="nextPick.kind == 'NotSeated' || nextPick.kind == 'WaitingToFill'"
           class="table-seating"
         />
 
         <template v-else>
           <div class="player-list">
-            <a
+            <component
+              :is="isDevMode ? 'a' : 'div'"
               v-for="seat in draftStore.currentState.seats"
               :key="seat.position"
               class="seated-player"
@@ -30,7 +31,7 @@ The primary page for making picks during an active draft
                 :title="seat.player.name"
                 :class="{ active: seat.player.id == authStore.user?.id }"
               />
-            </a>
+            </component>
           </div>
 
           <div class="pick-count" v-if="nextPick.kind == 'ActivePosition'">
@@ -153,6 +154,7 @@ const loaded = ref(false);
 const activeDialog = ref<ActiveDialog | null>(null);
 const draftId = parseInt(route.params["draftId"] as string);
 const activeRequest = ref<boolean>(false);
+const isDevMode = import.meta.env.DEV;
 
 onMounted(() => {
   console.log("---- Draft ID is", draftId);
@@ -224,8 +226,8 @@ const nextPick = computed<PickPosition>(() => {
 
   let nextPick: PickPosition;
   if (pickEvent == null) {
-    if (activePack.value == null) {
-      nextPick = { kind: "ReadyToStart" };
+    if (draftStore.hasSeatsAvailable) {
+      nextPick = { kind: "WaitingToFill" };
     } else {
       nextPick = { kind: "ActivePosition", round: 1, pick: 0 };
     }
@@ -445,7 +447,7 @@ type PickPosition =
       kind: "NotSeated";
     }
   | {
-      kind: "ReadyToStart";
+      kind: "WaitingToFill";
     }
   | {
       kind: "ActivePosition";
@@ -584,7 +586,7 @@ const CARDS_PER_PACK = 15;
 }
 
 .active-pack {
-  margin-top: 20px;
+  margin: 20px 0px;
   padding: 0 20px;
 }
 

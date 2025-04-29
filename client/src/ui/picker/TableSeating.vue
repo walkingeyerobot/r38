@@ -37,7 +37,7 @@
 
     <div class="footer">
       <button v-if="canJoin" class="join-btn" @click="onJoinClick">Join</button>
-      <template v-else-if="hasSeatsAvailable">Waiting for seats to fill</template>
+      <template v-else-if="draftStore.hasSeatsAvailable">Waiting for seats to fill</template>
       <template v-else-if="isSelfSeated">Take your seat</template>
       <template v-else>Ready to start</template>
     </div>
@@ -71,19 +71,8 @@ const isSelfSeated = computed(() => {
   return ownSeatPosition.value != null;
 });
 
-const hasSeatsAvailable = computed(() => {
-  for (const seat of draftStore.currentState.seats) {
-    // TODO: Currently there isn't a great way to tell whether a player is
-    // real or not. This is our best way
-    if (!seat.player.isPresent) {
-      return true;
-    }
-  }
-  return false;
-});
-
 const canJoin = computed(() => {
-  return !isSelfSeated.value && hasSeatsAvailable.value;
+  return !isSelfSeated.value && draftStore.hasSeatsAvailable;
 });
 
 async function onJoinClick() {
@@ -127,7 +116,6 @@ const TABLE_POSITIONS = [
   position: relative;
   width: 260px;
   height: 480px;
-  /* box-sizing: border-box; */
 
   display: flex;
   flex-direction: column;
