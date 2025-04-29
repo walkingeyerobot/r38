@@ -17,7 +17,7 @@ go get -v github.com/walkingeyerobot/r38/...
 You can now run the server without OAuth. You will always be considered logged in as userId 1. To be logged in as a different user, add ?as=x to the end of the url you want to view, where x is the id of the user you want to view the page as.
 
 ```bash
-source ~/r38-secret*.env; go run main.go -auth=false
+source r38-secret*.env; go run . -auth=false
 ```
 
 ## Configure OAuth for a local environment:
@@ -77,22 +77,34 @@ EOF
 ## Configure a draft
 
 MTGO draft:
+
 ```bash
 go run makedraft_cli/*.go --name="name of draft"
 ```
 
 Paper draft:
+
 ```bash
 go run makedraft_cli/*.go --inPerson --name="name of draft"
 ```
 
 Paper draft with automatic seat and/or pack assignment, for testing:
+
 ```bash
-go run makedraft_cli/*.go --inPerson --name="name of draft" [--assignSeats] [--assignPakcs]
+go run makedraft_cli/*.go --inPerson --name="name of draft" [--assignSeats] [--assignPacks]
+```
+
+## Initialize fake users
+
+The following will prepopulate the server with 11 fake users that you can
+impersonate with the `?as=` query param.
+
+```bash
+sqlite3 draft.db < development/InitUsers.sql
 ```
 
 ## Start the server
 
 ```bash
-source ~/r38-secret*.env; go run main.go
+source r38-secret*.env; go run .
 ```
