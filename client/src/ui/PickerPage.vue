@@ -11,78 +11,83 @@ The primary page for making picks during an active draft
           {{ draftStore.draftName }}
         </div>
 
-        <TableSeating />
+        <TableSeating
+          v-if="nextPick.kind == 'NotSeated' || nextPick.kind == 'ReadyToStart'"
+          class="table-seating"
+        />
 
-        <div class="player-list">
-          <a
-            v-for="seat in draftStore.currentState.seats"
-            :key="seat.position"
-            class="seated-player"
-            :href="`${route.path}?as=${seat.player.id}`"
-          >
-            <img
-              class="player-icon"
-              :src="seat.player.iconUrl"
-              :title="seat.player.name"
-              :class="{ active: seat.player.id == authStore.user?.id }"
-            />
-          </a>
-        </div>
-
-        <div class="pick-count" v-if="nextPick.kind == 'ActivePosition'">
-          <div class="pc-round">
-            <div class="pc-round-label">Pack</div>
-            <div class="pc-round-count">{{ nextPick.round }}</div>
+        <template v-else>
+          <div class="player-list">
+            <a
+              v-for="seat in draftStore.currentState.seats"
+              :key="seat.position"
+              class="seated-player"
+              :href="`${route.path}?as=${seat.player.id}`"
+            >
+              <img
+                class="player-icon"
+                :src="seat.player.iconUrl"
+                :title="seat.player.name"
+                :class="{ active: seat.player.id == authStore.user?.id }"
+              />
+            </a>
           </div>
-          <div class="pc-pick">
-            <div class="pc-pick-label">Pick</div>
-            <div class="pc-pick-count">{{ nextPick.pick + 1 }}</div>
-          </div>
-        </div>
-        <div class="pick-count-error" v-else-if="nextPick.kind == 'Error'">
-          {{ nextPick.message }}
-        </div>
 
-        <div class="active-pack">
-          <template v-if="activePack">
-            <div class="active-pack-label">Current pack</div>
-            <div class="active-pack-cnt">
-              <div
-                v-for="card in activePack"
-                :key="card.id"
-                class="card-slate"
-                @click="onCardClick(card)"
-              >
-                <div class="card-name">{{ card.definition.name }}</div>
-                <div class="card-cost">
-                  <ManaSymbol
-                    v-for="(msymb, i) in card.definition.mana_cost"
-                    :key="i"
-                    :code="msymb"
-                    class="mana-symbol"
-                  />
+          <div class="pick-count" v-if="nextPick.kind == 'ActivePosition'">
+            <div class="pc-round">
+              <div class="pc-round-label">Pack</div>
+              <div class="pc-round-count">{{ nextPick.round }}</div>
+            </div>
+            <div class="pc-pick">
+              <div class="pc-pick-label">Pick</div>
+              <div class="pc-pick-count">{{ nextPick.pick + 1 }}</div>
+            </div>
+          </div>
+          <div class="pick-count-error" v-else-if="nextPick.kind == 'Error'">
+            {{ nextPick.message }}
+          </div>
+
+          <div class="active-pack">
+            <template v-if="activePack">
+              <div class="active-pack-label">Current pack</div>
+              <div class="active-pack-cnt">
+                <div
+                  v-for="card in activePack"
+                  :key="card.id"
+                  class="card-slate"
+                  @click="onCardClick(card)"
+                >
+                  <div class="card-name">{{ card.definition.name }}</div>
+                  <div class="card-cost">
+                    <ManaSymbol
+                      v-for="(msymb, i) in card.definition.mana_cost"
+                      :key="i"
+                      :code="msymb"
+                      class="mana-symbol"
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
-          </template>
-          <template v-else><em>Waiting for pack</em></template>
-        </div>
+            </template>
+            <template v-else><em>Waiting for pack</em></template>
+          </div>
 
-        <div v-if="previousPicks" class="previous-pick" @click="onPreviousPickClick">
-          <div class="active-pack-label">Previous pick</div>
+          <div v-if="previousPicks" class="previous-pick" @click="onPreviousPickClick">
+            <div class="active-pack-label">Previous pick</div>
 
-          <div v-for="card in previousPicks" :key="card.id" class="card-slate previous">
-            <div class="card-name">{{ card.definition.name }}</div>
-            <div class="card-cost">
-              <ManaSymbol
-                v-for="(msymb, i) in card.definition.mana_cost"
-                :key="i"
-                :code="msymb"
-                class="mana-symbol"
-              />
+            <div v-for="card in previousPicks" :key="card.id" class="card-slate previous">
+              <div class="card-name">{{ card.definition.name }}</div>
+              <div class="card-cost">
+                <ManaSymbol
+                  v-for="(msymb, i) in card.definition.mana_cost"
+                  :key="i"
+                  :code="msymb"
+                  class="mana-symbol"
+                />
+              </div>
             </div>
           </div>
-        </div>
+        </template>
 
         <CardDetailDialog
           v-if="activeDialog?.kind == 'card-detail'"
@@ -175,7 +180,7 @@ const activePack = computed(() => {
   }
 
   const firstQueuedPack = seat.queuedPacks.packs[0];
-  if (firstQueuedPack.round == seat.round) {
+  if (firstQueuedPack.round == seat.round && firstQueuedPack.cards.length > 0) {
     return firstQueuedPack.cards.map((id) => draftStore.getCard(id));
   } else {
     return null;
@@ -202,7 +207,7 @@ const previousPicks = computed(() => {
   return null;
 });
 
-const nextPick = computed(() => {
+const nextPick = computed<PickPosition>(() => {
   const userId = authStore.user?.id;
 
   if (userId == null) {
@@ -212,14 +217,18 @@ const nextPick = computed(() => {
   const seat = findPlayerSeat(userId, draftStore.currentState);
 
   if (seat == null) {
-    return pickPositionError(`User ${userId} is not seated at this draft`);
+    return { kind: "NotSeated" };
   }
 
   const pickEvent = getMostRecentPickEvent(draftStore, seat.position);
 
   let nextPick: PickPosition;
   if (pickEvent == null) {
-    nextPick = { kind: "ActivePosition", round: 1, pick: 0 };
+    if (activePack.value == null) {
+      nextPick = { kind: "ReadyToStart" };
+    } else {
+      nextPick = { kind: "ActivePosition", round: 1, pick: 0 };
+    }
   } else {
     nextPick = incrementPick(pickEvent.round, pickEvent.pick);
   }
@@ -432,6 +441,12 @@ function pickPositionError(message: string): PickPosition {
 }
 
 type PickPosition =
+  | {
+      kind: "NotSeated";
+    }
+  | {
+      kind: "ReadyToStart";
+    }
   | {
       kind: "ActivePosition";
       round: number;

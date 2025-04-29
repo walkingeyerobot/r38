@@ -81,6 +81,9 @@ class StateParser {
         seatPosition: position,
         scanSound: src.scanSound,
         errorSound: src.errorSound,
+        // TODO: Currently there isn't a great way to tell whether a player is
+        // real or not. This is our best way at the moment
+        isPresent: src.playerName != "",
       },
       picks: playerPicks,
       originalPacks: [],

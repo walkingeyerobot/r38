@@ -2,7 +2,7 @@
   <div class="_table-seating">
     <div class="table">
       <component
-        :is="isDevMode ? 'a' : 'div'"
+        :is="seat.player.isPresent && isDevMode ? 'a' : 'div'"
         v-for="seat in draftStore.currentState.seats"
         :key="seat.position"
         class="seated-player"
@@ -20,11 +20,26 @@
           class="selection-halo"
           src="./selection_halo.svg"
         />
-        <img class="player-icon" :src="seat.player.iconUrl" :title="seat.player.name" />
+
+        <img
+          v-if="seat.player.isPresent"
+          class="player-icon"
+          :src="seat.player.iconUrl"
+          :title="seat.player.name"
+        />
+        <div v-else class="player-icon-standin"></div>
+
         <div class="position-badge" :class="[TABLE_POSITIONS[seat.position].orientation]">
           {{ seat.position + 1 }}
         </div>
       </component>
+    </div>
+
+    <div class="footer">
+      <button v-if="canJoin" class="join-btn" @click="onJoinClick">Join</button>
+      <template v-else-if="hasSeatsAvailable">Waiting for seats to fill</template>
+      <template v-else-if="isSelfSeated">Take your seat</template>
+      <template v-else>Ready to start</template>
     </div>
   </div>
 </template>
@@ -35,6 +50,9 @@ import { useRoute } from "vue-router";
 import { authStore } from "@/state/AuthStore";
 import { draftStore } from "@/state/DraftStore";
 import { computed } from "vue";
+import { fetchEndpoint, fetchEndpointEv } from "@/fetch/fetchEndpoint";
+import { ROUTE_JOIN_DRAFT } from "@/rest/api/join/join";
+import { ROUTE_DRAFT } from "@/rest/api/draft/draft";
 
 const route = useRoute();
 
@@ -52,6 +70,34 @@ const ownSeatPosition = computed(() => {
 const isSelfSeated = computed(() => {
   return ownSeatPosition.value != null;
 });
+
+const hasSeatsAvailable = computed(() => {
+  for (const seat of draftStore.currentState.seats) {
+    // TODO: Currently there isn't a great way to tell whether a player is
+    // real or not. This is our best way
+    if (!seat.player.isPresent) {
+      return true;
+    }
+  }
+  return false;
+});
+
+const canJoin = computed(() => {
+  return !isSelfSeated.value && hasSeatsAvailable.value;
+});
+
+async function onJoinClick() {
+  const [response, e] = await fetchEndpointEv(ROUTE_JOIN_DRAFT, {
+    id: draftStore.draftId,
+    position: undefined,
+    as: authStore.user?.id,
+  });
+  const payload = await fetchEndpoint(ROUTE_DRAFT, {
+    id: draftStore.draftId.toString(),
+    as: authStore.user?.id,
+  });
+  draftStore.loadDraft(payload);
+}
 </script>
 
 <script lang="ts">
@@ -74,7 +120,7 @@ const TABLE_POSITIONS = [
   flex-direction: column;
   align-items: center;
 
-  margin: 30px 0;
+  margin-top: 10px;
 }
 
 .table {
@@ -112,6 +158,15 @@ const TABLE_POSITIONS = [
   border-radius: 100px;
 
   border: 2px solid #8b4d4d;
+}
+
+.player-icon-standin {
+  width: 60px;
+  height: 60px;
+  border-radius: 100px;
+  min-height: 60px;
+
+  border: 1px solid #7a3231;
 }
 
 .position-badge {
@@ -165,5 +220,15 @@ const TABLE_POSITIONS = [
   100% {
     transform: rotate3d(0, 0, 1, 360deg);
   }
+}
+
+.footer {
+  margin-top: 60px;
+}
+
+.join-btn {
+  padding: 20px;
+  min-width: 160px;
+  font-size: 16px;
 }
 </style>
