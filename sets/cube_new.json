@@ -145,6 +145,15 @@
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"R\",\"W\"],\"layout\":\"transform\",\"name\":\"Ajani, Nacatl Pariah // Ajani, Nacatl Avenger\",\"type_line\":\"Legendary Creature — Cat Warrior // Legendary Planeswalker — Ajani\",\"collector_number\":\"237\",\"rarity\":\"mythic\",\"set\":\"mh3\",\"card_faces\":[{\"mana_cost\":\"{1}{W}\",\"name\":\"Ajani, Nacatl Pariah\",\"type_line\":\"Legendary Creature — Cat Warrior\",\"colors\":[\"W\"]},{\"mana_cost\":\"\",\"name\":\"Ajani, Nacatl Avenger\",\"type_line\":\"Legendary Planeswalker — Ajani\",\"colors\":[\"R\",\"W\"]}]},\"image_uris\":[\"https://cards.scryfall.io/normal/front/0/d/0d16e8e0-31b2-4389-afd6-783c501f6fa0.jpg?1738269605\",\"https://cards.scryfall.io/normal/back/0/d/0d16e8e0-31b2-4389-afd6-783c501f6fa0.jpg?1738269605\"],\"mtgo_id\":0}"
     },
     {
+      "color": "R",
+      "color_identity": "R",
+      "dfc": false,
+      "id": "1ac0e78b-0fdd-44f9-8b7b-c4f28a32782e",
+      "oracle_id": "3ed14ea7-ee62-4604-af3b-deafb00108c3",
+      "rarity": "uncommon",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"R\"],\"layout\":\"normal\",\"name\":\"Amped Raptor\",\"type_line\":\"Creature — Dinosaur\",\"collector_number\":\"114\",\"rarity\":\"uncommon\",\"set\":\"mh3\",\"colors\":[\"R\"],\"mana_cost\":\"{1}{R}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/1/a/1ac0e78b-0fdd-44f9-8b7b-c4f28a32782e.jpg?1734350317\"],\"mtgo_id\":0}"
+    },
+    {
       "color": "U",
       "color_identity": "U",
       "dfc": false,
@@ -161,15 +170,6 @@
       "oracle_id": "23467047-6dba-4498-b783-1ebc4f74b8c2",
       "rarity": "uncommon",
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":0,\"color_identity\":[],\"layout\":\"normal\",\"name\":\"Ancient Tomb\",\"type_line\":\"Land\",\"collector_number\":\"315\",\"rarity\":\"uncommon\",\"set\":\"tmp\",\"colors\":[]},\"image_uris\":[\"https://cards.scryfall.io/normal/front/3/0/30e401e3-282b-4524-87e1-c6cd50cd6d00.jpg?1562053283\"],\"mtgo_id\":0}"
-    },
-    {
-      "color": "R",
-      "color_identity": "R",
-      "dfc": false,
-      "id": "fa2920af-e6a1-4939-ab59-67af4430e5b8",
-      "oracle_id": "eaabd151-2160-4bff-82c0-3fa88659be98",
-      "rarity": "uncommon",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":4,\"color_identity\":[\"R\"],\"layout\":\"normal\",\"name\":\"Anger\",\"type_line\":\"Creature — Incarnation\",\"collector_number\":\"77\",\"rarity\":\"uncommon\",\"set\":\"jud\",\"colors\":[\"R\"],\"mana_cost\":\"{3}{R}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/f/a/fa2920af-e6a1-4939-ab59-67af4430e5b8.jpg?1562632777\"],\"mtgo_id\":0}"
     },
     {
       "color": "B",
@@ -271,15 +271,6 @@
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"B\",\"U\"],\"layout\":\"normal\",\"name\":\"Baleful Strix\",\"type_line\":\"Artifact Creature — Bird\",\"collector_number\":\"82\",\"rarity\":\"uncommon\",\"set\":\"pc2\",\"colors\":[\"B\",\"U\"],\"mana_cost\":\"{U}{B}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/6/2/62090c97-7e3e-4854-bc44-c4a900133ec5.jpg?1575571987\"],\"mtgo_id\":0}"
     },
     {
-      "color": "G",
-      "color_identity": "G",
-      "dfc": false,
-      "id": "76610e6e-b60f-494f-bb11-68371eb494f2",
-      "oracle_id": "2dd32fec-5bc3-4cc0-a9b4-814229a64914",
-      "rarity": "rare",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":5,\"color_identity\":[\"G\"],\"layout\":\"normal\",\"name\":\"Balustrade Wurm\",\"type_line\":\"Creature — Wurm\",\"collector_number\":\"168\",\"rarity\":\"rare\",\"set\":\"dsk\",\"colors\":[\"G\"],\"mana_cost\":\"{3}{G}{G}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/7/6/76610e6e-b60f-494f-bb11-68371eb494f2.jpg?1726286482\"],\"mtgo_id\":0}"
-    },
-    {
       "color": "B",
       "color_identity": "B",
       "dfc": false,
@@ -299,30 +290,12 @@
     },
     {
       "color": "",
-      "color_identity": "",
-      "dfc": false,
-      "id": "cd114ec3-d286-4c70-a122-3043bc53cc88",
-      "oracle_id": "d12e5ce0-5705-4c35-9a93-b883db52c80c",
-      "rarity": "mythic",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":5,\"color_identity\":[],\"layout\":\"normal\",\"name\":\"Batterskull\",\"type_line\":\"Artifact — Equipment\",\"collector_number\":\"130\",\"rarity\":\"mythic\",\"set\":\"nph\",\"colors\":[],\"mana_cost\":\"{5}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/c/d/cd114ec3-d286-4c70-a122-3043bc53cc88.jpg?1562881615\"],\"mtgo_id\":0}"
-    },
-    {
-      "color": "",
       "color_identity": "BG",
       "dfc": false,
       "id": "412ceddd-2b9a-4551-a6bf-ae2830a2010a",
       "oracle_id": "b76d1ae6-ad1d-4bac-b4c3-2e03e0e84d9b",
       "rarity": "rare",
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":0,\"color_identity\":[\"B\",\"G\"],\"layout\":\"normal\",\"name\":\"Bayou\",\"type_line\":\"Land — Swamp Forest\",\"collector_number\":\"278\",\"rarity\":\"rare\",\"set\":\"lea\",\"colors\":[]},\"image_uris\":[\"https://cards.scryfall.io/normal/front/4/1/412ceddd-2b9a-4551-a6bf-ae2830a2010a.jpg?1559591578\"],\"mtgo_id\":0}"
-    },
-    {
-      "color": "",
-      "color_identity": "",
-      "dfc": false,
-      "id": "ff37b863-f8c4-4584-8cc2-ac0e096e583f",
-      "oracle_id": "54022a10-c9f0-458d-a0ed-228843cd9a40",
-      "rarity": "uncommon",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":0,\"color_identity\":[],\"layout\":\"normal\",\"name\":\"Bazaar of Baghdad\",\"type_line\":\"Land\",\"collector_number\":\"70\",\"rarity\":\"uncommon\",\"set\":\"arn\",\"colors\":[]},\"image_uris\":[\"https://cards.scryfall.io/normal/front/f/f/ff37b863-f8c4-4584-8cc2-ac0e096e583f.jpg?1562943098\"],\"mtgo_id\":0}"
     },
     {
       "color": "G",
@@ -361,15 +334,6 @@
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":0,\"color_identity\":[\"B\",\"R\"],\"layout\":\"normal\",\"name\":\"Blackcleave Cliffs\",\"type_line\":\"Land\",\"collector_number\":\"224\",\"rarity\":\"rare\",\"set\":\"som\",\"colors\":[]},\"image_uris\":[\"https://cards.scryfall.io/normal/front/3/d/3d71be5f-0fd7-4a88-8041-f4d6bc4cc9ac.jpg?1562816648\"],\"mtgo_id\":0}"
     },
     {
-      "color": "W",
-      "color_identity": "W",
-      "dfc": false,
-      "id": "b8e56a28-713b-4a13-a601-1128cf117539",
-      "oracle_id": "194166ad-0179-42a3-86b9-ba7f322ec576",
-      "rarity": "rare",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":3,\"color_identity\":[\"W\"],\"layout\":\"normal\",\"name\":\"Blade Splicer\",\"type_line\":\"Creature — Phyrexian Human Artificer\",\"collector_number\":\"4\",\"rarity\":\"rare\",\"set\":\"nph\",\"colors\":[\"W\"],\"mana_cost\":\"{2}{W}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/b/8/b8e56a28-713b-4a13-a601-1128cf117539.jpg?1562880986\"],\"mtgo_id\":0}"
-    },
-    {
       "color": "",
       "color_identity": "BR",
       "dfc": false,
@@ -377,6 +341,15 @@
       "oracle_id": "977c2f33-b622-4172-9efb-7f523becd32b",
       "rarity": "rare",
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":0,\"color_identity\":[\"B\",\"R\"],\"layout\":\"normal\",\"name\":\"Blazemire Verge\",\"type_line\":\"Land\",\"collector_number\":\"256\",\"rarity\":\"rare\",\"set\":\"dsk\",\"colors\":[]},\"image_uris\":[\"https://cards.scryfall.io/normal/front/d/1/d151c8e2-d715-470d-868a-f45191db9fa0.jpg?1726286828\"],\"mtgo_id\":0}"
+    },
+    {
+      "color": "",
+      "color_identity": "BW",
+      "dfc": false,
+      "id": "52dcdabd-a186-45fe-9fee-6c0f1afeaf16",
+      "oracle_id": "2b8144a0-08d2-4c28-9fd7-5d90f90105e4",
+      "rarity": "rare",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":0,\"color_identity\":[\"B\",\"W\"],\"layout\":\"normal\",\"name\":\"Bleachbone Verge\",\"type_line\":\"Land\",\"collector_number\":\"250\",\"rarity\":\"rare\",\"set\":\"dft\",\"colors\":[]},\"image_uris\":[\"https://cards.scryfall.io/normal/front/5/2/52dcdabd-a186-45fe-9fee-6c0f1afeaf16.jpg?1738356877\"],\"mtgo_id\":0}"
     },
     {
       "color": "",
@@ -460,6 +433,15 @@
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":3,\"color_identity\":[\"R\"],\"layout\":\"adventure\",\"name\":\"Bonecrusher Giant // Stomp\",\"type_line\":\"Creature — Giant // Instant — Adventure\",\"collector_number\":\"115\",\"rarity\":\"rare\",\"set\":\"eld\",\"card_faces\":[{\"mana_cost\":\"{2}{R}\",\"name\":\"Bonecrusher Giant\",\"type_line\":\"Creature — Giant\"},{\"mana_cost\":\"{1}{R}\",\"name\":\"Stomp\",\"type_line\":\"Instant — Adventure\"}],\"colors\":[\"R\"],\"mana_cost\":\"{2}{R} // {1}{R}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/0/9/09fd2d9c-1793-4beb-a3fb-7a869f660cd4.jpg?1616182066\"],\"mtgo_id\":0}"
     },
     {
+      "color": "R",
+      "color_identity": "R",
+      "dfc": false,
+      "id": "2220ed60-3f8f-4dd2-8319-6a06896a5350",
+      "oracle_id": "7ba550a5-81fc-42c2-8df8-ad455d938605",
+      "rarity": "mythic",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":5,\"color_identity\":[\"R\"],\"layout\":\"normal\",\"name\":\"Bonehoard Dracosaur\",\"type_line\":\"Creature — Dinosaur Dragon\",\"collector_number\":\"134\",\"rarity\":\"mythic\",\"set\":\"lci\",\"colors\":[\"R\"],\"mana_cost\":\"{3}{R}{R}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/2/2/2220ed60-3f8f-4dd2-8319-6a06896a5350.jpg?1699044226\"],\"mtgo_id\":0}"
+    },
+    {
       "color": "",
       "color_identity": "G",
       "dfc": false,
@@ -523,13 +505,13 @@
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":0,\"color_identity\":[\"G\",\"U\"],\"layout\":\"normal\",\"name\":\"Breeding Pool\",\"type_line\":\"Land — Forest Island\",\"collector_number\":\"172\",\"rarity\":\"rare\",\"set\":\"dis\",\"colors\":[]},\"image_uris\":[\"https://cards.scryfall.io/normal/front/b/9/b98b2a35-ec2b-47fe-903d-dd292e469a3c.jpg?1593274081\"],\"mtgo_id\":0}"
     },
     {
-      "color": "GU",
-      "color_identity": "GU",
+      "color": "GW",
+      "color_identity": "GW",
       "dfc": false,
-      "id": "d25b13a4-6282-4426-8b01-9550f7d52d16",
-      "oracle_id": "67183256-23cc-4af5-991e-d7148e942c63",
-      "rarity": "rare",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":5,\"color_identity\":[\"G\",\"U\"],\"layout\":\"normal\",\"name\":\"Bring to Light\",\"type_line\":\"Sorcery\",\"collector_number\":\"209\",\"rarity\":\"rare\",\"set\":\"bfz\",\"colors\":[\"G\",\"U\"],\"mana_cost\":\"{3}{G}{U}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/d/2/d25b13a4-6282-4426-8b01-9550f7d52d16.jpg?1562945077\"],\"mtgo_id\":0}"
+      "id": "3dea5b45-925c-4732-8e9d-fa8232792736",
+      "oracle_id": "0c7019a7-3cca-481a-9af0-abedb89c15ad",
+      "rarity": "mythic",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":4,\"color_identity\":[\"G\",\"W\"],\"layout\":\"normal\",\"name\":\"Brightglass Gearhulk\",\"type_line\":\"Artifact Creature — Construct\",\"collector_number\":\"191\",\"rarity\":\"mythic\",\"set\":\"dft\",\"colors\":[\"G\",\"W\"],\"mana_cost\":\"{G}{G}{W}{W}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/3/d/3dea5b45-925c-4732-8e9d-fa8232792736.jpg?1738356581\"],\"mtgo_id\":0}"
     },
     {
       "color": "G",
@@ -566,6 +548,24 @@
       "oracle_id": "5b5bf1fa-6502-4790-b66b-f0f8504ebc7c",
       "rarity": "common",
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"B\"],\"layout\":\"normal\",\"name\":\"Cabal Ritual\",\"type_line\":\"Instant\",\"collector_number\":\"51\",\"rarity\":\"common\",\"set\":\"tor\",\"colors\":[\"B\"],\"mana_cost\":\"{1}{B}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/5/4/5403b49d-03a7-4cc3-af3c-df098c1c9c2e.jpg?1562629771\"],\"mtgo_id\":0}"
+    },
+    {
+      "color": "",
+      "color_identity": "",
+      "dfc": false,
+      "id": "35a335bf-7358-460f-b7c9-1e8bc4300f64",
+      "oracle_id": "c7c7bffa-442d-4ba5-b778-ad394c192f27",
+      "rarity": "rare",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":1,\"color_identity\":[],\"layout\":\"normal\",\"name\":\"Candelabra of Tawnos\",\"type_line\":\"Artifact\",\"collector_number\":\"43\",\"rarity\":\"rare\",\"set\":\"atq\",\"colors\":[],\"mana_cost\":\"{1}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/3/5/35a335bf-7358-460f-b7c9-1e8bc4300f64.jpg?1562906316\"],\"mtgo_id\":0}"
+    },
+    {
+      "color": "G",
+      "color_identity": "G",
+      "dfc": false,
+      "id": "89b39293-6f57-4294-85fc-c718bdbb4d40",
+      "oracle_id": "d5b80895-621a-40df-bf48-6c7295658f21",
+      "rarity": "uncommon",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"G\"],\"layout\":\"normal\",\"name\":\"Cankerbloom\",\"type_line\":\"Creature — Phyrexian Fungus\",\"collector_number\":\"161\",\"rarity\":\"uncommon\",\"set\":\"one\",\"colors\":[\"G\"],\"mana_cost\":\"{1}{G}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/8/9/89b39293-6f57-4294-85fc-c718bdbb4d40.jpg?1675957129\"],\"mtgo_id\":0}"
     },
     {
       "color": "BR",
@@ -658,15 +658,6 @@
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":1,\"color_identity\":[],\"layout\":\"normal\",\"name\":\"Chromatic Star\",\"type_line\":\"Artifact\",\"collector_number\":\"251\",\"rarity\":\"common\",\"set\":\"tsp\",\"colors\":[],\"mana_cost\":\"{1}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/1/d/1d7a1357-debd-49b0-9fd5-560d5b3f589e.jpg?1562901183\"],\"mtgo_id\":0}"
     },
     {
-      "color": "U",
-      "color_identity": "U",
-      "dfc": false,
-      "id": "febaaeae-5c0d-45fa-8169-b27b4996f18e",
-      "oracle_id": "837c5d0e-0a33-4f9d-ae25-68a687bdf640",
-      "rarity": "rare",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":3,\"color_identity\":[\"U\"],\"layout\":\"normal\",\"name\":\"Chrome Host Seedshark\",\"type_line\":\"Creature — Phyrexian Shark\",\"collector_number\":\"51\",\"rarity\":\"rare\",\"set\":\"mom\",\"colors\":[\"U\"],\"mana_cost\":\"{2}{U}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/f/e/febaaeae-5c0d-45fa-8169-b27b4996f18e.jpg?1682203038\"],\"mtgo_id\":0}"
-    },
-    {
       "color": "",
       "color_identity": "",
       "dfc": false,
@@ -683,6 +674,15 @@
       "oracle_id": "f161111d-9747-47b3-bb10-3c8bded32e21",
       "rarity": "rare",
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":0,\"color_identity\":[],\"layout\":\"normal\",\"name\":\"City of Traitors\",\"type_line\":\"Land\",\"collector_number\":\"143\",\"rarity\":\"rare\",\"set\":\"exo\",\"colors\":[]},\"image_uris\":[\"https://cards.scryfall.io/normal/front/a/7/a7a8b6b8-b95f-4014-b17a-a6d44d965995.jpg?1593864142\"],\"mtgo_id\":0}"
+    },
+    {
+      "color": "W",
+      "color_identity": "W",
+      "dfc": false,
+      "id": "f892d156-371c-4391-8ae6-25513c5032b0",
+      "oracle_id": "f1266a1b-bae6-4ded-b4d5-7586a5b6c5d0",
+      "rarity": "rare",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":3,\"color_identity\":[\"W\"],\"layout\":\"normal\",\"name\":\"Clarion Conqueror\",\"type_line\":\"Creature — Dragon\",\"collector_number\":\"5\",\"rarity\":\"rare\",\"set\":\"tdm\",\"colors\":[\"W\"],\"mana_cost\":\"{2}{W}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/f/8/f892d156-371c-4391-8ae6-25513c5032b0.jpg?1743203973\"],\"mtgo_id\":0}"
     },
     {
       "color": "",
@@ -757,6 +757,15 @@
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":0,\"color_identity\":[\"G\",\"R\"],\"layout\":\"normal\",\"name\":\"Copperline Gorge\",\"type_line\":\"Land\",\"collector_number\":\"225\",\"rarity\":\"rare\",\"set\":\"som\",\"colors\":[]},\"image_uris\":[\"https://cards.scryfall.io/normal/front/2/8/28f1d784-f286-418d-a712-bc07ad10d4a2.jpg?1562815756\"],\"mtgo_id\":0}"
     },
     {
+      "color": "R",
+      "color_identity": "R",
+      "dfc": false,
+      "id": "490eb213-9ae2-4b45-abec-6f1dfc83792a",
+      "oracle_id": "46b1a169-bc32-47bf-b379-fa0c3d13878f",
+      "rarity": "rare",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"R\"],\"layout\":\"normal\",\"name\":\"Cori-Steel Cutter\",\"type_line\":\"Artifact — Equipment\",\"collector_number\":\"103\",\"rarity\":\"rare\",\"set\":\"tdm\",\"colors\":[\"R\"],\"mana_cost\":\"{1}{R}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/4/9/490eb213-9ae2-4b45-abec-6f1dfc83792a.jpg?1743204377\"],\"mtgo_id\":0}"
+    },
+    {
       "color": "B",
       "color_identity": "B",
       "dfc": false,
@@ -782,6 +791,15 @@
       "oracle_id": "cc187110-1148-4090-bbb8-e205694a39f5",
       "rarity": "uncommon",
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"U\"],\"layout\":\"normal\",\"name\":\"Counterspell\",\"type_line\":\"Instant\",\"collector_number\":\"54\",\"rarity\":\"uncommon\",\"set\":\"lea\",\"colors\":[\"U\"],\"mana_cost\":\"{U}{U}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/0/d/0df55e3f-14de-46ef-b6b1-616618724d9e.jpg?1559591713\"],\"mtgo_id\":0}"
+    },
+    {
+      "color": "G",
+      "color_identity": "G",
+      "dfc": false,
+      "id": "dc63d2ea-a980-466e-9ebb-f28008f84c3d",
+      "oracle_id": "46779609-4fa7-4fd2-b5b4-7d4d749339e6",
+      "rarity": "rare",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":3,\"color_identity\":[\"G\"],\"layout\":\"normal\",\"name\":\"Courser of Kruphix\",\"type_line\":\"Enchantment Creature — Centaur\",\"collector_number\":\"888\",\"rarity\":\"rare\",\"set\":\"cmm\",\"colors\":[\"G\"],\"mana_cost\":\"{1}{G}{G}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/d/c/dc63d2ea-a980-466e-9ebb-f28008f84c3d.jpg?1690004764\"],\"mtgo_id\":0}"
     },
     {
       "color": "",
@@ -982,6 +1000,15 @@
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"B\"],\"layout\":\"normal\",\"name\":\"Demonic Tutor\",\"type_line\":\"Sorcery\",\"collector_number\":\"104\",\"rarity\":\"uncommon\",\"set\":\"lea\",\"colors\":[\"B\"],\"mana_cost\":\"{1}{B}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/7/1/711d4d54-5520-4de8-9b93-79902ed8e562.jpg?1559591474\"],\"mtgo_id\":0}"
     },
     {
+      "color": "W",
+      "color_identity": "W",
+      "dfc": false,
+      "id": "f632be90-9e7f-41f8-a52e-a2952354d730",
+      "oracle_id": "ca773c52-ca64-463c-99cf-e71b59d2cff7",
+      "rarity": "uncommon",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":1,\"color_identity\":[\"W\"],\"layout\":\"normal\",\"name\":\"Descendant of Storms\",\"type_line\":\"Creature — Human Soldier\",\"collector_number\":\"8\",\"rarity\":\"uncommon\",\"set\":\"tdm\",\"colors\":[\"W\"],\"mana_cost\":\"{W}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/f/6/f632be90-9e7f-41f8-a52e-a2952354d730.jpg?1743203984\"],\"mtgo_id\":0}"
+    },
+    {
       "color": "R",
       "color_identity": "R",
       "dfc": false,
@@ -989,15 +1016,6 @@
       "oracle_id": "52c3fe55-74ee-44cb-b62b-dc6c5dfdc33e",
       "rarity": "rare",
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":3,\"color_identity\":[\"R\"],\"layout\":\"normal\",\"name\":\"Detective's Phoenix\",\"type_line\":\"Enchantment Creature — Phoenix\",\"collector_number\":\"116\",\"rarity\":\"rare\",\"set\":\"mh3\",\"colors\":[\"R\"],\"mana_cost\":\"{2}{R}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/e/2/e2a01edd-dbc0-4ed4-b827-9b608290e9a1.jpg?1717012140\"],\"mtgo_id\":0}"
-    },
-    {
-      "color": "U",
-      "color_identity": "U",
-      "dfc": false,
-      "id": "5c18c2d8-995c-4736-bdef-464abcd1d31a",
-      "oracle_id": "f8b17b89-26ce-4208-874a-9e1d66514640",
-      "rarity": "rare",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":8,\"color_identity\":[\"U\"],\"layout\":\"normal\",\"name\":\"Dig Through Time\",\"type_line\":\"Instant\",\"collector_number\":\"36\",\"rarity\":\"rare\",\"set\":\"ktk\",\"colors\":[\"U\"],\"mana_cost\":\"{6}{U}{U}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/5/c/5c18c2d8-995c-4736-bdef-464abcd1d31a.jpg?1562787144\"],\"mtgo_id\":0}"
     },
     {
       "color": "B",
@@ -1063,15 +1081,6 @@
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":6,\"color_identity\":[\"U\"],\"layout\":\"normal\",\"name\":\"Echo of Eons\",\"type_line\":\"Sorcery\",\"collector_number\":\"46\",\"rarity\":\"mythic\",\"set\":\"mh1\",\"colors\":[\"U\"],\"mana_cost\":\"{4}{U}{U}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/f/f/ff590af2-2d6c-4f16-a9b8-1a6dab6e9ad5.jpg?1562201343\"],\"mtgo_id\":0}"
     },
     {
-      "color": "",
-      "color_identity": "RW",
-      "dfc": false,
-      "id": "72c6d541-e2cb-4d6e-acac-90a8f53b7006",
-      "oracle_id": "9ea747cf-5d04-4aa7-bdc3-8145860cd1ba",
-      "rarity": "rare",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":0,\"color_identity\":[\"R\",\"W\"],\"layout\":\"normal\",\"name\":\"Elegant Parlor\",\"type_line\":\"Land — Mountain Plains\",\"collector_number\":\"260\",\"rarity\":\"rare\",\"set\":\"mkm\",\"colors\":[]},\"image_uris\":[\"https://cards.scryfall.io/normal/front/7/2/72c6d541-e2cb-4d6e-acac-90a8f53b7006.jpg?1706242338\"],\"mtgo_id\":0}"
-    },
-    {
       "color": "W",
       "color_identity": "W",
       "dfc": false,
@@ -1090,6 +1099,15 @@
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":4,\"color_identity\":[\"W\"],\"layout\":\"normal\",\"name\":\"Elspeth, Knight-Errant\",\"type_line\":\"Legendary Planeswalker — Elspeth\",\"collector_number\":\"9\",\"rarity\":\"mythic\",\"set\":\"ala\",\"colors\":[\"W\"],\"mana_cost\":\"{2}{W}{W}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/4/4/44c52e52-2b1c-4ca8-ab6d-20d97a342704.jpg?1562703288\"],\"mtgo_id\":0}"
     },
     {
+      "color": "W",
+      "color_identity": "W",
+      "dfc": false,
+      "id": "73a065e3-b530-4e62-ab3c-4f6f908184ec",
+      "oracle_id": "f78af825-023a-42e9-8374-5c52303a1417",
+      "rarity": "mythic",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":5,\"color_identity\":[\"W\"],\"layout\":\"normal\",\"name\":\"Elspeth, Storm Slayer\",\"type_line\":\"Legendary Planeswalker — Elspeth\",\"collector_number\":\"11\",\"rarity\":\"mythic\",\"set\":\"tdm\",\"colors\":[\"W\"],\"mana_cost\":\"{3}{W}{W}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/7/3/73a065e3-b530-4e62-ab3c-4f6f908184ec.jpg?1743203994\"],\"mtgo_id\":0}"
+    },
+    {
       "color": "G",
       "color_identity": "G",
       "dfc": false,
@@ -1106,6 +1124,15 @@
       "oracle_id": "94f01534-7bb3-4b1e-8f77-e84156408686",
       "rarity": "rare",
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":1,\"color_identity\":[\"G\"],\"layout\":\"normal\",\"name\":\"Elvish Reclaimer\",\"type_line\":\"Creature — Elf Warrior\",\"collector_number\":\"169\",\"rarity\":\"rare\",\"set\":\"m20\",\"colors\":[\"G\"],\"mana_cost\":\"{G}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/3/9/39c431d7-d94b-46c4-bb89-f3db56214ab4.jpg?1592517191\"],\"mtgo_id\":0}"
+    },
+    {
+      "color": "R",
+      "color_identity": "R",
+      "dfc": false,
+      "id": "9823f7c1-577b-4865-b1c1-55dc31bd1e29",
+      "oracle_id": "52e439d0-a263-4d53-9ae3-fa1f8aa8293e",
+      "rarity": "uncommon",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"R\"],\"layout\":\"adventure\",\"name\":\"Embereth Shieldbreaker // Battle Display\",\"type_line\":\"Creature — Human Knight // Sorcery — Adventure\",\"collector_number\":\"ELD-122\",\"rarity\":\"uncommon\",\"set\":\"plst\",\"card_faces\":[{\"mana_cost\":\"{1}{R}\",\"name\":\"Embereth Shieldbreaker\",\"type_line\":\"Creature — Human Knight\"},{\"mana_cost\":\"{R}\",\"name\":\"Battle Display\",\"type_line\":\"Sorcery — Adventure\"}],\"colors\":[\"R\"],\"mana_cost\":\"{1}{R} // {R}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/9/8/9823f7c1-577b-4865-b1c1-55dc31bd1e29.jpg?1723435940\"],\"mtgo_id\":0}"
     },
     {
       "color": "B",
@@ -1171,6 +1198,15 @@
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":1,\"color_identity\":[\"W\"],\"layout\":\"normal\",\"name\":\"Ephemerate\",\"type_line\":\"Instant\",\"collector_number\":\"7\",\"rarity\":\"common\",\"set\":\"mh1\",\"colors\":[\"W\"],\"mana_cost\":\"{W}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/2/d/2da5f3f8-5eef-498f-ba2c-2f3fbc3745aa.jpg?1562201088\"],\"mtgo_id\":0}"
     },
     {
+      "color": "BU",
+      "color_identity": "BU",
+      "dfc": false,
+      "id": "7f7e780e-fbc5-4dc0-b5c7-efcb8645c7c6",
+      "oracle_id": "3d038f7c-95fa-4b71-8f74-b9b4dd45cde0",
+      "rarity": "rare",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":4,\"color_identity\":[\"B\",\"U\"],\"layout\":\"normal\",\"name\":\"Ertai Resurrected\",\"type_line\":\"Legendary Creature — Phyrexian Human Wizard\",\"collector_number\":\"199\",\"rarity\":\"rare\",\"set\":\"dmu\",\"colors\":[\"B\",\"U\"],\"mana_cost\":\"{2}{U}{B}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/7/f/7f7e780e-fbc5-4dc0-b5c7-efcb8645c7c6.jpg?1673307944\"],\"mtgo_id\":0}"
+    },
+    {
       "color": "G",
       "color_identity": "G",
       "dfc": false,
@@ -1178,15 +1214,6 @@
       "oracle_id": "8e7b079d-9ede-421c-bd2b-f9a5126a8e6f",
       "rarity": "rare",
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":4,\"color_identity\":[\"G\"],\"layout\":\"normal\",\"name\":\"Esika's Chariot\",\"type_line\":\"Legendary Artifact — Vehicle\",\"collector_number\":\"169\",\"rarity\":\"rare\",\"set\":\"khm\",\"colors\":[\"G\"],\"mana_cost\":\"{3}{G}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/a/8/a87606cc-fbf0-4e2c-9798-f1c935d0573d.jpg?1665343333\"],\"mtgo_id\":0}"
-    },
-    {
-      "color": "W",
-      "color_identity": "W",
-      "dfc": false,
-      "id": "f3537373-ef54-4578-9d05-6216420ee349",
-      "oracle_id": "5def9f38-0a0b-4e8d-9f9d-29dcb46520b4",
-      "rarity": "rare",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":1,\"color_identity\":[\"W\"],\"layout\":\"normal\",\"name\":\"Esper Sentinel\",\"type_line\":\"Artifact Creature — Human Soldier\",\"collector_number\":\"12\",\"rarity\":\"rare\",\"set\":\"mh2\",\"colors\":[\"W\"],\"mana_cost\":\"{W}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/f/3/f3537373-ef54-4578-9d05-6216420ee349.jpg?1626093502\"],\"mtgo_id\":0}"
     },
     {
       "color": "R",
@@ -1207,15 +1234,6 @@
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":3,\"color_identity\":[\"G\"],\"layout\":\"normal\",\"name\":\"Eternal Witness\",\"type_line\":\"Creature — Human Shaman\",\"collector_number\":\"86\",\"rarity\":\"uncommon\",\"set\":\"5dn\",\"colors\":[\"G\"],\"mana_cost\":\"{1}{G}{G}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/c/7/c7e10ca7-1e5d-4224-82cf-798a4d436d72.jpg?1562879671\"],\"mtgo_id\":0}"
     },
     {
-      "color": "G",
-      "color_identity": "G",
-      "dfc": false,
-      "id": "520db5fb-d961-45a3-af74-6f054b8be3ab",
-      "oracle_id": "917f2b4b-79ec-4ded-b4c8-cbcf363cb23b",
-      "rarity": "rare",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":4,\"color_identity\":[\"G\"],\"layout\":\"normal\",\"name\":\"Eureka\",\"type_line\":\"Sorcery\",\"collector_number\":\"185\",\"rarity\":\"rare\",\"set\":\"leg\",\"colors\":[\"G\"],\"mana_cost\":\"{2}{G}{G}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/5/2/520db5fb-d961-45a3-af74-6f054b8be3ab.jpg?1562858733\"],\"mtgo_id\":0}"
-    },
-    {
       "color": "",
       "color_identity": "",
       "dfc": false,
@@ -1228,28 +1246,10 @@
       "color": "B",
       "color_identity": "B",
       "dfc": false,
-      "id": "ebeafbc2-0399-4335-8f63-76a3e085e8c6",
-      "oracle_id": "12367806-5924-485c-814a-5b67dd79235e",
-      "rarity": "rare",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":1,\"color_identity\":[\"B\"],\"layout\":\"normal\",\"name\":\"Evolved Sleeper\",\"type_line\":\"Creature — Human\",\"collector_number\":\"93\",\"rarity\":\"rare\",\"set\":\"dmu\",\"colors\":[\"B\"],\"mana_cost\":\"{B}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/e/b/ebeafbc2-0399-4335-8f63-76a3e085e8c6.jpg?1673307095\"],\"mtgo_id\":0}"
-    },
-    {
-      "color": "B",
-      "color_identity": "B",
-      "dfc": false,
       "id": "a88b23ce-ce19-47da-b9f2-055a4d6bdc79",
       "oracle_id": "fbe61f74-1b3c-4e12-8758-7029872c9ff1",
       "rarity": "common",
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"B\"],\"layout\":\"normal\",\"name\":\"Exhume\",\"type_line\":\"Sorcery\",\"collector_number\":\"134\",\"rarity\":\"common\",\"set\":\"usg\",\"colors\":[\"B\"],\"mana_cost\":\"{1}{B}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/a/8/a88b23ce-ce19-47da-b9f2-055a4d6bdc79.jpg?1562930508\"],\"mtgo_id\":0}"
-    },
-    {
-      "color": "W",
-      "color_identity": "W",
-      "dfc": false,
-      "id": "f49006f2-a097-417d-8eb0-b8016ff2e0d5",
-      "oracle_id": "58916455-844c-4d97-908f-8205bdc117c0",
-      "rarity": "uncommon",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"W\"],\"layout\":\"normal\",\"name\":\"Exorcise\",\"type_line\":\"Sorcery\",\"collector_number\":\"8\",\"rarity\":\"uncommon\",\"set\":\"dsk\",\"colors\":[\"W\"],\"mana_cost\":\"{1}{W}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/f/4/f49006f2-a097-417d-8eb0-b8016ff2e0d5.jpg?1726285887\"],\"mtgo_id\":0}"
     },
     {
       "color": "",
@@ -1295,15 +1295,6 @@
       "oracle_id": "0c85b8f7-0bd0-4680-9ec5-d4b110460a54",
       "rarity": "rare",
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":0,\"color_identity\":[],\"layout\":\"normal\",\"name\":\"Fabled Passage\",\"type_line\":\"Land\",\"collector_number\":\"244\",\"rarity\":\"rare\",\"set\":\"eld\",\"colors\":[]},\"image_uris\":[\"https://cards.scryfall.io/normal/front/b/8/b841bfa8-7c17-4df2-8466-780ab9a4a53a.jpg?1572491204\"],\"mtgo_id\":0}"
-    },
-    {
-      "color": "U",
-      "color_identity": "U",
-      "dfc": false,
-      "id": "7fd4d018-dcf3-4439-8445-02d66e44f7d3",
-      "oracle_id": "437b2dab-15e0-4b9a-a204-58622d37a3b3",
-      "rarity": "uncommon",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":4,\"color_identity\":[\"U\"],\"layout\":\"normal\",\"name\":\"Fact or Fiction\",\"type_line\":\"Instant\",\"collector_number\":\"57\",\"rarity\":\"uncommon\",\"set\":\"inv\",\"colors\":[\"U\"],\"mana_cost\":\"{3}{U}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/7/f/7fd4d018-dcf3-4439-8445-02d66e44f7d3.jpg?1562920780\"],\"mtgo_id\":0}"
     },
     {
       "color": "U",
@@ -1369,6 +1360,15 @@
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"R\"],\"layout\":\"normal\",\"name\":\"Fear of Missing Out\",\"type_line\":\"Enchantment Creature — Nightmare\",\"collector_number\":\"136\",\"rarity\":\"rare\",\"set\":\"dsk\",\"colors\":[\"R\"],\"mana_cost\":\"{1}{R}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/9/d/9d48aaff-46ab-411b-9456-171d4709f951.jpg?1726286354\"],\"mtgo_id\":0}"
     },
     {
+      "color": "",
+      "color_identity": "",
+      "dfc": false,
+      "id": "2cf97898-1e05-4c0e-896f-ba6713bf6a7b",
+      "oracle_id": "aa959340-c869-4caa-92c7-572bd8d23eef",
+      "rarity": "mythic",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":0,\"color_identity\":[],\"layout\":\"normal\",\"name\":\"Field of the Dead\",\"type_line\":\"Land\",\"collector_number\":\"28\",\"rarity\":\"mythic\",\"set\":\"spg\",\"colors\":[]},\"image_uris\":[\"https://cards.scryfall.io/normal/front/2/c/2cf97898-1e05-4c0e-896f-ba6713bf6a7b.jpg?1717645347\"],\"mtgo_id\":0}"
+    },
+    {
       "color": "R",
       "color_identity": "R",
       "dfc": false,
@@ -1378,22 +1378,13 @@
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":4,\"color_identity\":[\"R\"],\"layout\":\"normal\",\"name\":\"Fiery Confluence\",\"type_line\":\"Sorcery\",\"collector_number\":\"26\",\"rarity\":\"rare\",\"set\":\"c15\",\"colors\":[\"R\"],\"mana_cost\":\"{2}{R}{R}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/7/b/7b61c9bc-16e8-417f-99e7-8bd83d4666c5.jpg?1562706203\"],\"mtgo_id\":0}"
     },
     {
-      "color": "",
-      "color_identity": "RU",
-      "dfc": false,
-      "id": "a3aab13c-9d9d-4507-ae5d-da979990ae1b",
-      "oracle_id": "026f4a4b-eedd-44e1-9d37-ca4fb8d6db98",
-      "rarity": "rare",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":0,\"color_identity\":[\"R\",\"U\"],\"layout\":\"normal\",\"name\":\"Fiery Islet\",\"type_line\":\"Land\",\"collector_number\":\"238\",\"rarity\":\"rare\",\"set\":\"mh1\",\"colors\":[]},\"image_uris\":[\"https://cards.scryfall.io/normal/front/a/3/a3aab13c-9d9d-4507-ae5d-da979990ae1b.jpg?1562202552\"],\"mtgo_id\":0}"
-    },
-    {
       "color": "RW",
       "color_identity": "RW",
       "dfc": false,
-      "id": "0da69523-cece-425a-b08a-fb27fac29374",
+      "id": "6d779966-4bd4-4315-8b45-d3a4492f2bb2",
       "oracle_id": "cd51cc2d-0d39-4aba-b0ea-70e8118149bc",
       "rarity": "rare",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":1,\"color_identity\":[\"R\",\"W\"],\"layout\":\"normal\",\"name\":\"Figure of Destiny\",\"type_line\":\"Creature — Kithkin\",\"collector_number\":\"139\",\"rarity\":\"rare\",\"set\":\"eve\",\"colors\":[\"R\",\"W\"],\"mana_cost\":\"{R/W}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/0/d/0da69523-cece-425a-b08a-fb27fac29374.jpg?1562897777\"],\"mtgo_id\":0}"
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":1,\"color_identity\":[\"R\",\"W\"],\"layout\":\"normal\",\"name\":\"Figure of Destiny\",\"type_line\":\"Creature — Kithkin\",\"collector_number\":\"213\",\"rarity\":\"rare\",\"set\":\"2x2\",\"colors\":[\"R\",\"W\"],\"mana_cost\":\"{R/W}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/6/d/6d779966-4bd4-4315-8b45-d3a4492f2bb2.jpg?1673148613\"],\"mtgo_id\":0}"
     },
     {
       "color": "RU",
@@ -1471,19 +1462,19 @@
       "color": "U",
       "color_identity": "U",
       "dfc": false,
+      "id": "a6a62aa3-8edb-4000-8ebd-15ec4b00eed7",
+      "oracle_id": "43c69d19-c06c-470a-bdba-a0335ff2d655",
+      "rarity": "uncommon",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"U\"],\"layout\":\"normal\",\"name\":\"Floodpits Drowner\",\"type_line\":\"Creature — Merfolk\",\"collector_number\":\"59\",\"rarity\":\"uncommon\",\"set\":\"dsk\",\"colors\":[\"U\"],\"mana_cost\":\"{1}{U}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/a/6/a6a62aa3-8edb-4000-8ebd-15ec4b00eed7.jpg?1726286073\"],\"mtgo_id\":0}"
+    },
+    {
+      "color": "U",
+      "color_identity": "U",
+      "dfc": false,
       "id": "e9be371c-c688-44ad-ab71-bd4c9f242d58",
       "oracle_id": "ac2173f9-f223-440a-9231-fd98762bdc6f",
       "rarity": "rare",
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":3,\"color_identity\":[\"U\"],\"layout\":\"normal\",\"name\":\"Force of Negation\",\"type_line\":\"Instant\",\"collector_number\":\"52\",\"rarity\":\"rare\",\"set\":\"mh1\",\"colors\":[\"U\"],\"mana_cost\":\"{1}{U}{U}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/e/9/e9be371c-c688-44ad-ab71-bd4c9f242d58.jpg?1562201382\"],\"mtgo_id\":0}"
-    },
-    {
-      "color": "G",
-      "color_identity": "G",
-      "dfc": false,
-      "id": "017c415b-d635-43c6-92b8-8c95d1c4ff8d",
-      "oracle_id": "5f627e45-deee-4a4f-8128-57b0d8ebc553",
-      "rarity": "rare",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":4,\"color_identity\":[\"G\"],\"layout\":\"normal\",\"name\":\"Force of Vigor\",\"type_line\":\"Instant\",\"collector_number\":\"164\",\"rarity\":\"rare\",\"set\":\"mh1\",\"colors\":[\"G\"],\"mana_cost\":\"{2}{G}{G}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/0/1/017c415b-d635-43c6-92b8-8c95d1c4ff8d.jpg?1712774966\"],\"mtgo_id\":0}"
     },
     {
       "color": "U",
@@ -1543,10 +1534,10 @@
       "color": "G",
       "color_identity": "G",
       "dfc": false,
-      "id": "3ba95ffa-990a-4013-98b7-5d8c0b34e9c4",
+      "id": "53c31b33-d947-4776-8953-da5bc84ca5ca",
       "oracle_id": "df317532-7d36-40fd-938f-e972749c8792",
       "rarity": "common",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":1,\"color_identity\":[\"G\"],\"layout\":\"normal\",\"name\":\"Fyndhorn Elves\",\"type_line\":\"Creature — Elf Druid\",\"collector_number\":\"244\",\"rarity\":\"common\",\"set\":\"ice\",\"colors\":[\"G\"],\"mana_cost\":\"{G}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/3/b/3ba95ffa-990a-4013-98b7-5d8c0b34e9c4.jpg?1562905989\"],\"mtgo_id\":0}"
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":1,\"color_identity\":[\"G\"],\"layout\":\"normal\",\"name\":\"Fyndhorn Elves\",\"type_line\":\"Creature — Elf Druid\",\"collector_number\":\"CMR-228\",\"rarity\":\"common\",\"set\":\"plst\",\"colors\":[\"G\"],\"mana_cost\":\"{G}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/5/3/53c31b33-d947-4776-8953-da5bc84ca5ca.jpg?1723434743\"],\"mtgo_id\":0}"
     },
     {
       "color": "",
@@ -1576,6 +1567,15 @@
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":1,\"color_identity\":[\"R\"],\"layout\":\"normal\",\"name\":\"Galvanic Discharge\",\"type_line\":\"Instant\",\"collector_number\":\"122\",\"rarity\":\"common\",\"set\":\"mh3\",\"colors\":[\"R\"],\"mana_cost\":\"{R}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/3/2/32aa6e33-221f-414c-9b51-850d97a7e051.jpg?1717012186\"],\"mtgo_id\":0}"
     },
     {
+      "color": "RW",
+      "color_identity": "RW",
+      "dfc": false,
+      "id": "600dca0f-5964-45e7-86df-f16a5b4a0106",
+      "oracle_id": "64c15098-f893-44f2-bf7f-162db8ab80e9",
+      "rarity": "rare",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":3,\"color_identity\":[\"R\",\"W\"],\"layout\":\"normal\",\"name\":\"General Ferrous Rokiric\",\"type_line\":\"Legendary Creature — Human Soldier\",\"collector_number\":\"198\",\"rarity\":\"rare\",\"set\":\"mh2\",\"colors\":[\"R\",\"W\"],\"mana_cost\":\"{1}{R}{W}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/6/0/600dca0f-5964-45e7-86df-f16a5b4a0106.jpg?1626098375\"],\"mtgo_id\":0}"
+    },
+    {
       "color": "G",
       "color_identity": "G",
       "dfc": false,
@@ -1592,6 +1592,15 @@
       "oracle_id": "91c835d1-22ca-4c90-9ba6-c8e01bbc0347",
       "rarity": "mythic",
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"R\"],\"layout\":\"normal\",\"name\":\"Generous Plunderer\",\"type_line\":\"Creature — Human Rogue\",\"collector_number\":\"11\",\"rarity\":\"mythic\",\"set\":\"big\",\"colors\":[\"R\"],\"mana_cost\":\"{1}{R}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/4/c/4c6cf93a-d073-48ac-88db-c46bf3e10beb.jpg?1739804185\"],\"mtgo_id\":0}"
+    },
+    {
+      "color": "W",
+      "color_identity": "W",
+      "dfc": false,
+      "id": "522aa72b-2b8c-484c-872b-f082101cee35",
+      "oracle_id": "522dd417-364b-44ab-8ca9-fb55db5f26a6",
+      "rarity": "rare",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"W\"],\"layout\":\"normal\",\"name\":\"Get Lost\",\"type_line\":\"Instant\",\"collector_number\":\"14\",\"rarity\":\"rare\",\"set\":\"lci\",\"colors\":[\"W\"],\"mana_cost\":\"{1}{W}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/5/2/522aa72b-2b8c-484c-872b-f082101cee35.jpg?1699043186\"],\"mtgo_id\":0}"
     },
     {
       "color": "",
@@ -1633,19 +1642,19 @@
       "color": "R",
       "color_identity": "R",
       "dfc": false,
-      "id": "179e954f-1d90-4ef4-b800-25845cc338e2",
-      "oracle_id": "edad60c6-80de-4033-af1b-a703ac332983",
-      "rarity": "uncommon",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"R\"],\"layout\":\"normal\",\"name\":\"Goblin Bombardment\",\"type_line\":\"Enchantment\",\"collector_number\":\"179\",\"rarity\":\"uncommon\",\"set\":\"tmp\",\"colors\":[\"R\"],\"mana_cost\":\"{1}{R}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/1/7/179e954f-1d90-4ef4-b800-25845cc338e2.jpg?1562052788\"],\"mtgo_id\":0}"
+      "id": "3277ad99-5682-4baa-b106-de15721876a6",
+      "oracle_id": "b75c3902-633e-4d24-acde-d7a9cc8f466e",
+      "rarity": "rare",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":5,\"color_identity\":[\"R\"],\"layout\":\"normal\",\"name\":\"Glorybringer\",\"type_line\":\"Creature — Dragon\",\"collector_number\":\"134\",\"rarity\":\"rare\",\"set\":\"akh\",\"colors\":[\"R\"],\"mana_cost\":\"{3}{R}{R}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/3/2/3277ad99-5682-4baa-b106-de15721876a6.jpg?1543675596\"],\"mtgo_id\":0}"
     },
     {
       "color": "R",
       "color_identity": "R",
       "dfc": false,
-      "id": "86ecaedc-08f1-4de7-aae8-056df57940e0",
-      "oracle_id": "1962d9b3-f057-4d2c-9c5b-386d9a66148a",
+      "id": "179e954f-1d90-4ef4-b800-25845cc338e2",
+      "oracle_id": "edad60c6-80de-4033-af1b-a703ac332983",
       "rarity": "uncommon",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"R\"],\"layout\":\"normal\",\"name\":\"Goblin Cratermaker\",\"type_line\":\"Creature — Goblin Warrior\",\"collector_number\":\"103\",\"rarity\":\"uncommon\",\"set\":\"grn\",\"colors\":[\"R\"],\"mana_cost\":\"{1}{R}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/8/6/86ecaedc-08f1-4de7-aae8-056df57940e0.jpg?1680225520\"],\"mtgo_id\":0}"
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"R\"],\"layout\":\"normal\",\"name\":\"Goblin Bombardment\",\"type_line\":\"Enchantment\",\"collector_number\":\"179\",\"rarity\":\"uncommon\",\"set\":\"tmp\",\"colors\":[\"R\"],\"mana_cost\":\"{1}{R}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/1/7/179e954f-1d90-4ef4-b800-25845cc338e2.jpg?1562052788\"],\"mtgo_id\":0}"
     },
     {
       "color": "R",
@@ -1675,6 +1684,15 @@
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":5,\"color_identity\":[\"R\"],\"layout\":\"normal\",\"name\":\"Goldspan Dragon\",\"type_line\":\"Creature — Dragon\",\"collector_number\":\"139\",\"rarity\":\"mythic\",\"set\":\"khm\",\"colors\":[\"R\"],\"mana_cost\":\"{3}{R}{R}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/9/d/9d914868-9000-4df2-a818-0ef8a7f636ae.jpg?1665343456\"],\"mtgo_id\":0}"
     },
     {
+      "color": "",
+      "color_identity": "BGRUW",
+      "dfc": false,
+      "id": "1fa48620-4c3d-4f75-be1f-c12c4aa59f51",
+      "oracle_id": "efe9c3e0-7315-408e-9903-9d25a681039b",
+      "rarity": "rare",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":5,\"color_identity\":[\"B\",\"G\",\"R\",\"U\",\"W\"],\"layout\":\"normal\",\"name\":\"Golos, Tireless Pilgrim\",\"type_line\":\"Legendary Artifact Creature — Scout\",\"collector_number\":\"226\",\"rarity\":\"rare\",\"set\":\"m20\",\"colors\":[],\"mana_cost\":\"{5}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/1/f/1fa48620-4c3d-4f75-be1f-c12c4aa59f51.jpg?1631531828\"],\"mtgo_id\":0}"
+    },
+    {
       "color": "B",
       "color_identity": "B",
       "dfc": false,
@@ -1682,6 +1700,15 @@
       "oracle_id": "f3abd4d1-a975-4e85-8684-aa0fce029670",
       "rarity": "mythic",
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":6,\"color_identity\":[\"B\"],\"layout\":\"normal\",\"name\":\"Grave Titan\",\"type_line\":\"Creature — Giant\",\"collector_number\":\"97\",\"rarity\":\"mythic\",\"set\":\"m11\",\"colors\":[\"B\"],\"mana_cost\":\"{4}{B}{B}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/5/f/5fa6d385-6b8e-45ad-83dc-b477799c05a5.jpg?1562461387\"],\"mtgo_id\":0}"
+    },
+    {
+      "color": "R",
+      "color_identity": "R",
+      "dfc": false,
+      "id": "c8f0b123-fdb0-4f3e-ba78-fa155c227e20",
+      "oracle_id": "952300de-766e-4ceb-bd36-e0b721bebc17",
+      "rarity": "uncommon",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":1,\"color_identity\":[\"R\"],\"layout\":\"normal\",\"name\":\"Greasewrench Goblin\",\"type_line\":\"Creature — Goblin Artificer\",\"collector_number\":\"132\",\"rarity\":\"uncommon\",\"set\":\"dft\",\"colors\":[\"R\"],\"mana_cost\":\"{R}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/c/8/c8f0b123-fdb0-4f3e-ba78-fa155c227e20.jpg?1738356427\"],\"mtgo_id\":0}"
     },
     {
       "color": "G",
@@ -1700,15 +1727,6 @@
       "oracle_id": "0d6b89dc-23fb-48e9-a54b-cea2838ae7c8",
       "rarity": "mythic",
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":4,\"color_identity\":[\"B\"],\"layout\":\"normal\",\"name\":\"Grief\",\"type_line\":\"Creature — Elemental Incarnation\",\"collector_number\":\"311\",\"rarity\":\"mythic\",\"set\":\"mh2\",\"colors\":[\"B\"],\"mana_cost\":\"{2}{B}{B}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/e/a/ea859431-c1bf-4d07-9845-430bc217cb91.jpg?1694738814\"],\"mtgo_id\":0}"
-    },
-    {
-      "color": "R",
-      "color_identity": "R",
-      "dfc": false,
-      "id": "5dd72697-24be-42c7-a6d9-a837bdbd4662",
-      "oracle_id": "37445e06-88a1-4e2e-a432-383736c9b977",
-      "rarity": "rare",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":1,\"color_identity\":[\"R\"],\"layout\":\"normal\",\"name\":\"Grim Lavamancer\",\"type_line\":\"Creature — Human Wizard\",\"collector_number\":\"100\",\"rarity\":\"rare\",\"set\":\"tor\",\"colors\":[\"R\"],\"mana_cost\":\"{R}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/5/d/5dd72697-24be-42c7-a6d9-a837bdbd4662.jpg?1562629949\"],\"mtgo_id\":0}"
     },
     {
       "color": "",
@@ -1783,6 +1801,15 @@
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":5,\"color_identity\":[\"B\"],\"layout\":\"normal\",\"name\":\"Harvester of Misery\",\"type_line\":\"Creature — Spirit\",\"collector_number\":\"9\",\"rarity\":\"mythic\",\"set\":\"big\",\"colors\":[\"B\"],\"mana_cost\":\"{3}{B}{B}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/a/3/a3012af9-621d-4fae-b00d-079a89ae35fe.jpg?1739804174\"],\"mtgo_id\":0}"
     },
     {
+      "color": "",
+      "color_identity": "G",
+      "dfc": false,
+      "id": "286f4d3a-6b38-404f-aaea-a1d3694f4fe6",
+      "oracle_id": "749d2994-44e7-40d3-8630-7bebed239e9e",
+      "rarity": "uncommon",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":1,\"color_identity\":[\"G\"],\"layout\":\"normal\",\"name\":\"Haywire Mite\",\"type_line\":\"Artifact Creature — Insect\",\"collector_number\":\"247\",\"rarity\":\"uncommon\",\"set\":\"dsc\",\"colors\":[],\"mana_cost\":\"{1}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/2/8/286f4d3a-6b38-404f-aaea-a1d3694f4fe6.jpg?1726285305\"],\"mtgo_id\":0}"
+    },
+    {
       "color": "R",
       "color_identity": "R",
       "dfc": false,
@@ -1804,19 +1831,37 @@
       "color": "G",
       "color_identity": "G",
       "dfc": false,
+      "id": "4f8fee37-a050-4329-8b10-46d150e7a95e",
+      "oracle_id": "09955b4b-6052-4c27-8b63-9548482b3c5c",
+      "rarity": "common",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"G\"],\"layout\":\"normal\",\"name\":\"Heritage Reclamation\",\"type_line\":\"Instant\",\"collector_number\":\"145\",\"rarity\":\"common\",\"set\":\"tdm\",\"colors\":[\"G\"],\"mana_cost\":\"{1}{G}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/4/f/4f8fee37-a050-4329-8b10-46d150e7a95e.jpg?1743204546\"],\"mtgo_id\":0}"
+    },
+    {
+      "color": "W",
+      "color_identity": "W",
+      "dfc": false,
+      "id": "8536e50d-81b3-4b1d-9469-22fad35fe145",
+      "oracle_id": "454a8902-8120-4373-96ee-bbf352b04e8d",
+      "rarity": "mythic",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":4,\"color_identity\":[\"W\"],\"layout\":\"normal\",\"name\":\"Hero of Bladehold\",\"type_line\":\"Creature — Human Knight\",\"collector_number\":\"188\",\"rarity\":\"mythic\",\"set\":\"moc\",\"colors\":[\"W\"],\"mana_cost\":\"{2}{W}{W}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/8/5/8536e50d-81b3-4b1d-9469-22fad35fe145.jpg?1682208444\"],\"mtgo_id\":0}"
+    },
+    {
+      "color": "G",
+      "color_identity": "G",
+      "dfc": false,
       "id": "89f5cc05-5d9d-4709-b3c5-a6249c294acc",
       "oracle_id": "69bc2afd-9f53-47f2-b9c8-f12732784e10",
       "rarity": "mythic",
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":1,\"color_identity\":[\"G\"],\"layout\":\"leveler\",\"name\":\"Hexdrinker\",\"type_line\":\"Creature — Snake\",\"collector_number\":\"168\",\"rarity\":\"mythic\",\"set\":\"mh1\",\"colors\":[\"G\"],\"mana_cost\":\"{G}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/8/9/89f5cc05-5d9d-4709-b3c5-a6249c294acc.jpg?1562202103\"],\"mtgo_id\":0}"
     },
     {
-      "color": "BG",
-      "color_identity": "BG",
+      "color": "U",
+      "color_identity": "U",
       "dfc": false,
-      "id": "0049e68d-0caf-474f-9523-dad343f1250a",
-      "oracle_id": "97acd977-164d-49d5-b3a1-72e0d75c9016",
-      "rarity": "rare",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":7,\"color_identity\":[\"B\",\"G\"],\"layout\":\"normal\",\"name\":\"Hogaak, Arisen Necropolis\",\"type_line\":\"Legendary Creature — Avatar\",\"collector_number\":\"202\",\"rarity\":\"rare\",\"set\":\"mh1\",\"colors\":[\"B\",\"G\"],\"mana_cost\":\"{5}{B/G}{B/G}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/0/0/0049e68d-0caf-474f-9523-dad343f1250a.jpg?1687248935\"],\"mtgo_id\":0}"
+      "id": "babd2248-5517-4b7b-a159-9a1f7b5583c8",
+      "oracle_id": "dc671205-f2fa-454f-9957-921a6069ad53",
+      "rarity": "uncommon",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":1,\"color_identity\":[\"U\"],\"layout\":\"normal\",\"name\":\"High Tide\",\"type_line\":\"Instant\",\"collector_number\":\"54\",\"rarity\":\"uncommon\",\"set\":\"dmr\",\"colors\":[\"U\"],\"mana_cost\":\"{U}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/b/a/babd2248-5517-4b7b-a159-9a1f7b5583c8.jpg?1743419076\"],\"mtgo_id\":0}"
     },
     {
       "color": "",
@@ -1826,6 +1871,15 @@
       "oracle_id": "262a5d83-506c-4781-9bc9-1a2b5d83955c",
       "rarity": "rare",
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":0,\"color_identity\":[\"G\",\"W\"],\"layout\":\"normal\",\"name\":\"Horizon Canopy\",\"type_line\":\"Land\",\"collector_number\":\"177\",\"rarity\":\"rare\",\"set\":\"fut\",\"colors\":[]},\"image_uris\":[\"https://cards.scryfall.io/normal/front/d/5/d5dfc25d-a17b-4ead-9484-e8a18b8fa176.jpg?1562937907\"],\"mtgo_id\":0}"
+    },
+    {
+      "color": "G",
+      "color_identity": "GRW",
+      "dfc": true,
+      "id": "57df2563-18d4-4526-a8bc-0c114e6fd4d9",
+      "oracle_id": "2e6ed3e6-d2b8-4b75-b7e1-0773da4987a1",
+      "rarity": "mythic",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":3,\"color_identity\":[\"G\",\"R\",\"W\"],\"layout\":\"transform\",\"name\":\"Huatli, Poet of Unity // Roar of the Fifth People\",\"type_line\":\"Legendary Creature — Human Warrior Bard // Enchantment — Saga\",\"collector_number\":\"189\",\"rarity\":\"mythic\",\"set\":\"lci\",\"card_faces\":[{\"mana_cost\":\"{2}{G}\",\"name\":\"Huatli, Poet of Unity\",\"type_line\":\"Legendary Creature — Human Warrior Bard\",\"colors\":[\"G\"]},{\"mana_cost\":\"\",\"name\":\"Roar of the Fifth People\",\"type_line\":\"Enchantment — Saga\",\"colors\":[\"G\",\"R\",\"W\"]}]},\"image_uris\":[\"https://cards.scryfall.io/normal/front/5/7/57df2563-18d4-4526-a8bc-0c114e6fd4d9.jpg?1739654483\",\"https://cards.scryfall.io/normal/back/5/7/57df2563-18d4-4526-a8bc-0c114e6fd4d9.jpg?1739654483\"],\"mtgo_id\":0}"
     },
     {
       "color": "U",
@@ -1891,15 +1945,6 @@
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":1,\"color_identity\":[\"B\"],\"layout\":\"normal\",\"name\":\"Inquisition of Kozilek\",\"type_line\":\"Sorcery\",\"collector_number\":\"115\",\"rarity\":\"uncommon\",\"set\":\"roe\",\"colors\":[\"B\"],\"mana_cost\":\"{B}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/6/a/6a3ff5c3-0fdb-4d54-b4e5-ce7bad9953f0.jpg?1562704713\"],\"mtgo_id\":0}"
     },
     {
-      "color": "G",
-      "color_identity": "G",
-      "dfc": false,
-      "id": "d60d2e62-06da-410a-81ed-6cebb2632fb6",
-      "oracle_id": "0a8d0217-ff24-4177-b6be-707eb2b6b9e9",
-      "rarity": "uncommon",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":1,\"color_identity\":[\"G\"],\"layout\":\"normal\",\"name\":\"Insidious Fungus\",\"type_line\":\"Creature — Fungus\",\"collector_number\":\"186\",\"rarity\":\"uncommon\",\"set\":\"dsk\",\"colors\":[\"G\"],\"mana_cost\":\"{G}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/d/6/d60d2e62-06da-410a-81ed-6cebb2632fb6.jpg?1726286558\"],\"mtgo_id\":0}"
-    },
-    {
       "color": "",
       "color_identity": "RW",
       "dfc": false,
@@ -1927,13 +1972,13 @@
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"W\"],\"layout\":\"normal\",\"name\":\"Intrepid Adversary\",\"type_line\":\"Creature — Human Scout\",\"collector_number\":\"25\",\"rarity\":\"mythic\",\"set\":\"dbl\",\"colors\":[\"W\"],\"mana_cost\":\"{1}{W}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/3/7/37ccc077-c327-4d70-a771-1f8e2e2b2c51.jpg?1673158733\"],\"mtgo_id\":0}"
     },
     {
-      "color": "U",
-      "color_identity": "U",
+      "color": "R",
+      "color_identity": "R",
       "dfc": false,
-      "id": "0e606072-a3aa-4300-ba90-ec92a721fa76",
-      "oracle_id": "7f77a84e-5a4b-4834-aefa-3cecc175ae8e",
-      "rarity": "mythic",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":4,\"color_identity\":[\"U\"],\"layout\":\"normal\",\"name\":\"Jace, the Mind Sculptor\",\"type_line\":\"Legendary Planeswalker — Jace\",\"collector_number\":\"31\",\"rarity\":\"mythic\",\"set\":\"wwk\",\"colors\":[\"U\"],\"mana_cost\":\"{2}{U}{U}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/0/e/0e606072-a3aa-4300-ba90-ec92a721fa76.jpg?1562281841\"],\"mtgo_id\":0}"
+      "id": "2ba70366-b6ae-423a-a8d8-29d2b8afd939",
+      "oracle_id": "d847542b-7522-43ec-91b0-f0aba5d7dddd",
+      "rarity": "uncommon",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"R\"],\"layout\":\"normal\",\"name\":\"Ivora, Insatiable Heir\",\"type_line\":\"Legendary Creature — Vampire Warrior\",\"collector_number\":\"50\",\"rarity\":\"uncommon\",\"set\":\"j25\",\"colors\":[\"R\"],\"mana_cost\":\"{1}{R}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/2/b/2ba70366-b6ae-423a-a8d8-29d2b8afd939.jpg?1730485879\"],\"mtgo_id\":0}"
     },
     {
       "color": "U",
@@ -1954,6 +1999,15 @@
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":4,\"color_identity\":[\"U\"],\"layout\":\"normal\",\"name\":\"Jace, Wielder of Mysteries\",\"type_line\":\"Legendary Planeswalker — Jace\",\"collector_number\":\"54\",\"rarity\":\"rare\",\"set\":\"war\",\"colors\":[\"U\"],\"mana_cost\":\"{1}{U}{U}{U}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/6/a/6adb7d73-4482-4930-8497-cffd169b57e2.jpg?1557576232\"],\"mtgo_id\":0}"
     },
     {
+      "color": "U",
+      "color_identity": "U",
+      "dfc": false,
+      "id": "0e606072-a3aa-4300-ba90-ec92a721fa76",
+      "oracle_id": "7f77a84e-5a4b-4834-aefa-3cecc175ae8e",
+      "rarity": "mythic",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":4,\"color_identity\":[\"U\"],\"layout\":\"normal\",\"name\":\"Jace, the Mind Sculptor\",\"type_line\":\"Legendary Planeswalker — Jace\",\"collector_number\":\"31\",\"rarity\":\"mythic\",\"set\":\"wwk\",\"colors\":[\"U\"],\"mana_cost\":\"{2}{U}{U}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/0/e/0e606072-a3aa-4300-ba90-ec92a721fa76.jpg?1562281841\"],\"mtgo_id\":0}"
+    },
+    {
       "color": "W",
       "color_identity": "W",
       "dfc": false,
@@ -1970,15 +2024,6 @@
       "oracle_id": "f5896356-5744-4f7e-a4e5-1cc36dde5958",
       "rarity": "rare",
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":0,\"color_identity\":[\"G\",\"R\",\"W\"],\"layout\":\"normal\",\"name\":\"Jetmir's Garden\",\"type_line\":\"Land — Mountain Forest Plains\",\"collector_number\":\"250\",\"rarity\":\"rare\",\"set\":\"snc\",\"colors\":[]},\"image_uris\":[\"https://cards.scryfall.io/normal/front/2/6/26d40e03-6de4-4373-9fbf-04c1dd79e995.jpg?1664414440\"],\"mtgo_id\":0}"
-    },
-    {
-      "color": "BU",
-      "color_identity": "BU",
-      "dfc": false,
-      "id": "2d35a710-3008-4e27-8afd-6e83329f9917",
-      "oracle_id": "ba48e067-f4d9-45b2-ade1-71cf8cda418c",
-      "rarity": "mythic",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":3,\"color_identity\":[\"B\",\"U\"],\"layout\":\"normal\",\"name\":\"Kaito Shizuki\",\"type_line\":\"Legendary Planeswalker — Kaito\",\"collector_number\":\"226\",\"rarity\":\"mythic\",\"set\":\"neo\",\"colors\":[\"B\",\"U\"],\"mana_cost\":\"{1}{U}{B}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/2/d/2d35a710-3008-4e27-8afd-6e83329f9917.jpg?1654568510\"],\"mtgo_id\":0}"
     },
     {
       "color": "BU",
@@ -2062,22 +2107,13 @@
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":0,\"color_identity\":[\"G\",\"R\",\"U\"],\"layout\":\"normal\",\"name\":\"Ketria Triome\",\"type_line\":\"Land — Forest Island Mountain\",\"collector_number\":\"250\",\"rarity\":\"rare\",\"set\":\"iko\",\"colors\":[]},\"image_uris\":[\"https://cards.scryfall.io/normal/front/a/2/a249b1f4-2b22-4b67-a207-e0c4ae95d2e1.jpg?1601241399\"],\"mtgo_id\":0}"
     },
     {
-      "color": "U",
-      "color_identity": "U",
+      "color": "B",
+      "color_identity": "B",
       "dfc": false,
-      "id": "5a123794-096f-4d01-bfd4-1d23f22608f7",
-      "oracle_id": "5d748bce-dff8-46fa-a3d1-633863b7bbff",
-      "rarity": "rare",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":3,\"color_identity\":[\"U\"],\"layout\":\"normal\",\"name\":\"Kiora, the Rising Tide\",\"type_line\":\"Legendary Creature — Merfolk Noble\",\"collector_number\":\"309\",\"rarity\":\"rare\",\"set\":\"fdn\",\"colors\":[\"U\"],\"mana_cost\":\"{2}{U}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/5/a/5a123794-096f-4d01-bfd4-1d23f22608f7.jpg?1730489754\"],\"mtgo_id\":0}"
-    },
-    {
-      "color": "U",
-      "color_identity": "U",
-      "dfc": false,
-      "id": "c8ff751a-ec64-41d5-b22c-2a483ad9a9b2",
-      "oracle_id": "16414460-11ce-481d-ab54-6f0e0ea7d83d",
-      "rarity": "mythic",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"U\"],\"layout\":\"normal\",\"name\":\"Kitsa, Otterball Elite\",\"type_line\":\"Legendary Creature — Otter Wizard\",\"collector_number\":\"54\",\"rarity\":\"mythic\",\"set\":\"blb\",\"colors\":[\"U\"],\"mana_cost\":\"{1}{U}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/c/8/c8ff751a-ec64-41d5-b22c-2a483ad9a9b2.jpg?1721426117\"],\"mtgo_id\":0}"
+      "id": "88496096-fd9a-451a-85d9-31ccc3580623",
+      "oracle_id": "8aa1bbc9-b047-4d68-93f4-728e40dafc5e",
+      "rarity": "uncommon",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"B\"],\"layout\":\"normal\",\"name\":\"Kitesail Freebooter\",\"type_line\":\"Creature — Human Pirate\",\"collector_number\":\"107\",\"rarity\":\"uncommon\",\"set\":\"m21\",\"colors\":[\"B\"],\"mana_cost\":\"{1}{B}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/8/8/88496096-fd9a-451a-85d9-31ccc3580623.jpg?1594736212\"],\"mtgo_id\":0}"
     },
     {
       "color": "GW",
@@ -2096,24 +2132,6 @@
       "oracle_id": "45f1e957-09f0-4d46-8e32-238f26060a87",
       "rarity": "rare",
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":3,\"color_identity\":[\"B\",\"R\"],\"layout\":\"normal\",\"name\":\"Kolaghan's Command\",\"type_line\":\"Instant\",\"collector_number\":\"224\",\"rarity\":\"rare\",\"set\":\"dtk\",\"colors\":[\"B\",\"R\"],\"mana_cost\":\"{1}{B}{R}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/7/c/7c884e1e-fecb-4330-b3de-5fc2a60f7173.jpg?1562788780\"],\"mtgo_id\":0}"
-    },
-    {
-      "color": "GU",
-      "color_identity": "GU",
-      "dfc": false,
-      "id": "c3b92caa-3401-4b11-9515-152f3e057c05",
-      "oracle_id": "1ebf2142-f171-40cd-8143-15f50084b707",
-      "rarity": "rare",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":7,\"color_identity\":[\"G\",\"U\"],\"layout\":\"normal\",\"name\":\"Koma, World-Eater\",\"type_line\":\"Legendary Creature — Serpent\",\"collector_number\":\"121\",\"rarity\":\"rare\",\"set\":\"fdn\",\"colors\":[\"G\",\"U\"],\"mana_cost\":\"{3}{G}{G}{U}{U}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/c/3/c3b92caa-3401-4b11-9515-152f3e057c05.jpg?1730489050\"],\"mtgo_id\":0}"
-    },
-    {
-      "color": "R",
-      "color_identity": "R",
-      "dfc": true,
-      "id": "28d92cad-45b0-479d-97fc-c175f3a3f259",
-      "oracle_id": "535916f8-b51a-4414-8ab0-fdccdefd9433",
-      "rarity": "uncommon",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":1,\"color_identity\":[\"R\"],\"layout\":\"transform\",\"name\":\"Kumano Faces Kakkazan // Etching of Kumano\",\"type_line\":\"Enchantment — Saga // Enchantment Creature — Human Shaman\",\"collector_number\":\"152\",\"rarity\":\"uncommon\",\"set\":\"neo\",\"card_faces\":[{\"mana_cost\":\"{R}\",\"name\":\"Kumano Faces Kakkazan\",\"type_line\":\"Enchantment — Saga\",\"colors\":[\"R\"]},{\"mana_cost\":\"\",\"name\":\"Etching of Kumano\",\"type_line\":\"Enchantment Creature — Human Shaman\",\"colors\":[\"R\"]}]},\"image_uris\":[\"https://cards.scryfall.io/normal/front/2/8/28d92cad-45b0-479d-97fc-c175f3a3f259.jpg?1693966032\",\"https://cards.scryfall.io/normal/back/2/8/28d92cad-45b0-479d-97fc-c175f3a3f259.jpg?1693966032\"],\"mtgo_id\":0}"
     },
     {
       "color": "R",
@@ -2150,6 +2168,24 @@
       "oracle_id": "c77dc11e-d95d-4e7e-bb24-d971c179e9b0",
       "rarity": "mythic",
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"R\"],\"layout\":\"normal\",\"name\":\"Legion Extruder\",\"type_line\":\"Artifact\",\"collector_number\":\"12\",\"rarity\":\"mythic\",\"set\":\"big\",\"colors\":[\"R\"],\"mana_cost\":\"{1}{R}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/5/a/5a077de0-1893-40d0-a499-ee2e6e2258f1.jpg?1739804188\"],\"mtgo_id\":0}"
+    },
+    {
+      "color": "BGU",
+      "color_identity": "BGU",
+      "dfc": false,
+      "id": "71efb776-e4c6-4844-a69f-eff79725a72c",
+      "oracle_id": "d5d91377-fd66-4dbe-a092-07f2ea379ca7",
+      "rarity": "mythic",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":3,\"color_identity\":[\"B\",\"G\",\"U\"],\"layout\":\"normal\",\"name\":\"Leovold, Emissary of Trest\",\"type_line\":\"Legendary Creature — Elf Advisor\",\"collector_number\":\"CN2-77\",\"rarity\":\"mythic\",\"set\":\"plst\",\"colors\":[\"B\",\"G\",\"U\"],\"mana_cost\":\"{B}{G}{U}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/7/1/71efb776-e4c6-4844-a69f-eff79725a72c.jpg?1723434873\"],\"mtgo_id\":0}"
+    },
+    {
+      "color": "B",
+      "color_identity": "B",
+      "dfc": false,
+      "id": "1b2c44f7-7b54-4cdf-8f53-ab78c515795b",
+      "oracle_id": "c4660b3c-a234-4a3e-83e7-e2fa9d556685",
+      "rarity": "rare",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":4,\"color_identity\":[\"B\"],\"layout\":\"normal\",\"name\":\"Lethal Scheme\",\"type_line\":\"Instant\",\"collector_number\":\"185\",\"rarity\":\"rare\",\"set\":\"pip\",\"colors\":[\"B\"],\"mana_cost\":\"{2}{B}{B}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/1/b/1b2c44f7-7b54-4cdf-8f53-ab78c515795b.jpg?1708742943\"],\"mtgo_id\":0}"
     },
     {
       "color": "W",
@@ -2242,6 +2278,15 @@
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":1,\"color_identity\":[\"G\"],\"layout\":\"normal\",\"name\":\"Llanowar Elves\",\"type_line\":\"Creature — Elf Druid\",\"collector_number\":\"210\",\"rarity\":\"common\",\"set\":\"lea\",\"colors\":[\"G\"],\"mana_cost\":\"{G}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/d/4/d4f1cc9e-4f99-4c26-ac1b-8ef069fa8ceb.jpg?1559591371\"],\"mtgo_id\":0}"
     },
     {
+      "color": "GRU",
+      "color_identity": "GRU",
+      "dfc": false,
+      "id": "33c59c04-4c0b-4a60-826e-3a7757d0b2a2",
+      "oracle_id": "68c7e459-0932-4644-a3c0-9a1eae1db7a3",
+      "rarity": "mythic",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":5,\"color_identity\":[\"G\",\"R\",\"U\"],\"layout\":\"normal\",\"name\":\"Loot, the Pathfinder\",\"type_line\":\"Legendary Creature — Beast Noble\",\"collector_number\":\"212\",\"rarity\":\"mythic\",\"set\":\"dft\",\"colors\":[\"G\",\"R\",\"U\"],\"mana_cost\":\"{2}{G}{U}{R}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/3/3/33c59c04-4c0b-4a60-826e-3a7757d0b2a2.jpg?1738356691\"],\"mtgo_id\":0}"
+    },
+    {
       "color": "W",
       "color_identity": "W",
       "dfc": false,
@@ -2249,15 +2294,6 @@
       "oracle_id": "b3d81980-76f2-44e2-b1c9-01e30c726312",
       "rarity": "rare",
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":3,\"color_identity\":[\"W\"],\"layout\":\"normal\",\"name\":\"Loran of the Third Path\",\"type_line\":\"Legendary Creature — Human Artificer\",\"collector_number\":\"12\",\"rarity\":\"rare\",\"set\":\"bro\",\"colors\":[\"W\"],\"mana_cost\":\"{2}{W}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/5/9/59faa45d-868b-4bc7-934c-0e077642e129.jpg?1674420209\"],\"mtgo_id\":0}"
-    },
-    {
-      "color": "U",
-      "color_identity": "U",
-      "dfc": false,
-      "id": "0ce44270-a684-4489-9077-521456e6dfaa",
-      "oracle_id": "66f28905-c7fc-4ada-8fa0-199626d9bedb",
-      "rarity": "common",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":5,\"color_identity\":[\"U\"],\"layout\":\"normal\",\"name\":\"Lórien Revealed\",\"type_line\":\"Sorcery\",\"collector_number\":\"60\",\"rarity\":\"common\",\"set\":\"ltr\",\"colors\":[\"U\"],\"mana_cost\":\"{3}{U}{U}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/0/c/0ce44270-a684-4489-9077-521456e6dfaa.jpg?1687210977\"],\"mtgo_id\":0}"
     },
     {
       "color": "U",
@@ -2312,6 +2348,24 @@
       "oracle_id": "d51831b1-7394-456e-a1de-6787a59f5932",
       "rarity": "rare",
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":0,\"color_identity\":[\"G\",\"W\"],\"layout\":\"normal\",\"name\":\"Lush Portico\",\"type_line\":\"Land — Forest Plains\",\"collector_number\":\"263\",\"rarity\":\"rare\",\"set\":\"mkm\",\"colors\":[]},\"image_uris\":[\"https://cards.scryfall.io/normal/front/c/1/c17816e8-28b1-4295-a637-efb0e5c18873.jpg?1706242346\"],\"mtgo_id\":0}"
+    },
+    {
+      "color": "RU",
+      "color_identity": "RU",
+      "dfc": false,
+      "id": "fb1189c9-7842-466e-8238-1e02677d8494",
+      "oracle_id": "158a6225-a246-4fd6-aa57-0df8067b4383",
+      "rarity": "rare",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":3,\"color_identity\":[\"R\",\"U\"],\"layout\":\"normal\",\"name\":\"Lutri, the Spellchaser\",\"type_line\":\"Legendary Creature — Elemental Otter\",\"collector_number\":\"227\",\"rarity\":\"rare\",\"set\":\"iko\",\"colors\":[\"R\",\"U\"],\"mana_cost\":\"{1}{U/R}{U/R}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/f/b/fb1189c9-7842-466e-8238-1e02677d8494.jpg?1628801771\"],\"mtgo_id\":0}"
+    },
+    {
+      "color": "U",
+      "color_identity": "U",
+      "dfc": false,
+      "id": "0ce44270-a684-4489-9077-521456e6dfaa",
+      "oracle_id": "66f28905-c7fc-4ada-8fa0-199626d9bedb",
+      "rarity": "common",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":5,\"color_identity\":[\"U\"],\"layout\":\"normal\",\"name\":\"Lórien Revealed\",\"type_line\":\"Sorcery\",\"collector_number\":\"60\",\"rarity\":\"common\",\"set\":\"ltr\",\"colors\":[\"U\"],\"mana_cost\":\"{3}{U}{U}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/0/c/0ce44270-a684-4489-9077-521456e6dfaa.jpg?1687210977\"],\"mtgo_id\":0}"
     },
     {
       "color": "R",
@@ -2404,13 +2458,13 @@
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":1,\"color_identity\":[],\"layout\":\"normal\",\"name\":\"Manifold Key\",\"type_line\":\"Artifact\",\"collector_number\":\"230\",\"rarity\":\"uncommon\",\"set\":\"m20\",\"colors\":[],\"mana_cost\":\"{1}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/7/1/715e637a-dfd8-45a0-b1ea-53e4abd29307.jpg?1592517669\"],\"mtgo_id\":0}"
     },
     {
-      "color": "B",
-      "color_identity": "B",
+      "color": "W",
+      "color_identity": "W",
       "dfc": false,
-      "id": "d16f8670-f038-400a-83e7-a53a7f8c47ac",
-      "oracle_id": "726d9d2c-736a-4852-9938-a0f50d8fd89f",
-      "rarity": "uncommon",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"B\"],\"layout\":\"normal\",\"name\":\"Marionette Apprentice\",\"type_line\":\"Creature — Human Artificer\",\"collector_number\":\"100\",\"rarity\":\"uncommon\",\"set\":\"mh3\",\"colors\":[\"B\"],\"mana_cost\":\"{1}{B}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/d/1/d16f8670-f038-400a-83e7-a53a7f8c47ac.jpg?1717012013\"],\"mtgo_id\":0}"
+      "id": "553fb946-2706-475b-89f9-e4355ec9ea2b",
+      "oracle_id": "ed06e421-480c-40c8-8c3e-1e466e5327b2",
+      "rarity": "rare",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":1,\"color_identity\":[\"W\"],\"layout\":\"normal\",\"name\":\"March of Otherworldly Light\",\"type_line\":\"Instant\",\"collector_number\":\"28\",\"rarity\":\"rare\",\"set\":\"neo\",\"colors\":[\"W\"],\"mana_cost\":\"{X}{W}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/5/5/553fb946-2706-475b-89f9-e4355ec9ea2b.jpg?1654566420\"],\"mtgo_id\":0}"
     },
     {
       "color": "",
@@ -2533,6 +2587,15 @@
       "color": "W",
       "color_identity": "W",
       "dfc": false,
+      "id": "75665c2f-a100-4e3f-be8e-b5cc3c9a090b",
+      "oracle_id": "3979067a-9c68-443d-a85f-d9f07be880b9",
+      "rarity": "mythic",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":3,\"color_identity\":[\"W\"],\"layout\":\"normal\",\"name\":\"Monastery Mentor\",\"type_line\":\"Creature — Human Monk\",\"collector_number\":\"28\",\"rarity\":\"mythic\",\"set\":\"mom\",\"colors\":[\"W\"],\"mana_cost\":\"{2}{W}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/7/5/75665c2f-a100-4e3f-be8e-b5cc3c9a090b.jpg?1682202772\"],\"mtgo_id\":0}"
+    },
+    {
+      "color": "W",
+      "color_identity": "W",
+      "dfc": false,
       "id": "0b1a46ab-95cb-4c24-924f-fc2afd4fcac7",
       "oracle_id": "60433b48-d27f-413c-905c-43839b1943f1",
       "rarity": "uncommon",
@@ -2605,15 +2668,6 @@
       "color": "",
       "color_identity": "",
       "dfc": false,
-      "id": "8ca3c48b-f104-4292-9a4e-2ce87a65893c",
-      "oracle_id": "6b3cc59a-7ea5-4eb5-9bf9-5a9c07f80e2b",
-      "rarity": "rare",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":0,\"color_identity\":[],\"layout\":\"normal\",\"name\":\"Mutavault\",\"type_line\":\"Land\",\"collector_number\":\"148\",\"rarity\":\"rare\",\"set\":\"mor\",\"colors\":[]},\"image_uris\":[\"https://cards.scryfall.io/normal/front/8/c/8ca3c48b-f104-4292-9a4e-2ce87a65893c.jpg?1562879924\"],\"mtgo_id\":0}"
-    },
-    {
-      "color": "",
-      "color_identity": "",
-      "dfc": false,
       "id": "b0ae94ed-7314-470b-baba-f2f58bbc894a",
       "oracle_id": "c53ba31a-ba27-4e17-9a92-311acb1cab29",
       "rarity": "rare",
@@ -2665,6 +2719,15 @@
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":4,\"color_identity\":[\"G\"],\"layout\":\"normal\",\"name\":\"Natural Order\",\"type_line\":\"Sorcery\",\"collector_number\":\"114\",\"rarity\":\"rare\",\"set\":\"vis\",\"colors\":[\"G\"],\"mana_cost\":\"{2}{G}{G}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/0/8/0845f0b0-9413-4ddd-861d-9607636bebc6.jpg?1562276959\"],\"mtgo_id\":0}"
     },
     {
+      "color": "G",
+      "color_identity": "G",
+      "dfc": false,
+      "id": "f5615c05-eb1e-4d27-a323-72d643d7c1d8",
+      "oracle_id": "78826359-fe63-44ad-adc4-a17ffcd710e4",
+      "rarity": "uncommon",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"G\"],\"layout\":\"normal\",\"name\":\"Nature's Lore\",\"type_line\":\"Sorcery\",\"collector_number\":\"178\",\"rarity\":\"uncommon\",\"set\":\"mkc\",\"colors\":[\"G\"],\"mana_cost\":\"{1}{G}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/f/5/f5615c05-eb1e-4d27-a323-72d643d7c1d8.jpg?1706547171\"],\"mtgo_id\":0}"
+    },
+    {
       "color": "B",
       "color_identity": "B",
       "dfc": false,
@@ -2713,15 +2776,6 @@
       "color": "G",
       "color_identity": "G",
       "dfc": false,
-      "id": "2ef6cb5f-0ab3-4652-9b39-c2cbf6d693d5",
-      "oracle_id": "c501e577-5137-4dd6-b923-95408b78258a",
-      "rarity": "uncommon",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"G\"],\"layout\":\"normal\",\"name\":\"Nishoba Brawler\",\"type_line\":\"Creature — Cat Warrior\",\"collector_number\":\"174\",\"rarity\":\"uncommon\",\"set\":\"dmu\",\"colors\":[\"G\"],\"mana_cost\":\"{1}{G}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/2/e/2ef6cb5f-0ab3-4652-9b39-c2cbf6d693d5.jpg?1673307761\"],\"mtgo_id\":0}"
-    },
-    {
-      "color": "G",
-      "color_identity": "G",
-      "dfc": false,
       "id": "1dd64b1d-bcef-476c-bf0b-3ac7df7cbed3",
       "oracle_id": "9c8845d6-fa65-4731-b348-dc724fc2d285",
       "rarity": "mythic",
@@ -2753,15 +2807,6 @@
       "oracle_id": "98aa9424-5912-4bd6-9300-b3972a31d8af",
       "rarity": "rare",
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":1,\"color_identity\":[\"G\",\"U\",\"W\"],\"layout\":\"normal\",\"name\":\"Noble Hierarch\",\"type_line\":\"Creature — Human Druid\",\"collector_number\":\"87\",\"rarity\":\"rare\",\"set\":\"con\",\"colors\":[\"G\"],\"mana_cost\":\"{G}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/6/a/6adfe928-1305-444d-b709-1e714544daaf.jpg?1562801546\"],\"mtgo_id\":0}"
-    },
-    {
-      "color": "",
-      "color_identity": "BG",
-      "dfc": false,
-      "id": "2744ac83-a79f-4042-8720-688b5adda382",
-      "oracle_id": "8ed932ff-986c-4592-ad70-53b3fac80d69",
-      "rarity": "rare",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":0,\"color_identity\":[\"B\",\"G\"],\"layout\":\"normal\",\"name\":\"Nurturing Peatland\",\"type_line\":\"Land\",\"collector_number\":\"243\",\"rarity\":\"rare\",\"set\":\"mh1\",\"colors\":[]},\"image_uris\":[\"https://cards.scryfall.io/normal/front/2/7/2744ac83-a79f-4042-8720-688b5adda382.jpg?1562202580\"],\"mtgo_id\":0}"
     },
     {
       "color": "G",
@@ -2872,15 +2917,6 @@
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":1,\"color_identity\":[\"W\"],\"layout\":\"normal\",\"name\":\"Oust\",\"type_line\":\"Sorcery\",\"collector_number\":\"40\",\"rarity\":\"uncommon\",\"set\":\"roe\",\"colors\":[\"W\"],\"mana_cost\":\"{W}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/0/7/07313dd3-d0dc-40ca-98a3-fa4d39e5bcae.jpg?1562700840\"],\"mtgo_id\":0}"
     },
     {
-      "color": "G",
-      "color_identity": "G",
-      "dfc": true,
-      "id": "60e53d61-fcc3-4def-8206-052b46f62deb",
-      "oracle_id": "9545f126-062f-4410-a362-e16255a128d6",
-      "rarity": "uncommon",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"G\"],\"layout\":\"transform\",\"name\":\"Outland Liberator // Frenzied Trapbreaker\",\"type_line\":\"Creature — Human Werewolf // Creature — Werewolf\",\"collector_number\":\"190\",\"rarity\":\"uncommon\",\"set\":\"mid\",\"card_faces\":[{\"mana_cost\":\"{1}{G}\",\"name\":\"Outland Liberator\",\"type_line\":\"Creature — Human Werewolf\",\"colors\":[\"G\"]},{\"mana_cost\":\"\",\"name\":\"Frenzied Trapbreaker\",\"type_line\":\"Creature — Werewolf\",\"colors\":[\"G\"]}]},\"image_uris\":[\"https://cards.scryfall.io/normal/front/6/0/60e53d61-fcc3-4def-8206-052b46f62deb.jpg?1636224528\",\"https://cards.scryfall.io/normal/back/6/0/60e53d61-fcc3-4def-8206-052b46f62deb.jpg?1636224528\"],\"mtgo_id\":0}"
-    },
-    {
       "color": "",
       "color_identity": "BG",
       "dfc": false,
@@ -2897,24 +2933,6 @@
       "oracle_id": "652e87af-7cf0-407f-9fb7-1a630fb8dd47",
       "rarity": "mythic",
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":5,\"color_identity\":[\"B\"],\"layout\":\"normal\",\"name\":\"Overlord of the Balemurk\",\"type_line\":\"Enchantment Creature — Avatar Horror\",\"collector_number\":\"113\",\"rarity\":\"mythic\",\"set\":\"dsk\",\"colors\":[\"B\"],\"mana_cost\":\"{3}{B}{B}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/9/b/9b911653-7b96-4cf3-a907-13c5c53a14f7.jpg?1726286269\"],\"mtgo_id\":0}"
-    },
-    {
-      "color": "R",
-      "color_identity": "R",
-      "dfc": false,
-      "id": "d58d3545-043a-457a-8324-facc3c2363ec",
-      "oracle_id": "c2db05e0-879b-43e4-9009-37a95fd848dc",
-      "rarity": "mythic",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":6,\"color_identity\":[\"R\"],\"layout\":\"normal\",\"name\":\"Overlord of the Boilerbilges\",\"type_line\":\"Enchantment Creature — Avatar Horror\",\"collector_number\":\"146\",\"rarity\":\"mythic\",\"set\":\"dsk\",\"colors\":[\"R\"],\"mana_cost\":\"{4}{R}{R}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/d/5/d58d3545-043a-457a-8324-facc3c2363ec.jpg?1726286391\"],\"mtgo_id\":0}"
-    },
-    {
-      "color": "G",
-      "color_identity": "G",
-      "dfc": false,
-      "id": "05d08ff1-edcc-4c76-96e0-683b3da36ebb",
-      "oracle_id": "4669e8c7-fc37-4b97-9cb7-8d29b43d9176",
-      "rarity": "mythic",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":5,\"color_identity\":[\"G\"],\"layout\":\"normal\",\"name\":\"Overlord of the Hauntwoods\",\"type_line\":\"Enchantment Creature — Avatar Horror\",\"collector_number\":\"194\",\"rarity\":\"mythic\",\"set\":\"dsk\",\"colors\":[\"G\"],\"mana_cost\":\"{3}{G}{G}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/0/5/05d08ff1-edcc-4c76-96e0-683b3da36ebb.jpg?1726286590\"],\"mtgo_id\":0}"
     },
     {
       "color": "W",
@@ -2942,6 +2960,15 @@
       "oracle_id": "7798a4d9-1c1d-48e6-b9a2-ecd6aec1efa7",
       "rarity": "mythic",
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":3,\"color_identity\":[],\"layout\":\"normal\",\"name\":\"Palantír of Orthanc\",\"type_line\":\"Legendary Artifact\",\"collector_number\":\"247\",\"rarity\":\"mythic\",\"set\":\"ltr\",\"colors\":[],\"mana_cost\":\"{3}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/6/e/6efb6a69-562c-4d95-858d-b067444cfd7e.jpg?1686970247\"],\"mtgo_id\":0}"
+    },
+    {
+      "color": "U",
+      "color_identity": "U",
+      "dfc": false,
+      "id": "eaa2fc8b-6a5e-4092-a1b5-66b02e689edf",
+      "oracle_id": "2cce7250-f8f9-4c0a-87b1-ba3c5b8ed6b3",
+      "rarity": "rare",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":4,\"color_identity\":[\"U\"],\"layout\":\"normal\",\"name\":\"Paradoxical Outcome\",\"type_line\":\"Instant\",\"collector_number\":\"33\",\"rarity\":\"rare\",\"set\":\"mb2\",\"colors\":[\"U\"],\"mana_cost\":\"{3}{U}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/e/a/eaa2fc8b-6a5e-4092-a1b5-66b02e689edf.jpg?1723226701\"],\"mtgo_id\":0}"
     },
     {
       "color": "W",
@@ -3025,13 +3052,13 @@
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[],\"layout\":\"normal\",\"name\":\"Phyrexian Revoker\",\"type_line\":\"Artifact Creature — Phyrexian Horror\",\"collector_number\":\"122\",\"rarity\":\"rare\",\"set\":\"mbs\",\"colors\":[],\"mana_cost\":\"{2}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/7/c/7c7bec21-61b0-4e72-848b-82f38e1910e0.jpg?1562612499\"],\"mtgo_id\":0}"
     },
     {
-      "color": "R",
-      "color_identity": "R",
+      "color": "BG",
+      "color_identity": "BG",
       "dfc": false,
-      "id": "55d35442-5ca0-4fd7-8ff1-b7347b3e6690",
-      "oracle_id": "a13f4095-300b-434f-aa9a-3608aaae5163",
-      "rarity": "uncommon",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"R\"],\"layout\":\"normal\",\"name\":\"Piggy Bank\",\"type_line\":\"Artifact Creature — Boar Toy\",\"collector_number\":\"148\",\"rarity\":\"uncommon\",\"set\":\"dsk\",\"colors\":[\"R\"],\"mana_cost\":\"{1}{R}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/5/5/55d35442-5ca0-4fd7-8ff1-b7347b3e6690.jpg?1726286398\"],\"mtgo_id\":0}"
+      "id": "fa3b415f-7901-4ab4-84fe-60b90d40ac90",
+      "oracle_id": "91740570-1a97-4513-8af9-b32c363daf15",
+      "rarity": "rare",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"B\",\"G\"],\"layout\":\"normal\",\"name\":\"Pillage the Bog\",\"type_line\":\"Sorcery\",\"collector_number\":\"224\",\"rarity\":\"rare\",\"set\":\"otj\",\"colors\":[\"B\",\"G\"],\"mana_cost\":\"{B}{G}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/f/a/fa3b415f-7901-4ab4-84fe-60b90d40ac90.jpg?1712356177\"],\"mtgo_id\":0}"
     },
     {
       "color": "",
@@ -3079,15 +3106,6 @@
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":9,\"color_identity\":[],\"layout\":\"normal\",\"name\":\"Portal to Phyrexia\",\"type_line\":\"Artifact\",\"collector_number\":\"240\",\"rarity\":\"mythic\",\"set\":\"bro\",\"colors\":[],\"mana_cost\":\"{9}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/5/f/5f608efc-0dbc-4cc3-aadd-ed473bfc29ab.jpg?1674422004\"],\"mtgo_id\":0}"
     },
     {
-      "color": "W",
-      "color_identity": "W",
-      "dfc": false,
-      "id": "19018f23-b63b-45af-8419-8959f41472d4",
-      "oracle_id": "c5782f70-05c6-4df9-812d-7ecbe2dbaaff",
-      "rarity": "rare",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":3,\"color_identity\":[\"W\"],\"layout\":\"normal\",\"name\":\"Pre-War Formalwear\",\"type_line\":\"Artifact — Equipment\",\"collector_number\":\"21\",\"rarity\":\"rare\",\"set\":\"pip\",\"colors\":[\"W\"],\"mana_cost\":\"{2}{W}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/1/9/19018f23-b63b-45af-8419-8959f41472d4.jpg?1708741823\"],\"mtgo_id\":0}"
-    },
-    {
       "color": "B",
       "color_identity": "B",
       "dfc": false,
@@ -3106,6 +3124,15 @@
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":1,\"color_identity\":[\"U\"],\"layout\":\"normal\",\"name\":\"Preordain\",\"type_line\":\"Sorcery\",\"collector_number\":\"70\",\"rarity\":\"common\",\"set\":\"m11\",\"colors\":[\"U\"],\"mana_cost\":\"{U}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/e/3/e3868c3d-4fcd-444b-866f-0f8e50ce7b67.jpg?1562479014\"],\"mtgo_id\":0}"
     },
     {
+      "color": "G",
+      "color_identity": "G",
+      "dfc": false,
+      "id": "c66bda12-18da-43e2-a5e2-16d2c5e4d070",
+      "oracle_id": "ae83ef2c-960f-4c5b-97cc-52465c687c18",
+      "rarity": "mythic",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":6,\"color_identity\":[\"G\"],\"layout\":\"normal\",\"name\":\"Primeval Titan\",\"type_line\":\"Creature — Giant\",\"collector_number\":\"494\",\"rarity\":\"mythic\",\"set\":\"sld\",\"colors\":[\"G\"],\"mana_cost\":\"{4}{G}{G}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/c/6/c66bda12-18da-43e2-a5e2-16d2c5e4d070.jpg?1655154314\"],\"mtgo_id\":0}"
+    },
+    {
       "color": "W",
       "color_identity": "W",
       "dfc": false,
@@ -3122,15 +3149,6 @@
       "oracle_id": "032b8a0d-491a-4a12-ab9f-689010054d5b",
       "rarity": "rare",
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":0,\"color_identity\":[],\"layout\":\"normal\",\"name\":\"Prismatic Vista\",\"type_line\":\"Land\",\"collector_number\":\"244\",\"rarity\":\"rare\",\"set\":\"mh1\",\"colors\":[]},\"image_uris\":[\"https://cards.scryfall.io/normal/front/e/3/e37da81e-be12-45a2-9128-376f1ad7b3e8.jpg?1562202585\"],\"mtgo_id\":0}"
-    },
-    {
-      "color": "U",
-      "color_identity": "U",
-      "dfc": false,
-      "id": "af5b29b3-974c-4200-8df8-b072c11e1600",
-      "oracle_id": "b749e9e4-0f2a-4157-8cca-facd6b48157f",
-      "rarity": "rare",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"U\"],\"layout\":\"normal\",\"name\":\"Proft's Eidetic Memory\",\"type_line\":\"Legendary Enchantment\",\"collector_number\":\"67\",\"rarity\":\"rare\",\"set\":\"mkm\",\"colors\":[\"U\"],\"mana_cost\":\"{1}{U}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/a/f/af5b29b3-974c-4200-8df8-b072c11e1600.jpg?1706241635\"],\"mtgo_id\":0}"
     },
     {
       "color": "BU",
@@ -3160,13 +3178,13 @@
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":6,\"color_identity\":[\"R\"],\"layout\":\"normal\",\"name\":\"Pyrokinesis\",\"type_line\":\"Instant\",\"collector_number\":\"78\",\"rarity\":\"uncommon\",\"set\":\"all\",\"colors\":[\"R\"],\"mana_cost\":\"{4}{R}{R}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/d/b/db2a5e85-6cbc-43c1-9362-4056ad017ef0.jpg?1562770632\"],\"mtgo_id\":0}"
     },
     {
-      "color": "GW",
-      "color_identity": "GW",
+      "color": "B",
+      "color_identity": "B",
       "dfc": false,
-      "id": "75256550-bbe0-499d-909e-af10691749c2",
-      "oracle_id": "10821e37-8a83-4d8e-a12f-249a10933a22",
-      "rarity": "common",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"G\",\"W\"],\"layout\":\"normal\",\"name\":\"Qasali Pridemage\",\"type_line\":\"Creature — Cat Wizard\",\"collector_number\":\"75\",\"rarity\":\"common\",\"set\":\"arb\",\"colors\":[\"G\",\"W\"],\"mana_cost\":\"{G}{W}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/7/5/75256550-bbe0-499d-909e-af10691749c2.jpg?1562642150\"],\"mtgo_id\":0}"
+      "id": "8c93a0f6-5e50-4dda-9ff6-da741fb839ff",
+      "oracle_id": "bbea79bc-71d4-4100-92f4-783c2c4b46da",
+      "rarity": "rare",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":3,\"color_identity\":[\"B\"],\"layout\":\"normal\",\"name\":\"Qarsi Revenant\",\"type_line\":\"Creature — Vampire\",\"collector_number\":\"86\",\"rarity\":\"rare\",\"set\":\"tdm\",\"colors\":[\"B\"],\"mana_cost\":\"{1}{B}{B}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/8/c/8c93a0f6-5e50-4dda-9ff6-da741fb839ff.jpg?1743204304\"],\"mtgo_id\":0}"
     },
     {
       "color": "G",
@@ -3187,6 +3205,15 @@
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":0,\"color_identity\":[\"B\",\"U\",\"W\"],\"layout\":\"normal\",\"name\":\"Raffine's Tower\",\"type_line\":\"Land — Plains Island Swamp\",\"collector_number\":\"254\",\"rarity\":\"rare\",\"set\":\"snc\",\"colors\":[]},\"image_uris\":[\"https://cards.scryfall.io/normal/front/a/2/a2c56479-4bee-4edb-80d7-4af010b7c793.jpg?1664414518\"],\"mtgo_id\":0}"
     },
     {
+      "color": "BUW",
+      "color_identity": "BUW",
+      "dfc": false,
+      "id": "716a44b4-f6b0-4f14-a270-6442aed3251f",
+      "oracle_id": "9307f7e9-bcd9-41f9-88f8-0fb9700a6b12",
+      "rarity": "mythic",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":3,\"color_identity\":[\"B\",\"U\",\"W\"],\"layout\":\"normal\",\"name\":\"Raffine, Scheming Seer\",\"type_line\":\"Legendary Creature — Sphinx Demon\",\"collector_number\":\"213\",\"rarity\":\"mythic\",\"set\":\"snc\",\"colors\":[\"B\",\"U\",\"W\"],\"mana_cost\":\"{W}{U}{B}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/7/1/716a44b4-f6b0-4f14-a270-6442aed3251f.jpg?1711471750\"],\"mtgo_id\":0}"
+    },
+    {
       "color": "R",
       "color_identity": "R",
       "dfc": false,
@@ -3203,6 +3230,15 @@
       "oracle_id": "aa77980d-0434-40f0-990f-1c8c50610174",
       "rarity": "uncommon",
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":1,\"color_identity\":[\"B\"],\"layout\":\"normal\",\"name\":\"Rain of Filth\",\"type_line\":\"Instant\",\"collector_number\":\"151\",\"rarity\":\"uncommon\",\"set\":\"usg\",\"colors\":[\"B\"],\"mana_cost\":\"{B}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/1/c/1cf07d5a-6618-48e2-a9f0-669b75bb6e85.jpg?1701537455\"],\"mtgo_id\":0}"
+    },
+    {
+      "color": "R",
+      "color_identity": "R",
+      "dfc": false,
+      "id": "64b80ddb-ce55-4ebc-b587-77843abc8bad",
+      "oracle_id": "450a07f5-709c-48a6-aaa8-ddbd7da4fd2e",
+      "rarity": "rare",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":4,\"color_identity\":[\"R\"],\"layout\":\"normal\",\"name\":\"Rampaging Raptor\",\"type_line\":\"Creature — Dinosaur\",\"collector_number\":\"160\",\"rarity\":\"rare\",\"set\":\"mom\",\"colors\":[\"R\"],\"mana_cost\":\"{2}{R}{R}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/6/4/64b80ddb-ce55-4ebc-b587-77843abc8bad.jpg?1682204450\"],\"mtgo_id\":0}"
     },
     {
       "color": "G",
@@ -3232,15 +3268,6 @@
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":0,\"color_identity\":[\"R\",\"U\",\"W\"],\"layout\":\"normal\",\"name\":\"Raugrin Triome\",\"type_line\":\"Land — Island Mountain Plains\",\"collector_number\":\"251\",\"rarity\":\"rare\",\"set\":\"iko\",\"colors\":[]},\"image_uris\":[\"https://cards.scryfall.io/normal/front/0/2/02138fbb-3962-4348-8d31-faaefba0b8b2.jpg?1591228666\"],\"mtgo_id\":0}"
     },
     {
-      "color": "R",
-      "color_identity": "R",
-      "dfc": false,
-      "id": "bc73b963-23c0-46d2-853a-34a8b463994e",
-      "oracle_id": "a78f981a-bf8a-42a4-b171-d655cc2cc1a2",
-      "rarity": "rare",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"R\"],\"layout\":\"normal\",\"name\":\"Razorkin Needlehead\",\"type_line\":\"Creature — Human Assassin\",\"collector_number\":\"153\",\"rarity\":\"rare\",\"set\":\"dsk\",\"colors\":[\"R\"],\"mana_cost\":\"{R}{R}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/b/c/bc73b963-23c0-46d2-853a-34a8b463994e.jpg?1726286422\"],\"mtgo_id\":0}"
-    },
-    {
       "color": "",
       "color_identity": "GW",
       "dfc": false,
@@ -3257,15 +3284,6 @@
       "oracle_id": "a044474a-cd72-4e9d-bd8d-a08f2de9cdc0",
       "rarity": "uncommon",
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":1,\"color_identity\":[\"B\"],\"layout\":\"normal\",\"name\":\"Reanimate\",\"type_line\":\"Sorcery\",\"collector_number\":\"151\",\"rarity\":\"uncommon\",\"set\":\"tmp\",\"colors\":[\"B\"],\"mana_cost\":\"{B}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/a/e/ae1ef31c-8ca5-444c-8f39-e1d1827318f5.jpg?1562055925\"],\"mtgo_id\":0}"
-    },
-    {
-      "color": "",
-      "color_identity": "",
-      "dfc": false,
-      "id": "279acd17-6c17-427b-a69d-fc02442ff4a3",
-      "oracle_id": "b6be94dc-7162-4887-b959-3bda709724eb",
-      "rarity": "rare",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[],\"layout\":\"normal\",\"name\":\"Reckoner Bankbuster\",\"type_line\":\"Artifact — Vehicle\",\"collector_number\":\"255\",\"rarity\":\"rare\",\"set\":\"neo\",\"colors\":[],\"mana_cost\":\"{2}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/2/7/279acd17-6c17-427b-a69d-fc02442ff4a3.jpg?1685368706\"],\"mtgo_id\":0}"
     },
     {
       "color": "B",
@@ -3305,12 +3323,30 @@
     },
     {
       "color": "",
+      "color_identity": "GU",
+      "dfc": false,
+      "id": "e5f3161d-3f69-4b06-ab73-c31fc0c1520c",
+      "oracle_id": "0935faa2-fb90-48db-8a92-906ba0f374c7",
+      "rarity": "rare",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":0,\"color_identity\":[\"G\",\"U\"],\"layout\":\"normal\",\"name\":\"Restless Vinestalk\",\"type_line\":\"Land\",\"collector_number\":\"261\",\"rarity\":\"rare\",\"set\":\"woe\",\"colors\":[]},\"image_uris\":[\"https://cards.scryfall.io/normal/front/e/5/e5f3161d-3f69-4b06-ab73-c31fc0c1520c.jpg?1692940027\"],\"mtgo_id\":0}"
+    },
+    {
+      "color": "",
       "color_identity": "",
       "dfc": false,
       "id": "5da578b8-19e6-4068-9336-e7cd33c585f1",
       "oracle_id": "aaadfe41-b2be-4183-b45e-a70e53a59d2e",
       "rarity": "rare",
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":1,\"color_identity\":[],\"layout\":\"normal\",\"name\":\"Retrofitter Foundry\",\"type_line\":\"Artifact\",\"collector_number\":\"57\",\"rarity\":\"rare\",\"set\":\"c18\",\"colors\":[],\"mana_cost\":\"{1}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/5/d/5da578b8-19e6-4068-9336-e7cd33c585f1.jpg?1592710366\"],\"mtgo_id\":0}"
+    },
+    {
+      "color": "",
+      "color_identity": "RU",
+      "dfc": false,
+      "id": "57a93a71-d77c-417f-85d0-cd420f573331",
+      "oracle_id": "510a6ac5-f098-4145-ac07-771b1b6f7cdf",
+      "rarity": "rare",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":0,\"color_identity\":[\"R\",\"U\"],\"layout\":\"normal\",\"name\":\"Riverpyre Verge\",\"type_line\":\"Land\",\"collector_number\":\"260\",\"rarity\":\"rare\",\"set\":\"dft\",\"colors\":[]},\"image_uris\":[\"https://cards.scryfall.io/normal/front/5/7/57a93a71-d77c-417f-85d0-cd420f573331.jpg?1738356929\"],\"mtgo_id\":0}"
     },
     {
       "color": "R",
@@ -3320,6 +3356,15 @@
       "oracle_id": "4df0d381-fc05-4d30-9307-48963aa2ecfd",
       "rarity": "mythic",
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"R\"],\"layout\":\"normal\",\"name\":\"Robber of the Rich\",\"type_line\":\"Creature — Human Archer Rogue\",\"collector_number\":\"138\",\"rarity\":\"mythic\",\"set\":\"eld\",\"colors\":[\"R\"],\"mana_cost\":\"{1}{R}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/0/e/0ecbe097-ba51-42e5-957c-382eb66c08f0.jpg?1572490437\"],\"mtgo_id\":0}"
+    },
+    {
+      "color": "G",
+      "color_identity": "G",
+      "dfc": false,
+      "id": "6aa5cc65-f8f1-4f6f-8b4e-2fedccbda684",
+      "oracle_id": "3015882b-4897-4d2c-8e33-6731c85a0d03",
+      "rarity": "rare",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"G\"],\"layout\":\"normal\",\"name\":\"Rofellos, Llanowar Emissary\",\"type_line\":\"Legendary Creature — Elf Druid\",\"collector_number\":\"118\",\"rarity\":\"rare\",\"set\":\"uds\",\"colors\":[\"G\"],\"mana_cost\":\"{G}{G}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/6/a/6aa5cc65-f8f1-4f6f-8b4e-2fedccbda684.jpg?1562444230\"],\"mtgo_id\":0}"
     },
     {
       "color": "",
@@ -3349,15 +3394,6 @@
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":3,\"color_identity\":[\"G\"],\"layout\":\"normal\",\"name\":\"Sandstorm Salvager\",\"type_line\":\"Creature — Human Artificer\",\"collector_number\":\"19\",\"rarity\":\"mythic\",\"set\":\"big\",\"colors\":[\"G\"],\"mana_cost\":\"{2}{G}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/1/3/13b0f27c-a359-4702-833a-82fec161eeec.jpg?1739804214\"],\"mtgo_id\":0}"
     },
     {
-      "color": "W",
-      "color_identity": "W",
-      "dfc": false,
-      "id": "269ddd84-fdc4-4c94-b183-32ecec56967c",
-      "oracle_id": "a70d9645-7c25-4fcb-9d16-fb73ce8b55e2",
-      "rarity": "rare",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":3,\"color_identity\":[\"W\"],\"layout\":\"normal\",\"name\":\"Sanguine Evangelist\",\"type_line\":\"Creature — Vampire Cleric\",\"collector_number\":\"34\",\"rarity\":\"rare\",\"set\":\"lci\",\"colors\":[\"W\"],\"mana_cost\":\"{2}{W}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/2/6/269ddd84-fdc4-4c94-b183-32ecec56967c.jpg?1699043382\"],\"mtgo_id\":0}"
-    },
-    {
       "color": "RUW",
       "color_identity": "RUW",
       "dfc": false,
@@ -3365,15 +3401,6 @@
       "oracle_id": "ce8af7dd-49df-4419-9776-4157efc60b0f",
       "rarity": "mythic",
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":4,\"color_identity\":[\"R\",\"U\",\"W\"],\"layout\":\"normal\",\"name\":\"Satya, Aetherflux Genius\",\"type_line\":\"Legendary Creature — Human Artificer\",\"collector_number\":\"142\",\"rarity\":\"mythic\",\"set\":\"m3c\",\"colors\":[\"R\",\"U\",\"W\"],\"mana_cost\":\"{1}{U}{R}{W}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/6/5/65a9bda0-80eb-4aa9-ad89-9f73e65dbce3.jpg?1719471977\"],\"mtgo_id\":0}"
-    },
-    {
-      "color": "G",
-      "color_identity": "G",
-      "dfc": false,
-      "id": "13c5a1ce-932a-4b3d-8b86-ed920e646afc",
-      "oracle_id": "ead4c01a-e2ae-49c9-95d9-651d81005907",
-      "rarity": "common",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"G\"],\"layout\":\"normal\",\"name\":\"Satyr Wayfinder\",\"type_line\":\"Creature — Satyr\",\"collector_number\":\"136\",\"rarity\":\"common\",\"set\":\"bng\",\"colors\":[\"G\"],\"mana_cost\":\"{1}{G}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/1/3/13c5a1ce-932a-4b3d-8b86-ed920e646afc.jpg?1593092623\"],\"mtgo_id\":0}"
     },
     {
       "color": "",
@@ -3404,15 +3431,6 @@
     },
     {
       "color": "",
-      "color_identity": "",
-      "dfc": false,
-      "id": "3e7da55c-7f05-46b2-aa3c-17f8d5df46bb",
-      "oracle_id": "fd547632-a29a-4dad-a9da-155882391815",
-      "rarity": "mythic",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":12,\"color_identity\":[],\"layout\":\"normal\",\"name\":\"Scion of Draco\",\"type_line\":\"Artifact Creature — Dragon\",\"collector_number\":\"234\",\"rarity\":\"mythic\",\"set\":\"mh2\",\"colors\":[],\"mana_cost\":\"{12}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/3/e/3e7da55c-7f05-46b2-aa3c-17f8d5df46bb.jpg?1626099262\"],\"mtgo_id\":0}"
-    },
-    {
-      "color": "",
       "color_identity": "R",
       "dfc": false,
       "id": "4742800a-4872-4c2d-b884-01e0ba16950c",
@@ -3437,6 +3455,15 @@
       "oracle_id": "c8d95ca8-7d12-4072-aeaf-e20f248c7e39",
       "rarity": "rare",
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":0,\"color_identity\":[\"B\",\"W\"],\"layout\":\"normal\",\"name\":\"Scrubland\",\"type_line\":\"Land — Plains Swamp\",\"collector_number\":\"281\",\"rarity\":\"rare\",\"set\":\"lea\",\"colors\":[]},\"image_uris\":[\"https://cards.scryfall.io/normal/front/b/e/bebe39d4-21fb-46a4-a1ec-b97102e46c15.jpg?1559591480\"],\"mtgo_id\":0}"
+    },
+    {
+      "color": "G",
+      "color_identity": "G",
+      "dfc": false,
+      "id": "b3dd3c7d-4685-4579-b483-14ddaaaddf5b",
+      "oracle_id": "929117cd-caa6-402b-9d7b-1f684d75695c",
+      "rarity": "rare",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"G\"],\"layout\":\"normal\",\"name\":\"Scythecat Cub\",\"type_line\":\"Creature — Cat\",\"collector_number\":\"24\",\"rarity\":\"rare\",\"set\":\"j25\",\"colors\":[\"G\"],\"mana_cost\":\"{1}{G}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/b/3/b3dd3c7d-4685-4579-b483-14ddaaaddf5b.jpg?1730485778\"],\"mtgo_id\":0}"
     },
     {
       "color": "",
@@ -3511,15 +3538,6 @@
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":4,\"color_identity\":[\"W\"],\"layout\":\"normal\",\"name\":\"Serra Paragon\",\"type_line\":\"Creature — Angel\",\"collector_number\":\"32\",\"rarity\":\"mythic\",\"set\":\"dmu\",\"colors\":[\"W\"],\"mana_cost\":\"{2}{W}{W}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/c/e/ce295f1e-fb31-4275-a5d3-8c6f29afff40.jpg?1739402923\"],\"mtgo_id\":0}"
     },
     {
-      "color": "W",
-      "color_identity": "W",
-      "dfc": false,
-      "id": "7e68f4df-88ce-4e09-a03c-7edf40bff167",
-      "oracle_id": "1b9f9f5b-8712-4f00-90cb-1b7b9970eccc",
-      "rarity": "rare",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":3,\"color_identity\":[\"W\"],\"layout\":\"normal\",\"name\":\"Sevinne's Reclamation\",\"type_line\":\"Sorcery\",\"collector_number\":\"5\",\"rarity\":\"rare\",\"set\":\"c19\",\"colors\":[\"W\"],\"mana_cost\":\"{2}{W}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/7/e/7e68f4df-88ce-4e09-a03c-7edf40bff167.jpg?1568003378\"],\"mtgo_id\":0}"
-    },
-    {
       "color": "",
       "color_identity": "",
       "dfc": false,
@@ -3556,13 +3574,13 @@
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":0,\"color_identity\":[\"U\"],\"layout\":\"normal\",\"name\":\"Shelldock Isle\",\"type_line\":\"Land\",\"collector_number\":\"272\",\"rarity\":\"rare\",\"set\":\"lrw\",\"colors\":[]},\"image_uris\":[\"https://cards.scryfall.io/normal/front/4/2/4216656e-90e8-45fc-a0f6-0d0d79d0a021.jpg?1562345880\"],\"mtgo_id\":0}"
     },
     {
-      "color": "W",
-      "color_identity": "W",
+      "color": "B",
+      "color_identity": "B",
       "dfc": false,
-      "id": "389f3f7b-be40-4a2d-b5cc-28471a577981",
-      "oracle_id": "d13fc657-c6fc-4394-bc70-691050550226",
+      "id": "a9225cc3-90f0-448f-a8d9-7c6c2796d077",
+      "oracle_id": "217062f5-96f1-454c-9507-17f34ef37070",
       "rarity": "uncommon",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"W\"],\"layout\":\"normal\",\"name\":\"Sheltered by Ghosts\",\"type_line\":\"Enchantment — Aura\",\"collector_number\":\"30\",\"rarity\":\"uncommon\",\"set\":\"dsk\",\"colors\":[\"W\"],\"mana_cost\":\"{1}{W}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/3/8/389f3f7b-be40-4a2d-b5cc-28471a577981.jpg?1726285971\"],\"mtgo_id\":0}"
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"B\"],\"layout\":\"normal\",\"name\":\"Sheoldred's Edict\",\"type_line\":\"Instant\",\"collector_number\":\"108\",\"rarity\":\"uncommon\",\"set\":\"one\",\"colors\":[\"B\"],\"mana_cost\":\"{1}{B}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/a/9/a9225cc3-90f0-448f-a8d9-7c6c2796d077.jpg?1675957049\"],\"mtgo_id\":0}"
     },
     {
       "color": "B",
@@ -3572,15 +3590,6 @@
       "oracle_id": "34f34409-326d-4994-a0ea-1a69aa278f03",
       "rarity": "mythic",
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":4,\"color_identity\":[\"B\"],\"layout\":\"normal\",\"name\":\"Sheoldred, the Apocalypse\",\"type_line\":\"Legendary Creature — Phyrexian Praetor\",\"collector_number\":\"107\",\"rarity\":\"mythic\",\"set\":\"dmu\",\"colors\":[\"B\"],\"mana_cost\":\"{2}{B}{B}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/d/6/d67be074-cdd4-41d9-ac89-0a0456c4e4b2.jpg?1674057568\"],\"mtgo_id\":0}"
-    },
-    {
-      "color": "B",
-      "color_identity": "B",
-      "dfc": false,
-      "id": "a9225cc3-90f0-448f-a8d9-7c6c2796d077",
-      "oracle_id": "217062f5-96f1-454c-9507-17f34ef37070",
-      "rarity": "uncommon",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"B\"],\"layout\":\"normal\",\"name\":\"Sheoldred's Edict\",\"type_line\":\"Instant\",\"collector_number\":\"108\",\"rarity\":\"uncommon\",\"set\":\"one\",\"colors\":[\"B\"],\"mana_cost\":\"{1}{B}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/a/9/a9225cc3-90f0-448f-a8d9-7c6c2796d077.jpg?1675957049\"],\"mtgo_id\":0}"
     },
     {
       "color": "",
@@ -3608,24 +3617,6 @@
       "oracle_id": "b83a3ba0-249e-4c39-bbf0-cb005413f7d2",
       "rarity": "rare",
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":3,\"color_identity\":[\"U\"],\"layout\":\"normal\",\"name\":\"Show and Tell\",\"type_line\":\"Sorcery\",\"collector_number\":\"96\",\"rarity\":\"rare\",\"set\":\"usg\",\"colors\":[\"U\"],\"mana_cost\":\"{2}{U}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/4/b/4b851c17-55ed-4671-b471-dc7b34944432.jpg?1667109583\"],\"mtgo_id\":0}"
-    },
-    {
-      "color": "B",
-      "color_identity": "B",
-      "dfc": false,
-      "id": "ea19eb5e-0d70-42e6-bda2-b13757e08ca6",
-      "oracle_id": "717bbb9d-0a5b-4979-a24b-9d54aac7657a",
-      "rarity": "uncommon",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":5,\"color_identity\":[\"B\"],\"layout\":\"normal\",\"name\":\"Shriekmaw\",\"type_line\":\"Creature — Elemental\",\"collector_number\":\"139\",\"rarity\":\"uncommon\",\"set\":\"lrw\",\"colors\":[\"B\"],\"mana_cost\":\"{4}{B}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/e/a/ea19eb5e-0d70-42e6-bda2-b13757e08ca6.jpg?1562372755\"],\"mtgo_id\":0}"
-    },
-    {
-      "color": "",
-      "color_identity": "BW",
-      "dfc": false,
-      "id": "ac07e230-0297-4e1d-bdfe-119010e0ad8e",
-      "oracle_id": "fd45063f-c83c-431c-9104-f139c497ec0d",
-      "rarity": "rare",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":0,\"color_identity\":[\"B\",\"W\"],\"layout\":\"normal\",\"name\":\"Silent Clearing\",\"type_line\":\"Land\",\"collector_number\":\"246\",\"rarity\":\"rare\",\"set\":\"mh1\",\"colors\":[]},\"image_uris\":[\"https://cards.scryfall.io/normal/front/a/c/ac07e230-0297-4e1d-bdfe-119010e0ad8e.jpg?1562202597\"],\"mtgo_id\":0}"
     },
     {
       "color": "U",
@@ -3662,6 +3653,15 @@
       "oracle_id": "d90af00a-d322-4265-9954-7b1e80702e18",
       "rarity": "rare",
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":3,\"color_identity\":[\"W\"],\"layout\":\"normal\",\"name\":\"Skyclave Apparition\",\"type_line\":\"Creature — Kor Spirit\",\"collector_number\":\"39\",\"rarity\":\"rare\",\"set\":\"znr\",\"colors\":[\"W\"],\"mana_cost\":\"{1}{W}{W}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/b/8/b83cfbaa-7890-4f6f-878b-4edb45677371.jpg?1604193295\"],\"mtgo_id\":0}"
+    },
+    {
+      "color": "BGR",
+      "color_identity": "BGR",
+      "dfc": false,
+      "id": "c6f777b0-2f35-4333-8f54-7ceeeac2ec83",
+      "oracle_id": "5a6f4181-f5ad-4ecf-9566-e52870af14d0",
+      "rarity": "mythic",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":3,\"color_identity\":[\"B\",\"G\",\"R\"],\"layout\":\"normal\",\"name\":\"Slimefoot and Squee\",\"type_line\":\"Legendary Creature — Fungus Goblin\",\"collector_number\":\"450\",\"rarity\":\"mythic\",\"set\":\"moc\",\"colors\":[\"B\",\"G\",\"R\"],\"mana_cost\":\"{B}{R}{G}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/c/6/c6f777b0-2f35-4333-8f54-7ceeeac2ec83.jpg?1727890610\"],\"mtgo_id\":0}"
     },
     {
       "color": "",
@@ -3730,10 +3730,19 @@
       "color": "",
       "color_identity": "",
       "dfc": false,
-      "id": "7c850b94-75c9-4457-8b5e-1193352d6fcb",
+      "id": "6a0f5301-0af9-496d-b55d-6bb5518b009c",
       "oracle_id": "1b5e6560-ff2e-4475-96cb-63f64c8a86db",
       "rarity": "uncommon",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":1,\"color_identity\":[],\"layout\":\"normal\",\"name\":\"Soul-Guide Lantern\",\"type_line\":\"Artifact\",\"collector_number\":\"237\",\"rarity\":\"uncommon\",\"set\":\"thb\",\"colors\":[],\"mana_cost\":\"{1}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/7/c/7c850b94-75c9-4457-8b5e-1193352d6fcb.jpg?1581481214\"],\"mtgo_id\":0}"
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":1,\"color_identity\":[],\"layout\":\"normal\",\"name\":\"Soul-Guide Lantern\",\"type_line\":\"Artifact\",\"collector_number\":\"139\",\"rarity\":\"uncommon\",\"set\":\"drc\",\"colors\":[],\"mana_cost\":\"{1}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/6/a/6a0f5301-0af9-496d-b55d-6bb5518b009c.jpg?1738355984\"],\"mtgo_id\":0}"
+    },
+    {
+      "color": "",
+      "color_identity": "G",
+      "dfc": false,
+      "id": "f511bfe7-b107-4ec5-b363-f718c19d9579",
+      "oracle_id": "63a19c7c-49d7-4b75-aac8-d0ff36c45fb8",
+      "rarity": "rare",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":4,\"color_identity\":[\"G\"],\"layout\":\"normal\",\"name\":\"Sowing Mycospawn\",\"type_line\":\"Creature — Eldrazi Fungus\",\"collector_number\":\"340\",\"rarity\":\"rare\",\"set\":\"mh3\",\"colors\":[],\"mana_cost\":\"{3}{G}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/f/5/f511bfe7-b107-4ec5-b363-f718c19d9579.jpg?1740308402\"],\"mtgo_id\":0}"
     },
     {
       "color": "",
@@ -3761,15 +3770,6 @@
       "oracle_id": "47a785ed-8095-4685-8daa-02c4e2b0ffcd",
       "rarity": "rare",
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":3,\"color_identity\":[\"U\"],\"layout\":\"normal\",\"name\":\"Spellseeker\",\"type_line\":\"Creature — Human Wizard\",\"collector_number\":\"41\",\"rarity\":\"rare\",\"set\":\"bbd\",\"colors\":[\"U\"],\"mana_cost\":\"{2}{U}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/7/4/74b4c336-5d4c-4bc5-b82a-35084a6ad808.jpg?1562918363\"],\"mtgo_id\":0}"
-    },
-    {
-      "color": "R",
-      "color_identity": "R",
-      "dfc": false,
-      "id": "b90164a1-8b0a-4445-a0ad-43e4c3324925",
-      "oracle_id": "e49b902f-a556-4dab-8928-93caf0a3f609",
-      "rarity": "rare",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":8,\"color_identity\":[\"R\"],\"layout\":\"split\",\"name\":\"Spiked Corridor // Torture Pit\",\"type_line\":\"Enchantment — Room // Enchantment — Room\",\"collector_number\":\"28\",\"rarity\":\"rare\",\"set\":\"dsc\",\"card_faces\":[{\"mana_cost\":\"{3}{R}\",\"name\":\"Spiked Corridor\",\"type_line\":\"Enchantment — Room\"},{\"mana_cost\":\"{3}{R}\",\"name\":\"Torture Pit\",\"type_line\":\"Enchantment — Room\"}],\"colors\":[\"R\"],\"mana_cost\":\"{3}{R} // {3}{R}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/b/9/b90164a1-8b0a-4445-a0ad-43e4c3324925.jpg?1726780774\"],\"mtgo_id\":0}"
     },
     {
       "color": "",
@@ -3808,6 +3808,15 @@
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"W\"],\"layout\":\"normal\",\"name\":\"Staff of the Storyteller\",\"type_line\":\"Artifact\",\"collector_number\":\"10\",\"rarity\":\"rare\",\"set\":\"onc\",\"colors\":[\"W\"],\"mana_cost\":\"{1}{W}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/a/b/ab1d1461-1625-4163-aacd-a939f4871fad.jpg?1675905578\"],\"mtgo_id\":0}"
     },
     {
+      "color": "W",
+      "color_identity": "W",
+      "dfc": false,
+      "id": "dd16222e-349c-4a2b-a7c8-8eb35a8ab332",
+      "oracle_id": "b1bc8e58-ea4f-46a9-b833-d780cf6758b3",
+      "rarity": "uncommon",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":1,\"color_identity\":[\"W\"],\"layout\":\"normal\",\"name\":\"Static Prison\",\"type_line\":\"Enchantment\",\"collector_number\":\"44\",\"rarity\":\"uncommon\",\"set\":\"mh3\",\"colors\":[\"W\"],\"mana_cost\":\"{W}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/d/d/dd16222e-349c-4a2b-a7c8-8eb35a8ab332.jpg?1717011554\"],\"mtgo_id\":0}"
+    },
+    {
       "color": "",
       "color_identity": "RU",
       "dfc": false,
@@ -3817,15 +3826,6 @@
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":0,\"color_identity\":[\"R\",\"U\"],\"layout\":\"normal\",\"name\":\"Steam Vents\",\"type_line\":\"Land — Island Mountain\",\"collector_number\":\"164\",\"rarity\":\"rare\",\"set\":\"gpt\",\"colors\":[]},\"image_uris\":[\"https://cards.scryfall.io/normal/front/0/5/054f2276-2dd5-43da-bb26-c57c560861fe.jpg?1593273017\"],\"mtgo_id\":0}"
     },
     {
-      "color": "",
-      "color_identity": "W",
-      "dfc": false,
-      "id": "1b6ef5f5-4058-4f89-a573-9e2da87a9f2e",
-      "oracle_id": "7ff8940f-d798-41eb-b82e-a1eba2163fe7",
-      "rarity": "rare",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":6,\"color_identity\":[\"W\"],\"layout\":\"prototype\",\"name\":\"Steel Seraph\",\"type_line\":\"Artifact Creature — Angel\",\"collector_number\":\"38\",\"rarity\":\"rare\",\"set\":\"bro\",\"colors\":[],\"mana_cost\":\"{6}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/1/b/1b6ef5f5-4058-4f89-a573-9e2da87a9f2e.jpg?1674420417\"],\"mtgo_id\":0}"
-    },
-    {
       "color": "U",
       "color_identity": "U",
       "dfc": false,
@@ -3833,6 +3833,15 @@
       "oracle_id": "3bc8a406-3ae7-4f56-a33c-b4a2c115b917",
       "rarity": "uncommon",
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":1,\"color_identity\":[\"U\"],\"layout\":\"normal\",\"name\":\"Stern Scolding\",\"type_line\":\"Instant\",\"collector_number\":\"71\",\"rarity\":\"uncommon\",\"set\":\"ltr\",\"colors\":[\"U\"],\"mana_cost\":\"{U}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/3/c/3ca1e1de-b916-445f-b3b2-0f4d0cc7ceeb.jpg?1686968311\"],\"mtgo_id\":0}"
+    },
+    {
+      "color": "U",
+      "color_identity": "U",
+      "dfc": false,
+      "id": "0a786855-6eb4-42c0-a528-4842db46809d",
+      "oracle_id": "2251e34e-4ce8-4452-9dc6-d8cce8583996",
+      "rarity": "uncommon",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":3,\"color_identity\":[\"U\"],\"layout\":\"normal\",\"name\":\"Stock Up\",\"type_line\":\"Sorcery\",\"collector_number\":\"67\",\"rarity\":\"uncommon\",\"set\":\"dft\",\"colors\":[\"U\"],\"mana_cost\":\"{2}{U}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/0/a/0a786855-6eb4-42c0-a528-4842db46809d.jpg?1738356263\"],\"mtgo_id\":0}"
     },
     {
       "color": "",
@@ -3851,6 +3860,15 @@
       "oracle_id": "358789f9-7d87-411d-919e-d597da665cbd",
       "rarity": "rare",
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"W\"],\"layout\":\"normal\",\"name\":\"Stoneforge Mystic\",\"type_line\":\"Creature — Kor Artificer\",\"collector_number\":\"20\",\"rarity\":\"rare\",\"set\":\"wwk\",\"colors\":[\"W\"],\"mana_cost\":\"{1}{W}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/1/9/19557351-b65f-4b04-b971-66abdc07000a.jpg?1566819710\"],\"mtgo_id\":0}"
+    },
+    {
+      "color": "U",
+      "color_identity": "U",
+      "dfc": false,
+      "id": "a36e682d-b43d-4e08-bf5b-70d7e924dbe5",
+      "oracle_id": "00c1788d-c52f-4839-9cd8-11fb86c418b6",
+      "rarity": "rare",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":1,\"color_identity\":[\"U\"],\"layout\":\"class\",\"name\":\"Stormchaser's Talent\",\"type_line\":\"Enchantment — Class\",\"collector_number\":\"75\",\"rarity\":\"rare\",\"set\":\"blb\",\"colors\":[\"U\"],\"mana_cost\":\"{U}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/a/3/a36e682d-b43d-4e08-bf5b-70d7e924dbe5.jpg?1739650074\"],\"mtgo_id\":0}"
     },
     {
       "color": "",
@@ -3880,6 +3898,15 @@
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":0,\"color_identity\":[\"R\",\"W\"],\"layout\":\"normal\",\"name\":\"Sunbaked Canyon\",\"type_line\":\"Land\",\"collector_number\":\"247\",\"rarity\":\"rare\",\"set\":\"mh1\",\"colors\":[]},\"image_uris\":[\"https://cards.scryfall.io/normal/front/c/3/c36820fa-ee86-4206-9a0d-737a67cf5208.jpg?1562202603\"],\"mtgo_id\":0}"
     },
     {
+      "color": "",
+      "color_identity": "RW",
+      "dfc": false,
+      "id": "94ed132f-b818-4dbf-9b4a-e5acb067e0a4",
+      "oracle_id": "a202276b-1f1b-4277-95ee-26877a204f5e",
+      "rarity": "rare",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":0,\"color_identity\":[\"R\",\"W\"],\"layout\":\"normal\",\"name\":\"Sunbillow Verge\",\"type_line\":\"Land\",\"collector_number\":\"264\",\"rarity\":\"rare\",\"set\":\"dft\",\"colors\":[]},\"image_uris\":[\"https://cards.scryfall.io/normal/front/9/4/94ed132f-b818-4dbf-9b4a-e5acb067e0a4.jpg?1738356948\"],\"mtgo_id\":0}"
+    },
+    {
       "color": "W",
       "color_identity": "W",
       "dfc": false,
@@ -3896,15 +3923,6 @@
       "oracle_id": "e6415ffb-8b7a-41c3-bedf-0d4112b7b795",
       "rarity": "rare",
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":0,\"color_identity\":[\"B\",\"U\"],\"layout\":\"normal\",\"name\":\"Sunken Ruins\",\"type_line\":\"Land\",\"collector_number\":\"326\",\"rarity\":\"rare\",\"set\":\"2xm\",\"colors\":[]},\"image_uris\":[\"https://cards.scryfall.io/normal/front/9/1/9181d30d-4f8e-421f-89b8-149ed8000fb2.jpg?1599710647\"],\"mtgo_id\":0}"
-    },
-    {
-      "color": "G",
-      "color_identity": "G",
-      "dfc": false,
-      "id": "c060c178-3c0e-493f-b6f0-ead5b1d6f191",
-      "oracle_id": "119d719d-e965-45b4-9bc9-ac03211b10c2",
-      "rarity": "rare",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"G\"],\"layout\":\"normal\",\"name\":\"Survival of the Fittest\",\"type_line\":\"Enchantment\",\"collector_number\":\"129\",\"rarity\":\"rare\",\"set\":\"exo\",\"colors\":[\"G\"],\"mana_cost\":\"{1}{G}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/c/0/c060c178-3c0e-493f-b6f0-ead5b1d6f191.jpg?1562088786\"],\"mtgo_id\":0}"
     },
     {
       "color": "",
@@ -3932,15 +3950,6 @@
       "oracle_id": "13d4c46b-c2d6-44cc-a252-4a991d471854",
       "rarity": "rare",
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"G\"],\"layout\":\"normal\",\"name\":\"Sylvan Caryatid\",\"type_line\":\"Creature — Plant\",\"collector_number\":\"180\",\"rarity\":\"rare\",\"set\":\"ths\",\"colors\":[\"G\"],\"mana_cost\":\"{1}{G}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/d/4/d40b65c1-b24d-492d-81b9-d8474ebdc08c.jpg?1562832168\"],\"mtgo_id\":0}"
-    },
-    {
-      "color": "G",
-      "color_identity": "G",
-      "dfc": false,
-      "id": "f486df00-7c4a-4ff0-bb0b-c8b5432ac742",
-      "oracle_id": "92eed395-62ca-4293-882b-8565c40daab5",
-      "rarity": "uncommon",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"G\"],\"layout\":\"normal\",\"name\":\"Sylvan Library\",\"type_line\":\"Enchantment\",\"collector_number\":\"207\",\"rarity\":\"uncommon\",\"set\":\"leg\",\"colors\":[\"G\"],\"mana_cost\":\"{1}{G}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/f/4/f486df00-7c4a-4ff0-bb0b-c8b5432ac742.jpg?1562861845\"],\"mtgo_id\":0}"
     },
     {
       "color": "G",
@@ -4087,15 +4096,6 @@
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":0,\"color_identity\":[\"G\",\"W\"],\"layout\":\"normal\",\"name\":\"Temple Garden\",\"type_line\":\"Land — Forest Plains\",\"collector_number\":\"284\",\"rarity\":\"rare\",\"set\":\"rav\",\"colors\":[]},\"image_uris\":[\"https://cards.scryfall.io/normal/front/7/9/794a2b79-8c55-4423-8843-7e6e96f84071.jpg?1598918487\"],\"mtgo_id\":0}"
     },
     {
-      "color": "W",
-      "color_identity": "W",
-      "dfc": false,
-      "id": "82b3088f-7b49-45e9-b447-129a597ceb75",
-      "oracle_id": "b21c99b3-b975-4428-9c9a-326ded2fa8dc",
-      "rarity": "rare",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":3,\"color_identity\":[\"W\"],\"layout\":\"normal\",\"name\":\"Temporary Lockdown\",\"type_line\":\"Enchantment\",\"collector_number\":\"36\",\"rarity\":\"rare\",\"set\":\"dmu\",\"colors\":[\"W\"],\"mana_cost\":\"{1}{W}{W}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/8/2/82b3088f-7b49-45e9-b447-129a597ceb75.jpg?1673306606\"],\"mtgo_id\":0}"
-    },
-    {
       "color": "B",
       "color_identity": "B",
       "dfc": false,
@@ -4114,6 +4114,15 @@
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"G\",\"R\"],\"layout\":\"normal\",\"name\":\"Territorial Kavu\",\"type_line\":\"Creature — Kavu\",\"collector_number\":\"216\",\"rarity\":\"rare\",\"set\":\"mh2\",\"colors\":[\"G\",\"R\"],\"mana_cost\":\"{R}{G}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/2/6/2605df98-0b02-4aab-bc36-01e93c693743.jpg?1634366740\"],\"mtgo_id\":0}"
     },
     {
+      "color": "R",
+      "color_identity": "R",
+      "dfc": false,
+      "id": "99e96b34-b1c4-4647-a38e-2cf1aedaaace",
+      "oracle_id": "9918eb7b-054e-4b1c-afc7-1163ab642d50",
+      "rarity": "rare",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":3,\"color_identity\":[\"R\"],\"layout\":\"normal\",\"name\":\"Tersa Lightshatter\",\"type_line\":\"Legendary Creature — Orc Wizard\",\"collector_number\":\"127\",\"rarity\":\"rare\",\"set\":\"tdm\",\"colors\":[\"R\"],\"mana_cost\":\"{2}{R}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/9/9/99e96b34-b1c4-4647-a38e-2cf1aedaaace.jpg?1743204474\"],\"mtgo_id\":0}"
+    },
+    {
       "color": "W",
       "color_identity": "W",
       "dfc": false,
@@ -4130,6 +4139,15 @@
       "oracle_id": "1de1b591-a73f-4974-b507-8c63e07a0868",
       "rarity": "rare",
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"U\"],\"layout\":\"normal\",\"name\":\"Thassa's Oracle\",\"type_line\":\"Creature — Merfolk Wizard\",\"collector_number\":\"73\",\"rarity\":\"rare\",\"set\":\"thb\",\"colors\":[\"U\"],\"mana_cost\":\"{U}{U}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/7/2/726e8b29-13e9-4138-b6a9-d2a0d8188d1c.jpg?1680582212\"],\"mtgo_id\":0}"
+    },
+    {
+      "color": "",
+      "color_identity": "",
+      "dfc": false,
+      "id": "05690d52-06c4-40b1-8360-380418a83250",
+      "oracle_id": "483c747a-b602-4747-95bc-72c2c17ed509",
+      "rarity": "mythic",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":4,\"color_identity\":[],\"layout\":\"normal\",\"name\":\"The Aetherspark\",\"type_line\":\"Legendary Artifact Planeswalker — Equipment\",\"collector_number\":\"231\",\"rarity\":\"mythic\",\"set\":\"dft\",\"colors\":[],\"mana_cost\":\"{4}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/0/5/05690d52-06c4-40b1-8360-380418a83250.jpg?1745509407\"],\"mtgo_id\":0}"
     },
     {
       "color": "",
@@ -4384,15 +4402,6 @@
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":8,\"color_identity\":[\"U\"],\"layout\":\"normal\",\"name\":\"Treasure Cruise\",\"type_line\":\"Sorcery\",\"collector_number\":\"59\",\"rarity\":\"common\",\"set\":\"ktk\",\"colors\":[\"U\"],\"mana_cost\":\"{7}{U}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/7/a/7a59d4b1-6cf4-44ec-8a96-1bb7094fea21.jpg?1562788963\"],\"mtgo_id\":0}"
     },
     {
-      "color": "R",
-      "color_identity": "R",
-      "dfc": false,
-      "id": "9b32531e-c759-4603-abd0-1724e8df70db",
-      "oracle_id": "c82eda61-d195-49c9-8ff0-a78dfa650689",
-      "rarity": "common",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"R\"],\"layout\":\"normal\",\"name\":\"Tribal Flames\",\"type_line\":\"Sorcery\",\"collector_number\":\"176\",\"rarity\":\"common\",\"set\":\"inv\",\"colors\":[\"R\"],\"mana_cost\":\"{1}{R}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/9/b/9b32531e-c759-4603-abd0-1724e8df70db.jpg?1562926326\"],\"mtgo_id\":0}"
-    },
-    {
       "color": "U",
       "color_identity": "U",
       "dfc": false,
@@ -4429,6 +4438,15 @@
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":0,\"color_identity\":[\"G\",\"U\"],\"layout\":\"normal\",\"name\":\"Tropical Island\",\"type_line\":\"Land — Forest Island\",\"collector_number\":\"283\",\"rarity\":\"rare\",\"set\":\"lea\",\"colors\":[]},\"image_uris\":[\"https://cards.scryfall.io/normal/front/a/9/a9c6c759-aabf-44e7-ba8c-33c5df232b56.jpg?1562008813\"],\"mtgo_id\":0}"
     },
     {
+      "color": "U",
+      "color_identity": "U",
+      "dfc": false,
+      "id": "14749e20-2f7e-4096-b113-d2d71365b960",
+      "oracle_id": "112322ad-8f66-4cd4-98a1-f425d61a69ce",
+      "rarity": "rare",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":3,\"color_identity\":[\"U\"],\"layout\":\"normal\",\"name\":\"True-Name Nemesis\",\"type_line\":\"Creature — Merfolk Rogue\",\"collector_number\":\"C13-63\",\"rarity\":\"rare\",\"set\":\"plst\",\"colors\":[\"U\"],\"mana_cost\":\"{1}{U}{U}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/1/4/14749e20-2f7e-4096-b113-d2d71365b960.jpg?1680826482\"],\"mtgo_id\":0}"
+    },
+    {
       "color": "R",
       "color_identity": "R",
       "dfc": false,
@@ -4445,6 +4463,24 @@
       "oracle_id": "02418479-9455-417f-a6a1-004356faff37",
       "rarity": "rare",
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":0,\"color_identity\":[\"U\",\"W\"],\"layout\":\"normal\",\"name\":\"Tundra\",\"type_line\":\"Land — Plains Island\",\"collector_number\":\"284\",\"rarity\":\"rare\",\"set\":\"lea\",\"colors\":[]},\"image_uris\":[\"https://cards.scryfall.io/normal/front/a/0/a03e8c5b-f4ed-4fd7-ba05-db813ccc05eb.jpg?1559591617\"],\"mtgo_id\":0}"
+    },
+    {
+      "color": "U",
+      "color_identity": "U",
+      "dfc": false,
+      "id": "3908c05d-ae7a-47ab-86ca-113f1562ec0a",
+      "oracle_id": "715d0777-4d36-463b-9102-6bb6bb00b7e9",
+      "rarity": "uncommon",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":4,\"color_identity\":[\"U\"],\"layout\":\"normal\",\"name\":\"Turnabout\",\"type_line\":\"Instant\",\"collector_number\":\"VMA-99\",\"rarity\":\"uncommon\",\"set\":\"plst\",\"colors\":[\"U\"],\"mana_cost\":\"{2}{U}{U}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/3/9/3908c05d-ae7a-47ab-86ca-113f1562ec0a.jpg?1738103044\"],\"mtgo_id\":0}"
+    },
+    {
+      "color": "",
+      "color_identity": "",
+      "dfc": false,
+      "id": "64a5d494-efa1-446b-bebe-2ad36e154376",
+      "oracle_id": "5c58353a-fd60-4528-bf0d-669626cda0b2",
+      "rarity": "mythic",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":7,\"color_identity\":[],\"layout\":\"normal\",\"name\":\"Ugin, Eye of the Storms\",\"type_line\":\"Legendary Planeswalker — Ugin\",\"collector_number\":\"1\",\"rarity\":\"mythic\",\"set\":\"tdm\",\"colors\":[],\"mana_cost\":\"{7}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/6/4/64a5d494-efa1-446b-bebe-2ad36e154376.jpg?1744102946\"],\"mtgo_id\":0}"
     },
     {
       "color": "",
@@ -4537,15 +4573,6 @@
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":1,\"color_identity\":[\"R\"],\"layout\":\"normal\",\"name\":\"Unholy Heat\",\"type_line\":\"Instant\",\"collector_number\":\"145\",\"rarity\":\"common\",\"set\":\"mh2\",\"colors\":[\"R\"],\"mana_cost\":\"{R}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/2/b/2b73d294-6ab1-4051-9b0f-d8e335d37674.jpg?1626097096\"],\"mtgo_id\":0}"
     },
     {
-      "color": "G",
-      "color_identity": "G",
-      "dfc": false,
-      "id": "2d5e991f-23b2-4db0-a452-7755125b1fd2",
-      "oracle_id": "050f5733-7c0b-4991-9a6c-7ea12ccf0ca9",
-      "rarity": "uncommon",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"G\"],\"layout\":\"normal\",\"name\":\"Up the Beanstalk\",\"type_line\":\"Enchantment\",\"collector_number\":\"195\",\"rarity\":\"uncommon\",\"set\":\"woe\",\"colors\":[\"G\"],\"mana_cost\":\"{1}{G}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/2/d/2d5e991f-23b2-4db0-a452-7755125b1fd2.jpg?1710276532\"],\"mtgo_id\":0}"
-    },
-    {
       "color": "U",
       "color_identity": "U",
       "dfc": false,
@@ -4582,15 +4609,6 @@
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":3,\"color_identity\":[\"G\"],\"layout\":\"normal\",\"name\":\"Ursine Monstrosity\",\"type_line\":\"Creature — Bear Mutant\",\"collector_number\":\"36\",\"rarity\":\"rare\",\"set\":\"dsc\",\"colors\":[\"G\"],\"mana_cost\":\"{2}{G}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/7/3/73cc6df4-3564-4ace-bf8a-eac3e62d725a.jpg?1726284230\"],\"mtgo_id\":0}"
     },
     {
-      "color": "U",
-      "color_identity": "U",
-      "dfc": false,
-      "id": "9e7fb3c0-5159-4d1f-8490-ce4c9a60f567",
-      "oracle_id": "e87906d2-db1a-4e19-b910-adb4eb339945",
-      "rarity": "mythic",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":4,\"color_identity\":[\"U\"],\"layout\":\"normal\",\"name\":\"Urza, Lord High Artificer\",\"type_line\":\"Legendary Creature — Human Artificer\",\"collector_number\":\"75\",\"rarity\":\"mythic\",\"set\":\"mh1\",\"colors\":[\"U\"],\"mana_cost\":\"{2}{U}{U}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/9/e/9e7fb3c0-5159-4d1f-8490-ce4c9a60f567.jpg?1567181307\"],\"mtgo_id\":0}"
-    },
-    {
       "color": "",
       "color_identity": "",
       "dfc": false,
@@ -4609,40 +4627,13 @@
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":0,\"color_identity\":[],\"layout\":\"saga\",\"name\":\"Urza's Saga\",\"type_line\":\"Enchantment Land — Urza's Saga\",\"collector_number\":\"259\",\"rarity\":\"rare\",\"set\":\"mh2\",\"colors\":[]},\"image_uris\":[\"https://cards.scryfall.io/normal/front/c/1/c1e0f201-42cb-46a1-901a-65bb4fc18f6c.jpg?1667318301\"],\"mtgo_id\":0}"
     },
     {
-      "color": "W",
-      "color_identity": "W",
+      "color": "U",
+      "color_identity": "U",
       "dfc": false,
-      "id": "24e58478-c6a8-4f86-854a-a489c99bd777",
-      "oracle_id": "a6eb06dc-a62d-4fdb-b336-e304d8d68c92",
-      "rarity": "uncommon",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":1,\"color_identity\":[\"W\"],\"layout\":\"normal\",\"name\":\"Usher of the Fallen\",\"type_line\":\"Creature — Spirit Warrior\",\"collector_number\":\"35\",\"rarity\":\"uncommon\",\"set\":\"khm\",\"colors\":[\"W\"],\"mana_cost\":\"{W}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/2/4/24e58478-c6a8-4f86-854a-a489c99bd777.jpg?1631046407\"],\"mtgo_id\":0}"
-    },
-    {
-      "color": "B",
-      "color_identity": "B",
-      "dfc": false,
-      "id": "7740ff55-67bb-409e-90f7-2c2c8b8c770a",
-      "oracle_id": "cae3ec72-436d-4086-9dcb-17b3d92ad5c4",
+      "id": "9e7fb3c0-5159-4d1f-8490-ce4c9a60f567",
+      "oracle_id": "e87906d2-db1a-4e19-b910-adb4eb339945",
       "rarity": "mythic",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":9,\"color_identity\":[\"B\"],\"layout\":\"normal\",\"name\":\"Valgavoth, Terror Eater\",\"type_line\":\"Legendary Creature — Elder Demon\",\"collector_number\":\"120\",\"rarity\":\"mythic\",\"set\":\"dsk\",\"colors\":[\"B\"],\"mana_cost\":\"{6}{B}{B}{B}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/7/7/7740ff55-67bb-409e-90f7-2c2c8b8c770a.jpg?1726286296\"],\"mtgo_id\":0}"
-    },
-    {
-      "color": "G",
-      "color_identity": "G",
-      "dfc": false,
-      "id": "7d4ba274-3c6f-4e12-ba2c-a81c3da3f7e2",
-      "oracle_id": "663d9559-6619-46fe-8ff4-655f1d5e0e4c",
-      "rarity": "rare",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":1,\"color_identity\":[\"G\"],\"layout\":\"normal\",\"name\":\"Valgavoth's Onslaught\",\"type_line\":\"Sorcery\",\"collector_number\":\"204\",\"rarity\":\"rare\",\"set\":\"dsk\",\"colors\":[\"G\"],\"mana_cost\":\"{X}{X}{G}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/7/d/7d4ba274-3c6f-4e12-ba2c-a81c3da3f7e2.jpg?1726286630\"],\"mtgo_id\":0}"
-    },
-    {
-      "color": "B",
-      "color_identity": "BR",
-      "dfc": false,
-      "id": "ea164381-1e76-4cfb-ab88-70b97c6285dd",
-      "oracle_id": "907ae517-22d5-4ac7-bc3a-3f4d5eaeeb57",
-      "rarity": "mythic",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"B\",\"R\"],\"layout\":\"modal_dfc\",\"name\":\"Valki, God of Lies // Tibalt, Cosmic Impostor\",\"type_line\":\"Legendary Creature — God // Legendary Planeswalker — Tibalt\",\"collector_number\":\"KHM-114\",\"rarity\":\"mythic\",\"set\":\"plst\",\"card_faces\":[{\"mana_cost\":\"{1}{B}\",\"name\":\"Valki, God of Lies\",\"type_line\":\"Legendary Creature — God\",\"colors\":[\"B\"]},{\"mana_cost\":\"{5}{B}{R}\",\"name\":\"Tibalt, Cosmic Impostor\",\"type_line\":\"Legendary Planeswalker — Tibalt\",\"colors\":[\"B\",\"R\"]}]},\"image_uris\":[\"https://cards.scryfall.io/normal/front/e/a/ea164381-1e76-4cfb-ab88-70b97c6285dd.jpg?1684197878\",\"https://cards.scryfall.io/normal/back/e/a/ea164381-1e76-4cfb-ab88-70b97c6285dd.jpg?1684197878\"],\"mtgo_id\":0}"
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":4,\"color_identity\":[\"U\"],\"layout\":\"normal\",\"name\":\"Urza, Lord High Artificer\",\"type_line\":\"Legendary Creature — Human Artificer\",\"collector_number\":\"75\",\"rarity\":\"mythic\",\"set\":\"mh1\",\"colors\":[\"U\"],\"mana_cost\":\"{2}{U}{U}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/9/e/9e7fb3c0-5159-4d1f-8490-ce4c9a60f567.jpg?1567181307\"],\"mtgo_id\":0}"
     },
     {
       "color": "B",
@@ -4699,13 +4690,13 @@
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":5,\"color_identity\":[\"W\"],\"layout\":\"adventure\",\"name\":\"Virtue of Loyalty // Ardenvale Fealty\",\"type_line\":\"Enchantment // Instant — Adventure\",\"collector_number\":\"38\",\"rarity\":\"mythic\",\"set\":\"woe\",\"card_faces\":[{\"mana_cost\":\"{3}{W}{W}\",\"name\":\"Virtue of Loyalty\",\"type_line\":\"Enchantment\"},{\"mana_cost\":\"{1}{W}\",\"name\":\"Ardenvale Fealty\",\"type_line\":\"Instant — Adventure\"}],\"colors\":[\"W\"],\"mana_cost\":\"{3}{W}{W} // {1}{W}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/e/a/ea7e7daf-7c06-4c74-8bcf-e42c1f611861.jpg?1692936837\"],\"mtgo_id\":0}"
     },
     {
-      "color": "B",
-      "color_identity": "B",
+      "color": "W",
+      "color_identity": "W",
       "dfc": false,
-      "id": "f1e5cafb-b0e6-4ee5-8c58-6f8e5ef2b9da",
-      "oracle_id": "fae36da0-bf9c-484f-b2fe-dd8ab2effc5c",
-      "rarity": "mythic",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":7,\"color_identity\":[\"B\"],\"layout\":\"adventure\",\"name\":\"Virtue of Persistence // Locthwain Scorn\",\"type_line\":\"Enchantment // Sorcery — Adventure\",\"collector_number\":\"115\",\"rarity\":\"mythic\",\"set\":\"woe\",\"card_faces\":[{\"mana_cost\":\"{5}{B}{B}\",\"name\":\"Virtue of Persistence\",\"type_line\":\"Enchantment\"},{\"mana_cost\":\"{1}{B}\",\"name\":\"Locthwain Scorn\",\"type_line\":\"Sorcery — Adventure\"}],\"colors\":[\"B\"],\"mana_cost\":\"{5}{B}{B} // {1}{B}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/f/1/f1e5cafb-b0e6-4ee5-8c58-6f8e5ef2b9da.jpg?1692937996\"],\"mtgo_id\":0}"
+      "id": "ec3de5f4-bb55-4ab9-995f-f3e0dc22c1bb",
+      "oracle_id": "b12cbda1-ac09-49eb-96b3-a4df27bc37ea",
+      "rarity": "rare",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"W\"],\"layout\":\"normal\",\"name\":\"Voice of Victory\",\"type_line\":\"Creature — Human Bard\",\"collector_number\":\"33\",\"rarity\":\"rare\",\"set\":\"tdm\",\"colors\":[\"W\"],\"mana_cost\":\"{1}{W}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/e/c/ec3de5f4-bb55-4ab9-995f-f3e0dc22c1bb.jpg?1743204090\"],\"mtgo_id\":0}"
     },
     {
       "color": "",
@@ -4751,6 +4742,15 @@
       "oracle_id": "09a70ae8-3859-4a09-901d-dce063fa3b5f",
       "rarity": "uncommon",
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":0,\"color_identity\":[],\"layout\":\"normal\",\"name\":\"Wasteland\",\"type_line\":\"Land\",\"collector_number\":\"330\",\"rarity\":\"uncommon\",\"set\":\"tmp\",\"colors\":[]},\"image_uris\":[\"https://cards.scryfall.io/normal/front/9/9/99ff731b-8399-40c8-b539-ba6ba5783771.jpg?1562055457\"],\"mtgo_id\":0}"
+    },
+    {
+      "color": "",
+      "color_identity": "BG",
+      "dfc": false,
+      "id": "5ceacc7d-d407-4f82-af58-9bdf8426924e",
+      "oracle_id": "c6e0574c-3e2b-4c40-b17a-05bce3d49309",
+      "rarity": "rare",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":0,\"color_identity\":[\"B\",\"G\"],\"layout\":\"normal\",\"name\":\"Wastewood Verge\",\"type_line\":\"Land\",\"collector_number\":\"268\",\"rarity\":\"rare\",\"set\":\"dft\",\"colors\":[]},\"image_uris\":[\"https://cards.scryfall.io/normal/front/5/c/5ceacc7d-d407-4f82-af58-9bdf8426924e.jpg?1738356966\"],\"mtgo_id\":0}"
     },
     {
       "color": "",
@@ -4834,15 +4834,6 @@
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"B\",\"G\"],\"layout\":\"normal\",\"name\":\"Witherbloom Apprentice\",\"type_line\":\"Creature — Human Druid\",\"collector_number\":\"STX-247\",\"rarity\":\"uncommon\",\"set\":\"plst\",\"colors\":[\"B\",\"G\"],\"mana_cost\":\"{B}{G}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/2/b/2b8238f3-05af-46a1-a1d4-ddea0219c3bd.jpg?1723443236\"],\"mtgo_id\":0}"
     },
     {
-      "color": "BG",
-      "color_identity": "BG",
-      "dfc": false,
-      "id": "87d5e94b-0b35-4efd-9158-1767dcaea38c",
-      "oracle_id": "7cc81fb3-495c-47cd-8c56-96197d87e9e0",
-      "rarity": "rare",
-      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"B\",\"G\"],\"layout\":\"normal\",\"name\":\"Witherbloom Command\",\"type_line\":\"Sorcery\",\"collector_number\":\"248\",\"rarity\":\"rare\",\"set\":\"stx\",\"colors\":[\"B\",\"G\"],\"mana_cost\":\"{B}{G}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/8/7/87d5e94b-0b35-4efd-9158-1767dcaea38c.jpg?1624740473\"],\"mtgo_id\":0}"
-    },
-    {
       "color": "",
       "color_identity": "",
       "dfc": false,
@@ -4859,6 +4850,15 @@
       "oracle_id": "2f70f1bb-29fa-4abb-afc2-653acd0a08b9",
       "rarity": "rare",
       "data": "{\"foil\":false,\"scryfall\":{\"cmc\":8,\"color_identity\":[\"G\"],\"layout\":\"normal\",\"name\":\"Woodfall Primus\",\"type_line\":\"Creature — Treefolk Shaman\",\"collector_number\":\"135\",\"rarity\":\"rare\",\"set\":\"shm\",\"colors\":[\"G\"],\"mana_cost\":\"{5}{G}{G}{G}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/4/3/43aa7e35-55ee-4e02-a8aa-ea2b267055d1.jpg?1562829387\"],\"mtgo_id\":0}"
+    },
+    {
+      "color": "G",
+      "color_identity": "G",
+      "dfc": false,
+      "id": "f39aa2e9-e294-4ce6-bf5e-e1f579101a7a",
+      "oracle_id": "e8863518-0bfa-49c3-8c6e-6c9116a81051",
+      "rarity": "rare",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":1,\"color_identity\":[\"G\"],\"layout\":\"normal\",\"name\":\"Worldly Tutor\",\"type_line\":\"Instant\",\"collector_number\":\"185\",\"rarity\":\"rare\",\"set\":\"dmr\",\"colors\":[\"G\"],\"mana_cost\":\"{G}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/f/3/f39aa2e9-e294-4ce6-bf5e-e1f579101a7a.jpg?1745319949\"],\"mtgo_id\":0}"
     },
     {
       "color": "G",
