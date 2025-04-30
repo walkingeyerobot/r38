@@ -25,6 +25,12 @@ func main() {
 	settings.InPerson = flagSet.Bool(
 		"inPerson", false,
 		"If true, draft will be initialized with empty packs.")
+	settings.AssignSeats = flagSet.Bool(
+		"assignSeats", false,
+		"If true, players will be preassigned seats even for an in-person draft.")
+	settings.AssignPacks = flagSet.Bool(
+		"assignPacks", false,
+		"If true, players will be preassigned their first packs even for an in-person draft.")
 	settings.Verbose = flagSet.Bool(
 		"v", false,
 		"If true, will enable verbose output.")

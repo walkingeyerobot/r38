@@ -1,6 +1,6 @@
 import { endpoint } from "@/rest/endpoint";
 
-export const routeDraftlist = endpoint({
+export const ROUTE_DRAFT_LIST = endpoint({
   route: "/api/draftlist",
   method: "get",
   queryVars: {

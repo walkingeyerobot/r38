@@ -14,7 +14,7 @@ import DefaultAvatar from "./ui/shared/avatars/default_avatar.png";
 import { authStore } from "./state/AuthStore";
 import { formatStore, type LayoutFormFactor } from "./state/FormatStore";
 import { fetchEndpoint } from "./fetch/fetchEndpoint";
-import { routeUserInfo, type SourceUserInfo } from "./rest/api/userinfo/userinfo";
+import { ROUTE_USER_INFO, type SourceUserInfo } from "./rest/api/userinfo/userinfo";
 
 export default defineComponent({
   created() {},
@@ -38,7 +38,7 @@ export default defineComponent({
       const asPlayerId = isNaN(asPlayer) ? undefined : asPlayer;
 
       try {
-        result = await fetchEndpoint(routeUserInfo, { as: asPlayerId });
+        result = await fetchEndpoint(ROUTE_USER_INFO, { as: asPlayerId });
         this.status = "ready";
       } catch (e) {
         console.error("Error fetching user info:", e);

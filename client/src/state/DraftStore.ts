@@ -100,6 +100,15 @@ export const draftStore = vuexModule(
       getCard(): (id: number) => DraftCard {
         return (id: number) => checkNotNil(draftStore.cards.get(id));
       },
+
+      hasSeatsAvailable(): boolean {
+        for (const seat of draftStore.currentState.seats) {
+          if (!seat.player.isPresent) {
+            return true;
+          }
+        }
+        return false;
+      },
     },
 
     actions: {},

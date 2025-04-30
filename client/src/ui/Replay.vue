@@ -31,7 +31,7 @@ import { globalClickTracker } from "./infra/globalClickTracker";
 import { getPlayerSeat } from "@/state/util/userIsSeated";
 import { tuple } from "@/util/tuple";
 import { fetchEndpoint } from "@/fetch/fetchEndpoint";
-import { routeDraft } from "@/rest/api/draft/draft";
+import { ROUTE_DRAFT } from "@/rest/api/draft/draft";
 import type { FetchStatus } from "./infra/FetchStatus";
 import { isAuthedUserSelected } from "./replay/isAuthedUserSelected";
 
@@ -104,7 +104,7 @@ export default defineComponent({
       this.targetDraftId = draftId;
 
       // TODO: Handle errors
-      const payload = await fetchEndpoint(routeDraft, {
+      const payload = await fetchEndpoint(ROUTE_DRAFT, {
         id: draftId.toString(),
         as: authStore.user?.id,
       });

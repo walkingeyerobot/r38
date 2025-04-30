@@ -61,6 +61,7 @@ export interface DraftPlayer {
   seatPosition: number;
   scanSound: number;
   errorSound: number;
+  isPresent: boolean;
 }
 
 export interface DraftCard {

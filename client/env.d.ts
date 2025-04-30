@@ -9,3 +9,9 @@ declare module "vuex" {
   export * from "vuex/types/logger.d.ts";
   export * from "vuex/types/vue.d.ts";
 }
+
+// Declare the special RFID event that our enclosing apps will inject if
+// someone scans a card
+interface HTMLElementEventMap {
+  rfidScan: CustomEvent<string>;
+}

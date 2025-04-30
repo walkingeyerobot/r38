@@ -141,6 +141,8 @@ func main() {
 	err = server.Shutdown(context.Background())
 }
 
+var ZoneDraftError = fmt.Errorf("zone draft violation")
+
 // NewHandler creates all server routes for serving the html.
 func NewHandler(database *sql.DB, useAuth bool) http.Handler {
 	mux := http.NewServeMux()
@@ -201,7 +203,11 @@ func NewHandler(database *sql.DB, useAuth bool) http.Handler {
 			if err != nil {
 				tx.Rollback()
 				if strings.HasPrefix(route, "/api/") {
-					w.WriteHeader(http.StatusInternalServerError)
+					if errors.Is(err, ZoneDraftError) {
+						w.WriteHeader(http.StatusBadRequest)
+					} else {
+						w.WriteHeader(http.StatusInternalServerError)
+					}
 					json.NewEncoder(w).Encode(JSONError{Error: err.Error()})
 				} else {
 					http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -261,12 +267,12 @@ func ServeAPIDraft(w http.ResponseWriter, r *http.Request, userID int64, tx *sql
 	}
 	draftID, err := strconv.ParseInt(parseResult[1], 10, 64)
 	if err != nil {
-		return fmt.Errorf("bad api url: %s", err.Error())
+		return fmt.Errorf("bad api url: %w", err)
 	}
 
 	draftJSON, err := GetFilteredJSON(tx, draftID, userID)
 	if err != nil {
-		return fmt.Errorf("error getting json: %s", err.Error())
+		return fmt.Errorf("error getting json: %w", err)
 	}
 
 	fmt.Fprint(w, draftJSON)
@@ -305,12 +311,12 @@ func ServeAPISetPref(w http.ResponseWriter, r *http.Request, userID int64, tx *s
 
 	bodyBytes, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		return fmt.Errorf("error reading post body: %s", err.Error())
+		return fmt.Errorf("error reading post body: %w", err)
 	}
 	var pref PostedPref
 	err = json.Unmarshal(bodyBytes, &pref)
 	if err != nil {
-		return fmt.Errorf("error parsing post body: %s", err.Error())
+		return fmt.Errorf("error parsing post body: %w", err)
 	}
 
 	if pref.FormatPref.Format != "" {
@@ -350,7 +356,7 @@ func ServeAPISetPref(w http.ResponseWriter, r *http.Request, userID int64, tx *s
 		query = `update userformats set elig = ? where user = ? and format = ?`
 		_, err = tx.Exec(query, elig, userID, pref.FormatPref.Format)
 		if err != nil {
-			return fmt.Errorf("error updating user pref: %s", err.Error())
+			return fmt.Errorf("error updating user pref: %w", err)
 		}
 	}
 
@@ -358,7 +364,7 @@ func ServeAPISetPref(w http.ResponseWriter, r *http.Request, userID int64, tx *s
 		query := `update users set mtgo_name = ? where id = ?`
 		_, err = tx.Exec(query, pref.MtgoName, userID)
 		if err != nil {
-			return fmt.Errorf("error updating user MTGO name: %s", err.Error())
+			return fmt.Errorf("error updating user MTGO name: %w", err)
 		}
 	}
 
@@ -377,12 +383,12 @@ func ServeAPIPick(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.
 
 	bodyBytes, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		return fmt.Errorf("error reading post body: %s", err.Error())
+		return fmt.Errorf("error reading post body: %w", err)
 	}
 	var pick PostedPick
 	err = json.Unmarshal(bodyBytes, &pick)
 	if err != nil {
-		return fmt.Errorf("error parsing post body: %s", err.Error())
+		return fmt.Errorf("error parsing post body: %w", err)
 	}
 
 	err = doHandlePostedPick(w, pick, userID, false, tx)
@@ -404,19 +410,19 @@ func ServeAPIPickRfid(w http.ResponseWriter, r *http.Request, userID int64, tx *
 
 	bodyBytes, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		return fmt.Errorf("error reading post body: %s", err.Error())
+		return fmt.Errorf("error reading post body: %w", err)
 	}
 	var rfidPick PostedRfidPick
 	err = json.Unmarshal(bodyBytes, &rfidPick)
 	if err != nil {
-		return fmt.Errorf("error parsing post body: %s", err.Error())
+		return fmt.Errorf("error parsing post body: %w", err)
 	}
 
 	var cardIds []int64
 	for _, cardRfid := range rfidPick.CardRfids {
 		var cardId, err = findCardByRfid(tx, cardRfid, userID, rfidPick.DraftId)
 		if err != nil {
-			return fmt.Errorf("error finding card in active draft: %s", err.Error())
+			return fmt.Errorf("error finding card in active draft: %w", err)
 		}
 		cardIds = append(cardIds, cardId)
 	}
@@ -445,7 +451,11 @@ func doHandlePostedPick(w http.ResponseWriter, pick PostedPick, userID int64, zo
 			// We can't send the actual error back to the client without leaking information about
 			// where the card they tried to pick actually is.
 			log.Printf("error making pick: %s", err.Error())
-			return fmt.Errorf("error making pick")
+			if errors.Is(err, ZoneDraftError) {
+				return fmt.Errorf("error making pick: %w", err)
+			} else {
+				return fmt.Errorf("error making pick")
+			}
 		}
 	} else if len(pick.CardIds) == 2 {
 		return fmt.Errorf("cogwork librarian power not implemented yet")
@@ -456,7 +466,7 @@ func doHandlePostedPick(w http.ResponseWriter, pick PostedPick, userID int64, zo
 	var draftJSON string
 	draftJSON, err = GetFilteredJSON(tx, draftID, userID)
 	if err != nil {
-		return fmt.Errorf("error getting json: %s", err.Error())
+		return fmt.Errorf("error getting json: %w", err)
 	}
 
 	fmt.Fprint(w, draftJSON)
@@ -475,12 +485,12 @@ func ServeAPIUndoPick(w http.ResponseWriter, r *http.Request, userID int64, tx *
 
 	bodyBytes, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		return fmt.Errorf("error reading post body: %s", err.Error())
+		return fmt.Errorf("error reading post body: %w", err)
 	}
 	var undo PostedUndo
 	err = json.Unmarshal(bodyBytes, &undo)
 	if err != nil {
-		return fmt.Errorf("error parsing post body: %s", err.Error())
+		return fmt.Errorf("error parsing post body: %w", err)
 	}
 
 	if !xsrftoken.Valid(undo.XsrfToken, xsrfKey, strconv.FormatInt(userID, 16), fmt.Sprintf("pick%d", undo.DraftId)) {
@@ -504,13 +514,13 @@ func ServeAPIUndoPick(w http.ResponseWriter, r *http.Request, userID int64, tx *
 	var seatID int64
 	err = row.Scan(&eventID, &round, &position, &cardID, &packID, &seatID)
 	if err != nil {
-		return fmt.Errorf("couldn't undo pick: %s", err.Error())
+		return fmt.Errorf("couldn't undo pick: %w", err)
 	}
 
 	query = `delete from events where id = ?`
 	_, err = tx.Exec(query, eventID)
 	if err != nil {
-		return fmt.Errorf("couldn't undo pick: %s", err.Error())
+		return fmt.Errorf("couldn't undo pick: %w", err)
 	}
 
 	// Put the picked card into the player's picks.
@@ -518,20 +528,20 @@ func ServeAPIUndoPick(w http.ResponseWriter, r *http.Request, userID int64, tx *
 
 	_, err = tx.Exec(query, packID, cardID)
 	if err != nil {
-		return fmt.Errorf("couldn't undo pick: %s", err.Error())
+		return fmt.Errorf("couldn't undo pick: %w", err)
 	}
 
 	// Move the pack to the next Position.
 	query = `update packs set seat = ? where id = ?`
 	_, err = tx.Exec(query, seatID, packID)
 	if err != nil {
-		return fmt.Errorf("couldn't undo pick: %s", err.Error())
+		return fmt.Errorf("couldn't undo pick: %w", err)
 	}
 
 	var draftJSON string
 	draftJSON, err = GetFilteredJSON(tx, undo.DraftId, userID)
 	if err != nil {
-		return fmt.Errorf("error getting json: %s", err.Error())
+		return fmt.Errorf("error getting json: %w", err)
 	}
 
 	fmt.Fprint(w, draftJSON)
@@ -551,7 +561,7 @@ func ServeAPIJoin(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.
 
 	bodyBytes, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		return fmt.Errorf("error reading post body: %s", err.Error())
+		return fmt.Errorf("error reading post body: %w", err)
 	}
 	toJoin := PostedJoin{
 		ID:       0,
@@ -559,7 +569,7 @@ func ServeAPIJoin(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.
 	}
 	err = json.Unmarshal(bodyBytes, &toJoin)
 	if err != nil {
-		return fmt.Errorf("error parsing post body: %s", err.Error())
+		return fmt.Errorf("error parsing post body: %w", err)
 	}
 
 	draftID := toJoin.ID
@@ -572,12 +582,12 @@ func ServeAPIJoin(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.
 		err = doJoinSeat(tx, userID, draftID, toJoin.Position)
 	}
 	if err != nil {
-		return fmt.Errorf("error joining draft %d: %s", draftID, err.Error())
+		return fmt.Errorf("error joining draft %d: %w", draftID, err)
 	}
 
 	draftJSON, err := GetFilteredJSON(tx, draftID, userID)
 	if err != nil {
-		return fmt.Errorf("error getting json: %s", err.Error())
+		return fmt.Errorf("error getting json: %w", err)
 	}
 
 	fmt.Fprint(w, draftJSON)
@@ -718,24 +728,24 @@ func ServeAPISkip(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.
 
 	bodyBytes, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		return fmt.Errorf("error reading post body: %s", err.Error())
+		return fmt.Errorf("error reading post body: %w", err)
 	}
 	var toJoin PostedJoin
 	err = json.Unmarshal(bodyBytes, &toJoin)
 	if err != nil {
-		return fmt.Errorf("error parsing post body: %s", err.Error())
+		return fmt.Errorf("error parsing post body: %w", err)
 	}
 
 	draftID := toJoin.ID
 
 	err = doSkip(tx, userID, draftID)
 	if err != nil {
-		return fmt.Errorf("error skipping draft %d: %s", draftID, err.Error())
+		return fmt.Errorf("error skipping draft %d: %w", draftID, err)
 	}
 
 	draftJSON, err := GetFilteredJSON(tx, draftID, userID)
 	if err != nil {
-		return fmt.Errorf("error getting json: %s", err.Error())
+		return fmt.Errorf("error getting json: %w", err)
 	}
 
 	fmt.Fprint(w, draftJSON)
@@ -815,12 +825,12 @@ func ServeAPIForceEnd(_ http.ResponseWriter, r *http.Request, userID int64, tx *
 	if userID == 1 {
 		bodyBytes, err := ioutil.ReadAll(r.Body)
 		if err != nil {
-			return fmt.Errorf("error reading post body: %s", err.Error())
+			return fmt.Errorf("error reading post body: %w", err)
 		}
 		var toJoin PostedJoin
 		err = json.Unmarshal(bodyBytes, &toJoin)
 		if err != nil {
-			return fmt.Errorf("error parsing post body: %s", err.Error())
+			return fmt.Errorf("error parsing post body: %w", err)
 		}
 
 		draftID := toJoin.ID
@@ -845,12 +855,12 @@ func ServeAPIUserInfo(w http.ResponseWriter, r *http.Request, userID int64, tx *
 func ServeAPIGetCardPack(w http.ResponseWriter, r *http.Request, _ int64, tx *sql.Tx) error {
 	bodyBytes, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		return fmt.Errorf("error reading post body: %s", err.Error())
+		return fmt.Errorf("error reading post body: %w", err)
 	}
 	var getCardPack PostedGetCardPack
 	err = json.Unmarshal(bodyBytes, &getCardPack)
 	if err != nil {
-		return fmt.Errorf("error parsing post body: %s", err.Error())
+		return fmt.Errorf("error parsing post body: %w", err)
 	}
 
 	query := `select pack from cards
@@ -864,11 +874,11 @@ func ServeAPIGetCardPack(w http.ResponseWriter, r *http.Request, _ int64, tx *sq
 	if errors.Is(err, sql.ErrNoRows) {
 		_, err = io.WriteString(w, "{\"pack\": 0}")
 		if err != nil {
-			return fmt.Errorf("error writing response: %s", err.Error())
+			return fmt.Errorf("error writing response: %w", err)
 		}
 		return nil
 	} else if err != nil {
-		return fmt.Errorf("error finding pack for card: %s", err.Error())
+		return fmt.Errorf("error finding pack for card: %w", err)
 	}
 
 	query = `select packs.id from packs
@@ -878,7 +888,7 @@ func ServeAPIGetCardPack(w http.ResponseWriter, r *http.Request, _ int64, tx *sq
 	var rows *sql.Rows
 	rows, err = tx.Query(query, getCardPack.DraftID)
 	if err != nil {
-		return fmt.Errorf("error finding packs in draft: %s", err.Error())
+		return fmt.Errorf("error finding packs in draft: %w", err)
 	}
 	defer rows.Close()
 	var packIndex = 1
@@ -886,12 +896,12 @@ func ServeAPIGetCardPack(w http.ResponseWriter, r *http.Request, _ int64, tx *sq
 		var packIdAtIndex int64
 		err = rows.Scan(&packIdAtIndex)
 		if err != nil {
-			return fmt.Errorf("error finding packs in draft: %s", err.Error())
+			return fmt.Errorf("error finding packs in draft: %w", err)
 		}
 		if packIdAtIndex == packId {
 			_, err = fmt.Fprintf(w, "{\"pack\": %d}", packIndex)
 			if err != nil {
-				return fmt.Errorf("error writing response: %s", err.Error())
+				return fmt.Errorf("error writing response: %w", err)
 			}
 			return nil
 		}
@@ -905,29 +915,29 @@ func ServeAPIGetCardPack(w http.ResponseWriter, r *http.Request, _ int64, tx *sq
 func ServeAPISet(w http.ResponseWriter, r *http.Request, _ int64, tx *sql.Tx) error {
 	bodyBytes, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		return fmt.Errorf("error reading post body: %s", err.Error())
+		return fmt.Errorf("error reading post body: %w", err)
 	}
 	var setRequest PostedSet
 	err = json.Unmarshal(bodyBytes, &setRequest)
 	if err != nil {
-		return fmt.Errorf("error parsing post body: %s", err.Error())
+		return fmt.Errorf("error parsing post body: %w", err)
 	}
 
 	jsonFile, err := os.Open("sets/" + setRequest.Set + ".json")
 	if err != nil {
-		return fmt.Errorf("error opening json file: %s", err.Error())
+		return fmt.Errorf("error opening json file: %w", err)
 	}
 	defer jsonFile.Close()
 
 	byteValue, err := ioutil.ReadAll(jsonFile)
 	if err != nil {
-		return fmt.Errorf("error readalling: %s", err.Error())
+		return fmt.Errorf("error readalling: %w", err)
 	}
 
 	var cfg makedraft.DraftConfig
 	err = json.Unmarshal(byteValue, &cfg)
 	if err != nil {
-		return fmt.Errorf("error unmarshalling: %s", err.Error())
+		return fmt.Errorf("error unmarshalling: %w", err)
 	}
 
 	var cards []SetCardData
@@ -935,7 +945,7 @@ func ServeAPISet(w http.ResponseWriter, r *http.Request, _ int64, tx *sql.Tx) er
 		var cardData R38CardData
 		err = json.Unmarshal([]byte(card.Data), &cardData)
 		if err != nil {
-			return fmt.Errorf("error unmarshalling: %s", err.Error())
+			return fmt.Errorf("error unmarshalling: %w", err)
 		}
 		cards = append(cards, SetCardData{
 			Id:   card.ID,
@@ -945,7 +955,7 @@ func ServeAPISet(w http.ResponseWriter, r *http.Request, _ int64, tx *sql.Tx) er
 
 	err = json.NewEncoder(w).Encode(cards)
 	if err != nil {
-		return fmt.Errorf("error marshalling: %s", err.Error())
+		return fmt.Errorf("error marshalling: %w", err)
 	}
 
 	return nil
@@ -1180,8 +1190,8 @@ func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool, zoneDrafting bool
 			log.Printf("zone draft check: seat %d has %d packs", newPosition+1, packsCount)
 			if packsCount >= 2 {
 				return draftID, myPackID, announcements, round, seatID,
-					fmt.Errorf("zone draft violation: seat %d (position %d) already has %d packs",
-						newPositionID, newPosition, packsCount)
+					fmt.Errorf("%w: seat %d (position %d) already has %d packs",
+						ZoneDraftError, newPositionID, newPosition, packsCount)
 			}
 			if packsCount == 1 {
 				// Check to see if new position is still picking from their first pack
@@ -1193,8 +1203,8 @@ func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool, zoneDrafting bool
 				}
 				if packsCount == 0 {
 					return draftID, myPackID, announcements, round, seatID,
-						fmt.Errorf("zone draft violation: seat %d (position %d) already has 2 packs (including unclaimed first pack)",
-							newPositionID, newPosition)
+						fmt.Errorf("%w: seat %d (position %d) already has 2 packs (including unclaimed first pack)",
+							ZoneDraftError, newPositionID, newPosition)
 				}
 			}
 		}
@@ -1574,7 +1584,7 @@ func GetJSONObject(tx *sql.Tx, draftID int64) (DraftJSON, error) {
 
 	rows, err := tx.Query(query, draftID)
 	if err != nil {
-		return draft, fmt.Errorf("error getting draft details: %s", err.Error())
+		return draft, fmt.Errorf("error getting draft details: %w", err)
 	}
 	defer rows.Close()
 	var indices [8][3]int64
@@ -1688,12 +1698,12 @@ func GetJSONObject(tx *sql.Tx, draftID int64) (DraftJSON, error) {
 func GetFilteredJSON(tx *sql.Tx, draftID int64, userID int64) (string, error) {
 	draftInfo, err := GetDraftListEntry(userID, tx, draftID)
 	if err != nil {
-		return "", fmt.Errorf("error getting draft list entry: %s", err.Error())
+		return "", fmt.Errorf("error getting draft list entry: %w", err)
 	}
 
 	draft, err := GetJSONObject(tx, draftID)
 	if err != nil {
-		return "", fmt.Errorf("error getting draft details: %s", err.Error())
+		return "", fmt.Errorf("error getting draft details: %w", err)
 	}
 
 	draft.PickXsrf = xsrftoken.Generate(xsrfKey, strconv.FormatInt(userID, 16), fmt.Sprintf("pick%d", draftID))
@@ -1716,7 +1726,7 @@ func GetFilteredJSON(tx *sql.Tx, draftID int64, userID int64) (string, error) {
 		var myRound sql.NullInt64
 		err = row.Scan(&myRound)
 		if err != nil {
-			return "", fmt.Errorf("error detecting end of draft %d for user %d: %s", draftID, userID, err.Error())
+			return "", fmt.Errorf("error detecting end of draft %d for user %d: %w", draftID, userID, err)
 		}
 		if myRound.Valid && myRound.Int64 >= 4 {
 			returnFullReplay = true
@@ -1730,7 +1740,7 @@ func GetFilteredJSON(tx *sql.Tx, draftID int64, userID int64) (string, error) {
 	if returnFullReplay {
 		ret, err := json.Marshal(draft)
 		if err != nil {
-			return "", fmt.Errorf("error marshalling full draft replay: %s", err.Error())
+			return "", fmt.Errorf("error marshalling full draft replay: %w", err)
 		}
 		return string(ret), nil
 	}
@@ -1739,13 +1749,13 @@ func GetFilteredJSON(tx *sql.Tx, draftID int64, userID int64) (string, error) {
 	if sock != "" {
 		conn, err := net.Dial("unix", sock)
 		if err != nil {
-			return "", fmt.Errorf("error connecting to filter service: %s", err.Error())
+			return "", fmt.Errorf("error connecting to filter service: %w", err)
 		}
 		defer conn.Close()
 
 		ret, err := json.Marshal(Perspective{User: userID, Draft: draft})
 		if err != nil {
-			return "", fmt.Errorf("error marshalling filter service request: %s", err.Error())
+			return "", fmt.Errorf("error marshalling filter service request: %w", err)
 		}
 
 		stop := "\r\n\r\n"
@@ -1809,7 +1819,7 @@ func GetDraftList(userID int64, tx *sql.Tx) (DraftList, error) {
 
 	rows, err := tx.Query(query, userID, userID, userID, userID)
 	if err != nil {
-		return drafts, fmt.Errorf("can't get draft list: %s", err.Error())
+		return drafts, fmt.Errorf("can't get draft list: %w", err)
 	}
 	defer rows.Close()
 	for rows.Next() {
@@ -1824,7 +1834,7 @@ func GetDraftList(userID int64, tx *sql.Tx) (DraftList, error) {
 			&d.Finished,
 			&d.InPerson)
 		if err != nil {
-			return drafts, fmt.Errorf("can't get draft list: %s", err.Error())
+			return drafts, fmt.Errorf("can't get draft list: %w", err)
 		}
 
 		if d.Joined {
