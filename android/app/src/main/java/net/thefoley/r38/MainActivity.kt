@@ -36,7 +36,8 @@ class MainActivity : ComponentActivity() {
     @Composable
     fun Content() {
         val state = rememberWebViewState("https://draftcu.be")
-//    val state = rememberWebViewState("http://10.0.2.2:5173")
+        //val state = rememberWebViewState("http://192.168.0.172:5173")
+        //val state = rememberWebViewState("http://10.0.2.2:5173")
         val navigator = rememberWebViewNavigator()
         val jsBridge = rememberWebViewJsBridge(navigator)
 
@@ -46,7 +47,9 @@ class MainActivity : ComponentActivity() {
                     NfcAdapter.EXTRA_TAG, Tag::class.java
                 )
                 if (tag != null) {
-                    Ndef.get(tag).writeNdefMessage(
+                    val ndef = Ndef.get(tag)
+                    ndef.connect()
+                    ndef.writeNdefMessage(
                         NdefMessage(
                             NdefRecord.createTextRecord(null, this.cardToWrite)
                         )
