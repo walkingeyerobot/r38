@@ -6,7 +6,8 @@ WORKDIR /src
 COPY . .
 RUN go mod download
 RUN go build -v .
-
+WORKDIR /src/makedraft_cli
+RUN go build -v .
 
 
 FROM node:23-slim AS nodebuilder
@@ -29,13 +30,15 @@ ENTRYPOINT ["node", "filter.js"]
 
 FROM debian:stable-slim AS go_deploy
 
-RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y ca-certificates  sqlite3 curl && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /srv/r38
 
 COPY --from=nodebuilder /src/client-dist /srv/r38/client-dist 
 COPY --from=gobuilder /src/r38 /srv/r38/r38
+COPY --from=gobuilder /src/makedraft_cli/makedraft_cli /srv/r38/makedraft_cli
 
+RUN ln -s db/draft.db draft.db
 EXPOSE 12264
-WORKDIR /srv/r38/db
+
 CMD ["/srv/r38/r38"]
