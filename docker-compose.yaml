@@ -8,6 +8,7 @@ services:
     image: git.ninefives.online/cdanis/r38-filter:latest
     volumes: 
       - &socket socket:/srv/r38/socket
+    working_dir: /srv/r38/socket
 
   app:
     image: git.ninefives.online/cdanis/r38-app:latest
