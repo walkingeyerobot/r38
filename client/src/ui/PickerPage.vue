@@ -136,7 +136,7 @@ import CardDetailDialog from "@/ui/picker/CardDetailDialog.vue";
 import LoadingDialog from "@/ui/picker/LoadingDialog.vue";
 import ManaSymbol from "@/ui/shared/mana/ManaSymbol.vue";
 
-import { fetchEndpoint, fetchEndpointEv } from "@/fetch/fetchEndpoint";
+import { fetchEndpointEv } from "@/fetch/fetchEndpoint";
 import { ROUTE_DRAFT } from "@/rest/api/draft/draft";
 import { ROUTE_UNDO_PICK } from "@/rest/api/undopick/undopick";
 import { ROUTE_PICK } from "@/rest/api/pick/pick";
@@ -156,16 +156,23 @@ const draftId = parseInt(route.params["draftId"] as string);
 const activeRequest = ref<boolean>(false);
 const isDevMode = import.meta.env.DEV;
 
+let fetchingDraft = false;
+let pollingId: number;
+
 onMounted(() => {
   console.log("---- Draft ID is", draftId);
 
   document.body.addEventListener("rfidScan", onRfidScan);
 
   fetchDraft();
+
+  pollingId = setInterval(onPollForState, 5000) as unknown as number;
 });
 
 onUnmounted(() => {
   document.body.removeEventListener("rfidScan", onRfidScan);
+
+  clearInterval(pollingId);
 });
 
 const playerSeat = computed(() => {
@@ -247,6 +254,12 @@ const sounds = computed(() => {
 
 const scanSound = useSound(sounds.value.scan);
 const errorSound = useSound(sounds.value.error);
+
+function onPollForState() {
+  if (activeDialog.value == null) {
+    fetchDraft();
+  }
+}
 
 function onCardClick(card: DraftCard) {
   activeDialog.value = {
@@ -367,12 +380,23 @@ async function onUndoPick(card: DraftCard) {
 }
 
 async function fetchDraft() {
-  const payload = await fetchEndpoint(ROUTE_DRAFT, {
+  if (fetchingDraft) {
+    return;
+  }
+  fetchingDraft = true;
+  const [payload, e] = await fetchEndpointEv(ROUTE_DRAFT, {
     id: draftId.toString(),
     as: authStore.user?.id,
   });
-  draftStore.loadDraft(payload);
-  loaded.value = true;
+  fetchingDraft = false;
+
+  if (payload) {
+    draftStore.loadDraft(payload);
+    loaded.value = true;
+  } else {
+    // TODO: Can't show an error dialog until loaded is true, woops
+    console.error("Error while loading draft", e);
+  }
 }
 </script>
 
