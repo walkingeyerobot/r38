@@ -5,13 +5,16 @@ services:
       context: .
       dockerfile: Dockerfile
       target: filter_deploy
+    image: git.ninefives.online/cdanis/r38-filter:latest
     volumes: 
       - &socket socket:/srv/r38/socket
 
   app:
+    image: git.ninefives.online/cdanis/r38-app:latest
     build:
       context: .
       dockerfile: Dockerfile
+      target: go_deploy
     ports:
       - "12264:12264"
     depends_on:
