@@ -1,0 +1,24 @@
+services:
+
+  filter:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: filter_deploy
+    volumes: 
+      - &socket socket:/srv/r38/socket
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "12264:12264"
+    depends_on:
+      - filter
+    volumes:
+      - *socket
+      - /srv/r38/db
+
+volumes:
+  socket:
