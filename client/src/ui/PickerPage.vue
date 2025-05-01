@@ -136,7 +136,7 @@ import CardDetailDialog from "@/ui/picker/CardDetailDialog.vue";
 import LoadingDialog from "@/ui/picker/LoadingDialog.vue";
 import ManaSymbol from "@/ui/shared/mana/ManaSymbol.vue";
 
-import { fetchEndpoint, fetchEndpointEv } from "@/fetch/fetchEndpoint";
+import { fetchEndpointEv } from "@/fetch/fetchEndpoint";
 import { ROUTE_DRAFT } from "@/rest/api/draft/draft";
 import { ROUTE_UNDO_PICK } from "@/rest/api/undopick/undopick";
 import { ROUTE_PICK } from "@/rest/api/pick/pick";
@@ -384,7 +384,7 @@ async function fetchDraft() {
     return;
   }
   fetchingDraft = true;
-  let [payload, e] = await fetchEndpointEv(ROUTE_DRAFT, {
+  const [payload, e] = await fetchEndpointEv(ROUTE_DRAFT, {
     id: draftId.toString(),
     as: authStore.user?.id,
   });
