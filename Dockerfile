@@ -22,9 +22,12 @@ RUN npm run build
 
 
 FROM node:23-slim AS filter_deploy
-WORKDIR /srv/r38-filter
+WORKDIR /srv/r38
 COPY filter.js .
-ENTRYPOINT ["node", "filter.js"]
+#RUN ln -s socket/r38.sock r38.sock
+WORKDIR /srv/r38/socket
+
+ENTRYPOINT ["node", "../filter.js"]
 
 
 
