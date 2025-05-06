@@ -40,6 +40,7 @@ WORKDIR /srv/r38
 COPY --from=nodebuilder /src/client-dist /srv/r38/client-dist 
 COPY --from=gobuilder /src/r38 /srv/r38/r38
 COPY --from=gobuilder /src/makedraft_cli/makedraft_cli /srv/r38/makedraft_cli
+COPY --from=gobuilder /src/sets /srv/r38/sets
 
 RUN ln -s db/draft.db draft.db
 RUN ln -s socket/r38.sock r38.sock
