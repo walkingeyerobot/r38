@@ -1,13 +1,13 @@
 <template>
   <div class="_draft-list-item">
-    <a class="main-section" :href="draftUrl">
+    <component :is="draftUrl ? 'RouterLink' : 'div'" class="main-section" :to="draftUrl">
       <div class="draft-name">
         {{ descriptor.name }}
       </div>
       <div class="draft-subtitle">
         {{ draftSubtitle }}
       </div>
-    </a>
+    </component>
     <a v-if="isShufflable" class="shuffle-section" :href="`/shuffler/${descriptor.id}`">Shuffle</a>
   </div>
 </template>
@@ -65,7 +65,6 @@ const draftSubtitle = computed(() => {
 
 function wrapUrl(url: string) {
   if (route.query["as"] != undefined) {
-    console.log("AS:", route.query["as"]);
     return url + `?as=${route.query["as"]}`;
   } else {
     return url;
@@ -92,7 +91,7 @@ function wrapUrl(url: string) {
   text-decoration: none;
 }
 
-.main-section:hover .draft-name {
+a.main-section:hover .draft-name {
   text-decoration: underline;
 }
 
