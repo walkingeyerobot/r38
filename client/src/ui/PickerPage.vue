@@ -8,7 +8,13 @@ The primary page for making picks during an active draft
     <div class="container">
       <template v-if="loaded">
         <div class="header">
-          {{ draftStore.draftName }}
+          <div class="header-left">
+            <a class="back-link" href="/" @click.prevent="$router.push(appendImpersonation('/'))"
+              >〈 Back</a
+            >
+          </div>
+          <div class="title">{{ draftStore.draftName }}</div>
+          <div class="header-right"></div>
         </div>
 
         <TableSeating
@@ -32,6 +38,22 @@ The primary page for making picks during an active draft
                 :class="{ active: seat.player.id == authStore.user?.id }"
               />
             </component>
+          </div>
+
+          <div class="boop-prompt" v-if="boopPrompt != 'none'">
+            <template v-if="boopPrompt == 'request-permission'">
+              <div>To scan cards, you must first enable booping.</div>
+              <div>
+                <button class="boop-btn" @click="onRequestNfcPermission">Enable booping</button>
+              </div>
+            </template>
+            <template v-else>
+              <div>Your hardware doesn't appear to support card scanning 😔.</div>
+              <div style="margin-top: 10px">
+                To participate in an in-person draft you'll need a device with an RFID reader (such
+                as a phone).
+              </div>
+            </template>
           </div>
 
           <div class="pick-count" v-if="nextPick.kind == 'ActivePosition'">
@@ -125,7 +147,7 @@ The primary page for making picks during an active draft
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from "vue";
+import { computed, onMounted, onUnmounted, reactive, ref } from "vue";
 import { useRoute } from "vue-router";
 import { useSound } from "@vueuse/sound";
 import axios from "axios";
@@ -154,10 +176,18 @@ const loaded = ref(false);
 const activeDialog = ref<ActiveDialog | null>(null);
 const draftId = parseInt(route.params["draftId"] as string);
 const activeRequest = ref<boolean>(false);
-const isDevMode = import.meta.env.DEV;
+
+const isNfcSupported = "NDEFReader" in window;
+const hasNfcPermission = ref<boolean>(false);
 
 let fetchingDraft = false;
 let pollingId: number;
+let wakeLock: WakeLockSentinel | null = null;
+
+const isDevMode = import.meta.env.DEV;
+const devOptions: DevOptions = reactive({
+  boopPrompt: null,
+});
 
 onMounted(() => {
   console.log("---- Draft ID is", draftId);
@@ -166,13 +196,33 @@ onMounted(() => {
 
   fetchDraft();
 
+  // if (!isDevMode) {
   pollingId = setInterval(onPollForState, 5000) as unknown as number;
+  // }
+
+  if ("wakeLock" in navigator) {
+    navigator.wakeLock.request("screen").then(
+      (lock) => {
+        console.log("Got a wake lock!");
+        wakeLock = lock;
+      },
+      (e) => {
+        console.log("Error when trying to acquire wake lock", e);
+      },
+    );
+  } else {
+    console.log("Wake locks not supported");
+  }
+
+  handleNfcScanning();
 });
 
 onUnmounted(() => {
   document.body.removeEventListener("rfidScan", onRfidScan);
 
   clearInterval(pollingId);
+
+  wakeLock?.release();
 });
 
 const playerSeat = computed(() => {
@@ -245,6 +295,22 @@ const nextPick = computed<PickPosition>(() => {
   return nextPick;
 });
 
+const boopPrompt = computed<BoopPrompt>(() => {
+  if (isDevMode && devOptions.boopPrompt != null) {
+    return devOptions.boopPrompt;
+  }
+
+  const isAppleMobileOs = navigator.platform.substring(0, 2) == "iP";
+
+  if (!draftStore.inPerson || hasNfcPermission.value || isAppleMobileOs) {
+    return "none" as const;
+  } else if (!isNfcSupported) {
+    return "missing-hardware" as const;
+  } else {
+    return "request-permission" as const;
+  }
+});
+
 const sounds = computed(() => {
   return {
     scan: PickerSounds.getScanSoundForSeat(playerSeat.value?.position),
@@ -279,6 +345,19 @@ function onPreviousPickClick() {
 }
 
 async function onRfidScan(event: CustomEvent<string>) {
+  const cardRfid = decodeURIComponent(
+    Array.prototype.map
+      .call(atob(event.detail), (c) => `%${`00${c.charCodeAt(0).toString(16)}`.slice(-2)}`)
+      .slice(3)
+      .join(""),
+  );
+
+  await handleCardScanned(cardRfid);
+}
+
+async function handleCardScanned(cardRfid: string) {
+  console.log("Attempting to pick scanned card with ID", cardRfid);
+
   if (activeRequest.value) {
     return;
   }
@@ -287,13 +366,6 @@ async function onRfidScan(event: CustomEvent<string>) {
     kind: "loading-spinner",
     message: "Picking scanned card...",
   };
-
-  const cardRfid = decodeURIComponent(
-    Array.prototype.map
-      .call(atob(event.detail), (c) => `%${`00${c.charCodeAt(0).toString(16)}`.slice(-2)}`)
-      .slice(3)
-      .join(""),
-  );
 
   const [response, e] = await fetchEndpointEv(ROUTE_PICK_RFID, {
     draftId: draftStore.draftId,
@@ -396,6 +468,70 @@ async function fetchDraft() {
   } else {
     // TODO: Can't show an error dialog until loaded is true, woops
     console.error("Error while loading draft", e);
+  }
+}
+
+async function handleNfcScanning() {
+  if (isNfcSupported) {
+    console.log("NFC reading supported!");
+
+    const nfcPermissionStatus = await navigator.permissions.query({
+      name: "nfc" as unknown as PermissionName,
+    });
+
+    hasNfcPermission.value = nfcPermissionStatus.state == "granted";
+    nfcPermissionStatus.addEventListener("change", (e) => {
+      console.log("NFC permission status changed to", nfcPermissionStatus.state);
+      hasNfcPermission.value = nfcPermissionStatus.state == "granted";
+    });
+
+    if (hasNfcPermission.value) {
+      console.log("Have permission, preparing to scan!");
+      scanForTag();
+    }
+  }
+}
+
+function onRequestNfcPermission() {
+  scanForTag();
+}
+
+function scanForTag() {
+  const reader = new NDEFReader();
+  reader.onreadingerror = () => {
+    console.log("Cannot read data from the NFC tag. Try another one?");
+  };
+  reader.onreading = (e) => {
+    console.log("NDEF message read.");
+    console.log("Records:");
+    for (const record of e.message.records) {
+      console.log(record.id, record.recordType);
+      if (record.recordType == "text") {
+        const td = new TextDecoder(record.encoding);
+        const text = td.decode(record.data);
+        console.log("Text:", td.decode(record.data));
+        if (CARD_UUID_PATTERN.test(text)) {
+          console.log("It's a thing!");
+          handleCardScanned(text);
+        }
+      }
+    }
+  };
+  reader
+    .scan()
+    .then(() => {
+      console.log("Scan started successfully.");
+    })
+    .catch((error) => {
+      console.log(`Error! Scan failed to start: ${error}.`);
+    });
+}
+
+function appendImpersonation(url: string) {
+  if (route.query["as"] != undefined) {
+    return url + `?as=${route.query["as"]}`;
+  } else {
+    return url;
   }
 }
 </script>
@@ -505,9 +641,17 @@ type ActiveDialog =
       escapedMessage?: string;
     };
 
+type BoopPrompt = "none" | "missing-hardware" | "request-permission";
+
+interface DevOptions {
+  boopPrompt: BoopPrompt | null;
+}
+
 // TODO: Move these into a per-draft config object
 const ROUNDS_PER_DRAFT = 3;
 const CARDS_PER_PACK = 15;
+
+const CARD_UUID_PATTERN = /\w{8}-\w{4}-\w{4}-\w{4}-\w{12}/;
 </script>
 
 <style scoped>
@@ -534,7 +678,35 @@ const CARDS_PER_PACK = 15;
 .header {
   font-size: 25px;
   text-align: center;
-  margin: 30px 0;
+  margin: 30px 20px;
+  display: flex;
+  align-items: center;
+}
+
+.header-left,
+.header-right {
+  width: 100px;
+  font-size: 16px;
+}
+
+.header-left {
+  text-align: left;
+}
+
+.header-right {
+  text-align: right;
+}
+
+.title {
+  flex: 1;
+}
+
+.back-link {
+  color: #ccc;
+  text-decoration: none;
+}
+.back-link:hover {
+  text-decoration: underline;
 }
 
 .player-list {
@@ -564,6 +736,21 @@ const CARDS_PER_PACK = 15;
 
 .seated-player + .seated-player {
   margin-left: 5px;
+}
+
+.boop-prompt {
+  padding: 20px;
+  margin: 20px;
+  background: #1b1b1b;
+  border-radius: 2px;
+  border: 1px solid #8b4d4d;
+}
+
+.boop-btn {
+  padding: 10px;
+  margin-top: 20px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .pick-count {
