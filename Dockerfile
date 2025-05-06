@@ -1,13 +1,25 @@
 FROM golang:1.24 AS gobuilder
 
+ENV GOCACHE=/tmp/go-cache
+RUN --mount=type=cache,target=/tmp/go-cache \
+    --mount=type=cache,target=/go/pkg/mod \
+    mkdir -p /tmp/go-cache /go/pkg/mod
+
 WORKDIR /src
 
 # then copy the rest of the source code
+# TODO there must be a better way to write this
 COPY . .
-RUN go mod download
-RUN go build -v .
+RUN --mount=type=cache,target=/tmp/go-cache \
+    --mount=type=cache,target=/go/pkg/mod \
+ go mod download
+RUN --mount=type=cache,target=/tmp/go-cache \
+    --mount=type=cache,target=/go/pkg/mod \
+ go build -v .
 WORKDIR /src/makedraft_cli
-RUN go build -v .
+RUN --mount=type=cache,target=/tmp/go-cache \
+    --mount=type=cache,target=/go/pkg/mod \
+ go build -v .
 
 
 FROM node:23-slim AS nodebuilder
