@@ -158,6 +158,7 @@ func MakeDraft(settings Settings, tx *sql.Tx) error {
 
 		switch card.Rarity {
 		case "mythic":
+		case "special":
 			currentSet.Mythics = append(currentSet.Mythics, card)
 		case "rare":
 			currentSet.Rares = append(currentSet.Rares, card)
