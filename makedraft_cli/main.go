@@ -4,10 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"flag"
-	"github.com/walkingeyerobot/r38/makedraft"
 	"log"
+	"os"
+
+	"github.com/walkingeyerobot/r38/makedraft"
 )
-import "os"
 
 func main() {
 	flagSet := flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
@@ -46,25 +47,25 @@ func main() {
 	database, err := sql.Open("sqlite3", *settings.Database)
 	if err != nil {
 		log.Printf("error opening database %s: %s", *settings.Database, err.Error())
-		return
+		os.Exit(1)
 	}
 	err = database.Ping()
 	if err != nil {
 		log.Printf("error pinging database: %s", err.Error())
-		return
+		os.Exit(1)
 	}
 
 	tx, err := database.BeginTx(context.Background(), &sql.TxOptions{ReadOnly: false})
 	if err != nil {
 		log.Printf("can't create a context: %s", err.Error())
-		return
+		os.Exit(1)
 	}
 	defer tx.Rollback()
 
 	err = makedraft.MakeDraft(settings, tx)
 	if err != nil {
 		log.Printf("%s", err.Error())
-		return
+		os.Exit(1)
 	}
 
 	if !*settings.Simulate {
@@ -75,7 +76,9 @@ func main() {
 
 	if err != nil {
 		log.Printf("can't commit :( %s", err.Error())
+		os.Exit(1)
 	} else {
 		log.Printf("done!")
+		os.Exit(0)
 	}
 }
