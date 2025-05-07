@@ -53,8 +53,10 @@ COPY --from=gobuilder /src/r38 /srv/r38/r38
 COPY --from=gobuilder /src/makedraft_cli/makedraft_cli /srv/r38/makedraft_cli
 COPY --from=gobuilder /src/sets /srv/r38/sets
 
+# the go app expects these in its working directory but they need to live on mounted volumes
 RUN ln -s db/draft.db draft.db
 RUN ln -s socket/r38.sock r38.sock
+
 EXPOSE 12264
 
 CMD ["/srv/r38/r38"]
