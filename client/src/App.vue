@@ -1,9 +1,7 @@
 <template>
-  <div id="app">
-    <router-view v-if="status == 'ready'" />
-    <div v-else-if="status == 'error'" class="error-msg">
-      There was an error loading user info; please try refreshing
-    </div>
+  <router-view v-if="status == 'ready'" />
+  <div v-else-if="status == 'error'" class="error-msg">
+    There was an error loading user info; please try refreshing
   </div>
 </template>
 
