@@ -108,8 +108,6 @@ const TABLE_POSITIONS = [
   display: flex;
   flex-direction: column;
   align-items: center;
-
-  margin-top: 10px;
 }
 
 .table {
