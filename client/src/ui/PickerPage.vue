@@ -5,144 +5,143 @@ The primary page for making picks during an active draft
 -->
 <template>
   <div class="_picker-page">
-    <div class="container">
-      <template v-if="loaded">
-        <div class="header">
-          <div class="header-left">
-            <a class="back-link" href="/" @click.prevent="$router.push(appendImpersonation('/'))"
-              >〈 Back</a
-            >
-          </div>
-          <div class="title">{{ draftStore.draftName }}</div>
-          <div class="header-right"></div>
-        </div>
-
-        <TableSeating
-          v-if="nextPick.kind == 'NotSeated' || nextPick.kind == 'WaitingToFill'"
-          class="table-seating"
-        />
-
-        <template v-else>
-          <div class="player-list">
-            <component
-              :is="isDevMode ? 'a' : 'div'"
-              v-for="seat in draftStore.currentState.seats"
-              :key="seat.position"
-              class="seated-player"
-              :href="`${route.path}?as=${seat.player.id}`"
-            >
-              <img
-                class="player-icon"
-                :src="seat.player.iconUrl"
-                :title="seat.player.name"
-                :class="{ active: seat.player.id == authStore.user?.id }"
-              />
-            </component>
-          </div>
-
-          <div class="boop-prompt" v-if="boopPrompt != 'none'">
-            <template v-if="boopPrompt == 'request-permission'">
-              <div>To scan cards, you must first enable booping.</div>
-              <div>
-                <button class="boop-btn" @click="onRequestNfcPermission">Enable booping</button>
-              </div>
-            </template>
-            <template v-else>
-              <div>Your hardware doesn't appear to support card scanning 😔.</div>
-              <div style="margin-top: 10px">
-                To participate in an in-person draft you'll need a device with an RFID reader (such
-                as a phone).
-              </div>
-            </template>
-          </div>
-
-          <div class="pick-count" v-if="nextPick.kind == 'ActivePosition'">
-            <div class="pc-round">
-              <div class="pc-round-label">Pack</div>
-              <div class="pc-round-count">{{ nextPick.round }}</div>
+    <template v-if="loaded">
+      <div class="scroll-outer">
+        <div class="scroll-inner">
+          <div class="header">
+            <div class="header-left">
+              <a class="back-link" href="/" @click.prevent="$router.push(appendImpersonation('/'))"
+                >〈 Back</a
+              >
             </div>
-            <div class="pc-pick">
-              <div class="pc-pick-label">Pick</div>
-              <div class="pc-pick-count">{{ nextPick.pick + 1 }}</div>
-            </div>
-          </div>
-          <div class="pick-count-error" v-else-if="nextPick.kind == 'Error'">
-            {{ nextPick.message }}
+            <div class="title">{{ draftStore.draftName }}</div>
+            <div class="header-right"></div>
           </div>
 
-          <div class="active-pack">
-            <template v-if="activePack">
-              <div class="active-pack-label">Current pack</div>
-              <div class="active-pack-cnt">
-                <div
-                  v-for="card in activePack"
-                  :key="card.id"
-                  class="card-slate"
-                  @click="onCardClick(card)"
-                >
-                  <div class="card-name">{{ card.definition.name }}</div>
-                  <div class="card-cost">
-                    <ManaSymbol
-                      v-for="(msymb, i) in card.definition.mana_cost"
-                      :key="i"
-                      :code="msymb"
-                      class="mana-symbol"
-                    />
+          <TableSeating
+            v-if="nextPick.kind == 'NotSeated' || nextPick.kind == 'WaitingToFill'"
+            class="table-seating"
+          />
+
+          <template v-else>
+            <div class="player-list-bg"></div>
+            <div class="player-list">
+              <component
+                :is="isDevMode ? 'a' : 'div'"
+                v-for="seat in draftStore.currentState.seats"
+                :key="seat.position"
+                class="seated-player"
+                :href="`${route.path}?as=${seat.player.id}`"
+              >
+                <img
+                  class="player-icon"
+                  :src="seat.player.iconUrl"
+                  :title="seat.player.name"
+                  :class="{ active: seat.player.id == authStore.user?.id }"
+                />
+              </component>
+            </div>
+
+            <div class="boop-prompt" v-if="boopPrompt != 'none'">
+              <template v-if="boopPrompt == 'request-permission'">
+                <div>To scan cards, you must first enable booping.</div>
+                <div>
+                  <button class="boop-btn" @click="onRequestNfcPermission">Enable booping</button>
+                </div>
+              </template>
+              <template v-else>
+                <div>Your hardware doesn't appear to support card scanning 😔.</div>
+                <div style="margin-top: 10px">
+                  To participate in an in-person draft you'll need a device with an RFID reader
+                  (such as a phone).
+                </div>
+              </template>
+            </div>
+
+            <div class="pick-count" v-if="nextPick.kind == 'ActivePosition'">
+              <div class="pc-round">
+                <div class="pc-round-label">Pack</div>
+                <div class="pc-round-count">{{ nextPick.round }}</div>
+              </div>
+              <div class="pc-pick">
+                <div class="pc-pick-label">Pick</div>
+                <div class="pc-pick-count">{{ nextPick.pick + 1 }}</div>
+              </div>
+            </div>
+            <div class="pick-count-error" v-else-if="nextPick.kind == 'Error'">
+              {{ nextPick.message }}
+            </div>
+
+            <div class="active-pack">
+              <template v-if="activePack">
+                <div class="active-pack-label">Current pack</div>
+                <div class="active-pack-cnt">
+                  <div
+                    v-for="card in activePack"
+                    :key="card.id"
+                    class="card-slate"
+                    @click="onCardClick(card)"
+                  >
+                    <div class="card-name">{{ card.definition.name }}</div>
+                    <div class="card-cost">
+                      <ManaSymbol
+                        v-for="(msymb, i) in card.definition.mana_cost"
+                        :key="i"
+                        :code="msymb"
+                        class="mana-symbol"
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
-            </template>
-            <template v-else><em>Waiting for pack</em></template>
-          </div>
+              </template>
+              <template v-else><em>Waiting for pack</em></template>
+            </div>
 
-          <div v-if="previousPicks" class="previous-pick" @click="onPreviousPickClick">
-            <div class="active-pack-label">Previous pick</div>
+            <div v-if="previousPicks" class="previous-pick" @click="onPreviousPickClick">
+              <div class="active-pack-label">Previous pick</div>
 
-            <div v-for="card in previousPicks" :key="card.id" class="card-slate previous">
-              <div class="card-name">{{ card.definition.name }}</div>
-              <div class="card-cost">
-                <ManaSymbol
-                  v-for="(msymb, i) in card.definition.mana_cost"
-                  :key="i"
-                  :code="msymb"
-                  class="mana-symbol"
-                />
+              <div v-for="card in previousPicks" :key="card.id" class="card-slate previous">
+                <div class="card-name">{{ card.definition.name }}</div>
+                <div class="card-cost">
+                  <ManaSymbol
+                    v-for="(msymb, i) in card.definition.mana_cost"
+                    :key="i"
+                    :code="msymb"
+                    class="mana-symbol"
+                  />
+                </div>
               </div>
             </div>
-          </div>
-        </template>
-
-        <CardDetailDialog
-          v-if="activeDialog?.kind == 'card-detail'"
-          :card="draftStore.getCard(activeDialog.cardId)"
-          class="fullscreen-page"
-          @close="activeDialog = null"
-          @pick="onPickCard"
-        />
-        <PreviousPickDialog
-          v-else-if="activeDialog?.kind == 'previous-pick'"
-          :cards="activeDialog.cards"
-          class="fullscreen-page"
-          @close="activeDialog = null"
-          @undo="onUndoPick"
-        />
-        <LoadingDialog
-          v-else-if="activeDialog?.kind == 'loading-spinner'"
-          class="fullscreen-page"
-        />
-        <DismissableDialog
-          v-else-if="activeDialog?.kind == 'error-dialog'"
-          class="fullscreen-page"
-          @close="activeDialog = null"
-        >
-          <template #header>Flagrant System Error</template>
-          <div class="error-msg">{{ activeDialog.message }}</div>
-          <div v-if="activeDialog.escapedMessage" class="error-msg-escaped">
-            {{ activeDialog.escapedMessage }}
-          </div>
-        </DismissableDialog>
-      </template>
-    </div>
+          </template>
+        </div>
+      </div>
+      <CardDetailDialog
+        v-if="activeDialog?.kind == 'card-detail'"
+        :card="draftStore.getCard(activeDialog.cardId)"
+        class="fullscreen-page"
+        @close="activeDialog = null"
+        @pick="onPickCard"
+      />
+      <PreviousPickDialog
+        v-else-if="activeDialog?.kind == 'previous-pick'"
+        :cards="activeDialog.cards"
+        class="fullscreen-page"
+        @close="activeDialog = null"
+        @undo="onUndoPick"
+      />
+      <LoadingDialog v-else-if="activeDialog?.kind == 'loading-spinner'" class="fullscreen-page" />
+      <DismissableDialog
+        v-else-if="activeDialog?.kind == 'error-dialog'"
+        class="fullscreen-page"
+        @close="activeDialog = null"
+      >
+        <template #header>Flagrant System Error</template>
+        <div class="error-msg">{{ activeDialog.message }}</div>
+        <div v-if="activeDialog.escapedMessage" class="error-msg-escaped">
+          {{ activeDialog.escapedMessage }}
+        </div>
+      </DismissableDialog>
+    </template>
   </div>
 </template>
 
@@ -302,7 +301,12 @@ const boopPrompt = computed<BoopPrompt>(() => {
 
   const isAppleMobileOs = navigator.platform.substring(0, 2) == "iP";
 
-  if (!draftStore.inPerson || hasNfcPermission.value || isAppleMobileOs) {
+  if (
+    !draftStore.inPerson ||
+    hasNfcPermission.value ||
+    isAppleMobileOs ||
+    activePack.value != null
+  ) {
     return "none" as const;
   } else if (!isNfcSupported) {
     return "missing-hardware" as const;
@@ -656,36 +660,44 @@ const CARD_UUID_PATTERN = /\w{8}-\w{4}-\w{4}-\w{4}-\w{12}/;
 
 <style scoped>
 ._picker-page {
-  background: #333;
-  color: white;
-
+  position: relative;
   height: 100%;
 
-  overflow-y: auto;
+  background: #333;
+  color: white;
+  overflow: hidden;
+}
+
+.scroll-outer {
+  height: 100%;
 
   display: flex;
   flex-direction: column;
   align-items: center;
+  overflow-y: auto;
 }
 
-.container {
+.scroll-inner {
   display: flex;
   flex-direction: column;
   max-width: 450px;
   width: 100%;
+  padding-bottom: 40px;
 }
 
 .header {
-  font-size: 25px;
+  font-size: 16px;
   text-align: center;
-  margin: 30px 20px;
+  padding: 20px 20px;
   display: flex;
   align-items: center;
+
+  background-color: #1b1b1b;
 }
 
 .header-left,
 .header-right {
-  width: 100px;
+  width: 80px;
   font-size: 16px;
 }
 
@@ -704,9 +716,22 @@ const CARD_UUID_PATTERN = /\w{8}-\w{4}-\w{4}-\w{4}-\w{12}/;
 .back-link {
   color: #ccc;
   text-decoration: none;
+  padding: 10px;
+  padding-left: 0px;
 }
 .back-link:hover {
   text-decoration: underline;
+}
+
+.table-seating {
+  margin-top: 30px;
+  padding-bottom: 50px;
+}
+
+.player-list-bg {
+  width: 100%;
+  height: 35px;
+  background-color: #1b1b1b;
 }
 
 .player-list {
@@ -718,6 +743,8 @@ const CARD_UUID_PATTERN = /\w{8}-\w{4}-\w{4}-\w{4}-\w{12}/;
 
   border-radius: 100px;
   background-color: #1b1b1b;
+
+  margin-top: -30px;
 }
 
 .player-icon {
