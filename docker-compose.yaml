@@ -5,15 +5,26 @@ services:
       context: .
       dockerfile: Dockerfile
       target: filter_deploy
+    image: git.ninefives.online/cdanis/r38-filter:latest
     volumes: 
       - &socket socket:/srv/r38/socket
+    working_dir: /srv/r38/socket
+    restart: always
 
   app:
+    image: git.ninefives.online/cdanis/r38-app:latest
     build:
       context: .
       dockerfile: Dockerfile
+      target: go_deploy
+    environment:
+      - DISCORD_CLIENT_ID=$DISCORD_CLIENT_ID
+      - DISCORD_CLIENT_SECRET=$DISCORD_CLIENT_SECRET
+      - DISCORD_REDIRECT_URL=$DISCORD_REDIRECT_URL_unencrypted
+      - SESSION_SECRET=$SESSION_SECRET
     ports:
       - "12264:12264"
+    restart: always
     depends_on:
       - filter
     volumes:
