@@ -9,6 +9,7 @@ services:
     volumes: 
       - &socket socket:/srv/r38/socket
     working_dir: /srv/r38/socket
+    restart: always
 
   app:
     image: git.ninefives.online/cdanis/r38-app:latest
@@ -23,6 +24,7 @@ services:
       - SESSION_SECRET=$SESSION_SECRET
     ports:
       - "12264:12264"
+    restart: always
     depends_on:
       - filter
     volumes:
