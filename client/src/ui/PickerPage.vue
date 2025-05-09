@@ -186,18 +186,24 @@ let wakeLock: WakeLockSentinel | null = null;
 const isDevMode = import.meta.env.DEV;
 const devOptions: DevOptions = reactive({
   boopPrompt: null,
+  pollState: false,
 });
 
 onMounted(() => {
   console.log("---- Draft ID is", draftId);
 
+  // Tell iOS app to start scanning
+  postMessage("scan");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (window as any).webkit?.messageHandlers?.scanner?.postMessage("scan");
+
   document.body.addEventListener("rfidScan", onRfidScan);
 
   fetchDraft();
 
-  // if (!isDevMode) {
-  pollingId = setInterval(onPollForState, 5000) as unknown as number;
-  // }
+  if (!isDevMode || devOptions.pollState) {
+    pollingId = setInterval(onPollForState, 5000) as unknown as number;
+  }
 
   if ("wakeLock" in navigator) {
     navigator.wakeLock.request("screen").then(
@@ -238,7 +244,7 @@ const activePack = computed(() => {
   }
 
   const firstQueuedPack = seat.queuedPacks.packs[0];
-  if (firstQueuedPack.round == seat.round && firstQueuedPack.cards.length > 0) {
+  if (firstQueuedPack && firstQueuedPack.round == seat.round && firstQueuedPack.cards.length > 0) {
     return firstQueuedPack.cards.map((id) => draftStore.getCard(id));
   } else {
     return null;
@@ -649,6 +655,7 @@ type BoopPrompt = "none" | "missing-hardware" | "request-permission";
 
 interface DevOptions {
   boopPrompt: BoopPrompt | null;
+  pollState: boolean;
 }
 
 // TODO: Move these into a per-draft config object
