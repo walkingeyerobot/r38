@@ -221,6 +221,7 @@ func NewHandler(database *sql.DB, useAuth bool) http.Handler {
 
 	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	mux.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir("client-dist/assets"))))
+	mux.Handle("/favicon.ico", http.StripPrefix("/", http.FileServer(http.Dir("client-dist"))))
 
 	if useAuth {
 		log.Printf("setting up auth routes...")
