@@ -156,6 +156,7 @@ import DismissableDialog from "@/ui/picker/DismissableDialog.vue";
 import CardDetailDialog from "@/ui/picker/CardDetailDialog.vue";
 import LoadingDialog from "@/ui/picker/LoadingDialog.vue";
 import ManaSymbol from "@/ui/shared/mana/ManaSymbol.vue";
+import zone from "@/sfx/zone.mp3";
 
 import { fetchEndpointEv } from "@/fetch/fetchEndpoint";
 import { ROUTE_DRAFT } from "@/rest/api/draft/draft";
@@ -330,6 +331,7 @@ const sounds = computed(() => {
 
 const scanSound = useSound(sounds.value.scan);
 const errorSound = useSound(sounds.value.error);
+const zoneSound = useSound(zone);
 
 function onPollForState() {
   if (activeDialog.value == null) {
@@ -389,12 +391,21 @@ async function handleCardScanned(cardRfid: string) {
     activeDialog.value = null;
     scanSound.play();
   } else {
-    activeDialog.value = {
-      kind: "error-dialog",
-      message: `An error occurred while scanning card with ID "${cardRfid}"`,
-      escapedMessage: getErrorMessage(e),
-    };
-    errorSound.play();
+    if (isZoneDraftViolation(e)) {
+      activeDialog.value = {
+        kind: "error-dialog",
+        message: `Hold your horses!`,
+        escapedMessage: "Wait for the next player to take their pack before picking.",
+      };
+      zoneSound.play();
+    } else {
+      activeDialog.value = {
+        kind: "error-dialog",
+        message: `An error occurred while scanning card with ID "${cardRfid}"`,
+        escapedMessage: getErrorMessage(e),
+      };
+      errorSound.play();
+    }
   }
 
   activeRequest.value = false;
@@ -587,6 +598,13 @@ function incrementPick(round: number, pick: number): PickPosition {
       kind: "DraftComplete",
     };
   }
+}
+
+function isZoneDraftViolation(e: unknown): boolean {
+  if (axios.isAxiosError(e)) {
+    return e.response?.status === 400;
+  }
+  return false;
 }
 
 function getErrorMessage(e: unknown): string {
