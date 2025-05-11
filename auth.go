@@ -77,7 +77,7 @@ func oauthDiscordCallback(w http.ResponseWriter, r *http.Request, userID int64, 
 	if p.Picture != "" {
 		p.Picture = fmt.Sprintf("https://cdn.discordapp.com/avatars/%v/%s.png", p.ID, p.Picture)
 	} else {
-		p.Picture = "http://draftcu.be/static/favicon.png"
+		p.Picture = "https://cdn.discordapp.com/embed/avatars/0.png"
 	}
 
 	statement, err := tx.Prepare(`INSERT INTO users (discord_id, discord_name, picture) VALUES (?, ?, ?)`)
