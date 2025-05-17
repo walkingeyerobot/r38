@@ -9,6 +9,8 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"github.com/objectbox/objectbox-go/objectbox"
+	"github.com/walkingeyerobot/r38/schema"
 	"html/template"
 	"io"
 	"io/ioutil"
@@ -18,6 +20,7 @@ import (
 	"os"
 	"os/signal"
 	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -36,7 +39,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-type r38handler func(w http.ResponseWriter, r *http.Request, userId int64, tx *sql.Tx) error
+type r38handler func(w http.ResponseWriter, r *http.Request, userId int64, tx *sql.Tx, ob *objectbox.ObjectBox) error
 
 const FOREST_BEAR_ID = "700900270153924608"
 const FOREST_BEAR = ":forestbear:" + FOREST_BEAR_ID
@@ -92,7 +95,7 @@ func main() {
 
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":%s", port),
-		Handler: NewHandler(database, *useAuthPtr),
+		Handler: NewHandler(database, nil, *useAuthPtr),
 	}
 
 	dg, err = discordgo.New("Bot " + os.Getenv("DISCORD_BOT_TOKEN"))
@@ -142,9 +145,10 @@ func main() {
 }
 
 var ZoneDraftError = fmt.Errorf("zone draft violation")
+var MethodNotAllowedError = fmt.Errorf("invalid request method")
 
 // NewHandler creates all server routes for serving the html.
-func NewHandler(database *sql.DB, useAuth bool) http.Handler {
+func NewHandler(database *sql.DB, ob *objectbox.ObjectBox, useAuth bool) http.Handler {
 	mux := http.NewServeMux()
 
 	addHandler := func(route string, serveFunc r38handler, readonly bool) {
@@ -193,18 +197,37 @@ func NewHandler(database *sql.DB, useAuth bool) http.Handler {
 			ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 			defer cancel()
 
-			tx, err := database.BeginTx(ctx, &sql.TxOptions{ReadOnly: readonly})
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
+			var err error
+			if database != nil {
+				var tx *sql.Tx
+				tx, err = database.BeginTx(ctx, &sql.TxOptions{ReadOnly: readonly})
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
 
-			err = serveFunc(w, r, userID, tx)
+				err = serveFunc(w, r, userID, tx, nil)
+				if err != nil {
+					tx.Rollback()
+				} else {
+					tx.Commit()
+				}
+			} else if ob != nil {
+				handle := func() error {
+					return serveFunc(w, r, userID, nil, ob)
+				}
+				if readonly {
+					err = ob.RunInReadTx(handle)
+				} else {
+					err = ob.RunInWriteTx(handle)
+				}
+			}
 			if err != nil {
-				tx.Rollback()
 				if strings.HasPrefix(route, "/api/") {
 					if errors.Is(err, ZoneDraftError) {
 						w.WriteHeader(http.StatusBadRequest)
+					} else if errors.Is(err, MethodNotAllowedError) {
+						w.WriteHeader(http.StatusMethodNotAllowed)
 					} else {
 						w.WriteHeader(http.StatusInternalServerError)
 					}
@@ -212,8 +235,6 @@ func NewHandler(database *sql.DB, useAuth bool) http.Handler {
 				} else {
 					http.Error(w, err.Error(), http.StatusInternalServerError)
 				}
-			} else {
-				tx.Commit()
 			}
 		})
 		mux.Handle(route, handler)
@@ -253,14 +274,14 @@ func HandleIndex(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "client-dist/index.html")
 }
 
-func HandleLogin(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx) error {
+func HandleLogin(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 	t := template.Must(template.ParseFiles("login.tmpl"))
 	t.Execute(w, nil)
 	return nil
 }
 
 // ServeAPIDraft serves the /api/draft endpoint.
-func ServeAPIDraft(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx) error {
+func ServeAPIDraft(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 	re := regexp.MustCompile(`/api/draft/(\d+)`)
 	parseResult := re.FindStringSubmatch(r.URL.Path)
 	if parseResult == nil {
@@ -271,7 +292,7 @@ func ServeAPIDraft(w http.ResponseWriter, r *http.Request, userID int64, tx *sql
 		return fmt.Errorf("bad api url: %w", err)
 	}
 
-	draftJSON, err := GetFilteredJSON(tx, draftID, userID)
+	draftJSON, err := GetFilteredJSON(tx, ob, draftID, userID)
 	if err != nil {
 		return fmt.Errorf("error getting json: %w", err)
 	}
@@ -281,7 +302,7 @@ func ServeAPIDraft(w http.ResponseWriter, r *http.Request, userID int64, tx *sql
 }
 
 // ServeAPIDraftList serves the /api/draftlist endpoint.
-func ServeAPIDraftList(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx) error {
+func ServeAPIDraftList(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 	drafts, err := GetDraftList(userID, tx)
 	if err != nil {
 		return err
@@ -291,7 +312,7 @@ func ServeAPIDraftList(w http.ResponseWriter, r *http.Request, userID int64, tx 
 }
 
 // ServeAPIPrefs serves the /api/prefs endpoint.
-func ServeAPIPrefs(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx) error {
+func ServeAPIPrefs(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 	prefs, err := GetUserPrefs(userID, tx)
 	if err != nil {
 		return err
@@ -301,7 +322,7 @@ func ServeAPIPrefs(w http.ResponseWriter, r *http.Request, userID int64, tx *sql
 }
 
 // ServeAPISetPref serves the /api/setpref endpoint.
-func ServeAPISetPref(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx) error {
+func ServeAPISetPref(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 	if r.Method != "POST" {
 		// we have to return an error manually here because we want to return
 		// a different http status code.
@@ -369,11 +390,11 @@ func ServeAPISetPref(w http.ResponseWriter, r *http.Request, userID int64, tx *s
 		}
 	}
 
-	return ServeAPIPrefs(w, r, userID, tx)
+	return ServeAPIPrefs(w, r, userID, tx, ob)
 }
 
 // ServeAPIPick serves the /api/pick endpoint.
-func ServeAPIPick(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx) error {
+func ServeAPIPick(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 	if r.Method != "POST" {
 		// we have to return an error manually here because we want to return
 		// a different http status code.
@@ -392,7 +413,7 @@ func ServeAPIPick(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.
 		return fmt.Errorf("error parsing post body: %w", err)
 	}
 
-	err = doHandlePostedPick(w, pick, userID, false, tx)
+	err = doHandlePostedPick(w, pick, userID, false, tx, ob)
 	if err != nil {
 		return err
 	}
@@ -400,7 +421,7 @@ func ServeAPIPick(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.
 }
 
 // ServeAPIPickRfid serves the /api/pickrfid endpoint.
-func ServeAPIPickRfid(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx) error {
+func ServeAPIPickRfid(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 	if r.Method != "POST" {
 		// we have to return an error manually here because we want to return
 		// a different http status code.
@@ -433,14 +454,14 @@ func ServeAPIPickRfid(w http.ResponseWriter, r *http.Request, userID int64, tx *
 		XsrfToken: rfidPick.XsrfToken,
 	}
 
-	err = doHandlePostedPick(w, pick, userID, true, tx)
+	err = doHandlePostedPick(w, pick, userID, true, tx, ob)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func doHandlePostedPick(w http.ResponseWriter, pick PostedPick, userID int64, zoneDrafting bool, tx *sql.Tx) error {
+func doHandlePostedPick(w http.ResponseWriter, pick PostedPick, userID int64, zoneDrafting bool, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 	var draftID int64
 	var err error
 	if len(pick.CardIds) == 1 {
@@ -465,7 +486,7 @@ func doHandlePostedPick(w http.ResponseWriter, pick PostedPick, userID int64, zo
 	}
 
 	var draftJSON string
-	draftJSON, err = GetFilteredJSON(tx, draftID, userID)
+	draftJSON, err = GetFilteredJSON(tx, ob, draftID, userID)
 	if err != nil {
 		return fmt.Errorf("error getting json: %w", err)
 	}
@@ -475,7 +496,7 @@ func doHandlePostedPick(w http.ResponseWriter, pick PostedPick, userID int64, zo
 }
 
 // ServeAPIUndoPick serves the /api/undopick endpoint.
-func ServeAPIUndoPick(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx) error {
+func ServeAPIUndoPick(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 	if r.Method != "POST" {
 		// we have to return an error manually here because we want to return
 		// a different http status code.
@@ -540,7 +561,7 @@ func ServeAPIUndoPick(w http.ResponseWriter, r *http.Request, userID int64, tx *
 	}
 
 	var draftJSON string
-	draftJSON, err = GetFilteredJSON(tx, undo.DraftId, userID)
+	draftJSON, err = GetFilteredJSON(tx, ob, undo.DraftId, userID)
 	if err != nil {
 		return fmt.Errorf("error getting json: %w", err)
 	}
@@ -551,13 +572,9 @@ func ServeAPIUndoPick(w http.ResponseWriter, r *http.Request, userID int64, tx *
 }
 
 // ServeAPIJoin serves the /api/join endpoint.
-func ServeAPIJoin(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx) error {
+func ServeAPIJoin(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 	if r.Method != "POST" {
-		// we have to return an error manually here because we want to return
-		// a different http status code.
-		tx.Rollback()
-		http.Error(w, "invalid request method", http.StatusMethodNotAllowed)
-		return nil
+		return MethodNotAllowedError
 	}
 
 	bodyBytes, err := ioutil.ReadAll(r.Body)
@@ -576,17 +593,25 @@ func ServeAPIJoin(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.
 	draftID := toJoin.ID
 
 	if toJoin.Position < 0 {
-		err = doJoin(tx, userID, draftID)
+		if tx != nil {
+			err = doJoin(tx, userID, draftID)
+		} else if ob != nil {
+			err = doJoinOb(ob, userID, draftID)
+		}
 	} else if toJoin.Position > 7 {
 		return fmt.Errorf("invalid position %d", toJoin.Position)
 	} else {
-		err = doJoinSeat(tx, userID, draftID, toJoin.Position)
+		if tx != nil {
+			err = doJoinSeat(tx, userID, draftID, toJoin.Position)
+		} else if ob != nil {
+			err = doJoinSeatPositionOb(ob, userID, draftID, toJoin.Position)
+		}
 	}
 	if err != nil {
 		return fmt.Errorf("error joining draft %d: %w", draftID, err)
 	}
 
-	draftJSON, err := GetFilteredJSON(tx, draftID, userID)
+	draftJSON, err := GetFilteredJSON(tx, ob, draftID, userID)
 	if err != nil {
 		return fmt.Errorf("error getting json: %w", err)
 	}
@@ -639,6 +664,37 @@ func doJoin(tx *sql.Tx, userID int64, draftID int64) error {
 	return nil
 }
 
+// doJoinOb does the actual joining.
+func doJoinOb(ob *objectbox.ObjectBox, userId int64, draftId int64) error {
+	draft, err := schema.BoxForDraft(ob).Get(uint64(draftId))
+	if err != nil {
+		return err
+	}
+
+	var reservedSeat *schema.Seat
+	var openSeat *schema.Seat
+	for _, seat := range draft.Seats {
+		if seat.User.Id == uint64(userId) {
+			return fmt.Errorf("user %d already joined %d", userId, draftId)
+		}
+		if seat.ReservedUser.Id == uint64(userId) {
+			reservedSeat = seat
+		} else if openSeat == nil && seat.User == nil {
+			openSeat = seat
+		}
+	}
+
+	if reservedSeat != nil {
+		err = doJoinSeatOb(ob, userId, draftId, reservedSeat)
+	} else if openSeat != nil {
+		err = doJoinSeatOb(ob, userId, draftId, openSeat)
+	} else {
+		return fmt.Errorf("no non-reserved seats available for user %d in draft %d", userId, draftId)
+	}
+
+	return err
+}
+
 // doJoinSeat joins at a specific seat Position.
 func doJoinSeat(tx *sql.Tx, userID int64, draftID int64, position int64) error {
 	query := `select
@@ -685,6 +741,34 @@ func doJoinSeat(tx *sql.Tx, userID int64, draftID int64, position int64) error {
 	return nil
 }
 
+// doJoinSeatPositionOb joins at a specific seat Position.
+func doJoinSeatPositionOb(ob *objectbox.ObjectBox, userId int64, draftId int64, position int64) error {
+	draft, err := schema.BoxForDraft(ob).Get(uint64(draftId))
+	if err != nil {
+		return err
+	}
+
+	if slices.ContainsFunc(draft.Seats, func(seat *schema.Seat) bool {
+		return seat.User != nil && seat.User.Id == uint64(userId)
+	}) {
+		return fmt.Errorf("user %d already joined %d", userId, draftId)
+	}
+
+	seatIndex := slices.IndexFunc(draft.Seats, func(seat *schema.Seat) bool {
+		return seat.Position == int(position)
+	})
+	seat := draft.Seats[seatIndex]
+	if seat.User != nil {
+		return fmt.Errorf("seat %d (position %d) in draft %d already occupied by user %d", seat.Id, position, draftId, seat.User.Id)
+	}
+	if seat.ReservedUser != nil && seat.ReservedUser.Id != uint64(userId) {
+		return fmt.Errorf("seat %d (position %d) in draft %d already reserved by user %d", seat.Id, position, draft.Id, seat.ReservedUser.Id)
+	}
+
+	err = doJoinSeatOb(ob, userId, draftId, seat)
+	return err
+}
+
 func doJoinSeatId(tx *sql.Tx, userID int64, draftID int64, query string, emptySeatID int64, row *sql.Row) error {
 	query = `update seats set user = ? where id = ?`
 	_, err := tx.Exec(query, userID, emptySeatID)
@@ -717,8 +801,18 @@ func doJoinSeatId(tx *sql.Tx, userID int64, draftID int64, query string, emptySe
 	return nil
 }
 
+func doJoinSeatOb(ob *objectbox.ObjectBox, userId int64, draftId int64, seat *schema.Seat) error {
+	user, err := schema.BoxForUser(ob).Get(uint64(userId))
+	if err != nil {
+		return err
+	}
+	seat.User = user
+	_, err = schema.BoxForSeat(ob).Put(seat)
+	return err
+}
+
 // ServeAPISkip serves the /api/skip endpoint.
-func ServeAPISkip(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx) error {
+func ServeAPISkip(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 	if r.Method != "POST" {
 		// we have to return an error manually here because we want to return
 		// a different http status code.
@@ -744,7 +838,7 @@ func ServeAPISkip(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.
 		return fmt.Errorf("error skipping draft %d: %w", draftID, err)
 	}
 
-	draftJSON, err := GetFilteredJSON(tx, draftID, userID)
+	draftJSON, err := GetFilteredJSON(tx, ob, draftID, userID)
 	if err != nil {
 		return fmt.Errorf("error getting json: %w", err)
 	}
@@ -822,7 +916,7 @@ func doSkip(tx *sql.Tx, userID int64, draftID int64) error {
 }
 
 // ServeAPIForceEnd serves the /api/dev/forceEnd testing endpoint.
-func ServeAPIForceEnd(_ http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx) error {
+func ServeAPIForceEnd(_ http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 	if userID == 1 {
 		bodyBytes, err := ioutil.ReadAll(r.Body)
 		if err != nil {
@@ -842,7 +936,7 @@ func ServeAPIForceEnd(_ http.ResponseWriter, r *http.Request, userID int64, tx *
 }
 
 // ServeAPIUserInfo serves the /api/userinfo endpoint.
-func ServeAPIUserInfo(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx) error {
+func ServeAPIUserInfo(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 	userInfoJSON, err := getUserJSON(userID, tx)
 	if err != nil {
 		return err
@@ -853,7 +947,7 @@ func ServeAPIUserInfo(w http.ResponseWriter, r *http.Request, userID int64, tx *
 }
 
 // ServeAPIGetCardPack serves the /api/getcardpack endpoint.
-func ServeAPIGetCardPack(w http.ResponseWriter, r *http.Request, _ int64, tx *sql.Tx) error {
+func ServeAPIGetCardPack(w http.ResponseWriter, r *http.Request, _ int64, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 	bodyBytes, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		return fmt.Errorf("error reading post body: %w", err)
@@ -913,7 +1007,7 @@ func ServeAPIGetCardPack(w http.ResponseWriter, r *http.Request, _ int64, tx *sq
 }
 
 // ServeAPISet serves the /api/set endpoint.
-func ServeAPISet(w http.ResponseWriter, r *http.Request, _ int64, tx *sql.Tx) error {
+func ServeAPISet(w http.ResponseWriter, r *http.Request, _ int64, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 	bodyBytes, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		return fmt.Errorf("error reading post body: %w", err)
@@ -1695,19 +1789,75 @@ func GetJSONObject(tx *sql.Tx, draftID int64) (DraftJSON, error) {
 	return draft, nil
 }
 
+// GetJSONObjectOb returns a better DraftJSON object. May be filtered.
+func GetJSONObjectOb(ob *objectbox.ObjectBox, draftId int64) (DraftJSON, error) {
+	var draftJson = DraftJSON{DraftID: draftId}
+
+	draft, err := schema.BoxForDraft(ob).Get(uint64(draftId))
+	if err != nil {
+		return draftJson, err
+	}
+	draftJson.DraftName = draft.Name
+	draftJson.InPerson = draft.InPerson
+
+	for _, seat := range draft.Seats {
+		if seat.User != nil {
+			draftJson.Seats[seat.Position].PlayerID = int64(seat.User.Id)
+			draftJson.Seats[seat.Position].PlayerName = seat.User.DiscordName
+			draftJson.Seats[seat.Position].PlayerImage = seat.User.Picture
+			draftJson.Seats[seat.Position].MtgoName = seat.User.MtgoName
+		}
+		draftJson.Seats[seat.Position].ScanSound = int64(seat.ScanSound)
+		draftJson.Seats[seat.Position].ErrorSound = int64(seat.ErrorSound)
+		for j, pack := range seat.Packs {
+			for k, card := range pack.Cards {
+				dataObj := make(map[string]interface{})
+				err = json.Unmarshal([]byte(card.Data), &dataObj)
+				if err != nil {
+					log.Printf("making nil card data because of error %s", err.Error())
+					dataObj = nil
+				}
+				dataObj["id"] = card.Id
+				draftJson.Seats[seat.Position].Packs[j][k] = dataObj
+			}
+		}
+	}
+
+	for _, event := range draft.Events {
+		var eventJson DraftEvent
+		eventJson.Cards = append(eventJson.Cards, int64(event.Card1.Id))
+		if event.Card2 != nil {
+			eventJson.Cards = append(eventJson.Cards, int64(event.Card2.Id))
+			eventJson.Librarian = true
+		}
+		if event.Announcement != "" {
+			eventJson.Announcements = strings.Split(event.Announcement, "\n")
+		}
+		eventJson.Type = "Pick"
+		draftJson.Events = append(draftJson.Events, eventJson)
+	}
+
+	return draftJson, err
+}
+
 // GetFilteredJSON returns a filtered json object of replay data.
-func GetFilteredJSON(tx *sql.Tx, draftID int64, userID int64) (string, error) {
-	draftInfo, err := GetDraftListEntry(userID, tx, draftID)
+func GetFilteredJSON(tx *sql.Tx, ob *objectbox.ObjectBox, draftId int64, userId int64) (string, error) {
+	draftInfo, err := GetDraftListEntry(userId, tx, ob, draftId)
 	if err != nil {
 		return "", fmt.Errorf("error getting draft list entry: %w", err)
 	}
 
-	draft, err := GetJSONObject(tx, draftID)
+	var draft DraftJSON
+	if tx != nil {
+		draft, err = GetJSONObject(tx, draftId)
+	} else if ob != nil {
+		draft, err = GetJSONObjectOb(ob, draftId)
+	}
 	if err != nil {
 		return "", fmt.Errorf("error getting draft details: %w", err)
 	}
 
-	draft.PickXsrf = xsrftoken.Generate(xsrfKey, strconv.FormatInt(userID, 16), fmt.Sprintf("pick%d", draftID))
+	draft.PickXsrf = xsrftoken.Generate(xsrfKey, strconv.FormatInt(userId, 16), fmt.Sprintf("pick%d", draftId))
 
 	var returnFullReplay bool
 	if draftInfo.Finished {
@@ -1718,21 +1868,34 @@ func GetFilteredJSON(tx *sql.Tx, draftID int64, userID int64) (string, error) {
 		// we need to see if we're done with the draft. If we are,
 		// we can see the full replay. Otherwise, we need to
 		// filter.
-		query := `select
+		if tx != nil {
+			query := `select
                             round
                           from seats
                           where draft = ?
                             and user = ?`
-		row := tx.QueryRow(query, draftID, userID)
-		var myRound sql.NullInt64
-		err = row.Scan(&myRound)
-		if err != nil {
-			return "", fmt.Errorf("error detecting end of draft %d for user %d: %w", draftID, userID, err)
+			row := tx.QueryRow(query, draftId, userId)
+			var myRound sql.NullInt64
+			err = row.Scan(&myRound)
+			if err != nil {
+				return "", fmt.Errorf("error detecting end of draft %d for user %d: %w", draftId, userId, err)
+			}
+			if myRound.Valid && myRound.Int64 >= 4 {
+				returnFullReplay = true
+			}
+		} else if ob != nil {
+			draft, err := schema.BoxForDraft(ob).Get(uint64(draftId))
+			if err != nil {
+				return "", fmt.Errorf("error detecting end of draft %d for user %d: %w", draftId, userId, err)
+			}
+			for _, seat := range draft.Seats {
+				if seat.User != nil && seat.User.Id == uint64(userId) {
+					returnFullReplay = seat.Round >= 4
+					break
+				}
+			}
 		}
-		if myRound.Valid && myRound.Int64 >= 4 {
-			returnFullReplay = true
-		}
-	} else if userID != 0 && draftInfo.AvailableSeats == 0 && draftInfo.ReservedSeats == 0 {
+	} else if userId != 0 && draftInfo.AvailableSeats == 0 && draftInfo.ReservedSeats == 0 {
 		// If we're logged in AND the draft is full,
 		// we can see the full replay.
 		returnFullReplay = true
@@ -1754,7 +1917,7 @@ func GetFilteredJSON(tx *sql.Tx, draftID int64, userID int64) (string, error) {
 		}
 		defer conn.Close()
 
-		ret, err := json.Marshal(Perspective{User: userID, Draft: draft})
+		ret, err := json.Marshal(Perspective{User: userId, Draft: draft})
 		if err != nil {
 			return "", fmt.Errorf("error marshalling filter service request: %w", err)
 		}
@@ -1838,42 +2001,92 @@ func GetDraftList(userID int64, tx *sql.Tx) (DraftList, error) {
 			return drafts, fmt.Errorf("can't get draft list: %w", err)
 		}
 
-		if d.Joined {
-			d.Status = "member"
-		} else if d.Reserved {
-			d.Status = "reserved"
-		} else if d.Finished {
-			d.Status = "spectator"
-		} else if userID == 0 {
-			d.Status = "closed"
-		} else if d.AvailableSeats == 0 && d.ReservedSeats == 0 {
-			d.Status = "spectator"
-		} else if d.AvailableSeats == 0 || d.Skipped {
-			d.Status = "closed"
-		} else {
-			d.Status = "joinable"
-		}
+		d = AddStatus(d, userID)
 
 		drafts.Drafts = append(drafts.Drafts, d)
 	}
 	return drafts, nil
 }
 
-func GetDraftListEntry(userID int64, tx *sql.Tx, draftID int64) (DraftListEntry, error) {
+func AddStatus(d DraftListEntry, userId int64) DraftListEntry {
+	if d.Joined {
+		d.Status = "member"
+	} else if d.Reserved {
+		d.Status = "reserved"
+	} else if d.Finished {
+		d.Status = "spectator"
+	} else if userId == 0 {
+		d.Status = "closed"
+	} else if d.AvailableSeats == 0 && d.ReservedSeats == 0 {
+		d.Status = "spectator"
+	} else if d.AvailableSeats == 0 || d.Skipped {
+		d.Status = "closed"
+	} else {
+		d.Status = "joinable"
+	}
+	return d
+}
+
+func GetDraftListEntry(userId int64, tx *sql.Tx, ob *objectbox.ObjectBox, draftId int64) (DraftListEntry, error) {
 	var ret DraftListEntry
 
-	drafts, err := GetDraftList(userID, tx)
-	if err != nil {
-		return ret, err
+	if tx != nil {
+		drafts, err := GetDraftList(userId, tx)
+		if err != nil {
+			return ret, err
+		}
+
+		draftCount := len(drafts.Drafts)
+		i := sort.Search(draftCount, func(i int) bool { return draftId <= drafts.Drafts[i].ID })
+		if i < draftCount && i >= 0 {
+			return drafts.Drafts[i], nil
+		}
+
+		return ret, fmt.Errorf("could not find draft id %d", draftId)
+	} else if ob != nil {
+		draft, err := schema.BoxForDraft(ob).Get(uint64(draftId))
+		if err != nil {
+			return ret, err
+		}
+
+		numAvailable := int64(0)
+		numReserved := int64(0)
+		finished := true
+		joined := false
+		reserved := false
+
+		for _, seat := range draft.Seats {
+			if seat.User != nil {
+				if seat.User.Id == uint64(userId) {
+					joined = true
+				}
+			} else if seat.ReservedUser != nil {
+				numReserved++
+				if seat.ReservedUser.Id == uint64(userId) {
+					reserved = true
+				}
+			} else {
+				numAvailable++
+			}
+			if seat.Round < 3 {
+				finished = false
+			}
+		}
+
+		return AddStatus(DraftListEntry{
+			AvailableSeats: numAvailable,
+			ReservedSeats:  numReserved,
+			Finished:       finished,
+			ID:             int64(draft.Id),
+			Joined:         joined,
+			Reserved:       reserved,
+			Skipped:        false, // TODO
+			Name:           draft.Name,
+			InPerson:       draft.InPerson,
+		}, userId), err
 	}
 
-	draftCount := len(drafts.Drafts)
-	i := sort.Search(draftCount, func(i int) bool { return draftID <= drafts.Drafts[i].ID })
-	if i < draftCount && i >= 0 {
-		return drafts.Drafts[i], nil
-	}
-
-	return ret, fmt.Errorf("could not find draft id %d", draftID)
+	return ret, nil
 }
 
 func GetUserPrefs(userID int64, tx *sql.Tx) (UserFormatPrefs, error) {
@@ -1942,7 +2155,7 @@ func DiscordMsgCreate(database *sql.DB) func(s *discordgo.Session, msg *discordg
 
 						flagSet.Parse(args[1:])
 
-						err = makedraft.MakeDraft(settings, tx)
+						err = makedraft.MakeDraft(settings, tx, nil)
 
 						var resp string
 						if err != nil {
