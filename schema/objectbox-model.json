@@ -1,0 +1,285 @@
+{
+  "_note1": "KEEP THIS FILE! Check it into a version control system (VCS) like git.",
+  "_note2": "ObjectBox manages crucial IDs for your object model. See docs for details.",
+  "_note3": "If you have VCS merge conflicts, you must resolve them according to ObjectBox docs.",
+  "entities": [
+    {
+      "id": "1:1728523190254749745",
+      "lastPropertyId": "4:5847503720074439249",
+      "name": "Card",
+      "properties": [
+        {
+          "id": "1:8544395346678812316",
+          "name": "Id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:8184353917683228508",
+          "name": "Data",
+          "type": 9
+        },
+        {
+          "id": "3:2601013580858766931",
+          "name": "CardId",
+          "type": 9
+        }
+      ]
+    },
+    {
+      "id": "2:5663264790156429323",
+      "lastPropertyId": "4:7606563587574782325",
+      "name": "Draft",
+      "properties": [
+        {
+          "id": "1:8858029890058417170",
+          "name": "Id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:4508250143033471113",
+          "name": "Name",
+          "type": 9
+        },
+        {
+          "id": "3:268971421038837113",
+          "name": "Format",
+          "type": 9
+        },
+        {
+          "id": "4:7606563587574782325",
+          "name": "InPerson",
+          "type": 1
+        }
+      ],
+      "relations": [
+        {
+          "id": "1:751382817597970823",
+          "name": "Seats",
+          "targetId": "4:4887936716414452540"
+        },
+        {
+          "id": "2:5954888830735860335",
+          "name": "UnassignedPacks",
+          "targetId": "3:1155517256902974807"
+        },
+        {
+          "id": "8:3916323228265520547",
+          "name": "Events",
+          "targetId": "6:7673531568455826754"
+        }
+      ]
+    },
+    {
+      "id": "3:1155517256902974807",
+      "lastPropertyId": "2:8935275349771071339",
+      "name": "Pack",
+      "properties": [
+        {
+          "id": "1:738798414154091846",
+          "name": "Id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:8935275349771071339",
+          "name": "Round",
+          "type": 6
+        }
+      ],
+      "relations": [
+        {
+          "id": "3:416795459030113531",
+          "name": "OriginalCards",
+          "targetId": "1:1728523190254749745"
+        },
+        {
+          "id": "4:7372407126934531702",
+          "name": "Cards",
+          "targetId": "1:1728523190254749745"
+        }
+      ]
+    },
+    {
+      "id": "4:4887936716414452540",
+      "lastPropertyId": "7:2175187569463296958",
+      "name": "Seat",
+      "properties": [
+        {
+          "id": "1:8078538147364094683",
+          "name": "Id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:2770904193133050794",
+          "name": "Position",
+          "type": 6
+        },
+        {
+          "id": "3:7494406323403893610",
+          "name": "User",
+          "indexId": "2:7336966020615020520",
+          "type": 11,
+          "flags": 520,
+          "relationTarget": "User"
+        },
+        {
+          "id": "4:1831797613325508740",
+          "name": "Round",
+          "type": 6
+        },
+        {
+          "id": "5:2650220096827722242",
+          "name": "ScanSound",
+          "type": 6
+        },
+        {
+          "id": "6:8296297800027766072",
+          "name": "ErrorSound",
+          "type": 6
+        },
+        {
+          "id": "7:2175187569463296958",
+          "name": "ReservedUser",
+          "indexId": "4:7361461358871369732",
+          "type": 11,
+          "flags": 520,
+          "relationTarget": "User"
+        }
+      ],
+      "relations": [
+        {
+          "id": "5:6696446224981877860",
+          "name": "Packs",
+          "targetId": "3:1155517256902974807"
+        },
+        {
+          "id": "6:9146694319596130362",
+          "name": "OriginalPacks",
+          "targetId": "3:1155517256902974807"
+        },
+        {
+          "id": "7:8203968657580447748",
+          "name": "PickedCards",
+          "targetId": "1:1728523190254749745"
+        }
+      ]
+    },
+    {
+      "id": "5:4703981982501053839",
+      "lastPropertyId": "5:7487591356744068798",
+      "name": "User",
+      "properties": [
+        {
+          "id": "1:987361712691974179",
+          "name": "Id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:4218050236313686403",
+          "name": "DiscordId",
+          "indexId": "3:5730927515722964384",
+          "type": 9,
+          "flags": 2080
+        },
+        {
+          "id": "3:2883176456415605197",
+          "name": "DiscordName",
+          "type": 9
+        },
+        {
+          "id": "4:8627742690429822644",
+          "name": "Picture",
+          "type": 9
+        },
+        {
+          "id": "5:7487591356744068798",
+          "name": "MtgoName",
+          "type": 9
+        }
+      ]
+    },
+    {
+      "id": "6:7673531568455826754",
+      "lastPropertyId": "11:1935204458196918156",
+      "name": "Event",
+      "properties": [
+        {
+          "id": "1:7948667117051851965",
+          "name": "Id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:6134006601491701085",
+          "name": "Position",
+          "type": 6
+        },
+        {
+          "id": "3:4300446115445441902",
+          "name": "Announcement",
+          "type": 9
+        },
+        {
+          "id": "4:1440768340189357890",
+          "name": "Card1_Id",
+          "type": 6,
+          "flags": 8192
+        },
+        {
+          "id": "5:8934009907250970733",
+          "name": "Card1_Data",
+          "type": 9
+        },
+        {
+          "id": "6:7749107391073925782",
+          "name": "Card1_CardId",
+          "type": 9
+        },
+        {
+          "id": "7:3222100831603838537",
+          "name": "Card2_Id",
+          "type": 6,
+          "flags": 8192
+        },
+        {
+          "id": "8:1493405508721905247",
+          "name": "Card2_Data",
+          "type": 9
+        },
+        {
+          "id": "9:7491448732175180055",
+          "name": "Card2_CardId",
+          "type": 9
+        },
+        {
+          "id": "10:8736377686176001505",
+          "name": "Modified",
+          "type": 6
+        },
+        {
+          "id": "11:1935204458196918156",
+          "name": "Round",
+          "type": 6
+        }
+      ]
+    }
+  ],
+  "lastEntityId": "6:7673531568455826754",
+  "lastIndexId": "4:7361461358871369732",
+  "lastRelationId": "8:3916323228265520547",
+  "modelVersion": 5,
+  "modelVersionParserMinimum": 5,
+  "retiredEntityUids": [],
+  "retiredIndexUids": [
+    7548905364694482398
+  ],
+  "retiredPropertyUids": [
+    5847503720074439249
+  ],
+  "retiredRelationUids": [],
+  "version": 1
+}
