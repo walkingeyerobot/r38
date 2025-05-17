@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"github.com/objectbox/objectbox-go/objectbox"
+	"github.com/walkingeyerobot/r38/schema"
 	"io/ioutil"
 	"log"
 	"math"
@@ -28,6 +30,7 @@ const SPECTATORS_CATEGORY_ID = "711340302966980698"
 type Settings struct {
 	Set                                       *string
 	Database                                  *string
+	DatabaseDir                               *string
 	Seed                                      *int
 	InPerson                                  *bool
 	AssignSeats                               *bool
@@ -51,26 +54,26 @@ type Settings struct {
 	AbortDuplicateThreeColorIdentityUncommons *bool
 }
 
-func MakeDraft(settings Settings, tx *sql.Tx) error {
+func MakeDraft(settings Settings, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 	if *settings.Set == "" {
 		return fmt.Errorf("you must specify a set json file to continue")
 	}
 
 	jsonFile, err := os.Open(*settings.Set)
 	if err != nil {
-		return fmt.Errorf("error opening json file: %s", err.Error())
+		return fmt.Errorf("error opening json file: %w", err)
 	}
 	defer jsonFile.Close()
 
 	byteValue, err := ioutil.ReadAll(jsonFile)
 	if err != nil {
-		return fmt.Errorf("error readalling: %s", err.Error())
+		return fmt.Errorf("error readalling: %w", err)
 	}
 
 	var cfg DraftConfig
 	err = json.Unmarshal(byteValue, &cfg)
 	if err != nil {
-		return fmt.Errorf("error unmarshalling: %s", err.Error())
+		return fmt.Errorf("error unmarshalling: %w", err)
 	}
 
 	flagSet := flag.FlagSet{}
@@ -123,7 +126,7 @@ func MakeDraft(settings Settings, tx *sql.Tx) error {
 		r.Comma = ' '
 		fields, err := r.Read()
 		if err != nil {
-			return fmt.Errorf("error parsing json flags: %s", err.Error())
+			return fmt.Errorf("error parsing json flags: %w", err)
 		}
 		var allFlags []string
 		for _, flag := range fields {
@@ -275,28 +278,89 @@ func MakeDraft(settings Settings, tx *sql.Tx) error {
 	format = strings.TrimSuffix(format, path.Ext(format))
 	assignSeats := *settings.AssignSeats || !*settings.InPerson
 	assignPacks := *settings.AssignPacks || !*settings.InPerson
-	packIDs, err = generateEmptyDraft(tx, *settings.Name, format, *settings.InPerson, assignSeats, assignPacks, *settings.Simulate)
-	if err != nil {
-		return err
-	}
-
 	re := regexp.MustCompile(`"FOIL_STATUS"`)
-	if *settings.Verbose {
-		log.Printf("inserting into db...")
-	}
-	query := `INSERT INTO cards (pack, original_pack, data, cardid) VALUES (?, ?, ?, ?)`
-	for i, pack := range packs {
-		for _, card := range pack {
-			packID := packIDs[i]
-			var data string
-			if card.Foil {
-				data = re.ReplaceAllString(card.Data, "true")
-			} else {
-				data = re.ReplaceAllString(card.Data, "false")
+
+	if tx != nil {
+		packIDs, err = generateEmptyDraft(tx, *settings.Name, format, *settings.InPerson, assignSeats, assignPacks, *settings.Simulate)
+		if err != nil {
+			return err
+		}
+
+		if *settings.Verbose {
+			log.Printf("inserting into db...")
+		}
+		query := `INSERT INTO cards (pack, original_pack, data, cardid) VALUES (?, ?, ?, ?)`
+		for i, pack := range packs {
+			for _, card := range pack {
+				packID := packIDs[i]
+				var data string
+				if card.Foil {
+					data = re.ReplaceAllString(card.Data, "true")
+				} else {
+					data = re.ReplaceAllString(card.Data, "false")
+				}
+				tx.Exec(query, packID, packID, data, card.ID)
 			}
-			tx.Exec(query, packID, packID, data, card.ID)
 		}
 	}
+
+	if ob != nil {
+		// TODO: handle assignSeats/assignPacks
+		scanSounds := rand.Perm(8)
+		errorSounds := rand.Perm(8)
+
+		var seats []*schema.Seat
+		for i := 0; i < 8; i++ {
+			seat := schema.Seat{
+				Position:      i,
+				Round:         0,
+				ScanSound:     scanSounds[i],
+				ErrorSound:    errorSounds[i],
+				Packs:         []*schema.Pack{},
+				OriginalPacks: []*schema.Pack{},
+				PickedCards:   []*schema.Card{},
+			}
+			seats = append(seats, &seat)
+		}
+
+		var obPacks []*schema.Pack
+		for _, pack := range packs {
+			var obCards []*schema.Card
+			for _, card := range pack {
+				var data string
+				if card.Foil {
+					data = re.ReplaceAllString(card.Data, "true")
+				} else {
+					data = re.ReplaceAllString(card.Data, "false")
+				}
+				obCards = append(obCards, &schema.Card{
+					Data:   data,
+					CardId: card.ID,
+				})
+			}
+			obPack := schema.Pack{
+				Round:         0,
+				OriginalCards: obCards,
+				Cards:         obCards,
+			}
+			obPacks = append(obPacks, &obPack)
+		}
+
+		draft := schema.Draft{
+			Name:            *settings.Name,
+			Format:          format,
+			InPerson:        *settings.InPerson,
+			Seats:           seats,
+			UnassignedPacks: obPacks,
+			Events:          []*schema.Event{},
+		}
+
+		_, err = schema.BoxForDraft(ob).Put(&draft)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 

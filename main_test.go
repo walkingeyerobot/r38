@@ -79,7 +79,7 @@ func makeDraft(t *testing.T, err error, db *sql.DB, seed int) {
 		AbortMissingCommonColor:          ptr(false),
 		AbortMissingCommonColorIdentity:  ptr(false),
 		AbortDuplicateThreeColorIdentityUncommons: ptr(false),
-	}, tx)
+	}, tx, nil)
 	if err != nil {
 		t.Error(err)
 	}
@@ -155,7 +155,7 @@ func FuzzInPersonDraft(f *testing.F) {
 
 		makeDraft(t, err, db, seed)
 
-		handlers := NewHandler(db, false)
+		handlers := NewHandler(db, nil, false)
 
 		players, seats := populateDraft(t, handlers)
 
@@ -191,7 +191,7 @@ func TestInPersonDraftUndoFirstPick(t *testing.T) {
 
 	makeDraft(t, err, db, SEED)
 
-	handlers := NewHandler(db, false)
+	handlers := NewHandler(db, nil, false)
 
 	players, seats := populateDraft(t, handlers)
 
@@ -265,7 +265,7 @@ func TestInPersonDraftUndoSubsequentPick(t *testing.T) {
 
 	makeDraft(t, err, db, SEED)
 
-	handlers := NewHandler(db, false)
+	handlers := NewHandler(db, nil, false)
 
 	players, seats := populateDraft(t, handlers)
 
@@ -354,7 +354,7 @@ func TestInPersonDraftEnforceZoneDraftingNextPlayerMakingFirstPick(t *testing.T)
 
 	makeDraft(t, err, db, SEED)
 
-	handlers := NewHandler(db, false)
+	handlers := NewHandler(db, nil, false)
 
 	players, seats := populateDraft(t, handlers)
 
@@ -401,7 +401,7 @@ func TestInPersonDraftEnforceZoneDraftingNextPlayerMakingSubsequentPick(t *testi
 
 	makeDraft(t, err, db, SEED)
 
-	handlers := NewHandler(db, false)
+	handlers := NewHandler(db, nil, false)
 
 	players, seats := populateDraft(t, handlers)
 

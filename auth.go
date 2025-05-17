@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/objectbox/objectbox-go/objectbox"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -47,14 +48,14 @@ func generateStateOauthCookie(w http.ResponseWriter) string {
 	return state
 }
 
-func oauthDiscordLogin(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx) error {
+func oauthDiscordLogin(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 	oauthState := generateStateOauthCookie(w)
 	u := discordOauthConfig.AuthCodeURL(oauthState)
 	http.Redirect(w, r, u, http.StatusTemporaryRedirect)
 	return nil
 }
 
-func oauthDiscordCallback(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx) error {
+func oauthDiscordCallback(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 	oauthState, _ := r.Cookie("oauthstate")
 
 	if r.FormValue("state") != oauthState.Value {
