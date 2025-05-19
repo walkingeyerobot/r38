@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/objectbox/objectbox-go/objectbox"
 	"github.com/walkingeyerobot/r38/makedraft"
 	"github.com/walkingeyerobot/r38/schema"
@@ -10,13 +11,13 @@ import (
 	"math/rand"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
 )
 
 func doSetupOB(t *testing.T, seed int) (*objectbox.ObjectBox, error) {
-	t.SkipNow()
 	xsrfKey = "test"
 	sock = ""
 
@@ -92,15 +93,19 @@ func findCardToPickOB(t *testing.T, ob *objectbox.ObjectBox, seat int, round int
 		pack := draft.UnassignedPacks[rand.Intn(len(draft.UnassignedPacks))]
 		return pack.Cards[rand.Intn(len(pack.Cards))].CardId
 	} else {
-		packs := draft.Seats[seat].Packs
+		seatIndex := slices.IndexFunc(draft.Seats, func(s *schema.Seat) bool {
+			return s.Position == seat
+		})
+		packs := draft.Seats[seatIndex].Packs
 		for _, pack := range packs {
-			if pack.Round == round && len(pack.Cards) == 15-card {
+			if pack.Round == round+1 && len(pack.Cards) == 15-card {
 				if len(pack.Cards) == 0 {
 					t.Errorf("no cards in pack for seat %d, pack %d, pick %d", seat, round+1, card+1)
 				}
 				return pack.Cards[rand.Intn(len(pack.Cards))].CardId
 			}
 		}
+		spew.Dump(packs)
 	}
 	t.Errorf("no pack found for seat %d, pack %d, pick %d", seat, round+1, card+1)
 	t.FailNow()
@@ -128,7 +133,7 @@ func FuzzInPersonDraftOB(f *testing.F) {
 				for _, seat := range rand.Perm(8) {
 					player := players[seat] + 1
 
-					cardId := findCardToPickOB(t, ob, player, round, card)
+					cardId := findCardToPickOB(t, ob, seats[seat], round, card)
 
 					token := xsrftoken.Generate(xsrfKey, strconv.FormatInt(int64(player), 16), "pick1")
 
@@ -141,6 +146,8 @@ func FuzzInPersonDraftOB(f *testing.F) {
 					if res.StatusCode != http.StatusOK {
 						body, _ := io.ReadAll(res.Body)
 						t.Errorf("pick failed: %s", body)
+						spew.Dump(schema.BoxForDraft(ob).Get(1))
+						t.FailNow()
 					}
 				}
 

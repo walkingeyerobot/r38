@@ -324,11 +324,7 @@ func ServeAPIPrefs(w http.ResponseWriter, r *http.Request, userID int64, tx *sql
 // ServeAPISetPref serves the /api/setpref endpoint.
 func ServeAPISetPref(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 	if r.Method != "POST" {
-		// we have to return an error manually here because we want to return
-		// a different http status code.
-		tx.Rollback()
-		http.Error(w, "invalid request method", http.StatusMethodNotAllowed)
-		return nil
+		return MethodNotAllowedError
 	}
 
 	bodyBytes, err := ioutil.ReadAll(r.Body)
@@ -396,11 +392,7 @@ func ServeAPISetPref(w http.ResponseWriter, r *http.Request, userID int64, tx *s
 // ServeAPIPick serves the /api/pick endpoint.
 func ServeAPIPick(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 	if r.Method != "POST" {
-		// we have to return an error manually here because we want to return
-		// a different http status code.
-		tx.Rollback()
-		http.Error(w, "invalid request method", http.StatusMethodNotAllowed)
-		return nil
+		return MethodNotAllowedError
 	}
 
 	bodyBytes, err := ioutil.ReadAll(r.Body)
@@ -421,13 +413,9 @@ func ServeAPIPick(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.
 }
 
 // ServeAPIPickRfid serves the /api/pickrfid endpoint.
-func ServeAPIPickRfid(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx, ob *objectbox.ObjectBox) error {
+func ServeAPIPickRfid(w http.ResponseWriter, r *http.Request, userId int64, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 	if r.Method != "POST" {
-		// we have to return an error manually here because we want to return
-		// a different http status code.
-		tx.Rollback()
-		http.Error(w, "invalid request method", http.StatusMethodNotAllowed)
-		return nil
+		return MethodNotAllowedError
 	}
 
 	bodyBytes, err := ioutil.ReadAll(r.Body)
@@ -441,32 +429,84 @@ func ServeAPIPickRfid(w http.ResponseWriter, r *http.Request, userID int64, tx *
 	}
 
 	var cardIds []int64
-	for _, cardRfid := range rfidPick.CardRfids {
-		var cardId, err = findCardByRfid(tx, cardRfid, userID, rfidPick.DraftId)
+	if tx != nil {
+		for _, cardRfid := range rfidPick.CardRfids {
+			var cardId, err = findCardByRfid(tx, cardRfid, userId, rfidPick.DraftId)
+			if err != nil {
+				return fmt.Errorf("error finding card in active draft: %w", err)
+			}
+			cardIds = append(cardIds, cardId)
+		}
+	} else if ob != nil {
+		draft, err := schema.BoxForDraft(ob).Get(uint64(rfidPick.DraftId))
 		if err != nil {
 			return fmt.Errorf("error finding card in active draft: %w", err)
 		}
-		cardIds = append(cardIds, cardId)
+		var seatIndex = slices.IndexFunc(draft.Seats, func(seat *schema.Seat) bool {
+			return seat.User != nil && seat.User.Id == uint64(userId)
+		})
+		if seatIndex == -1 {
+			return fmt.Errorf("user %d not in draft %d", userId, rfidPick.DraftId)
+		}
+		seat := draft.Seats[seatIndex]
+	cards:
+		for _, cardRfid := range rfidPick.CardRfids {
+			for _, pack := range seat.Packs {
+				for _, card := range pack.Cards {
+					if card.CardId == cardRfid {
+						cardIds = append(cardIds, int64(card.Id))
+						continue cards
+					}
+				}
+			}
+			for _, pack := range draft.UnassignedPacks {
+				for _, card := range pack.Cards {
+					if card.CardId == cardRfid {
+						cardIds = append(cardIds, int64(card.Id))
+						draft.UnassignedPacks = slices.DeleteFunc(draft.UnassignedPacks, func(p *schema.Pack) bool {
+							return p == pack
+						})
+						seat.Packs = append(seat.Packs, pack)
+						seat.OriginalPacks = append(seat.Packs, pack)
+						pack.Round = seat.Round
+						_, err = schema.BoxForDraft(ob).Put(draft)
+						if err != nil {
+							return err
+						}
+						_, err = schema.BoxForSeat(ob).Put(seat)
+						if err != nil {
+							return err
+						}
+						_, err = schema.BoxForPack(ob).Put(pack)
+						if err != nil {
+							return err
+						}
+						continue cards
+					}
+				}
+			}
+			return fmt.Errorf("couldn't find card %s", cardRfid)
+		}
 	}
 
 	var pick = PostedPick{
+		DraftId:   rfidPick.DraftId,
 		CardIds:   cardIds,
 		XsrfToken: rfidPick.XsrfToken,
 	}
 
-	err = doHandlePostedPick(w, pick, userID, true, tx, ob)
+	err = doHandlePostedPick(w, pick, userId, true, tx, ob)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func doHandlePostedPick(w http.ResponseWriter, pick PostedPick, userID int64, zoneDrafting bool, tx *sql.Tx, ob *objectbox.ObjectBox) error {
-	var draftID int64
+func doHandlePostedPick(w http.ResponseWriter, pick PostedPick, userId int64, zoneDrafting bool, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 	var err error
 	if len(pick.CardIds) == 1 {
-		draftID, err = doSinglePick(tx, userID, pick.CardIds[0], zoneDrafting)
-		if err == nil && !xsrftoken.Valid(pick.XsrfToken, xsrfKey, strconv.FormatInt(userID, 16), fmt.Sprintf("pick%d", draftID)) {
+		err = doSinglePick(tx, ob, userId, pick.DraftId, pick.CardIds[0], zoneDrafting)
+		if err == nil && !xsrftoken.Valid(pick.XsrfToken, xsrfKey, strconv.FormatInt(userId, 16), fmt.Sprintf("pick%d", pick.DraftId)) {
 			err = fmt.Errorf("invalid XSRF token")
 		}
 		if err != nil {
@@ -486,7 +526,7 @@ func doHandlePostedPick(w http.ResponseWriter, pick PostedPick, userID int64, zo
 	}
 
 	var draftJSON string
-	draftJSON, err = GetFilteredJSON(tx, ob, draftID, userID)
+	draftJSON, err = GetFilteredJSON(tx, ob, pick.DraftId, userId)
 	if err != nil {
 		return fmt.Errorf("error getting json: %w", err)
 	}
@@ -498,11 +538,7 @@ func doHandlePostedPick(w http.ResponseWriter, pick PostedPick, userID int64, zo
 // ServeAPIUndoPick serves the /api/undopick endpoint.
 func ServeAPIUndoPick(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 	if r.Method != "POST" {
-		// we have to return an error manually here because we want to return
-		// a different http status code.
-		tx.Rollback()
-		http.Error(w, "invalid request method", http.StatusMethodNotAllowed)
-		return nil
+		return MethodNotAllowedError
 	}
 
 	bodyBytes, err := ioutil.ReadAll(r.Body)
@@ -814,11 +850,7 @@ func doJoinSeatOb(ob *objectbox.ObjectBox, userId int64, draftId int64, seat *sc
 // ServeAPISkip serves the /api/skip endpoint.
 func ServeAPISkip(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 	if r.Method != "POST" {
-		// we have to return an error manually here because we want to return
-		// a different http status code.
-		tx.Rollback()
-		http.Error(w, "invalid request method", http.StatusMethodNotAllowed)
-		return nil
+		return MethodNotAllowedError
 	}
 
 	bodyBytes, err := ioutil.ReadAll(r.Body)
@@ -929,7 +961,7 @@ func ServeAPIForceEnd(_ http.ResponseWriter, r *http.Request, userID int64, tx *
 		}
 
 		draftID := toJoin.ID
-		return NotifyEndOfDraft(tx, draftID)
+		return NotifyEndOfDraft(tx, ob, draftID)
 	} else {
 		return http.ErrBodyNotAllowed
 	}
@@ -1143,24 +1175,35 @@ func findCardByRfid(tx *sql.Tx, cardRfid string, userID int64, draftID int64) (i
 	return cardId, nil
 }
 
-// doSinglePick performs a normal pick based on a user id and a card id. It returns the draft id and an error.
-func doSinglePick(tx *sql.Tx, userID int64, cardID int64, zoneDrafting bool) (int64, error) {
-	draftID, packID, announcements, round, seatID, err := doPick(tx, userID, cardID, true, zoneDrafting)
-	if err != nil {
-		return draftID, err
+// doSinglePick performs a normal pick based on a user id and a card id.
+func doSinglePick(tx *sql.Tx, ob *objectbox.ObjectBox, userId int64, draftId int64, cardId int64, zoneDrafting bool) error {
+	if tx != nil {
+		packID, announcements, round, seatID, err := doPick(tx, userId, draftId, cardId, true, zoneDrafting)
+		if err != nil {
+			return err
+		}
+		err = doEvent(tx, draftId, userId, announcements, cardId, sql.NullInt64{}, packID, seatID, round)
+		if err != nil {
+			return err
+		}
+	} else if ob != nil {
+		packID, announcements, round, seat, err := doPickOb(ob, userId, draftId, cardId, true, zoneDrafting)
+		if err != nil {
+			return err
+		}
+		err = doEventOb(ob, draftId, userId, announcements, cardId, sql.NullInt64{}, packID, seat, round)
+		if err != nil {
+			return err
+		}
 	}
-	err = doEvent(tx, draftID, userID, announcements, cardID, sql.NullInt64{}, packID, seatID, round)
-	if err != nil {
-		return draftID, err
-	}
-	return draftID, nil
+	return nil
 }
 
 // doPick actually performs a pick in the database.
-// It returns the draftID, packID, announcements, round, and an error.
+// It returns the packID, announcements, round, and an error.
 // Of those return values, packID and announcements are only really relevant for Cogwork Librarian,
 // which is not currently fully implemented, but we leave them here anyway for when we want to do that.
-func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool, zoneDrafting bool) (int64, int64, []string, int64, int64, error) {
+func doPick(tx *sql.Tx, userId int64, draftId int64, cardId int64, pass bool, zoneDrafting bool) (int64, []string, int64, int64, error) {
 	announcements := []string{}
 
 	// First we need information about the card. Determine which pack the card is in,
@@ -1169,7 +1212,6 @@ func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool, zoneDrafting bool
 	query := `select
                    packs.id,
                    seats.position,
-                   seats.draft,
                    seats.user,
                    seats.round,
                    seats.id
@@ -1178,21 +1220,20 @@ func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool, zoneDrafting bool
                  join seats on packs.seat = seats.id
                  where cards.id = ?`
 
-	row := tx.QueryRow(query, cardID)
+	row := tx.QueryRow(query, cardId)
 	var myPackID int64
 	var position int64
-	var draftID int64
 	var userID2 sql.NullInt64
 	var round int64
 	var seatID int64
-	err := row.Scan(&myPackID, &position, &draftID, &userID2, &round, &seatID)
+	err := row.Scan(&myPackID, &position, &userID2, &round, &seatID)
 
 	if err != nil {
-		return draftID, myPackID, announcements, round, seatID, err
-	} else if userID2.Valid && userID != userID2.Int64 {
-		return draftID, myPackID, announcements, round, seatID, fmt.Errorf("card does not belong to the user")
+		return myPackID, announcements, round, seatID, err
+	} else if userID2.Valid && userId != userID2.Int64 {
+		return myPackID, announcements, round, seatID, fmt.Errorf("card does not belong to the user")
 	} else if round == 0 {
-		return draftID, myPackID, announcements, round, seatID, fmt.Errorf("card has already been picked")
+		return myPackID, announcements, round, seatID, fmt.Errorf("card has already been picked")
 	}
 
 	// Now get the pack id that the user is allowed to pick from in the draft that the
@@ -1207,14 +1248,14 @@ func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool, zoneDrafting bool
                   order by v_packs.count desc
                   limit 1`
 
-	row = tx.QueryRow(query, userID, draftID)
+	row = tx.QueryRow(query, userId, draftId)
 	var myPackID2 int64
 	err = row.Scan(&myPackID2)
 
 	if err != nil {
-		return draftID, myPackID, announcements, round, seatID, err
+		return myPackID, announcements, round, seatID, err
 	} else if myPackID != myPackID2 {
-		return draftID, myPackID, announcements, round, seatID,
+		return myPackID, announcements, round, seatID,
 			fmt.Errorf("card is not in the next available pack (in pack %d but expecting pack %d)", myPackID, myPackID2)
 	}
 
@@ -1230,13 +1271,13 @@ func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool, zoneDrafting bool
                    and seats.user = ?
                    and seats.draft = ?`
 
-	row = tx.QueryRow(query, userID, draftID)
+	row = tx.QueryRow(query, userId, draftId)
 	var myPicksID int64
 	var myCount int64
 	err = row.Scan(&myPicksID, &myCount)
 
 	if err != nil {
-		return draftID, myPackID, announcements, round, seatID, err
+		return myPackID, announcements, round, seatID, err
 	}
 
 	// Are we passing the pack after we've picked the card?
@@ -1264,12 +1305,12 @@ func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool, zoneDrafting bool
                          where seats.draft = ?
                            and seats.position = ?`
 
-		row = tx.QueryRow(query, draftID, newPosition)
+		row = tx.QueryRow(query, draftId, newPosition)
 		var newPositionID int64
 		var newPositionDiscordID sql.NullString
 		err = row.Scan(&newPositionID, &newPositionDiscordID)
 		if err != nil {
-			return draftID, myPackID, announcements, round, seatID, err
+			return myPackID, announcements, round, seatID, err
 		}
 
 		if zoneDrafting {
@@ -1280,11 +1321,11 @@ func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool, zoneDrafting bool
 			var packsCount int64
 			err = row.Scan(&packsCount)
 			if err != nil {
-				return draftID, myPackID, announcements, round, seatID, err
+				return myPackID, announcements, round, seatID, err
 			}
 			log.Printf("zone draft check: seat %d has %d packs", newPosition+1, packsCount)
 			if packsCount >= 2 {
-				return draftID, myPackID, announcements, round, seatID,
+				return myPackID, announcements, round, seatID,
 					fmt.Errorf("%w: seat %d (position %d) already has %d packs",
 						ZoneDraftError, newPositionID, newPosition, packsCount)
 			}
@@ -1294,10 +1335,10 @@ func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool, zoneDrafting bool
 				row = tx.QueryRow(query, newPositionID, round)
 				err = row.Scan(&packsCount)
 				if err != nil {
-					return draftID, myPackID, announcements, round, seatID, err
+					return myPackID, announcements, round, seatID, err
 				}
 				if packsCount == 0 {
-					return draftID, myPackID, announcements, round, seatID,
+					return myPackID, announcements, round, seatID,
 						fmt.Errorf("%w: seat %d (position %d) already has 2 packs (including unclaimed first pack)",
 							ZoneDraftError, newPositionID, newPosition)
 				}
@@ -1307,16 +1348,16 @@ func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool, zoneDrafting bool
 		// Put the picked card into the player's picks.
 		query = `update cards set pack = ? where id = ?`
 
-		_, err = tx.Exec(query, myPicksID, cardID)
+		_, err = tx.Exec(query, myPicksID, cardId)
 		if err != nil {
-			return draftID, myPackID, announcements, round, seatID, err
+			return myPackID, announcements, round, seatID, err
 		}
 
 		// Move the pack to the next Position.
 		query = `update packs set seat = ? where id = ?`
 		_, err = tx.Exec(query, newPositionID, myPackID)
 		if err != nil {
-			return draftID, myPackID, announcements, round, seatID, err
+			return myPackID, announcements, round, seatID, err
 		}
 		log.Printf("will move pack %d to seat %d (position %d)", myPackID, newPositionID, newPosition)
 
@@ -1329,11 +1370,11 @@ func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool, zoneDrafting bool
                            and v_packs.round = ?
                            and v_packs.count > 0
                            and seats.draft = ?`
-		row = tx.QueryRow(query, userID, round, draftID)
+		row = tx.QueryRow(query, userId, round, draftId)
 		var packsLeftInSeat int64
 		err = row.Scan(&packsLeftInSeat)
 		if err != nil {
-			return draftID, myPackID, announcements, round, seatID, err
+			return myPackID, announcements, round, seatID, err
 		}
 
 		if packsLeftInSeat == 0 {
@@ -1347,14 +1388,14 @@ func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool, zoneDrafting bool
                                    and b.position = ?
                                    and a.draft = ?
                                    and a.round = b.round`
-			row = tx.QueryRow(query, userID, newPosition, draftID)
+			row = tx.QueryRow(query, userId, newPosition, draftId)
 			var roundsMatch int64
 			err = row.Scan(&roundsMatch)
 			if err != nil {
 				log.Printf("cannot determine if rounds match for notify")
 			} else if roundsMatch == 1 && newPositionDiscordID.Valid {
-				log.Printf("attempting to notify Position %d draft %d", newPosition, draftID)
-				err = NotifyByDraftAndDiscordID(draftID, newPositionDiscordID.String)
+				log.Printf("attempting to notify Position %d draft %d", newPosition, draftId)
+				err = NotifyByDraftAndDiscordID(draftId, newPositionDiscordID.String)
 				if err != nil {
 					log.Printf("error with notify")
 				}
@@ -1370,9 +1411,9 @@ func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool, zoneDrafting bool
 			// weirder formats.
 			query = `update seats set round = ? where user = ? and draft = ?`
 
-			_, err = tx.Exec(query, (myCount+1)/15+1, userID, draftID)
+			_, err = tx.Exec(query, (myCount+1)/15+1, userId, draftId)
 			if err != nil {
-				return draftID, myPackID, announcements, round, seatID, err
+				return myPackID, announcements, round, seatID, err
 			}
 
 			// If the rounds do NOT match from earlier, we have a situation where players are in different
@@ -1399,14 +1440,14 @@ func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool, zoneDrafting bool
                                          order by round desc
                                          limit 1`
 
-				row = tx.QueryRow(query, draftID)
+				row = tx.QueryRow(query, draftId)
 				var nextRoundPlayers int64
 				err = row.Scan(&nextRoundPlayers)
 				if err != nil {
 					log.Printf("error counting players and rounds")
 				} else if nextRoundPlayers == 8 && myCount+1 == 45 {
 					// The draft is over. Notify the admin.
-					err = NotifyEndOfDraft(tx, draftID)
+					err = NotifyEndOfDraft(tx, nil, draftId)
 					if err != nil {
 						log.Printf("error notifying end of draft: %s", err.Error())
 					}
@@ -1424,7 +1465,7 @@ func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool, zoneDrafting bool
                                                    and seats.draft = ?
                                                  group by seats.id`
 
-					rows, err := tx.Query(query, draftID)
+					rows, err := tx.Query(query, draftId)
 					if err != nil {
 						log.Printf("error determining if there's a blocking player")
 					} else {
@@ -1443,7 +1484,7 @@ func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool, zoneDrafting bool
 							}
 						}
 						if rowCount == 1 && blockingDiscordID.Valid {
-							err = NotifyByDraftAndDiscordID(draftID, blockingDiscordID.String)
+							err = NotifyByDraftAndDiscordID(draftId, blockingDiscordID.String)
 							if err != nil {
 								log.Printf("error with blocking notify")
 							}
@@ -1457,16 +1498,208 @@ func doPick(tx *sql.Tx, userID int64, cardID int64, pass bool, zoneDrafting bool
 		// just take the card from the pack.
 		query = `update cards set pack = ? where id = ?`
 
-		_, err = tx.Exec(query, myPicksID, cardID)
+		_, err = tx.Exec(query, myPicksID, cardId)
 		if err != nil {
-			return draftID, myPackID, announcements, round, seatID, err
+			return myPackID, announcements, round, seatID, err
 		}
 	}
 
 	log.Printf("player %d in draft %d (position %d) took card %d from pack %d",
-		userID, draftID, position, cardID, myPackID)
+		userId, draftId, position, cardId, myPackID)
 
-	return draftID, myPackID, announcements, round, seatID, nil
+	return myPackID, announcements, round, seatID, nil
+}
+
+// doPickOb actually performs a pick in the database.
+// It returns the packID, announcements, round, and an error.
+// Of those return values, packID and announcements are only really relevant for Cogwork Librarian,
+// which is not currently fully implemented, but we leave them here anyway for when we want to do that.
+func doPickOb(ob *objectbox.ObjectBox, userId int64, draftId int64, cardId int64, pass bool, zoneDrafting bool) (int64, []string, int64, *schema.Seat, error) {
+	announcements := []string{}
+
+	var myPackID int64
+	var round int64
+
+	draft, err := schema.BoxForDraft(ob).Get(uint64(draftId))
+	if err != nil {
+		return myPackID, announcements, round, nil, err
+	}
+
+	seatIndex := slices.IndexFunc(draft.Seats, func(seat *schema.Seat) bool {
+		return seat.User != nil && seat.User.Id == uint64(userId)
+	})
+	if seatIndex == -1 {
+		return myPackID, announcements, round, nil, fmt.Errorf("user %d not in draft %d", userId, draftId)
+	}
+	seat := draft.Seats[seatIndex]
+	if len(seat.Packs) == 0 {
+		return myPackID, announcements, round, seat, fmt.Errorf("seat %d has no current pack", seat.Id)
+	}
+	slices.SortFunc(seat.Packs, func(a, b *schema.Pack) int {
+		if a.Round != b.Round {
+			return a.Round - b.Round
+		}
+		return len(b.Cards) - len(a.Cards)
+	})
+	pack := seat.Packs[0]
+	myPackID = int64(pack.Id)
+	cardIndex := slices.IndexFunc(pack.Cards, func(card *schema.Card) bool {
+		return card.Id == uint64(cardId)
+	})
+	if cardIndex == -1 {
+		return myPackID, announcements, round, seat, fmt.Errorf("card %d not in seat %d's current pack", cardId, seat.Id)
+	}
+	card := pack.Cards[cardIndex]
+
+	// Put the picked card into the player's picks.
+	pack.Cards = slices.DeleteFunc(pack.Cards, func(c *schema.Card) bool {
+		return c == card
+	})
+	seat.PickedCards = append(seat.PickedCards, card)
+
+	// Are we passing the pack after we've picked the card?
+	if pass {
+		seat.Packs = slices.DeleteFunc(seat.Packs, func(p *schema.Pack) bool {
+			return p == pack
+		})
+
+		// Get the Position that the pack will be passed to.
+		var newPosition int
+		if round%2 == 0 {
+			newPosition = seat.Position - 1
+			if newPosition == -1 {
+				newPosition = 7
+			}
+		} else {
+			newPosition = seat.Position + 1
+			if newPosition == 8 {
+				newPosition = 0
+			}
+		}
+
+		nextSeatIndex := slices.IndexFunc(draft.Seats, func(seat *schema.Seat) bool {
+			return seat.Position == newPosition
+		})
+		nextSeat := draft.Seats[nextSeatIndex]
+
+		if len(pack.Cards) > 0 {
+			if zoneDrafting {
+				// Enforce zone drafting: can't pass yet if there are two packs
+				// belonging to the new position.
+				packsCount := len(nextSeat.Packs)
+				log.Printf("zone draft check: seat %d has %d packs", newPosition+1, packsCount)
+				if packsCount >= 2 {
+					return myPackID, announcements, round, seat,
+						fmt.Errorf("%w: seat %d (position %d) already has %d packs",
+							ZoneDraftError, nextSeat.Id, newPosition, packsCount)
+				}
+				if packsCount == 1 && len(nextSeat.OriginalPacks) == 0 {
+					// New position is still picking from their first pack
+					return myPackID, announcements, round, seat,
+						fmt.Errorf("%w: seat %d (position %d) already has 2 packs (including unclaimed first pack)",
+							ZoneDraftError, nextSeat.Id, newPosition)
+				}
+			}
+
+			// Move the pack to the next Position.
+			nextSeat.Packs = append(nextSeat.Packs, pack)
+			log.Printf("will move pack %d to seat %d (position %d)", myPackID, nextSeat.Id, newPosition)
+		}
+
+		// Get the number of remaining packs in the Position.
+		packsLeftInSeat := len(seat.Packs)
+
+		if packsLeftInSeat == 0 {
+			// If there are 0 packs left in the Position, check to see if the player we passed the pack to
+			// is in the same round as us. If the rounds match, NotifyByDraftAndPosition.
+			roundsMatch := seat.Round == nextSeat.Round
+			if roundsMatch && nextSeat.User != nil && nextSeat.User.DiscordId != "" {
+				log.Printf("attempting to notify Position %d draft %d", newPosition, draftId)
+				err = NotifyByDraftAndDiscordID(draftId, nextSeat.User.DiscordId)
+				if err != nil {
+					log.Printf("error with notify")
+				}
+			}
+
+			// Now that we've passed the pack, check to see if we should advance to the next round.
+			// Update our round.
+
+			// WARNING: if you ever have a draft with anything other than 15 cards per pack, or you have
+			// something like Lore Seeker in your draft, this is going to break horribly.
+			// If we're only doing normal drafts, round is effectively something that can be calculated,
+			// but by explicitly storing it, we allow ourselves the possibility of expanding support to
+			// weirder formats.
+			seat.Round = len(seat.PickedCards)/15 + 1
+
+			// If the rounds do NOT match from earlier, we have a situation where players are in different
+			// rounds. Look for a blocking player.
+			if !roundsMatch {
+				// We now know that we've passed a pack to someone in a different round.
+				// We know that player is necessarily in a round earlier than ours because
+				// we couldn't pass them a pack from a round they're already finished with.
+				// That means we did not send a notification, because that player can't yet
+				// pick from that pack.
+				// That means there is a chance someone else is blocking the draft and needs
+				// a friendly reminder to make their picks.
+				// Before we find the blocking player, we need to make sure we're not the
+				// only ones in this round.
+				// If we are the only ones in this round, we very likely just passed the
+				// blocking player their last pick of their round, so they are very likely
+				// the most recent ping. We don't want to double ping.
+				nextRoundPlayers := 0
+				nextRound := 0
+				for _, s := range draft.Seats {
+					nextRound = max(nextRound, s.Round)
+				}
+				for _, s := range draft.Seats {
+					if s.Round == nextRound {
+						nextRoundPlayers++
+					}
+				}
+				if nextRoundPlayers == 8 && len(seat.PickedCards) == 45 {
+					// The draft is over. Notify the admin.
+					err = NotifyEndOfDraft(nil, ob, draftId)
+					if err != nil {
+						log.Printf("error notifying end of draft: %s", err.Error())
+					}
+				} else if nextRoundPlayers > 1 {
+					// Now we know that we are not the only player in this round.
+					blockingDiscordId := ""
+					for _, s := range draft.Seats {
+						if len(s.Packs) > 0 {
+							if blockingDiscordId != "" || s.User == nil {
+								blockingDiscordId = ""
+								break
+							}
+							blockingDiscordId = s.User.DiscordId
+						}
+					}
+					if blockingDiscordId != "" {
+						err = NotifyByDraftAndDiscordID(draftId, blockingDiscordId)
+					}
+				}
+			}
+		}
+		_, err = schema.BoxForSeat(ob).PutMany([]*schema.Seat{seat, nextSeat})
+		if err != nil {
+			return myPackID, announcements, round, seat, err
+		}
+	} else {
+		_, err = schema.BoxForSeat(ob).Put(seat)
+		if err != nil {
+			return myPackID, announcements, round, seat, err
+		}
+	}
+
+	_, err = schema.BoxForPack(ob).Put(pack)
+	if err != nil {
+		return myPackID, announcements, round, seat, err
+	}
+
+	log.Printf("player %d in draft %d (position %d) took card %d from pack %d",
+		userId, draftId, seat.Position, cardId, myPackID)
+
+	return myPackID, announcements, round, seat, nil
 }
 
 // NotifyByDraftAndDiscordID sends a discord alert to a user.
@@ -1475,23 +1708,65 @@ func NotifyByDraftAndDiscordID(draftID int64, discordID string) error {
 		fmt.Sprintf(`<@%s> you have new picks <http://draftcu.be/draft/%d>`, discordID, draftID))
 }
 
-func NotifyEndOfDraft(tx *sql.Tx, draftID int64) error {
-	draftName, err := GetDraftName(tx, draftID)
-	if err != nil {
-		return err
-	}
+func NotifyEndOfDraft(tx *sql.Tx, ob *objectbox.ObjectBox, draftID int64) error {
+	if tx != nil {
+		draftName, err := GetDraftName(tx, draftID)
+		if err != nil {
+			return err
+		}
 
-	err = PostFirstRoundPairings(tx, draftID, draftName)
-	if err != nil {
-		return err
-	}
+		err = PostFirstRoundPairings(tx, draftID, draftName)
+		if err != nil {
+			return err
+		}
 
-	err = NotifyAdminOfDraftCompletion(tx, draftID)
-	if err != nil {
-		return err
-	}
+		adminDiscordID, err := GetAdminDiscordId(tx)
+		if err != nil {
+			return err
+		}
+		err = NotifyAdminOfDraftCompletion(adminDiscordID, draftID)
+		if err != nil {
+			return err
+		}
 
-	err = UnlockSpectatorChannel(tx, draftID)
+		result := tx.QueryRow("select spectatorchannelid from drafts where id=?", draftID)
+		var channelID sql.NullString
+		err = result.Scan(&channelID)
+		if !channelID.Valid {
+			// OK to not find channel
+			return nil
+		}
+		err = UnlockSpectatorChannel(channelID.String, draftID)
+		if err != nil {
+			return err
+		}
+	} else if ob != nil {
+		draft, err := schema.BoxForDraft(ob).Get(uint64(draftID))
+		if err != nil {
+			return err
+		}
+
+		err = PostFirstRoundPairingsOb(ob, draft)
+		if err != nil {
+			return err
+		}
+
+		admin, err := schema.BoxForUser(ob).Get(1)
+		if err != nil {
+			return err
+		}
+		err = NotifyAdminOfDraftCompletion(admin.DiscordId, int64(draft.Id))
+		if err != nil {
+			return err
+		}
+
+		if len(draft.SpectatorChannelId) > 0 {
+			err = UnlockSpectatorChannel(draft.SpectatorChannelId, int64(draft.Id))
+			if err != nil {
+				return err
+			}
+		}
+	}
 
 	return nil
 }
@@ -1548,7 +1823,7 @@ func PostFirstRoundPairings(tx *sql.Tx, draftID int64, draftName string) error {
 			drafterIds[2], drafterIds[6],
 			drafterIds[3], drafterIds[7])
 		round := 1
-		err2 := PostPairings(tx, draftID, draftName, round, pairings)
+		err2 := PostPairings(tx, nil, draftID, draftName, round, pairings)
 		if err2 != nil {
 			return err2
 		}
@@ -1556,7 +1831,30 @@ func PostFirstRoundPairings(tx *sql.Tx, draftID int64, draftName string) error {
 	return nil
 }
 
-func PostPairings(tx *sql.Tx, draftID int64, draftName string, round int, pairings string) error {
+func PostFirstRoundPairingsOb(ob *objectbox.ObjectBox, draft *schema.Draft) error {
+	drafterIds := [8]string{}
+	for _, seat := range draft.Seats {
+		if len(seat.User.DiscordId) > 0 {
+			drafterIds[seat.Position] = seat.User.DiscordId
+		} else {
+			drafterIds[seat.Position] = seat.User.DiscordName
+		}
+	}
+
+	pairings := fmt.Sprintf(`%s vs %s
+%s vs %s
+%s vs %s
+%s vs %s`,
+		drafterIds[0], drafterIds[4],
+		drafterIds[1], drafterIds[5],
+		drafterIds[2], drafterIds[6],
+		drafterIds[3], drafterIds[7])
+	round := 1
+	err := PostPairings(nil, ob, int64(draft.Id), draft.Name, round, pairings)
+	return err
+}
+
+func PostPairings(tx *sql.Tx, ob *objectbox.ObjectBox, draftID int64, draftName string, round int, pairings string) error {
 	msg, err := DiscordNotifyEmbed(
 		os.Getenv("DRAFT_ANNOUNCEMENTS_CHANNEL_ID"),
 		&discordgo.MessageEmbed{
@@ -1582,8 +1880,12 @@ func PostPairings(tx *sql.Tx, draftID int64, draftName string, round int, pairin
 	if err != nil {
 		log.Printf("%s", err.Error())
 	}
-	_, err = tx.Exec("insert into pairingmsgs (msgid, draft, round) values (?, ?, ?)",
-		msg.ID, draftID, round)
+	if tx != nil {
+		_, err = tx.Exec("insert into pairingmsgs (msgid, draft, round) values (?, ?, ?)",
+			msg.ID, draftID, round)
+	} else if ob != nil {
+		// TODO
+	}
 	if err != nil {
 		log.Print(err.Error())
 		return err
@@ -1591,13 +1893,9 @@ func PostPairings(tx *sql.Tx, draftID int64, draftName string, round int, pairin
 	return nil
 }
 
-func NotifyAdminOfDraftCompletion(tx *sql.Tx, draftID int64) error {
-	adminDiscordID, err := GetAdminDiscordId(tx)
-	if err != nil {
-		return err
-	}
+func NotifyAdminOfDraftCompletion(adminDiscordId string, draftID int64) error {
 	return DiscordNotify(os.Getenv("PICK_ALERTS_CHANNEL_ID"),
-		fmt.Sprintf(`<@%s> draft %d is finished!`, adminDiscordID, draftID))
+		fmt.Sprintf(`<@%s> draft %d is finished!`, adminDiscordId, draftID))
 }
 
 func GetAdminDiscordId(tx *sql.Tx) (string, error) {
@@ -1611,21 +1909,14 @@ func GetAdminDiscordId(tx *sql.Tx) (string, error) {
 	return adminDiscordID, err
 }
 
-func UnlockSpectatorChannel(tx *sql.Tx, draftID int64) error {
+func UnlockSpectatorChannel(channelId string, draftID int64) error {
 	if dg != nil {
-		result := tx.QueryRow("select spectatorchannelid from drafts where id=?", draftID)
-		var channelID sql.NullString
-		err := result.Scan(&channelID)
-		if !channelID.Valid {
-			// OK to not find channel
-			return nil
-		}
-		channel, err := dg.Channel(channelID.String)
+		channel, err := dg.Channel(channelId)
 		if err != nil {
 			return err
 		}
 		for _, perm := range channel.PermissionOverwrites {
-			err = dg.ChannelPermissionDelete(channelID.String, perm.ID)
+			err = dg.ChannelPermissionDelete(channelId, perm.ID)
 			if err != nil {
 				return err
 			}
@@ -1962,6 +2253,45 @@ func doEvent(tx *sql.Tx, draftID int64, userID int64, announcements []string, ca
 	return err
 }
 
+// doEventOb records an event (pick) into the database.
+func doEventOb(ob *objectbox.ObjectBox, draftId int64, userId int64, announcements []string, cardId1 int64, cardId2 sql.NullInt64, packId int64, seat *schema.Seat, round int64) error {
+	draftBox := schema.BoxForDraft(ob)
+	draft, err := draftBox.Get(uint64(draftId))
+	if err != nil {
+		return err
+	}
+	card1, err := schema.BoxForCard(ob).Get(uint64(cardId1))
+	if err != nil {
+		return err
+	}
+	if cardId2.Valid {
+		card2, err := schema.BoxForCard(ob).Get(uint64(cardId2.Int64))
+		if err != nil {
+			return err
+		}
+		draft.Events = append(draft.Events, &schema.Event{
+			Position:     seat.Position,
+			Announcement: strings.Join(announcements, "\n"),
+			Card1:        card1,
+			Card2:        card2,
+			Modified:     len(seat.PickedCards),
+			Round:        int(round),
+		})
+	} else {
+		draft.Events = append(draft.Events, &schema.Event{
+			Position:     seat.Position,
+			Announcement: strings.Join(announcements, "\n"),
+			Card1:        card1,
+			Card2:        nil,
+			Modified:     len(seat.PickedCards),
+			Round:        int(round),
+		})
+	}
+
+	_, err = draftBox.Put(draft)
+	return err
+}
+
 func GetDraftList(userID int64, tx *sql.Tx) (DraftList, error) {
 	var drafts DraftList
 
@@ -2068,7 +2398,7 @@ func GetDraftListEntry(userId int64, tx *sql.Tx, ob *objectbox.ObjectBox, draftI
 			} else {
 				numAvailable++
 			}
-			if seat.Round < 3 {
+			if seat.Round <= 3 {
 				finished = false
 			}
 		}
@@ -2487,7 +2817,7 @@ func CheckNextRoundPairings(tx *sql.Tx, draftID int64, round int) {
 				log.Printf("%s", err.Error())
 				return
 			}
-			err = PostPairings(tx, draftID, draftName, round+1, pairings)
+			err = PostPairings(tx, nil, draftID, draftName, round+1, pairings)
 			if err != nil {
 				log.Printf("%s", err.Error())
 				return

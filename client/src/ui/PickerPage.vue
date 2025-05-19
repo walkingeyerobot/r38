@@ -425,6 +425,7 @@ async function onPickCard(card: DraftCard) {
   };
 
   const [response, e] = await fetchEndpointEv(ROUTE_PICK, {
+    draftId,
     cards: [card.id],
     xsrfToken: draftStore.pickXsrf,
     as: authStore.user?.id,
