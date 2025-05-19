@@ -110,6 +110,7 @@ export default defineComponent({
       const start = Date.now();
       // TODO: Error handling
       const response = await fetchEndpoint(ROUTE_PICK, {
+        draftId: draftStore.draftId,
         cards: [cardId],
         xsrfToken: draftStore.pickXsrf,
         as: authStore.user?.id,

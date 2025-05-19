@@ -9,13 +9,14 @@ type Card struct {
 }
 
 type Draft struct {
-	Id              uint64
-	Name            string
-	Format          string
-	InPerson        bool
-	Seats           []*Seat
-	UnassignedPacks []*Pack
-	Events          []*Event
+	Id                 uint64
+	Name               string
+	Format             string
+	InPerson           bool
+	Seats              []*Seat
+	UnassignedPacks    []*Pack
+	Events             []*Event
+	SpectatorChannelId string
 }
 
 type Pack struct {
@@ -50,8 +51,8 @@ type Event struct {
 	Id           uint64
 	Position     int
 	Announcement string
-	Card1        *Card `objectBox:"link"`
-	Card2        *Card `objectBox:"link"`
+	Card1        *Card `objectbox:"link"`
+	Card2        *Card `objectbox:"link"`
 	Modified     int
 	Round        int
 }

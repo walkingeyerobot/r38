@@ -2016,14 +2016,10 @@ var Event_ = struct {
 	Id           *objectbox.PropertyUint64
 	Position     *objectbox.PropertyInt
 	Announcement *objectbox.PropertyString
-	Card1_Id     *objectbox.PropertyUint64
-	Card1_Data   *objectbox.PropertyString
-	Card1_CardId *objectbox.PropertyString
-	Card2_Id     *objectbox.PropertyUint64
-	Card2_Data   *objectbox.PropertyString
-	Card2_CardId *objectbox.PropertyString
 	Modified     *objectbox.PropertyInt
 	Round        *objectbox.PropertyInt
+	Card1        *objectbox.RelationToOne
+	Card2        *objectbox.RelationToOne
 }{
 	Id: &objectbox.PropertyUint64{
 		BaseProperty: &objectbox.BaseProperty{
@@ -2043,42 +2039,6 @@ var Event_ = struct {
 			Entity: &EventBinding.Entity,
 		},
 	},
-	Card1_Id: &objectbox.PropertyUint64{
-		BaseProperty: &objectbox.BaseProperty{
-			Id:     4,
-			Entity: &EventBinding.Entity,
-		},
-	},
-	Card1_Data: &objectbox.PropertyString{
-		BaseProperty: &objectbox.BaseProperty{
-			Id:     5,
-			Entity: &EventBinding.Entity,
-		},
-	},
-	Card1_CardId: &objectbox.PropertyString{
-		BaseProperty: &objectbox.BaseProperty{
-			Id:     6,
-			Entity: &EventBinding.Entity,
-		},
-	},
-	Card2_Id: &objectbox.PropertyUint64{
-		BaseProperty: &objectbox.BaseProperty{
-			Id:     7,
-			Entity: &EventBinding.Entity,
-		},
-	},
-	Card2_Data: &objectbox.PropertyString{
-		BaseProperty: &objectbox.BaseProperty{
-			Id:     8,
-			Entity: &EventBinding.Entity,
-		},
-	},
-	Card2_CardId: &objectbox.PropertyString{
-		BaseProperty: &objectbox.BaseProperty{
-			Id:     9,
-			Entity: &EventBinding.Entity,
-		},
-	},
 	Modified: &objectbox.PropertyInt{
 		BaseProperty: &objectbox.BaseProperty{
 			Id:     10,
@@ -2090,6 +2050,20 @@ var Event_ = struct {
 			Id:     11,
 			Entity: &EventBinding.Entity,
 		},
+	},
+	Card1: &objectbox.RelationToOne{
+		Property: &objectbox.BaseProperty{
+			Id:     24,
+			Entity: &EventBinding.Entity,
+		},
+		Target: &CardBinding.Entity,
+	},
+	Card2: &objectbox.RelationToOne{
+		Property: &objectbox.BaseProperty{
+			Id:     25,
+			Entity: &EventBinding.Entity,
+		},
+		Target: &CardBinding.Entity,
 	},
 }
 
@@ -2105,17 +2079,15 @@ func (event_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.PropertyFlags(1)
 	model.Property("Position", 6, 2, 6134006601491701085)
 	model.Property("Announcement", 9, 3, 4300446115445441902)
-	model.Property("Card1_Id", 6, 4, 1440768340189357890)
-	model.PropertyFlags(8192)
-	model.Property("Card1_Data", 9, 5, 8934009907250970733)
-	model.Property("Card1_CardId", 9, 6, 7749107391073925782)
-	model.Property("Card2_Id", 6, 7, 3222100831603838537)
-	model.PropertyFlags(8192)
-	model.Property("Card2_Data", 9, 8, 1493405508721905247)
-	model.Property("Card2_CardId", 9, 9, 7491448732175180055)
 	model.Property("Modified", 6, 10, 8736377686176001505)
 	model.Property("Round", 6, 11, 1935204458196918156)
-	model.EntityLastPropertyId(11, 1935204458196918156)
+	model.Property("Card1", 11, 24, 1432834121224423321)
+	model.PropertyFlags(520)
+	model.PropertyRelation("Card", 5, 6315904713288332300)
+	model.Property("Card2", 11, 25, 3938773008361457094)
+	model.PropertyFlags(520)
+	model.PropertyRelation("Card", 6, 9101246984390296186)
+	model.EntityLastPropertyId(25, 3938773008361457094)
 }
 
 // GetId is called by ObjectBox during Put operations to check for existing ID on an object
@@ -2131,6 +2103,26 @@ func (event_EntityInfo) SetId(object interface{}, id uint64) error {
 
 // PutRelated is called by ObjectBox to put related entities before the object itself is flattened and put
 func (event_EntityInfo) PutRelated(ob *objectbox.ObjectBox, object interface{}, id uint64) error {
+	if rel := object.(*Event).Card1; rel != nil {
+		if rId, err := CardBinding.GetId(rel); err != nil {
+			return err
+		} else if rId == 0 {
+			// NOTE Put/PutAsync() has a side-effect of setting the rel.ID
+			if _, err := BoxForCard(ob).Put(rel); err != nil {
+				return err
+			}
+		}
+	}
+	if rel := object.(*Event).Card2; rel != nil {
+		if rId, err := CardBinding.GetId(rel); err != nil {
+			return err
+		} else if rId == 0 {
+			// NOTE Put/PutAsync() has a side-effect of setting the rel.ID
+			if _, err := BoxForCard(ob).Put(rel); err != nil {
+				return err
+			}
+		}
+	}
 	return nil
 }
 
@@ -2138,25 +2130,35 @@ func (event_EntityInfo) PutRelated(ob *objectbox.ObjectBox, object interface{}, 
 func (event_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id uint64) error {
 	obj := object.(*Event)
 	var offsetAnnouncement = fbutils.CreateStringOffset(fbb, obj.Announcement)
-	var offsetCard1_Data = fbutils.CreateStringOffset(fbb, obj.Card1.Data)
-	var offsetCard1_CardId = fbutils.CreateStringOffset(fbb, obj.Card1.CardId)
-	var offsetCard2_Data = fbutils.CreateStringOffset(fbb, obj.Card2.Data)
-	var offsetCard2_CardId = fbutils.CreateStringOffset(fbb, obj.Card2.CardId)
+
+	var rIdCard1 uint64
+	if rel := obj.Card1; rel != nil {
+		if rId, err := CardBinding.GetId(rel); err != nil {
+			return err
+		} else {
+			rIdCard1 = rId
+		}
+	}
+
+	var rIdCard2 uint64
+	if rel := obj.Card2; rel != nil {
+		if rId, err := CardBinding.GetId(rel); err != nil {
+			return err
+		} else {
+			rIdCard2 = rId
+		}
+	}
 
 	// build the FlatBuffers object
-	fbb.StartObject(11)
+	fbb.StartObject(25)
 	fbutils.SetUint64Slot(fbb, 0, id)
 	fbutils.SetInt64Slot(fbb, 1, int64(obj.Position))
 	fbutils.SetUOffsetTSlot(fbb, 2, offsetAnnouncement)
 	if obj.Card1 != nil {
-		fbutils.SetUint64Slot(fbb, 3, obj.Card1.Id)
-		fbutils.SetUOffsetTSlot(fbb, 4, offsetCard1_Data)
-		fbutils.SetUOffsetTSlot(fbb, 5, offsetCard1_CardId)
+		fbutils.SetUint64Slot(fbb, 23, rIdCard1)
 	}
 	if obj.Card2 != nil {
-		fbutils.SetUint64Slot(fbb, 6, obj.Card2.Id)
-		fbutils.SetUOffsetTSlot(fbb, 7, offsetCard2_Data)
-		fbutils.SetUOffsetTSlot(fbb, 8, offsetCard2_CardId)
+		fbutils.SetUint64Slot(fbb, 24, rIdCard2)
 	}
 	fbutils.SetInt64Slot(fbb, 9, int64(obj.Modified))
 	fbutils.SetInt64Slot(fbb, 10, int64(obj.Round))
@@ -2176,22 +2178,32 @@ func (event_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{}
 
 	var propId = table.GetUint64Slot(4, 0)
 
+	var relCard1 *Card
+	if rId := fbutils.GetUint64PtrSlot(table, 50); rId != nil && *rId > 0 {
+		if rObject, err := BoxForCard(ob).Get(*rId); err != nil {
+			return nil, err
+		} else {
+			relCard1 = rObject
+		}
+	}
+
+	var relCard2 *Card
+	if rId := fbutils.GetUint64PtrSlot(table, 52); rId != nil && *rId > 0 {
+		if rObject, err := BoxForCard(ob).Get(*rId); err != nil {
+			return nil, err
+		} else {
+			relCard2 = rObject
+		}
+	}
+
 	return &Event{
 		Id:           propId,
 		Position:     fbutils.GetIntSlot(table, 6),
 		Announcement: fbutils.GetStringSlot(table, 8),
-		Card1: &Card{
-			Id:     fbutils.GetUint64Slot(table, 10),
-			Data:   fbutils.GetStringSlot(table, 12),
-			CardId: fbutils.GetStringSlot(table, 14),
-		},
-		Card2: &Card{
-			Id:     fbutils.GetUint64Slot(table, 16),
-			Data:   fbutils.GetStringSlot(table, 18),
-			CardId: fbutils.GetStringSlot(table, 20),
-		},
-		Modified: fbutils.GetIntSlot(table, 22),
-		Round:    fbutils.GetIntSlot(table, 24),
+		Card1:        relCard1,
+		Card2:        relCard2,
+		Modified:     fbutils.GetIntSlot(table, 22),
+		Round:        fbutils.GetIntSlot(table, 24),
 	}, nil
 }
 

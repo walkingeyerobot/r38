@@ -313,7 +313,7 @@ func MakeDraft(settings Settings, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 		for i := 0; i < 8; i++ {
 			seat := schema.Seat{
 				Position:      i,
-				Round:         0,
+				Round:         1,
 				ScanSound:     scanSounds[i],
 				ErrorSound:    errorSounds[i],
 				Packs:         []*schema.Pack{},

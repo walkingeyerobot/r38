@@ -97,6 +97,7 @@ type UserFormatPref struct {
 
 // PostedPick is JSON accepted from the client when a user makes a pick.
 type PostedPick struct {
+	DraftId   int64   `json:"draftId"`
 	CardIds   []int64 `json:"cards"`
 	XsrfToken string  `json:"xsrfToken"`
 }
