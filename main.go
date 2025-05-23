@@ -555,54 +555,95 @@ func ServeAPIUndoPick(w http.ResponseWriter, r *http.Request, userID int64, tx *
 		err = fmt.Errorf("invalid XSRF token")
 	}
 
-	query := `select
-				events.id, events.round, events.position, events.card1, events.pack, events.seat
-				from events
-				join seats on seats.draft = events.draft and seats.position = events.position
-				where events.draft = ?
-				and seats.user = ?
-				and events.round = seats.round
-				order by events.id desc`
-	row := tx.QueryRow(query, undo.DraftId, userID)
-	var eventID int64
-	var round int64
-	var position int64
-	var cardID int64
-	var packID int64
-	var seatID int64
-	err = row.Scan(&eventID, &round, &position, &cardID, &packID, &seatID)
-	if err != nil {
-		return fmt.Errorf("couldn't undo pick: %w", err)
+	if tx != nil {
+		query := `select
+					events.id, events.round, events.position, events.card1, events.pack, events.seat
+					from events
+					join seats on seats.draft = events.draft and seats.position = events.position
+					where events.draft = ?
+					and seats.user = ?
+					and events.round = seats.round
+					order by events.id desc`
+		row := tx.QueryRow(query, undo.DraftId, userID)
+		var eventID int64
+		var round int64
+		var position int64
+		var cardID int64
+		var packID int64
+		var seatID int64
+		err = row.Scan(&eventID, &round, &position, &cardID, &packID, &seatID)
+		if err != nil {
+			return fmt.Errorf("couldn't undo pick: %w", err)
+		}
+
+		query = `delete from events where id = ?`
+		_, err = tx.Exec(query, eventID)
+		if err != nil {
+			return fmt.Errorf("couldn't undo pick: %w", err)
+		}
+
+		// Put the picked card into the player's picks.
+		query = `update cards set pack = ? where id = ?`
+
+		_, err = tx.Exec(query, packID, cardID)
+		if err != nil {
+			return fmt.Errorf("couldn't undo pick: %w", err)
+		}
+
+		// Move the pack to the next Position.
+		query = `update packs set seat = ? where id = ?`
+		_, err = tx.Exec(query, seatID, packID)
+		if err != nil {
+			return fmt.Errorf("couldn't undo pick: %w", err)
+		}
+	} else if ob != nil {
+		draftBox := schema.BoxForDraft(ob)
+		draft, err := draftBox.Get(1)
+		if err != nil {
+			return err
+		}
+		seatIndex := slices.IndexFunc(draft.Seats, func(seat *schema.Seat) bool {
+			return seat.User.Id == uint64(userID)
+		})
+		seat := draft.Seats[seatIndex]
+		var lastEvent *schema.Event = nil
+		for _, event := range draft.Events {
+			if event.Position == seat.Position &&
+				event.Round == seat.Round &&
+				(lastEvent == nil || event.Id > lastEvent.Id) {
+				lastEvent = event
+			}
+		}
+
+		draft.Events = slices.DeleteFunc(draft.Events, func(e *schema.Event) bool {
+			return e == lastEvent
+		})
+		draftBox.Put(draft)
+
+		card := lastEvent.Card1
+		packBox := schema.BoxForPack(ob)
+		pack, err := packBox.Get(lastEvent.Pack.Id)
+		pack.Cards = append(pack.Cards, card)
+		packBox.Put(pack)
+
+		seatBox := schema.BoxForSeat(ob)
+		newSeatIndex := slices.IndexFunc(draft.Seats, func(seat *schema.Seat) bool {
+			return slices.IndexFunc(seat.Packs, func(pack *schema.Pack) bool {
+				return pack.Id == lastEvent.Pack.Id
+			}) != -1
+		})
+		newSeat := draft.Seats[newSeatIndex]
+		newSeat.Packs = slices.DeleteFunc(newSeat.Packs, func(pack *schema.Pack) bool {
+			return pack.Id == lastEvent.Pack.Id
+		})
+		seatBox.Put(newSeat)
+
+		seat.PickedCards = slices.DeleteFunc(seat.PickedCards, func(c *schema.Card) bool {
+			return c.Id == card.Id
+		})
+		seat.Packs = append(seat.Packs, pack)
+		seatBox.Put(seat)
 	}
-
-	query = `delete from events where id = ?`
-	_, err = tx.Exec(query, eventID)
-	if err != nil {
-		return fmt.Errorf("couldn't undo pick: %w", err)
-	}
-
-	// Put the picked card into the player's picks.
-	query = `update cards set pack = ? where id = ?`
-
-	_, err = tx.Exec(query, packID, cardID)
-	if err != nil {
-		return fmt.Errorf("couldn't undo pick: %w", err)
-	}
-
-	// Move the pack to the next Position.
-	query = `update packs set seat = ? where id = ?`
-	_, err = tx.Exec(query, seatID, packID)
-	if err != nil {
-		return fmt.Errorf("couldn't undo pick: %w", err)
-	}
-
-	var draftJSON string
-	draftJSON, err = GetFilteredJSON(tx, ob, undo.DraftId, userID)
-	if err != nil {
-		return fmt.Errorf("error getting json: %w", err)
-	}
-
-	fmt.Fprint(w, draftJSON)
 
 	return nil
 }
@@ -1541,6 +1582,7 @@ func doPickOb(ob *objectbox.ObjectBox, userId int64, draftId int64, cardId int64
 		}
 		return len(b.Cards) - len(a.Cards)
 	})
+	round = int64(seat.Round)
 	pack := seat.Packs[0]
 	myPackID = int64(pack.Id)
 	cardIndex := slices.IndexFunc(pack.Cards, func(card *schema.Card) bool {
@@ -1630,6 +1672,7 @@ func doPickOb(ob *objectbox.ObjectBox, userId int64, draftId int64, cardId int64
 			// but by explicitly storing it, we allow ourselves the possibility of expanding support to
 			// weirder formats.
 			seat.Round = len(seat.PickedCards)/15 + 1
+			round = int64(seat.Round)
 
 			// If the rounds do NOT match from earlier, we have a situation where players are in different
 			// rounds. Look for a blocking player.
@@ -2264,6 +2307,7 @@ func doEventOb(ob *objectbox.ObjectBox, draftId int64, userId int64, announcemen
 	if err != nil {
 		return err
 	}
+	pack, err := schema.BoxForPack(ob).Get(uint64(packId))
 	if cardId2.Valid {
 		card2, err := schema.BoxForCard(ob).Get(uint64(cardId2.Int64))
 		if err != nil {
@@ -2274,6 +2318,7 @@ func doEventOb(ob *objectbox.ObjectBox, draftId int64, userId int64, announcemen
 			Announcement: strings.Join(announcements, "\n"),
 			Card1:        card1,
 			Card2:        card2,
+			Pack:         pack,
 			Modified:     len(seat.PickedCards),
 			Round:        int(round),
 		})
@@ -2283,6 +2328,7 @@ func doEventOb(ob *objectbox.ObjectBox, draftId int64, userId int64, announcemen
 			Announcement: strings.Join(announcements, "\n"),
 			Card1:        card1,
 			Card2:        nil,
+			Pack:         pack,
 			Modified:     len(seat.PickedCards),
 			Round:        int(round),
 		})
