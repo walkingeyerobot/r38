@@ -53,6 +53,7 @@ type Event struct {
 	Announcement string
 	Card1        *Card `objectbox:"link"`
 	Card2        *Card `objectbox:"link"`
+	Pack         *Pack `objectbox:"link"`
 	Modified     int
 	Round        int
 }

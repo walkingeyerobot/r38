@@ -83,7 +83,7 @@ func makeDraftOB(t *testing.T, ob *objectbox.ObjectBox, seed int) {
 	}
 }
 
-func findCardToPickOB(t *testing.T, ob *objectbox.ObjectBox, seat int, round int, card int) string {
+func findCardToPickOB(t *testing.T, ob *objectbox.ObjectBox, seat int, round int, card int) *schema.Card {
 	draft, err := schema.BoxForDraft(ob).Get(1)
 	if err != nil {
 		t.Errorf("error reading draft %s", err.Error())
@@ -91,7 +91,7 @@ func findCardToPickOB(t *testing.T, ob *objectbox.ObjectBox, seat int, round int
 	}
 	if card == 0 {
 		pack := draft.UnassignedPacks[rand.Intn(len(draft.UnassignedPacks))]
-		return pack.Cards[rand.Intn(len(pack.Cards))].CardId
+		return pack.Cards[rand.Intn(len(pack.Cards))]
 	} else {
 		seatIndex := slices.IndexFunc(draft.Seats, func(s *schema.Seat) bool {
 			return s.Position == seat
@@ -102,14 +102,14 @@ func findCardToPickOB(t *testing.T, ob *objectbox.ObjectBox, seat int, round int
 				if len(pack.Cards) == 0 {
 					t.Errorf("no cards in pack for seat %d, pack %d, pick %d", seat, round+1, card+1)
 				}
-				return pack.Cards[rand.Intn(len(pack.Cards))].CardId
+				return pack.Cards[rand.Intn(len(pack.Cards))]
 			}
 		}
 		spew.Dump(packs)
 	}
 	t.Errorf("no pack found for seat %d, pack %d, pick %d", seat, round+1, card+1)
 	t.FailNow()
-	return ""
+	return nil
 }
 
 func FuzzInPersonDraftOB(f *testing.F) {
@@ -133,7 +133,7 @@ func FuzzInPersonDraftOB(f *testing.F) {
 				for _, seat := range rand.Perm(8) {
 					player := players[seat] + 1
 
-					cardId := findCardToPickOB(t, ob, seats[seat], round, card)
+					cardId := findCardToPickOB(t, ob, seats[seat], round, card).CardId
 
 					token := xsrftoken.Generate(xsrfKey, strconv.FormatInt(int64(player), 16), "pick1")
 
@@ -154,4 +154,59 @@ func FuzzInPersonDraftOB(f *testing.F) {
 			}
 		}
 	})
+}
+
+func TestInPersonDraftUndoFirstPickOB(t *testing.T) {
+	ob, err := doSetupOB(t, SEED)
+	defer ob.Close()
+
+	makeDraftOB(t, ob, SEED)
+
+	handlers := NewHandler(nil, ob, false)
+
+	players, seats := populateDraft(t, handlers)
+
+	player := players[0] + 1
+	card := findCardToPickOB(t, ob, player, 0, 0)
+
+	token := xsrftoken.Generate(xsrfKey, strconv.FormatInt(int64(player), 16), "pick1")
+
+	handlers.ServeHTTP(httptest.NewRecorder(),
+		httptest.NewRequest("POST", fmt.Sprintf("/api/pickrfid/?as=%d", player),
+			strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cardRfids": ["%s"], "xsrfToken": "%s"}`, card.CardId, token))))
+
+	w := httptest.NewRecorder()
+	handlers.ServeHTTP(w,
+		httptest.NewRequest("POST", fmt.Sprintf("/api/undopick/?as=%d", player),
+			strings.NewReader(fmt.Sprintf(`{"draftId": 1, "xsrfToken": "%s"}`, token))))
+	res := w.Result()
+	if res.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(res.Body)
+		t.Errorf("undo failed: %s", body)
+	}
+
+	draft, err := schema.BoxForDraft(ob).Get(1)
+	if err != nil {
+		t.Errorf("couldn't get draft: %s", err.Error())
+	}
+	if len(draft.Events) != 0 {
+		t.Error("didn't delete event")
+	}
+
+	for _, seat := range draft.Seats {
+		if seat.Position == seats[0] {
+			if len(seat.PickedCards) != 0 {
+				t.Errorf("didn't remove card from picked cards")
+			}
+			if len(seat.Packs) != 1 {
+				t.Errorf("removed pack from seat")
+			}
+			cardIndex := slices.IndexFunc(seat.Packs[0].Cards, func(c *schema.Card) bool {
+				return c.Id == card.Id
+			})
+			if cardIndex == -1 {
+				t.Errorf("didn't put card back in pack")
+			}
+		}
+	}
 }

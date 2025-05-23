@@ -28,7 +28,7 @@
     },
     {
       "id": "2:5663264790156429323",
-      "lastPropertyId": "4:7606563587574782325",
+      "lastPropertyId": "5:7498775565443963097",
       "name": "Draft",
       "properties": [
         {
@@ -51,6 +51,11 @@
           "id": "4:7606563587574782325",
           "name": "InPerson",
           "type": 1
+        },
+        {
+          "id": "5:7498775565443963097",
+          "name": "SpectatorChannelId",
+          "type": 9
         }
       ],
       "relations": [
@@ -204,7 +209,7 @@
     },
     {
       "id": "6:7673531568455826754",
-      "lastPropertyId": "25:3938773008361457094",
+      "lastPropertyId": "26:8224660085647238639",
       "name": "Event",
       "properties": [
         {
@@ -248,12 +253,20 @@
           "type": 11,
           "flags": 520,
           "relationTarget": "Card"
+        },
+        {
+          "id": "26:8224660085647238639",
+          "name": "Pack",
+          "indexId": "7:6451483386392342396",
+          "type": 11,
+          "flags": 520,
+          "relationTarget": "Pack"
         }
       ]
     }
   ],
   "lastEntityId": "6:7673531568455826754",
-  "lastIndexId": "6:9101246984390296186",
+  "lastIndexId": "7:6451483386392342396",
   "lastRelationId": "8:3916323228265520547",
   "modelVersion": 5,
   "modelVersionParserMinimum": 5,

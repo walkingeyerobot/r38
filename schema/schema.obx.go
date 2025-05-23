@@ -363,13 +363,14 @@ var DraftBinding = draft_EntityInfo{
 
 // Draft_ contains type-based Property helpers to facilitate some common operations such as Queries.
 var Draft_ = struct {
-	Id              *objectbox.PropertyUint64
-	Name            *objectbox.PropertyString
-	Format          *objectbox.PropertyString
-	InPerson        *objectbox.PropertyBool
-	Seats           *objectbox.RelationToMany
-	UnassignedPacks *objectbox.RelationToMany
-	Events          *objectbox.RelationToMany
+	Id                 *objectbox.PropertyUint64
+	Name               *objectbox.PropertyString
+	Format             *objectbox.PropertyString
+	InPerson           *objectbox.PropertyBool
+	SpectatorChannelId *objectbox.PropertyString
+	Seats              *objectbox.RelationToMany
+	UnassignedPacks    *objectbox.RelationToMany
+	Events             *objectbox.RelationToMany
 }{
 	Id: &objectbox.PropertyUint64{
 		BaseProperty: &objectbox.BaseProperty{
@@ -392,6 +393,12 @@ var Draft_ = struct {
 	InPerson: &objectbox.PropertyBool{
 		BaseProperty: &objectbox.BaseProperty{
 			Id:     4,
+			Entity: &DraftBinding.Entity,
+		},
+	},
+	SpectatorChannelId: &objectbox.PropertyString{
+		BaseProperty: &objectbox.BaseProperty{
+			Id:     5,
 			Entity: &DraftBinding.Entity,
 		},
 	},
@@ -425,7 +432,8 @@ func (draft_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Property("Name", 9, 2, 4508250143033471113)
 	model.Property("Format", 9, 3, 268971421038837113)
 	model.Property("InPerson", 1, 4, 7606563587574782325)
-	model.EntityLastPropertyId(4, 7606563587574782325)
+	model.Property("SpectatorChannelId", 9, 5, 7498775565443963097)
+	model.EntityLastPropertyId(5, 7498775565443963097)
 	model.Relation(1, 751382817597970823, SeatBinding.Id, SeatBinding.Uid)
 	model.Relation(2, 5954888830735860335, PackBinding.Id, PackBinding.Uid)
 	model.Relation(8, 3916323228265520547, EventBinding.Id, EventBinding.Uid)
@@ -464,13 +472,15 @@ func (draft_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id
 	obj := object.(*Draft)
 	var offsetName = fbutils.CreateStringOffset(fbb, obj.Name)
 	var offsetFormat = fbutils.CreateStringOffset(fbb, obj.Format)
+	var offsetSpectatorChannelId = fbutils.CreateStringOffset(fbb, obj.SpectatorChannelId)
 
 	// build the FlatBuffers object
-	fbb.StartObject(4)
+	fbb.StartObject(5)
 	fbutils.SetUint64Slot(fbb, 0, id)
 	fbutils.SetUOffsetTSlot(fbb, 1, offsetName)
 	fbutils.SetUOffsetTSlot(fbb, 2, offsetFormat)
 	fbutils.SetBoolSlot(fbb, 3, obj.InPerson)
+	fbutils.SetUOffsetTSlot(fbb, 4, offsetSpectatorChannelId)
 	return nil
 }
 
@@ -515,13 +525,14 @@ func (draft_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{}
 	}
 
 	return &Draft{
-		Id:              propId,
-		Name:            fbutils.GetStringSlot(table, 6),
-		Format:          fbutils.GetStringSlot(table, 8),
-		InPerson:        fbutils.GetBoolSlot(table, 10),
-		Seats:           relSeats,
-		UnassignedPacks: relUnassignedPacks,
-		Events:          relEvents,
+		Id:                 propId,
+		Name:               fbutils.GetStringSlot(table, 6),
+		Format:             fbutils.GetStringSlot(table, 8),
+		InPerson:           fbutils.GetBoolSlot(table, 10),
+		Seats:              relSeats,
+		UnassignedPacks:    relUnassignedPacks,
+		Events:             relEvents,
+		SpectatorChannelId: fbutils.GetStringSlot(table, 12),
 	}, nil
 }
 
@@ -2020,6 +2031,7 @@ var Event_ = struct {
 	Round        *objectbox.PropertyInt
 	Card1        *objectbox.RelationToOne
 	Card2        *objectbox.RelationToOne
+	Pack         *objectbox.RelationToOne
 }{
 	Id: &objectbox.PropertyUint64{
 		BaseProperty: &objectbox.BaseProperty{
@@ -2065,6 +2077,13 @@ var Event_ = struct {
 		},
 		Target: &CardBinding.Entity,
 	},
+	Pack: &objectbox.RelationToOne{
+		Property: &objectbox.BaseProperty{
+			Id:     26,
+			Entity: &EventBinding.Entity,
+		},
+		Target: &PackBinding.Entity,
+	},
 }
 
 // GeneratorVersion is called by ObjectBox to verify the compatibility of the generator used to generate this code
@@ -2087,7 +2106,10 @@ func (event_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Property("Card2", 11, 25, 3938773008361457094)
 	model.PropertyFlags(520)
 	model.PropertyRelation("Card", 6, 9101246984390296186)
-	model.EntityLastPropertyId(25, 3938773008361457094)
+	model.Property("Pack", 11, 26, 8224660085647238639)
+	model.PropertyFlags(520)
+	model.PropertyRelation("Pack", 7, 6451483386392342396)
+	model.EntityLastPropertyId(26, 8224660085647238639)
 }
 
 // GetId is called by ObjectBox during Put operations to check for existing ID on an object
@@ -2123,6 +2145,16 @@ func (event_EntityInfo) PutRelated(ob *objectbox.ObjectBox, object interface{}, 
 			}
 		}
 	}
+	if rel := object.(*Event).Pack; rel != nil {
+		if rId, err := PackBinding.GetId(rel); err != nil {
+			return err
+		} else if rId == 0 {
+			// NOTE Put/PutAsync() has a side-effect of setting the rel.ID
+			if _, err := BoxForPack(ob).Put(rel); err != nil {
+				return err
+			}
+		}
+	}
 	return nil
 }
 
@@ -2149,8 +2181,17 @@ func (event_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id
 		}
 	}
 
+	var rIdPack uint64
+	if rel := obj.Pack; rel != nil {
+		if rId, err := PackBinding.GetId(rel); err != nil {
+			return err
+		} else {
+			rIdPack = rId
+		}
+	}
+
 	// build the FlatBuffers object
-	fbb.StartObject(25)
+	fbb.StartObject(26)
 	fbutils.SetUint64Slot(fbb, 0, id)
 	fbutils.SetInt64Slot(fbb, 1, int64(obj.Position))
 	fbutils.SetUOffsetTSlot(fbb, 2, offsetAnnouncement)
@@ -2159,6 +2200,9 @@ func (event_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id
 	}
 	if obj.Card2 != nil {
 		fbutils.SetUint64Slot(fbb, 24, rIdCard2)
+	}
+	if obj.Pack != nil {
+		fbutils.SetUint64Slot(fbb, 25, rIdPack)
 	}
 	fbutils.SetInt64Slot(fbb, 9, int64(obj.Modified))
 	fbutils.SetInt64Slot(fbb, 10, int64(obj.Round))
@@ -2196,12 +2240,22 @@ func (event_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{}
 		}
 	}
 
+	var relPack *Pack
+	if rId := fbutils.GetUint64PtrSlot(table, 54); rId != nil && *rId > 0 {
+		if rObject, err := BoxForPack(ob).Get(*rId); err != nil {
+			return nil, err
+		} else {
+			relPack = rObject
+		}
+	}
+
 	return &Event{
 		Id:           propId,
 		Position:     fbutils.GetIntSlot(table, 6),
 		Announcement: fbutils.GetStringSlot(table, 8),
 		Card1:        relCard1,
 		Card2:        relCard2,
+		Pack:         relPack,
 		Modified:     fbutils.GetIntSlot(table, 22),
 		Round:        fbutils.GetIntSlot(table, 24),
 	}, nil
