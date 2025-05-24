@@ -1120,51 +1120,69 @@ func ServeAPIGetCardPack(w http.ResponseWriter, r *http.Request, _ int64, tx *sq
 		return fmt.Errorf("error parsing post body: %w", err)
 	}
 
-	query := `select pack from cards
+	if tx != nil {
+		query := `select pack from cards
 		join packs on cards.pack = packs.id
 		join seats on packs.seat = seats.id
 		where seats.draft = ?
 		and cards.cardid = ?`
-	var packId int64
-	row := tx.QueryRow(query, getCardPack.DraftID, getCardPack.CardRfid)
-	err = row.Scan(&packId)
-	if errors.Is(err, sql.ErrNoRows) {
-		_, err = io.WriteString(w, "{\"pack\": 0}")
-		if err != nil {
-			return fmt.Errorf("error writing response: %w", err)
-		}
-		return nil
-	} else if err != nil {
-		return fmt.Errorf("error finding pack for card: %w", err)
-	}
-
-	query = `select packs.id from packs
-		join seats on packs.seat = seats.id
-		where seats.draft = ?`
-
-	var rows *sql.Rows
-	rows, err = tx.Query(query, getCardPack.DraftID)
-	if err != nil {
-		return fmt.Errorf("error finding packs in draft: %w", err)
-	}
-	defer func() {
-		_ = rows.Close()
-	}()
-	var packIndex = 1
-	for rows.Next() {
-		var packIdAtIndex int64
-		err = rows.Scan(&packIdAtIndex)
-		if err != nil {
-			return fmt.Errorf("error finding packs in draft: %w", err)
-		}
-		if packIdAtIndex == packId {
-			_, err = fmt.Fprintf(w, "{\"pack\": %d}", packIndex)
+		var packId int64
+		row := tx.QueryRow(query, getCardPack.DraftID, getCardPack.CardRfid)
+		err = row.Scan(&packId)
+		if errors.Is(err, sql.ErrNoRows) {
+			_, err = io.WriteString(w, "{\"pack\": 0}")
 			if err != nil {
 				return fmt.Errorf("error writing response: %w", err)
 			}
 			return nil
+		} else if err != nil {
+			return fmt.Errorf("error finding pack for card: %w", err)
 		}
-		packIndex++
+
+		query = `select packs.id from packs
+		join seats on packs.seat = seats.id
+		where seats.draft = ?`
+
+		var rows *sql.Rows
+		rows, err = tx.Query(query, getCardPack.DraftID)
+		if err != nil {
+			return fmt.Errorf("error finding packs in draft: %w", err)
+		}
+		defer func() {
+			_ = rows.Close()
+		}()
+		var packIndex = 1
+		for rows.Next() {
+			var packIdAtIndex int64
+			err = rows.Scan(&packIdAtIndex)
+			if err != nil {
+				return fmt.Errorf("error finding packs in draft: %w", err)
+			}
+			if packIdAtIndex == packId {
+				_, err = fmt.Fprintf(w, "{\"pack\": %d}", packIndex)
+				if err != nil {
+					return fmt.Errorf("error writing response: %w", err)
+				}
+				return nil
+			}
+			packIndex++
+		}
+	} else if ob != nil {
+		draft, err := schema.BoxForDraft(ob).Get(uint64(getCardPack.DraftID))
+		if err != nil {
+			return err
+		}
+
+		packIndex := slices.IndexFunc(draft.UnassignedPacks, func(pack *schema.Pack) bool {
+			return slices.IndexFunc(pack.Cards, func(card *schema.Card) bool {
+				return card.CardId == getCardPack.CardRfid
+			}) != -1
+		})
+		_, err = io.WriteString(w, fmt.Sprintf("{\"pack\": %d}", packIndex+1))
+		if err != nil {
+			return fmt.Errorf("error writing response: %w", err)
+		}
+		return nil
 	}
 
 	return errors.New("didn't find pack in draft")
