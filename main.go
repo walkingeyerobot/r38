@@ -302,13 +302,18 @@ func ServeAPIDraft(w http.ResponseWriter, r *http.Request, userID int64, tx *sql
 }
 
 // ServeAPIDraftList serves the /api/draftlist endpoint.
-func ServeAPIDraftList(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx, ob *objectbox.ObjectBox) error {
-	drafts, err := GetDraftList(userID, tx)
+func ServeAPIDraftList(w http.ResponseWriter, r *http.Request, userId int64, tx *sql.Tx, ob *objectbox.ObjectBox) error {
+	var drafts DraftList
+	var err error
+	if tx != nil {
+		drafts, err = GetDraftList(userId, tx)
+	} else if ob != nil {
+		drafts, err = GetDraftListOb(userId, ob)
+	}
 	if err != nil {
 		return err
 	}
-	json.NewEncoder(w).Encode(drafts)
-	return nil
+	return json.NewEncoder(w).Encode(drafts)
 }
 
 // ServeAPIPrefs serves the /api/prefs endpoint.
@@ -2384,6 +2389,20 @@ func GetDraftList(userID int64, tx *sql.Tx) (DraftList, error) {
 	return drafts, nil
 }
 
+func GetDraftListOb(userId int64, ob *objectbox.ObjectBox) (DraftList, error) {
+	draftList := DraftList{
+		Drafts: []DraftListEntry{},
+	}
+	drafts, err := schema.BoxForDraft(ob).GetAll()
+	if err != nil {
+		return draftList, err
+	}
+	for _, draft := range drafts {
+		draftList.Drafts = append(draftList.Drafts, draftToDraftListEntry(draft, userId))
+	}
+	return draftList, nil
+}
+
 func AddStatus(d DraftListEntry, userId int64) DraftListEntry {
 	if d.Joined {
 		d.Status = "member"
@@ -2425,44 +2444,48 @@ func GetDraftListEntry(userId int64, tx *sql.Tx, ob *objectbox.ObjectBox, draftI
 			return ret, err
 		}
 
-		numAvailable := int64(0)
-		numReserved := int64(0)
-		finished := true
-		joined := false
-		reserved := false
-
-		for _, seat := range draft.Seats {
-			if seat.User != nil {
-				if seat.User.Id == uint64(userId) {
-					joined = true
-				}
-			} else if seat.ReservedUser != nil {
-				numReserved++
-				if seat.ReservedUser.Id == uint64(userId) {
-					reserved = true
-				}
-			} else {
-				numAvailable++
-			}
-			if seat.Round <= 3 {
-				finished = false
-			}
-		}
-
-		return AddStatus(DraftListEntry{
-			AvailableSeats: numAvailable,
-			ReservedSeats:  numReserved,
-			Finished:       finished,
-			ID:             int64(draft.Id),
-			Joined:         joined,
-			Reserved:       reserved,
-			Skipped:        false, // TODO
-			Name:           draft.Name,
-			InPerson:       draft.InPerson,
-		}, userId), err
+		return draftToDraftListEntry(draft, userId), nil
 	}
 
 	return ret, nil
+}
+
+func draftToDraftListEntry(draft *schema.Draft, userId int64) DraftListEntry {
+	numAvailable := int64(0)
+	numReserved := int64(0)
+	finished := true
+	joined := false
+	reserved := false
+
+	for _, seat := range draft.Seats {
+		if seat.User != nil {
+			if seat.User.Id == uint64(userId) {
+				joined = true
+			}
+		} else if seat.ReservedUser != nil {
+			numReserved++
+			if seat.ReservedUser.Id == uint64(userId) {
+				reserved = true
+			}
+		} else {
+			numAvailable++
+		}
+		if seat.Round <= 3 {
+			finished = false
+		}
+	}
+
+	return AddStatus(DraftListEntry{
+		AvailableSeats: numAvailable,
+		ReservedSeats:  numReserved,
+		Finished:       finished,
+		ID:             int64(draft.Id),
+		Joined:         joined,
+		Reserved:       reserved,
+		Skipped:        false, // TODO
+		Name:           draft.Name,
+		InPerson:       draft.InPerson,
+	}, userId)
 }
 
 func GetUserPrefs(userID int64, tx *sql.Tx) (UserFormatPrefs, error) {
