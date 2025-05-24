@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"github.com/objectbox/objectbox-go/objectbox"
 	"github.com/walkingeyerobot/r38/schema"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"time"
@@ -42,7 +42,7 @@ var discordOauthConfig = &oauth2.Config{
 func generateStateOauthCookie(w http.ResponseWriter) string {
 	var expiration = time.Now().Add(365 * 24 * time.Hour)
 	b := make([]byte, 16)
-	rand.Read(b)
+	_, _ = rand.Read(b)
 	state := base64.URLEncoding.EncodeToString(b)
 	cookie := http.Cookie{Name: "oauthstate", Value: state, Expires: expiration}
 	http.SetCookie(w, &cookie)
@@ -87,7 +87,10 @@ func oauthDiscordCallback(w http.ResponseWriter, r *http.Request, _ int64, tx *s
 		if err != nil {
 			return err
 		}
-		statement.Exec(p.ID, p.Name, p.Picture)
+		_, err = statement.Exec(p.ID, p.Name, p.Picture)
+		if err != nil {
+			return err
+		}
 
 		query := `update users set discord_name = ?, picture = ? where discord_id = ?`
 		_, err = tx.Exec(query, p.Name, p.Picture, p.ID)
@@ -138,28 +141,29 @@ func oauthDiscordCallback(w http.ResponseWriter, r *http.Request, _ int64, tx *s
 func getUserDataFromDiscord(code string) ([]byte, error) {
 	token, err := discordOauthConfig.Exchange(context.Background(), code)
 	if err != nil {
-		return nil, fmt.Errorf("code exchange wrong: %s", err.Error())
+		return nil, fmt.Errorf("code exchange wrong: %w", err)
 	}
 	req, err := http.NewRequest("GET", discordURLAPI, nil)
 	if err != nil {
-		return nil, fmt.Errorf("could not initialize Discord API request: %s", err.Error())
+		return nil, fmt.Errorf("could not initialize Discord API request: %w", err)
 	}
 	req.Header.Set("Authorization", "Bearer "+token.AccessToken)
 	client := &http.Client{}
 	response, err := client.Do(req)
-	if err != nil {
+	defer func() {
 		if response != nil {
-			response.Body.Close()
+			_ = response.Body.Close()
 		}
-		return nil, fmt.Errorf("failed getting user info: %s", err.Error())
-	}
-	defer response.Body.Close()
-	if response.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("received status code %v getting user info: %s", response.StatusCode, err.Error())
-	}
-	body, err := ioutil.ReadAll(response.Body)
+	}()
 	if err != nil {
-		return nil, fmt.Errorf("failed to read response: %s", err.Error())
+		return nil, fmt.Errorf("failed getting user info: %w", err)
+	}
+	if response.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("received status code %v getting user info: %w", response.StatusCode, err)
+	}
+	body, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response: %w", err)
 	}
 	return body, nil
 }
