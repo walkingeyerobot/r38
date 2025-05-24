@@ -1093,7 +1093,13 @@ func ServeAPIForceEnd(_ http.ResponseWriter, r *http.Request, userID int64, tx *
 
 // ServeAPIUserInfo serves the /api/userinfo endpoint.
 func ServeAPIUserInfo(w http.ResponseWriter, _ *http.Request, userID int64, tx *sql.Tx, ob *objectbox.ObjectBox) error {
-	userInfoJSON, err := getUserJSON(userID, tx)
+	var userInfoJSON []byte
+	var err error
+	if tx != nil {
+		userInfoJSON, err = getUserJSON(userID, tx)
+	} else if ob != nil {
+		userInfoJSON, err = getUserJSONOb(userID, ob)
+	}
 	if err != nil {
 		return err
 	}
@@ -1236,6 +1242,27 @@ func getUserJSON(userID int64, tx *sql.Tx) ([]byte, error) {
 		if mtgoName.Valid {
 			userInfo.MtgoName = mtgoName.String
 		}
+	}
+
+	userInfoJSON, err := json.Marshal(userInfo)
+	if err != nil {
+		return nil, err
+	}
+	return userInfoJSON, nil
+}
+
+func getUserJSONOb(userId int64, ob *objectbox.ObjectBox) ([]byte, error) {
+	var userInfo UserInfo
+
+	if userId != 0 {
+		user, err := schema.BoxForUser(ob).Get(uint64(userId))
+		if err != nil {
+			return nil, err
+		}
+		userInfo.ID = int64(user.Id)
+		userInfo.Name = user.DiscordName
+		userInfo.Picture = user.Picture
+		userInfo.MtgoName = user.MtgoName
 	}
 
 	userInfoJSON, err := json.Marshal(userInfo)
