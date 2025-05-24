@@ -309,8 +309,8 @@ func ServeAPIDraftList(w http.ResponseWriter, _ *http.Request, userId int64, tx 
 }
 
 // ServeAPIPrefs serves the /api/prefs endpoint.
-func ServeAPIPrefs(w http.ResponseWriter, _ *http.Request, userID int64, tx *sql.Tx, ob *objectbox.ObjectBox) error {
-	prefs, err := GetUserPrefs(userID, tx)
+func ServeAPIPrefs(w http.ResponseWriter, _ *http.Request, userId int64, tx *sql.Tx, _ *objectbox.ObjectBox) error {
+	prefs, err := GetUserPrefs(userId, tx)
 	if err != nil {
 		return err
 	}
@@ -318,7 +318,7 @@ func ServeAPIPrefs(w http.ResponseWriter, _ *http.Request, userID int64, tx *sql
 }
 
 // ServeAPISetPref serves the /api/setpref endpoint.
-func ServeAPISetPref(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx, ob *objectbox.ObjectBox) error {
+func ServeAPISetPref(w http.ResponseWriter, r *http.Request, userId int64, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 	if r.Method != "POST" {
 		return MethodNotAllowedError
 	}
@@ -333,18 +333,18 @@ func ServeAPISetPref(w http.ResponseWriter, r *http.Request, userID int64, tx *s
 		return fmt.Errorf("error parsing post body: %w", err)
 	}
 
-	if pref.FormatPref.Format != "" {
+	if pref.FormatPref.Format != "" && tx != nil {
 		var query string
 		if dg != nil {
 			query := `select discord_id from users where id = ?`
-			row := tx.QueryRow(query, userID)
+			row := tx.QueryRow(query, userId)
 			var discordId sql.NullString
 			err = row.Scan(&discordId)
 			if err != nil {
 				return err
 			}
 			if !discordId.Valid {
-				return fmt.Errorf("user %d with no discord ID can't enable formats", userID)
+				return fmt.Errorf("user %d with no discord ID can't enable formats", userId)
 			}
 			member, err := dg.GuildMember(makedraft.GuildId, discordId.String)
 			if err != nil {
@@ -357,7 +357,7 @@ func ServeAPISetPref(w http.ResponseWriter, r *http.Request, userID int64, tx *s
 				}
 			}
 			if !isDraftFriend {
-				return fmt.Errorf("user %d is not draft friend, can't enable formats", userID)
+				return fmt.Errorf("user %d is not draft friend, can't enable formats", userId)
 			}
 		}
 
@@ -368,21 +368,34 @@ func ServeAPISetPref(w http.ResponseWriter, r *http.Request, userID int64, tx *s
 			elig = 0
 		}
 		query = `update userformats set elig = ? where user = ? and format = ?`
-		_, err = tx.Exec(query, elig, userID, pref.FormatPref.Format)
+		_, err = tx.Exec(query, elig, userId, pref.FormatPref.Format)
 		if err != nil {
 			return fmt.Errorf("error updating user pref: %w", err)
 		}
 	}
 
 	if pref.MtgoName != "" {
-		query := `update users set mtgo_name = ? where id = ?`
-		_, err = tx.Exec(query, pref.MtgoName, userID)
-		if err != nil {
-			return fmt.Errorf("error updating user MTGO name: %w", err)
+		if tx != nil {
+			query := `update users set mtgo_name = ? where id = ?`
+			_, err = tx.Exec(query, pref.MtgoName, userId)
+			if err != nil {
+				return fmt.Errorf("error updating user MTGO name: %w", err)
+			}
+		} else if ob != nil {
+			userBox := schema.BoxForUser(ob)
+			user, err := userBox.Get(uint64(userId))
+			if err != nil {
+				return fmt.Errorf("error updating user MTGO name: %w", err)
+			}
+			user.MtgoName = pref.MtgoName
+			_, err = userBox.Put(user)
+			if err != nil {
+				return fmt.Errorf("error updating user MTGO name: %w", err)
+			}
 		}
 	}
 
-	return ServeAPIPrefs(w, r, userID, tx, ob)
+	return ServeAPIPrefs(w, r, userId, tx, ob)
 }
 
 // ServeAPIPick serves the /api/pick endpoint.
@@ -2579,18 +2592,20 @@ func draftToDraftListEntry(draft *schema.Draft, userId int64) DraftListEntry {
 func GetUserPrefs(userID int64, tx *sql.Tx) (UserFormatPrefs, error) {
 	var prefs UserFormatPrefs
 
-	query := `select
+	if tx != nil {
+		query := `select
 				format, elig
 				from userformats
 				where user = ?`
-	result, err := tx.Query(query, userID)
-	if err != nil {
-		return prefs, err
-	}
-	for result.Next() {
-		var pref UserFormatPref
-		err = result.Scan(&pref.Format, &pref.Elig)
-		prefs.Prefs = append(prefs.Prefs, pref)
+		result, err := tx.Query(query, userID)
+		if err != nil {
+			return prefs, err
+		}
+		for result.Next() {
+			var pref UserFormatPref
+			err = result.Scan(&pref.Format, &pref.Elig)
+			prefs.Prefs = append(prefs.Prefs, pref)
+		}
 	}
 
 	return prefs, nil
