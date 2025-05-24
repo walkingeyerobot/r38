@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/objectbox/objectbox-go/objectbox"
+	"github.com/walkingeyerobot/r38/schema"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -48,14 +49,14 @@ func generateStateOauthCookie(w http.ResponseWriter) string {
 	return state
 }
 
-func oauthDiscordLogin(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx, ob *objectbox.ObjectBox) error {
+func oauthDiscordLogin(w http.ResponseWriter, r *http.Request, _ int64, _ *sql.Tx, _ *objectbox.ObjectBox) error {
 	oauthState := generateStateOauthCookie(w)
 	u := discordOauthConfig.AuthCodeURL(oauthState)
 	http.Redirect(w, r, u, http.StatusTemporaryRedirect)
 	return nil
 }
 
-func oauthDiscordCallback(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx, ob *objectbox.ObjectBox) error {
+func oauthDiscordCallback(w http.ResponseWriter, r *http.Request, _ int64, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 	oauthState, _ := r.Cookie("oauthstate")
 
 	if r.FormValue("state") != oauthState.Value {
@@ -81,25 +82,50 @@ func oauthDiscordCallback(w http.ResponseWriter, r *http.Request, userID int64, 
 		p.Picture = "https://cdn.discordapp.com/embed/avatars/0.png"
 	}
 
-	statement, err := tx.Prepare(`INSERT INTO users (discord_id, discord_name, picture) VALUES (?, ?, ?)`)
-	if err != nil {
-		return err
-	}
-	statement.Exec(p.ID, p.Name, p.Picture)
+	if tx != nil {
+		statement, err := tx.Prepare(`INSERT INTO users (discord_id, discord_name, picture) VALUES (?, ?, ?)`)
+		if err != nil {
+			return err
+		}
+		statement.Exec(p.ID, p.Name, p.Picture)
 
-	query := `update users set discord_name = ?, picture = ? where discord_id = ?`
-	_, err = tx.Exec(query, p.Name, p.Picture, p.ID)
-	if err != nil {
-		return err
+		query := `update users set discord_name = ?, picture = ? where discord_id = ?`
+		_, err = tx.Exec(query, p.Name, p.Picture, p.ID)
+		if err != nil {
+			return err
+		}
+
+		row := tx.QueryRow(`SELECT id FROM users WHERE discord_id = ?`, p.ID)
+		var rowid string
+		err = row.Scan(&rowid)
+		if err != nil {
+			return err
+		}
+		session.Values["userid"] = rowid
+	} else if ob != nil {
+		userBox := schema.BoxForUser(ob)
+		users, err := userBox.Query(schema.User_.DiscordId.Equals(p.ID, true)).Find()
+		if err != nil {
+			return err
+		}
+
+		var user *schema.User
+		if len(users) > 0 {
+			user = users[0]
+		} else {
+			user = &schema.User{
+				DiscordId:   p.ID,
+				DiscordName: p.Name,
+				Picture:     p.Picture,
+			}
+			_, err := userBox.Put(user)
+			if err != nil {
+				return err
+			}
+		}
+		session.Values["userid"] = user.Id
 	}
 
-	row := tx.QueryRow(`SELECT id FROM users WHERE discord_id = ?`, p.ID)
-	var rowid string
-	err = row.Scan(&rowid)
-	if err != nil {
-		return err
-	}
-	session.Values["userid"] = rowid
 	err = session.Save(r, w)
 	if err != nil {
 		return err
