@@ -11,6 +11,7 @@ import (
 	"math/rand"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"slices"
 	"strconv"
 	"strings"
@@ -23,7 +24,7 @@ func doSetupOB(t *testing.T, seed int) (*objectbox.ObjectBox, error) {
 	sock = ""
 
 	ob, err := objectbox.NewBuilder().Model(schema.ObjectBoxModel()).
-		Directory(fmt.Sprintf("memory:test-db-%d", time.Now().UnixNano())).Build()
+		Directory(fmt.Sprintf("memory:test-db-%d-%d", time.Now().UnixNano(), os.Getpid())).Build()
 	if err != nil {
 		t.Error(err)
 	}
@@ -114,48 +115,45 @@ func findCardToPickOB(t *testing.T, ob *objectbox.ObjectBox, seat int, round int
 	return nil
 }
 
-func FuzzInPersonDraftOB(f *testing.F) {
-	f.Add(SEED)
-	f.Fuzz(func(t *testing.T, seed int) {
-		ob, err := doSetupOB(t, seed)
-		if err != nil {
-			t.Errorf("error in setup: %s", err.Error())
-			t.FailNow()
-		}
-		defer ob.Close()
+func TestInPersonDraftOB(t *testing.T) {
+	ob, err := doSetupOB(t, SEED)
+	if err != nil {
+		t.Errorf("error in setup: %s", err.Error())
+		t.FailNow()
+	}
+	defer ob.Close()
 
-		makeDraftOB(t, ob, seed)
+	makeDraftOB(t, ob, SEED)
 
-		handlers := NewHandler(nil, ob, false)
+	handlers := NewHandler(nil, ob, false)
 
-		players, seats := populateDraft(t, handlers)
+	players, seats := populateDraft(t, handlers)
 
-		for round := range 3 {
-			for card := range 15 {
-				for _, seat := range rand.Perm(8) {
-					player := players[seat] + 1
+	for round := range 3 {
+		for card := range 15 {
+			for _, seat := range rand.Perm(8) {
+				player := players[seat] + 1
 
-					cardId := findCardToPickOB(t, ob, seats[seat], round, card).CardId
+				cardId := findCardToPickOB(t, ob, seats[seat], round, card).CardId
 
-					token := xsrftoken.Generate(xsrfKey, strconv.FormatInt(int64(player), 16), "pick1")
+				token := xsrftoken.Generate(xsrfKey, strconv.FormatInt(int64(player), 16), "pick1")
 
-					t.Logf("pack %d pick %d: player %d (position %d) picking card %s", round+1, card+1, player, seats[seat]+1, cardId)
-					w := httptest.NewRecorder()
-					handlers.ServeHTTP(w,
-						httptest.NewRequest("POST", fmt.Sprintf("/api/pickrfid/?as=%d", player),
-							strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cardRfids": ["%s"], "xsrfToken": "%s"}`, cardId, token))))
-					res := w.Result()
-					if res.StatusCode != http.StatusOK {
-						body, _ := io.ReadAll(res.Body)
-						t.Errorf("pick failed: %s", body)
-						spew.Dump(schema.BoxForDraft(ob).Get(1))
-						t.FailNow()
-					}
+				t.Logf("pack %d pick %d: player %d (position %d) picking card %s", round+1, card+1, player, seats[seat]+1, cardId)
+				w := httptest.NewRecorder()
+				handlers.ServeHTTP(w,
+					httptest.NewRequest("POST", fmt.Sprintf("/api/pickrfid/?as=%d", player),
+						strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cardRfids": ["%s"], "xsrfToken": "%s"}`, cardId, token))))
+				res := w.Result()
+				if res.StatusCode != http.StatusOK {
+					body, _ := io.ReadAll(res.Body)
+					t.Errorf("pick failed: %s", body)
+					spew.Dump(schema.BoxForDraft(ob).Get(1))
+					t.FailNow()
 				}
-
 			}
+
 		}
-	})
+	}
 }
 
 func TestInPersonDraftUndoFirstPickOB(t *testing.T) {
