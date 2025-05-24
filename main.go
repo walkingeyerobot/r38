@@ -894,7 +894,7 @@ func doJoinSeatOb(ob *objectbox.ObjectBox, userId int64, draftId int64, seat *sc
 }
 
 // ServeAPISkip serves the /api/skip endpoint.
-func ServeAPISkip(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx, ob *objectbox.ObjectBox) error {
+func ServeAPISkip(w http.ResponseWriter, r *http.Request, userId int64, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 	if r.Method != "POST" {
 		return MethodNotAllowedError
 	}
@@ -909,14 +909,18 @@ func ServeAPISkip(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.
 		return fmt.Errorf("error parsing post body: %w", err)
 	}
 
-	draftID := toJoin.ID
+	draftId := toJoin.ID
 
-	err = doSkip(tx, userID, draftID)
+	if tx != nil {
+		err = doSkip(tx, userId, draftId)
+	} else if ob != nil {
+		err = doSkipOb(ob, userId, draftId)
+	}
 	if err != nil {
-		return fmt.Errorf("error skipping draft %d: %w", draftID, err)
+		return fmt.Errorf("error skipping draft %d: %w", draftId, err)
 	}
 
-	draftJSON, err := GetFilteredJSON(tx, ob, draftID, userID)
+	draftJSON, err := GetFilteredJSON(tx, ob, draftId, userId)
 	if err != nil {
 		return fmt.Errorf("error getting json: %w", err)
 	}
@@ -988,6 +992,61 @@ func doSkip(tx *sql.Tx, userID int64, draftID int64) error {
 	}
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+// doSkipOb does the actual skipping.
+func doSkipOb(ob *objectbox.ObjectBox, userId int64, draftId int64) error {
+	draft, err := schema.BoxForDraft(ob).Get(uint64(draftId))
+	if err != nil {
+		return err
+	}
+
+	if slices.IndexFunc(draft.Seats, func(seat *schema.Seat) bool {
+		return seat.User.Id == uint64(userId)
+	}) != -1 {
+		return fmt.Errorf("user %d already joined %d", userId, draftId)
+	}
+
+	reservedSeatIndex := slices.IndexFunc(draft.Seats, func(seat *schema.Seat) bool {
+		return seat.ReservedUser.Id == uint64(userId)
+	})
+	if reservedSeatIndex == -1 {
+		return fmt.Errorf("no seat reserved for user %d in draft %d", userId, draftId)
+	}
+	seat := draft.Seats[reservedSeatIndex]
+
+	userBox := schema.BoxForUser(ob)
+	user, err := userBox.Get(uint64(userId))
+	if err != nil {
+		return err
+	}
+	user.Skips = append(user.Skips, &schema.Skip{
+		DraftId: uint64(draftId),
+	})
+	_, err = userBox.Put(user)
+	if err != nil {
+		return err
+	}
+
+	newUser, err := makedraft.AssignSeatsOb(ob, draftId, 1)
+	if err != nil {
+		return err
+	}
+	if len(newUser) > 0 {
+		seat.ReservedUser = nil
+	} else {
+		reservedUser, err := userBox.Get(uint64(newUser[0]))
+		if err != nil {
+			return err
+		}
+		seat.ReservedUser = reservedUser
+		_, err = schema.BoxForSeat(ob).Put(seat)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
