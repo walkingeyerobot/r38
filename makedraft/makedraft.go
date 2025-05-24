@@ -316,7 +316,6 @@ func MakeDraft(settings Settings, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 		if err != nil {
 			return err
 		}
-		// TODO: handle assignPacks
 		scanSounds := rand.Perm(8)
 		errorSounds := rand.Perm(8)
 
@@ -373,6 +372,16 @@ func MakeDraft(settings Settings, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 				Cards:         obCards,
 			}
 			obPacks = append(obPacks, &obPack)
+		}
+
+		if assignPacks {
+			randPacks := rand.Perm(len(obPacks))
+			for i, seat := range seats {
+				for j := range 3 {
+					seat.Packs = append(seat.Packs, obPacks[randPacks[i*3+j]])
+				}
+			}
+			obPacks = []*schema.Pack{}
 		}
 
 		draft := schema.Draft{
