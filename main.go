@@ -355,7 +355,7 @@ func ServeAPISetPref(w http.ResponseWriter, r *http.Request, userID int64, tx *s
 			if !discordId.Valid {
 				return fmt.Errorf("user %d with no discord ID can't enable formats", userID)
 			}
-			member, err := dg.GuildMember(makedraft.GUILD_ID, discordId.String)
+			member, err := dg.GuildMember(makedraft.GuildId, discordId.String)
 			if err != nil {
 				return err
 			}
