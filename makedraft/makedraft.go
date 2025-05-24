@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"github.com/objectbox/objectbox-go/objectbox"
 	"github.com/walkingeyerobot/r38/schema"
-	"io/ioutil"
+	"io"
 	"log"
 	"math"
 	"math/rand"
@@ -24,8 +24,8 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-const GUILD_ID = "685333271793500161"
-const SPECTATORS_CATEGORY_ID = "711340302966980698"
+const GuildId = "685333271793500161"
+const SpectatorsCategoryId = "711340302966980698"
 
 // Settings stores all the settings that can be passed in.
 type Settings struct {
@@ -64,9 +64,11 @@ func MakeDraft(settings Settings, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 	if err != nil {
 		return fmt.Errorf("error opening json file: %w", err)
 	}
-	defer jsonFile.Close()
+	defer func() {
+		_ = jsonFile.Close()
+	}()
 
-	byteValue, err := ioutil.ReadAll(jsonFile)
+	byteValue, err := io.ReadAll(jsonFile)
 	if err != nil {
 		return fmt.Errorf("error readalling: %w", err)
 	}
@@ -130,12 +132,15 @@ func MakeDraft(settings Settings, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 			return fmt.Errorf("error parsing json flags: %w", err)
 		}
 		var allFlags []string
-		for _, flag := range fields {
-			if flag != "" {
-				allFlags = append(allFlags, flag)
+		for _, field := range fields {
+			if field != "" {
+				allFlags = append(allFlags, field)
 			}
 		}
-		flagSet.Parse(allFlags)
+		err = flagSet.Parse(allFlags)
+		if err != nil {
+			return fmt.Errorf("error parsing json flags: %w", err)
+		}
 	}
 
 	if *settings.Seed == 0 {
@@ -300,7 +305,10 @@ func MakeDraft(settings Settings, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 				} else {
 					data = re.ReplaceAllString(card.Data, "false")
 				}
-				tx.Exec(query, packID, packID, data, card.ID)
+				_, err = tx.Exec(query, packID, packID, data, card.ID)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -420,7 +428,7 @@ func generateEmptyDraft(tx *sql.Tx, name string, format string, inPerson bool, a
 	var channel *discordgo.Channel
 	var channelID string
 	if dg != nil {
-		channel, err = dg.GuildChannelCreate(GUILD_ID,
+		channel, err = dg.GuildChannelCreate(GuildId,
 			regexp.MustCompile("[^a-z-]").ReplaceAllString(strings.ToLower(name), "-")+"-spectators",
 			discordgo.ChannelTypeGuildText)
 		if err != nil {
@@ -444,8 +452,8 @@ func generateEmptyDraft(tx *sql.Tx, name string, format string, inPerson bool, a
 
 	if dg != nil {
 		_, err = dg.ChannelEditComplex(channel.ID, &discordgo.ChannelEdit{
-			Topic:    fmt.Sprintf("<http://draftcu.be/draft/%d>", draftID),
-			ParentID: SPECTATORS_CATEGORY_ID,
+			Topic:    fmt.Sprintf("<https://draftcu.be/draft/%d>", draftID),
+			ParentID: SpectatorsCategoryId,
 		})
 		if err != nil {
 			return packIds, fmt.Errorf("error creating spectator channel: %s", err)
@@ -809,11 +817,17 @@ func AssignSeats(tx *sql.Tx, draftID int64, format string, numUsers int) ([]int,
 	var users []int
 	for result.Next() {
 		var user int
-		result.Scan(&user)
+		err = result.Scan(&user)
+		if err != nil {
+			return users, err
+		}
 		users = append(users, user)
 
 		query = `UPDATE userformats SET epoch = max(?, epoch + 1) where user = ? and format = ?`
 		_, err = tx.Exec(query, draftEpoch, user, format)
+		if err != nil {
+			return users, err
+		}
 	}
 
 	return users, nil
