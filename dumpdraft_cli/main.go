@@ -16,11 +16,15 @@ func main() {
 
 	draftId := flagSet.Uint64("id", 0, "ID of the draft to dump.")
 
-	flagSet.Parse(os.Args[1:])
+	err := flagSet.Parse(os.Args[1:])
+	if err != nil {
+		log.Printf("error parsing flags: %s", err.Error())
+		os.Exit(1)
+	}
 
 	ob, err := objectbox.NewBuilder().Model(schema.ObjectBoxModel()).Build()
 	if err != nil {
-		log.Printf("error opening database: %w", err)
+		log.Printf("error opening database: %s", err.Error())
 		os.Exit(1)
 	}
 	defer ob.Close()
@@ -29,7 +33,7 @@ func main() {
 
 	draft, err := box.Get(*draftId)
 	if err != nil {
-		log.Printf("error reading draft: %w", err)
+		log.Printf("error reading draft: %s", err.Error())
 		os.Exit(1)
 	}
 	if draft == nil {
