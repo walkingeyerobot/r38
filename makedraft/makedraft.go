@@ -15,6 +15,7 @@ import (
 	"os"
 	"path"
 	"regexp"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -305,22 +306,50 @@ func MakeDraft(settings Settings, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 	}
 
 	if ob != nil {
-		// TODO: handle assignSeats/assignPacks
+		var numUsers int
+		if assignSeats {
+			numUsers = 8
+		} else {
+			numUsers = 0
+		}
+		assignedUsers, err := AssignSeatsOb(ob, 0, numUsers)
+		if err != nil {
+			return err
+		}
+		// TODO: handle assignPacks
 		scanSounds := rand.Perm(8)
 		errorSounds := rand.Perm(8)
 
 		var seats []*schema.Seat
 		for i := 0; i < 8; i++ {
-			seat := schema.Seat{
-				Position:      i,
-				Round:         1,
-				ScanSound:     scanSounds[i],
-				ErrorSound:    errorSounds[i],
-				Packs:         []*schema.Pack{},
-				OriginalPacks: []*schema.Pack{},
-				PickedCards:   []*schema.Card{},
+			if len(assignedUsers) > i {
+				reservedUser, err := schema.BoxForUser(ob).Get(uint64(assignedUsers[i]))
+				if err != nil {
+					return err
+				}
+				seat := schema.Seat{
+					Position:      i,
+					Round:         1,
+					ReservedUser:  reservedUser,
+					ScanSound:     scanSounds[i],
+					ErrorSound:    errorSounds[i],
+					Packs:         []*schema.Pack{},
+					OriginalPacks: []*schema.Pack{},
+					PickedCards:   []*schema.Card{},
+				}
+				seats = append(seats, &seat)
+			} else {
+				seat := schema.Seat{
+					Position:      i,
+					Round:         1,
+					ScanSound:     scanSounds[i],
+					ErrorSound:    errorSounds[i],
+					Packs:         []*schema.Pack{},
+					OriginalPacks: []*schema.Pack{},
+					PickedCards:   []*schema.Card{},
+				}
+				seats = append(seats, &seat)
 			}
-			seats = append(seats, &seat)
 		}
 
 		var obPacks []*schema.Pack
@@ -779,6 +808,54 @@ func AssignSeats(tx *sql.Tx, draftID int64, format string, numUsers int) ([]int,
 	}
 
 	return users, nil
+}
+
+func AssignSeatsOb(ob *objectbox.ObjectBox, draftId int64, numUsers int) ([]int, error) {
+	var userIds []int
+	if numUsers == 0 {
+		return userIds, nil
+	}
+
+	if draftId != 0 {
+		draft, err := schema.BoxForDraft(ob).Get(uint64(draftId))
+		if err != nil {
+			return userIds, err
+		}
+
+		users, err := schema.BoxForUser(ob).GetAll() // TODO: need to limit?
+		if err != nil {
+			return userIds, err
+		}
+		candidates := rand.Perm(len(users))
+		for _, i := range candidates {
+			if slices.IndexFunc(users[i].Skips, func(skip *schema.Skip) bool {
+				return skip.DraftId == uint64(draftId)
+			}) != -1 {
+				continue
+			}
+			userId := users[i].Id
+			if slices.IndexFunc(draft.Seats, func(seat *schema.Seat) bool {
+				return seat.User.Id == userId || seat.ReservedUser.Id == userId
+			}) != -1 {
+				continue
+			}
+			userIds = append(userIds, int(userId))
+			if len(userIds) == numUsers {
+				break
+			}
+		}
+	} else {
+		users, err := schema.BoxForUser(ob).GetAll() // TODO: need to limit?
+		if err != nil {
+			return userIds, err
+		}
+		candidates := rand.Perm(len(users))
+		for _, i := range candidates {
+			userIds = append(userIds, int(users[i].Id))
+		}
+	}
+
+	return userIds, nil
 }
 
 func stdev(list []float64) float64 {

@@ -45,6 +45,7 @@ type User struct {
 	DiscordName string
 	MtgoName    string
 	Picture     string
+	Skips       []*Skip
 }
 
 type Event struct {
@@ -56,4 +57,9 @@ type Event struct {
 	Pack         *Pack `objectbox:"link"`
 	Modified     int
 	Round        int
+}
+
+type Skip struct {
+	Id      uint64
+	DraftId uint64
 }
