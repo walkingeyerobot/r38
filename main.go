@@ -11,9 +11,7 @@ import (
 	"fmt"
 	"github.com/objectbox/objectbox-go/objectbox"
 	"github.com/walkingeyerobot/r38/schema"
-	"html/template"
 	"io"
-	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -41,13 +39,13 @@ import (
 
 type r38handler func(w http.ResponseWriter, r *http.Request, userId int64, tx *sql.Tx, ob *objectbox.ObjectBox) error
 
-const FOREST_BEAR_ID = "700900270153924608"
-const FOREST_BEAR = ":forestbear:" + FOREST_BEAR_ID
-const DRAFT_ALERTS_ROLE = "692079611680653442"
-const DRAFT_FRIEND_ROLE = "692865288554938428"
-const EVERYONE_ROLE = "685333271793500161"
-const BOSS = "176164707026206720"
-const PINK = 0xE50389
+const ForestBearId = "700900270153924608"
+const ForestBear = ":forestbear:" + ForestBearId
+const DraftAlertsRole = "692079611680653442"
+const DraftFriendRole = "692865288554938428"
+const EveryoneRole = "685333271793500161"
+const Boss = "176164707026206720"
+const Pink = 0xE50389
 
 var secretKeyNoOneWillEverGuess = []byte(os.Getenv("SESSION_SECRET"))
 var xsrfKey string
@@ -208,9 +206,9 @@ func NewHandler(database *sql.DB, ob *objectbox.ObjectBox, useAuth bool) http.Ha
 
 				err = serveFunc(w, r, userID, tx, nil)
 				if err != nil {
-					tx.Rollback()
+					err = errors.Join(err, tx.Rollback())
 				} else {
-					tx.Commit()
+					err = tx.Commit()
 				}
 			} else if ob != nil {
 				handle := func() error {
@@ -231,7 +229,7 @@ func NewHandler(database *sql.DB, ob *objectbox.ObjectBox, useAuth bool) http.Ha
 					} else {
 						w.WriteHeader(http.StatusInternalServerError)
 					}
-					json.NewEncoder(w).Encode(JSONError{Error: err.Error()})
+					_ = json.NewEncoder(w).Encode(JSONError{Error: err.Error()})
 				} else {
 					http.Error(w, err.Error(), http.StatusInternalServerError)
 				}
@@ -274,12 +272,6 @@ func HandleIndex(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "client-dist/index.html")
 }
 
-func HandleLogin(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx, ob *objectbox.ObjectBox) error {
-	t := template.Must(template.ParseFiles("login.tmpl"))
-	t.Execute(w, nil)
-	return nil
-}
-
 // ServeAPIDraft serves the /api/draft endpoint.
 func ServeAPIDraft(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 	re := regexp.MustCompile(`/api/draft/(\d+)`)
@@ -297,12 +289,12 @@ func ServeAPIDraft(w http.ResponseWriter, r *http.Request, userID int64, tx *sql
 		return fmt.Errorf("error getting json: %w", err)
 	}
 
-	fmt.Fprint(w, draftJSON)
-	return nil
+	_, err = fmt.Fprint(w, draftJSON)
+	return err
 }
 
 // ServeAPIDraftList serves the /api/draftlist endpoint.
-func ServeAPIDraftList(w http.ResponseWriter, r *http.Request, userId int64, tx *sql.Tx, ob *objectbox.ObjectBox) error {
+func ServeAPIDraftList(w http.ResponseWriter, _ *http.Request, userId int64, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 	var drafts DraftList
 	var err error
 	if tx != nil {
@@ -317,13 +309,12 @@ func ServeAPIDraftList(w http.ResponseWriter, r *http.Request, userId int64, tx 
 }
 
 // ServeAPIPrefs serves the /api/prefs endpoint.
-func ServeAPIPrefs(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx, ob *objectbox.ObjectBox) error {
+func ServeAPIPrefs(w http.ResponseWriter, _ *http.Request, userID int64, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 	prefs, err := GetUserPrefs(userID, tx)
 	if err != nil {
 		return err
 	}
-	json.NewEncoder(w).Encode(prefs)
-	return nil
+	return json.NewEncoder(w).Encode(prefs)
 }
 
 // ServeAPISetPref serves the /api/setpref endpoint.
@@ -332,7 +323,7 @@ func ServeAPISetPref(w http.ResponseWriter, r *http.Request, userID int64, tx *s
 		return MethodNotAllowedError
 	}
 
-	bodyBytes, err := ioutil.ReadAll(r.Body)
+	bodyBytes, err := io.ReadAll(r.Body)
 	if err != nil {
 		return fmt.Errorf("error reading post body: %w", err)
 	}
@@ -361,7 +352,7 @@ func ServeAPISetPref(w http.ResponseWriter, r *http.Request, userID int64, tx *s
 			}
 			isDraftFriend := false
 			for _, role := range member.Roles {
-				if role == DRAFT_FRIEND_ROLE {
+				if role == DraftFriendRole {
 					isDraftFriend = true
 				}
 			}
@@ -400,7 +391,7 @@ func ServeAPIPick(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.
 		return MethodNotAllowedError
 	}
 
-	bodyBytes, err := ioutil.ReadAll(r.Body)
+	bodyBytes, err := io.ReadAll(r.Body)
 	if err != nil {
 		return fmt.Errorf("error reading post body: %w", err)
 	}
@@ -423,7 +414,7 @@ func ServeAPIPickRfid(w http.ResponseWriter, r *http.Request, userId int64, tx *
 		return MethodNotAllowedError
 	}
 
-	bodyBytes, err := ioutil.ReadAll(r.Body)
+	bodyBytes, err := io.ReadAll(r.Body)
 	if err != nil {
 		return fmt.Errorf("error reading post body: %w", err)
 	}
@@ -536,17 +527,17 @@ func doHandlePostedPick(w http.ResponseWriter, pick PostedPick, userId int64, zo
 		return fmt.Errorf("error getting json: %w", err)
 	}
 
-	fmt.Fprint(w, draftJSON)
-	return nil
+	_, err = fmt.Fprint(w, draftJSON)
+	return err
 }
 
 // ServeAPIUndoPick serves the /api/undopick endpoint.
-func ServeAPIUndoPick(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx, ob *objectbox.ObjectBox) error {
+func ServeAPIUndoPick(_ http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 	if r.Method != "POST" {
 		return MethodNotAllowedError
 	}
 
-	bodyBytes, err := ioutil.ReadAll(r.Body)
+	bodyBytes, err := io.ReadAll(r.Body)
 	if err != nil {
 		return fmt.Errorf("error reading post body: %w", err)
 	}
@@ -623,13 +614,22 @@ func ServeAPIUndoPick(w http.ResponseWriter, r *http.Request, userID int64, tx *
 		draft.Events = slices.DeleteFunc(draft.Events, func(e *schema.Event) bool {
 			return e == lastEvent
 		})
-		draftBox.Put(draft)
+		_, err = draftBox.Put(draft)
+		if err != nil {
+			return err
+		}
 
 		card := lastEvent.Card1
 		packBox := schema.BoxForPack(ob)
 		pack, err := packBox.Get(lastEvent.Pack.Id)
+		if err != nil {
+			return err
+		}
 		pack.Cards = append(pack.Cards, card)
-		packBox.Put(pack)
+		_, err = packBox.Put(pack)
+		if err != nil {
+			return err
+		}
 
 		seatBox := schema.BoxForSeat(ob)
 		newSeatIndex := slices.IndexFunc(draft.Seats, func(seat *schema.Seat) bool {
@@ -641,13 +641,19 @@ func ServeAPIUndoPick(w http.ResponseWriter, r *http.Request, userID int64, tx *
 		newSeat.Packs = slices.DeleteFunc(newSeat.Packs, func(pack *schema.Pack) bool {
 			return pack.Id == lastEvent.Pack.Id
 		})
-		seatBox.Put(newSeat)
+		_, err = seatBox.Put(newSeat)
+		if err != nil {
+			return err
+		}
 
 		seat.PickedCards = slices.DeleteFunc(seat.PickedCards, func(c *schema.Card) bool {
 			return c.Id == card.Id
 		})
 		seat.Packs = append(seat.Packs, pack)
-		seatBox.Put(seat)
+		_, err = seatBox.Put(seat)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -659,7 +665,7 @@ func ServeAPIJoin(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.
 		return MethodNotAllowedError
 	}
 
-	bodyBytes, err := ioutil.ReadAll(r.Body)
+	bodyBytes, err := io.ReadAll(r.Body)
 	if err != nil {
 		return fmt.Errorf("error reading post body: %w", err)
 	}
@@ -698,8 +704,8 @@ func ServeAPIJoin(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.
 		return fmt.Errorf("error getting json: %w", err)
 	}
 
-	fmt.Fprint(w, draftJSON)
-	return nil
+	_, err = fmt.Fprint(w, draftJSON)
+	return err
 }
 
 // doJoin does the actual joining.
@@ -767,9 +773,9 @@ func doJoinOb(ob *objectbox.ObjectBox, userId int64, draftId int64) error {
 	}
 
 	if reservedSeat != nil {
-		err = doJoinSeatOb(ob, userId, draftId, reservedSeat)
+		err = doJoinSeatOb(ob, userId, reservedSeat)
 	} else if openSeat != nil {
-		err = doJoinSeatOb(ob, userId, draftId, openSeat)
+		err = doJoinSeatOb(ob, userId, openSeat)
 	} else {
 		return fmt.Errorf("no non-reserved seats available for user %d in draft %d", userId, draftId)
 	}
@@ -847,7 +853,7 @@ func doJoinSeatPositionOb(ob *objectbox.ObjectBox, userId int64, draftId int64, 
 		return fmt.Errorf("seat %d (position %d) in draft %d already reserved by user %d", seat.Id, position, draft.Id, seat.ReservedUser.Id)
 	}
 
-	err = doJoinSeatOb(ob, userId, draftId, seat)
+	err = doJoinSeatOb(ob, userId, seat)
 	return err
 }
 
@@ -883,7 +889,7 @@ func doJoinSeatId(tx *sql.Tx, userID int64, draftID int64, query string, emptySe
 	return nil
 }
 
-func doJoinSeatOb(ob *objectbox.ObjectBox, userId int64, draftId int64, seat *schema.Seat) error {
+func doJoinSeatOb(ob *objectbox.ObjectBox, userId int64, seat *schema.Seat) error {
 	user, err := schema.BoxForUser(ob).Get(uint64(userId))
 	if err != nil {
 		return err
@@ -899,7 +905,7 @@ func ServeAPISkip(w http.ResponseWriter, r *http.Request, userId int64, tx *sql.
 		return MethodNotAllowedError
 	}
 
-	bodyBytes, err := ioutil.ReadAll(r.Body)
+	bodyBytes, err := io.ReadAll(r.Body)
 	if err != nil {
 		return fmt.Errorf("error reading post body: %w", err)
 	}
@@ -925,8 +931,8 @@ func ServeAPISkip(w http.ResponseWriter, r *http.Request, userId int64, tx *sql.
 		return fmt.Errorf("error getting json: %w", err)
 	}
 
-	fmt.Fprint(w, draftJSON)
-	return nil
+	_, err = fmt.Fprint(w, draftJSON)
+	return err
 }
 
 // doSkip does the actual skipping.
@@ -1055,7 +1061,7 @@ func doSkipOb(ob *objectbox.ObjectBox, userId int64, draftId int64) error {
 // ServeAPIForceEnd serves the /api/dev/forceEnd testing endpoint.
 func ServeAPIForceEnd(_ http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 	if userID == 1 {
-		bodyBytes, err := ioutil.ReadAll(r.Body)
+		bodyBytes, err := io.ReadAll(r.Body)
 		if err != nil {
 			return fmt.Errorf("error reading post body: %w", err)
 		}
@@ -1073,19 +1079,19 @@ func ServeAPIForceEnd(_ http.ResponseWriter, r *http.Request, userID int64, tx *
 }
 
 // ServeAPIUserInfo serves the /api/userinfo endpoint.
-func ServeAPIUserInfo(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx, ob *objectbox.ObjectBox) error {
+func ServeAPIUserInfo(w http.ResponseWriter, _ *http.Request, userID int64, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 	userInfoJSON, err := getUserJSON(userID, tx)
 	if err != nil {
 		return err
 	}
 
-	w.Write(userInfoJSON)
-	return nil
+	_, err = w.Write(userInfoJSON)
+	return err
 }
 
 // ServeAPIGetCardPack serves the /api/getcardpack endpoint.
 func ServeAPIGetCardPack(w http.ResponseWriter, r *http.Request, _ int64, tx *sql.Tx, ob *objectbox.ObjectBox) error {
-	bodyBytes, err := ioutil.ReadAll(r.Body)
+	bodyBytes, err := io.ReadAll(r.Body)
 	if err != nil {
 		return fmt.Errorf("error reading post body: %w", err)
 	}
@@ -1122,7 +1128,9 @@ func ServeAPIGetCardPack(w http.ResponseWriter, r *http.Request, _ int64, tx *sq
 	if err != nil {
 		return fmt.Errorf("error finding packs in draft: %w", err)
 	}
-	defer rows.Close()
+	defer func() {
+		_ = rows.Close()
+	}()
 	var packIndex = 1
 	for rows.Next() {
 		var packIdAtIndex int64
@@ -1144,8 +1152,8 @@ func ServeAPIGetCardPack(w http.ResponseWriter, r *http.Request, _ int64, tx *sq
 }
 
 // ServeAPISet serves the /api/set endpoint.
-func ServeAPISet(w http.ResponseWriter, r *http.Request, _ int64, tx *sql.Tx, ob *objectbox.ObjectBox) error {
-	bodyBytes, err := ioutil.ReadAll(r.Body)
+func ServeAPISet(w http.ResponseWriter, r *http.Request, _ int64, _ *sql.Tx, _ *objectbox.ObjectBox) error {
+	bodyBytes, err := io.ReadAll(r.Body)
 	if err != nil {
 		return fmt.Errorf("error reading post body: %w", err)
 	}
@@ -1159,9 +1167,11 @@ func ServeAPISet(w http.ResponseWriter, r *http.Request, _ int64, tx *sql.Tx, ob
 	if err != nil {
 		return fmt.Errorf("error opening json file: %w", err)
 	}
-	defer jsonFile.Close()
+	defer func() {
+		_ = jsonFile.Close()
+	}()
 
-	byteValue, err := ioutil.ReadAll(jsonFile)
+	byteValue, err := io.ReadAll(jsonFile)
 	if err != nil {
 		return fmt.Errorf("error readalling: %w", err)
 	}
@@ -1296,7 +1306,7 @@ func doSinglePick(tx *sql.Tx, ob *objectbox.ObjectBox, userId int64, draftId int
 		if err != nil {
 			return err
 		}
-		err = doEventOb(ob, draftId, userId, announcements, cardId, sql.NullInt64{}, packID, seat, round)
+		err = doEventOb(ob, draftId, announcements, cardId, sql.NullInt64{}, packID, seat, round)
 		if err != nil {
 			return err
 		}
@@ -1309,7 +1319,7 @@ func doSinglePick(tx *sql.Tx, ob *objectbox.ObjectBox, userId int64, draftId int
 // Of those return values, packID and announcements are only really relevant for Cogwork Librarian,
 // which is not currently fully implemented, but we leave them here anyway for when we want to do that.
 func doPick(tx *sql.Tx, userId int64, draftId int64, cardId int64, pass bool, zoneDrafting bool) (int64, []string, int64, int64, error) {
-	announcements := []string{}
+	var announcements []string
 
 	// First we need information about the card. Determine which pack the card is in,
 	// where that pack is at the table, who sits at that Position, which draft that
@@ -1574,7 +1584,9 @@ func doPick(tx *sql.Tx, userId int64, draftId int64, cardId int64, pass bool, zo
 					if err != nil {
 						log.Printf("error determining if there's a blocking player")
 					} else {
-						defer rows.Close()
+						defer func() {
+							_ = rows.Close()
+						}()
 
 						rowCount := 0
 						var blockingPosition int64
@@ -1620,7 +1632,7 @@ func doPick(tx *sql.Tx, userId int64, draftId int64, cardId int64, pass bool, zo
 // Of those return values, packID and announcements are only really relevant for Cogwork Librarian,
 // which is not currently fully implemented, but we leave them here anyway for when we want to do that.
 func doPickOb(ob *objectbox.ObjectBox, userId int64, draftId int64, cardId int64, pass bool, zoneDrafting bool) (int64, []string, int64, *schema.Seat, error) {
-	announcements := []string{}
+	var announcements []string
 
 	var myPackID int64
 	var round int64
@@ -1812,7 +1824,7 @@ func doPickOb(ob *objectbox.ObjectBox, userId int64, draftId int64, cardId int64
 // NotifyByDraftAndDiscordID sends a discord alert to a user.
 func NotifyByDraftAndDiscordID(draftID int64, discordID string) error {
 	return DiscordNotify(os.Getenv("PICK_ALERTS_CHANNEL_ID"),
-		fmt.Sprintf(`<@%s> you have new picks <http://draftcu.be/draft/%d>`, discordID, draftID))
+		fmt.Sprintf(`<@%s> you have new picks <https://draftcu.be/draft/%d>`, discordID, draftID))
 }
 
 func NotifyEndOfDraft(tx *sql.Tx, ob *objectbox.ObjectBox, draftID int64) error {
@@ -1843,7 +1855,7 @@ func NotifyEndOfDraft(tx *sql.Tx, ob *objectbox.ObjectBox, draftID int64) error 
 			// OK to not find channel
 			return nil
 		}
-		err = UnlockSpectatorChannel(channelID.String, draftID)
+		err = UnlockSpectatorChannel(channelID.String)
 		if err != nil {
 			return err
 		}
@@ -1868,7 +1880,7 @@ func NotifyEndOfDraft(tx *sql.Tx, ob *objectbox.ObjectBox, draftID int64) error 
 		}
 
 		if len(draft.SpectatorChannelId) > 0 {
-			err = UnlockSpectatorChannel(draft.SpectatorChannelId, int64(draft.Id))
+			err = UnlockSpectatorChannel(draft.SpectatorChannelId)
 			if err != nil {
 				return err
 			}
@@ -1967,7 +1979,7 @@ func PostPairings(tx *sql.Tx, ob *objectbox.ObjectBox, draftID int64, draftName 
 		&discordgo.MessageEmbed{
 			Title:       fmt.Sprintf("%s, Round %d", draftName, round),
 			Description: pairings,
-			Color:       PINK,
+			Color:       Pink,
 			Footer: &discordgo.MessageEmbedFooter{
 				Text: "React with 🏆 if you win and 💀 if you lose.",
 			},
@@ -2016,7 +2028,7 @@ func GetAdminDiscordId(tx *sql.Tx) (string, error) {
 	return adminDiscordID, err
 }
 
-func UnlockSpectatorChannel(channelId string, draftID int64) error {
+func UnlockSpectatorChannel(channelId string) error {
 	if dg != nil {
 		channel, err := dg.Channel(channelId)
 		if err != nil {
@@ -2041,7 +2053,7 @@ func DiscordNotify(channelId string, message string) error {
 	return nil
 }
 
-// DiscordNotify posts a message to discord.
+// DiscordNotifyEmbed posts a message to discord.
 func DiscordNotifyEmbed(channelId string, message *discordgo.MessageEmbed) (*discordgo.Message, error) {
 	if dg != nil {
 		msg, err := dg.ChannelMessageSendEmbed(channelId, message)
@@ -2079,7 +2091,9 @@ func GetJSONObject(tx *sql.Tx, draftID int64) (DraftJSON, error) {
 	if err != nil {
 		return draft, fmt.Errorf("error getting draft details: %w", err)
 	}
-	defer rows.Close()
+	defer func() {
+		_ = rows.Close()
+	}()
 	var indices [8][3]int64
 	for rows.Next() {
 		var position int64
@@ -2156,7 +2170,9 @@ func GetJSONObject(tx *sql.Tx, draftID int64) (DraftJSON, error) {
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return draft, fmt.Errorf("error getting draft events: %s", err)
 	}
-	defer rows.Close()
+	defer func() {
+		_ = rows.Close()
+	}()
 	for rows.Next() {
 		var event DraftEvent
 		var announcements string
@@ -2313,7 +2329,9 @@ func GetFilteredJSON(tx *sql.Tx, ob *objectbox.ObjectBox, draftId int64, userId 
 		if err != nil {
 			return "", fmt.Errorf("error connecting to filter service: %w", err)
 		}
-		defer conn.Close()
+		defer func() {
+			_ = conn.Close()
+		}()
 
 		ret, err := json.Marshal(Perspective{User: userId, Draft: draft})
 		if err != nil {
@@ -2322,10 +2340,19 @@ func GetFilteredJSON(tx *sql.Tx, ob *objectbox.ObjectBox, draftId int64, userId 
 
 		stop := "\r\n\r\n"
 
-		conn.Write(ret)
-		conn.Write([]byte(stop))
+		_, err = conn.Write(ret)
+		if err != nil {
+			return "", err
+		}
+		_, err = conn.Write([]byte(stop))
+		if err != nil {
+			return "", err
+		}
 
-		io.Copy(&buff, conn)
+		_, err = io.Copy(&buff, conn)
+		if err != nil {
+			return "", err
+		}
 	}
 
 	return buff.String(), nil
@@ -2361,7 +2388,7 @@ func doEvent(tx *sql.Tx, draftID int64, userID int64, announcements []string, ca
 }
 
 // doEventOb records an event (pick) into the database.
-func doEventOb(ob *objectbox.ObjectBox, draftId int64, userId int64, announcements []string, cardId1 int64, cardId2 sql.NullInt64, packId int64, seat *schema.Seat, round int64) error {
+func doEventOb(ob *objectbox.ObjectBox, draftId int64, announcements []string, cardId1 int64, cardId2 sql.NullInt64, packId int64, seat *schema.Seat, round int64) error {
 	draftBox := schema.BoxForDraft(ob)
 	draft, err := draftBox.Get(uint64(draftId))
 	if err != nil {
@@ -2419,13 +2446,15 @@ func GetDraftList(userID int64, tx *sql.Tx) (DraftList, error) {
                   left join seats on drafts.id = seats.draft
                   left join skips on drafts.id = skips.draft and skips.user = ?
                   group by drafts.id
-                  order by drafts.id asc`
+                  order by drafts.id`
 
 	rows, err := tx.Query(query, userID, userID, userID, userID)
 	if err != nil {
 		return drafts, fmt.Errorf("can't get draft list: %w", err)
 	}
-	defer rows.Close()
+	defer func() {
+		_ = rows.Close()
+	}()
 	for rows.Next() {
 		var d DraftListEntry
 		err = rows.Scan(&d.ID,
@@ -2567,7 +2596,7 @@ func GetUserPrefs(userID int64, tx *sql.Tx) (UserFormatPrefs, error) {
 	return prefs, nil
 }
 
-func DiscordReady(s *discordgo.Session, event *discordgo.Ready) {
+func DiscordReady(s *discordgo.Session, _ *discordgo.Ready) {
 	err := s.UpdateCustomStatus("Tier 5 Wolf Combo")
 	if err != nil {
 		log.Printf("%s", err.Error())
@@ -2576,7 +2605,7 @@ func DiscordReady(s *discordgo.Session, event *discordgo.Ready) {
 
 func DiscordMsgCreate(database *sql.DB) func(s *discordgo.Session, msg *discordgo.MessageCreate) {
 	return func(s *discordgo.Session, msg *discordgo.MessageCreate) {
-		if msg.Author.ID == BOSS {
+		if msg.Author.ID == Boss {
 			if msg.GuildID == "" {
 				args, err := shlex.Split(msg.Content)
 				if err != nil {
@@ -2588,7 +2617,9 @@ func DiscordMsgCreate(database *sql.DB) func(s *discordgo.Session, msg *discordg
 					if err != nil {
 						log.Printf("%s", err.Error())
 					} else {
-						defer tx.Rollback()
+						defer func() {
+							_ = tx.Rollback()
+						}()
 						flagSet := flag.NewFlagSet(args[0], flag.ContinueOnError)
 
 						settings := makedraft.Settings{}
@@ -2611,9 +2642,9 @@ func DiscordMsgCreate(database *sql.DB) func(s *discordgo.Session, msg *discordg
 							"name", "untitled draft",
 							"The name of the draft.")
 
-						flagSet.Parse(args[1:])
+						err = flagSet.Parse(args[1:])
 
-						err = makedraft.MakeDraft(settings, tx, nil)
+						err = errors.Join(err, makedraft.MakeDraft(settings, tx, nil))
 
 						var resp string
 						if err != nil {
@@ -2639,7 +2670,7 @@ func DiscordMsgCreate(database *sql.DB) func(s *discordgo.Session, msg *discordg
 				}
 			} else if msg.Content == "!alerts" {
 				DiscordSendRoleReactionMessage(s, database, msg.ChannelID,
-					FOREST_BEAR, FOREST_BEAR_ID, DRAFT_ALERTS_ROLE,
+					ForestBear, ForestBearId, DraftAlertsRole,
 					"Draft alerts", "if you would like notifications for games being played")
 			}
 		}
@@ -2653,7 +2684,7 @@ func DiscordSendRoleReactionMessage(s *discordgo.Session, database *sql.DB, chan
 			Title: title,
 			Description: "\nReact with <" + emoji + "> " + description + ".\n\n" +
 				"If you would like to remove the role, simply remove your reaction.\n",
-			Color: PINK,
+			Color: Pink,
 		})
 	if err != nil {
 		log.Printf("%s", err.Error())
@@ -2678,7 +2709,9 @@ func DiscordReactionAdd(database *sql.DB) func(s *discordgo.Session, msg *discor
 			log.Printf("%s", err.Error())
 			return
 		}
-		defer tx.Rollback()
+		defer func() {
+			_ = tx.Rollback()
+		}()
 		row := tx.QueryRow(`select emoji, roleid from rolemsgs where msgid = ?`, msg.MessageID)
 		var emojiID string
 		var roleID string
@@ -2690,7 +2723,7 @@ func DiscordReactionAdd(database *sql.DB) func(s *discordgo.Session, msg *discor
 					log.Printf("%s", err.Error())
 				}
 			}
-		} else if err == sql.ErrNoRows {
+		} else if errors.Is(err, sql.ErrNoRows) {
 			row = tx.QueryRow(`select draft, round from pairingmsgs where msgid = ?`, msg.MessageID)
 			var draftID int64
 			var round int
@@ -2714,7 +2747,7 @@ func DiscordReactionAdd(database *sql.DB) func(s *discordgo.Session, msg *discor
 				} else {
 					log.Printf("%s", err.Error())
 				}
-			} else if err != sql.ErrNoRows {
+			} else if !errors.Is(err, sql.ErrNoRows) {
 				log.Printf("%s", err.Error())
 			}
 		} else {
@@ -2734,7 +2767,9 @@ func DiscordReactionRemove(database *sql.DB) func(s *discordgo.Session, msg *dis
 			log.Printf("%s", err.Error())
 			return
 		}
-		defer tx.Rollback()
+		defer func() {
+			_ = tx.Rollback()
+		}()
 		row := tx.QueryRow(`select emoji, roleid from rolemsgs where msgid = ?`, msg.MessageID)
 		var emojiID string
 		var roleID string
@@ -2746,7 +2781,7 @@ func DiscordReactionRemove(database *sql.DB) func(s *discordgo.Session, msg *dis
 					log.Printf("%s", err.Error())
 				}
 			}
-		} else if err == sql.ErrNoRows {
+		} else if errors.Is(err, sql.ErrNoRows) {
 			row = tx.QueryRow(`select draft, round from pairingmsgs where msgid = ?`, msg.MessageID)
 			var draftID int
 			var round int
@@ -2767,7 +2802,7 @@ func DiscordReactionRemove(database *sql.DB) func(s *discordgo.Session, msg *dis
 				if err != nil {
 					log.Printf("%s", err.Error())
 				}
-			} else if err != sql.ErrNoRows {
+			} else if !errors.Is(err, sql.ErrNoRows) {
 				log.Printf("%s", err.Error())
 			}
 		} else {
@@ -2967,7 +3002,9 @@ func ArchiveSpectatorChannels(db *sql.DB) error {
 			log.Printf("error archiving spectator channels: %s", err.Error())
 			return err
 		}
-		defer tx.Rollback()
+		defer func() {
+			_ = tx.Rollback()
+		}()
 
 		query := `select
 				spectatorchannelid
@@ -2989,7 +3026,7 @@ func ArchiveSpectatorChannels(db *sql.DB) error {
 				return err
 			}
 			log.Printf("locking channel %s", channelID)
-			err = dg.ChannelPermissionSet(channelID, EVERYONE_ROLE, 0, 0, discordgo.PermissionViewChannel)
+			err = dg.ChannelPermissionSet(channelID, EveryoneRole, 0, 0, discordgo.PermissionViewChannel)
 			if err != nil {
 				log.Printf("error archiving spectator channels: %s", err.Error())
 				return err
