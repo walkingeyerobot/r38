@@ -2585,8 +2585,12 @@ func GetDraftListOb(userId int64, ob *objectbox.ObjectBox) (DraftList, error) {
 	if err != nil {
 		return draftList, err
 	}
+	user, err := schema.BoxForUser(ob).Get(uint64(userId))
+	if err != nil {
+		return draftList, err
+	}
 	for _, draft := range drafts {
-		draftList.Drafts = append(draftList.Drafts, draftToDraftListEntry(draft, userId))
+		draftList.Drafts = append(draftList.Drafts, draftToDraftListEntry(draft, user))
 	}
 	return draftList, nil
 }
@@ -2632,13 +2636,18 @@ func GetDraftListEntry(userId int64, tx *sql.Tx, ob *objectbox.ObjectBox, draftI
 			return ret, err
 		}
 
-		return draftToDraftListEntry(draft, userId), nil
+		user, err := schema.BoxForUser(ob).Get(uint64(userId))
+		if err != nil {
+			return ret, err
+		}
+
+		return draftToDraftListEntry(draft, user), nil
 	}
 
 	return ret, nil
 }
 
-func draftToDraftListEntry(draft *schema.Draft, userId int64) DraftListEntry {
+func draftToDraftListEntry(draft *schema.Draft, user *schema.User) DraftListEntry {
 	numAvailable := int64(0)
 	numReserved := int64(0)
 	finished := true
@@ -2647,12 +2656,12 @@ func draftToDraftListEntry(draft *schema.Draft, userId int64) DraftListEntry {
 
 	for _, seat := range draft.Seats {
 		if seat.User != nil {
-			if seat.User.Id == uint64(userId) {
+			if seat.User.Id == user.Id {
 				joined = true
 			}
 		} else if seat.ReservedUser != nil {
 			numReserved++
-			if seat.ReservedUser.Id == uint64(userId) {
+			if seat.ReservedUser.Id == user.Id {
 				reserved = true
 			}
 		} else {
@@ -2663,6 +2672,10 @@ func draftToDraftListEntry(draft *schema.Draft, userId int64) DraftListEntry {
 		}
 	}
 
+	skipped := slices.ContainsFunc(user.Skips, func(skip *schema.Skip) bool {
+		return skip.DraftId == draft.Id
+	})
+
 	return AddStatus(DraftListEntry{
 		AvailableSeats: numAvailable,
 		ReservedSeats:  numReserved,
@@ -2670,10 +2683,10 @@ func draftToDraftListEntry(draft *schema.Draft, userId int64) DraftListEntry {
 		ID:             int64(draft.Id),
 		Joined:         joined,
 		Reserved:       reserved,
-		Skipped:        false, // TODO
+		Skipped:        skipped,
 		Name:           draft.Name,
 		InPerson:       draft.InPerson,
-	}, userId)
+	}, int64(user.Id))
 }
 
 func GetUserPrefs(userID int64, tx *sql.Tx) (UserFormatPrefs, error) {
