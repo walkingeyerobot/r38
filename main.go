@@ -108,9 +108,9 @@ func main() {
 			}
 		}()
 		dg.AddHandler(DiscordReady)
-		dg.AddHandler(DiscordMsgCreate(database))
-		dg.AddHandler(DiscordReactionAdd(database))
-		dg.AddHandler(DiscordReactionRemove(database))
+		dg.AddHandler(DiscordMsgCreate(database, nil))
+		dg.AddHandler(DiscordReactionAdd(database, nil))
+		dg.AddHandler(DiscordReactionRemove(database, nil))
 		err = dg.Open()
 		if err != nil {
 			log.Printf("%s", err.Error())
@@ -118,7 +118,7 @@ func main() {
 	}
 
 	scheduler := gocron.NewScheduler(time.UTC)
-	_, err = scheduler.Every(8).Hours().Do(ArchiveSpectatorChannels, database)
+	_, err = scheduler.Every(8).Hours().Do(ArchiveSpectatorChannels, database, nil)
 	if err != nil {
 		log.Printf("error setting up spectator channel archive task: %s", err.Error())
 	}
@@ -2000,7 +2000,7 @@ func PostFirstRoundPairings(tx *sql.Tx, draftID int64, draftName string) error {
 			drafterIds[2], drafterIds[6],
 			drafterIds[3], drafterIds[7])
 		round := 1
-		err2 := PostPairings(tx, nil, draftID, draftName, round, pairings)
+		err2 := PostPairings(tx, draftID, draftName, round, pairings)
 		if err2 != nil {
 			return err2
 		}
@@ -2027,11 +2027,11 @@ func PostFirstRoundPairingsOb(ob *objectbox.ObjectBox, draft *schema.Draft) erro
 		drafterIds[2], drafterIds[6],
 		drafterIds[3], drafterIds[7])
 	round := 1
-	err := PostPairings(nil, ob, int64(draft.Id), draft.Name, round, pairings)
+	err := PostPairingsOb(ob, draft, round, pairings)
 	return err
 }
 
-func PostPairings(tx *sql.Tx, ob *objectbox.ObjectBox, draftID int64, draftName string, round int, pairings string) error {
+func PostPairings(tx *sql.Tx, draftID int64, draftName string, round int, pairings string) error {
 	msg, err := DiscordNotifyEmbed(
 		os.Getenv("DRAFT_ANNOUNCEMENTS_CHANNEL_ID"),
 		&discordgo.MessageEmbed{
@@ -2057,12 +2057,46 @@ func PostPairings(tx *sql.Tx, ob *objectbox.ObjectBox, draftID int64, draftName 
 	if err != nil {
 		log.Printf("%s", err.Error())
 	}
-	if tx != nil {
-		_, err = tx.Exec("insert into pairingmsgs (msgid, draft, round) values (?, ?, ?)",
-			msg.ID, draftID, round)
-	} else if ob != nil {
-		// TODO
+	_, err = tx.Exec("insert into pairingmsgs (msgid, draft, round) values (?, ?, ?)",
+		msg.ID, draftID, round)
+	if err != nil {
+		log.Print(err.Error())
+		return err
 	}
+	return nil
+}
+
+func PostPairingsOb(ob *objectbox.ObjectBox, draft *schema.Draft, round int, pairings string) error {
+	msg, err := DiscordNotifyEmbed(
+		os.Getenv("DRAFT_ANNOUNCEMENTS_CHANNEL_ID"),
+		&discordgo.MessageEmbed{
+			Title:       fmt.Sprintf("%s, Round %d", draft.Name, round),
+			Description: pairings,
+			Color:       Pink,
+			Footer: &discordgo.MessageEmbedFooter{
+				Text: "React with 🏆 if you win and 💀 if you lose.",
+			},
+		})
+	if err != nil {
+		log.Print(err.Error())
+		return err
+	}
+	if msg == nil {
+		return nil
+	}
+	err = dg.MessageReactionAdd(msg.ChannelID, msg.ID, "🏆")
+	if err != nil {
+		log.Printf("%s", err.Error())
+	}
+	err = dg.MessageReactionAdd(msg.ChannelID, msg.ID, "💀")
+	if err != nil {
+		log.Printf("%s", err.Error())
+	}
+	_, err = schema.BoxForPairingMsg(ob).Put(&schema.PairingMsg{
+		MsgId: msg.ID,
+		Draft: draft,
+		Round: round,
+	})
 	if err != nil {
 		log.Print(err.Error())
 		return err
@@ -2084,6 +2118,14 @@ func GetAdminDiscordId(tx *sql.Tx) (string, error) {
 	var adminDiscordID string
 	err := row.Scan(&adminDiscordID)
 	return adminDiscordID, err
+}
+
+func GetAdminDiscordIdOb(ob *objectbox.ObjectBox) (string, error) {
+	user, err := schema.BoxForUser(ob).Get(1)
+	if err != nil {
+		return "", err
+	}
+	return user.DiscordId, nil
 }
 
 func UnlockSpectatorChannel(channelId string) error {
@@ -2663,7 +2705,7 @@ func DiscordReady(s *discordgo.Session, _ *discordgo.Ready) {
 	}
 }
 
-func DiscordMsgCreate(database *sql.DB) func(s *discordgo.Session, msg *discordgo.MessageCreate) {
+func DiscordMsgCreate(database *sql.DB, ob *objectbox.ObjectBox) func(s *discordgo.Session, msg *discordgo.MessageCreate) {
 	return func(s *discordgo.Session, msg *discordgo.MessageCreate) {
 		if msg.Author.ID == Boss {
 			if msg.GuildID == "" {
@@ -2673,40 +2715,43 @@ func DiscordMsgCreate(database *sql.DB) func(s *discordgo.Session, msg *discordg
 					return
 				}
 				if strings.HasPrefix(msg.Content, "makedraft") {
-					tx, err := database.Begin()
-					if err != nil {
-						log.Printf("%s", err.Error())
-					} else {
+					flagSet := flag.NewFlagSet(args[0], flag.ContinueOnError)
+
+					settings := makedraft.Settings{}
+					settings.Set = flagSet.String(
+						"set", "sets/cube.json",
+						"A .json file containing relevant set data.")
+					settings.Database = flagSet.String(
+						"database", "draft.db",
+						"The sqlite3 database to insert to.")
+					settings.Seed = flagSet.Int(
+						"seed", 0,
+						"The random seed to use to generate the draft. If 0, time.Now().UnixNano() will be used.")
+					settings.Verbose = flagSet.Bool(
+						"v", false,
+						"If true, will enable verbose output.")
+					settings.Simulate = flagSet.Bool(
+						"simulate", false,
+						"If true, won't commit to the database.")
+					settings.Name = flagSet.String(
+						"name", "untitled draft",
+						"The name of the draft.")
+
+					err = flagSet.Parse(args[1:])
+
+					var resp string
+					if database != nil {
+						tx, err := database.Begin()
+						if err != nil {
+							log.Printf("%s", err.Error())
+							return
+						}
 						defer func() {
 							_ = tx.Rollback()
 						}()
-						flagSet := flag.NewFlagSet(args[0], flag.ContinueOnError)
-
-						settings := makedraft.Settings{}
-						settings.Set = flagSet.String(
-							"set", "sets/cube.json",
-							"A .json file containing relevant set data.")
-						settings.Database = flagSet.String(
-							"database", "draft.db",
-							"The sqlite3 database to insert to.")
-						settings.Seed = flagSet.Int(
-							"seed", 0,
-							"The random seed to use to generate the draft. If 0, time.Now().UnixNano() will be used.")
-						settings.Verbose = flagSet.Bool(
-							"v", false,
-							"If true, will enable verbose output.")
-						settings.Simulate = flagSet.Bool(
-							"simulate", false,
-							"If true, won't commit to the database.")
-						settings.Name = flagSet.String(
-							"name", "untitled draft",
-							"The name of the draft.")
-
-						err = flagSet.Parse(args[1:])
 
 						err = errors.Join(err, makedraft.MakeDraft(settings, tx, nil))
 
-						var resp string
 						if err != nil {
 							resp = fmt.Sprintf("%s", err.Error())
 						} else {
@@ -2722,14 +2767,23 @@ func DiscordMsgCreate(database *sql.DB) func(s *discordgo.Session, msg *discordg
 								resp = fmt.Sprintf("done!")
 							}
 						}
-						_, err = dg.ChannelMessageSend(msg.ChannelID, resp)
+					} else if ob != nil {
+						err = ob.RunInWriteTx(func() error {
+							return makedraft.MakeDraft(settings, nil, ob)
+						})
 						if err != nil {
-							log.Printf("%s", err)
+							resp = fmt.Sprintf("can't commit :( %s", err.Error())
+						} else {
+							resp = fmt.Sprintf("done!")
 						}
+					}
+					_, err = dg.ChannelMessageSend(msg.ChannelID, resp)
+					if err != nil {
+						log.Printf("%s", err)
 					}
 				}
 			} else if msg.Content == "!alerts" {
-				DiscordSendRoleReactionMessage(s, database, msg.ChannelID,
+				DiscordSendRoleReactionMessage(s, database, ob, msg.ChannelID,
 					ForestBear, ForestBearId, DraftAlertsRole,
 					"Draft alerts", "if you would like notifications for games being played")
 			}
@@ -2737,7 +2791,7 @@ func DiscordMsgCreate(database *sql.DB) func(s *discordgo.Session, msg *discordg
 	}
 }
 
-func DiscordSendRoleReactionMessage(s *discordgo.Session, database *sql.DB, channelID string, emoji string, emojiId string, roleID string, title string, description string) {
+func DiscordSendRoleReactionMessage(s *discordgo.Session, database *sql.DB, ob *objectbox.ObjectBox, channelID string, emoji string, emojiId string, roleId string, title string, description string) {
 	sent, err := DiscordNotifyEmbed(
 		channelID,
 		&discordgo.MessageEmbed{
@@ -2749,9 +2803,18 @@ func DiscordSendRoleReactionMessage(s *discordgo.Session, database *sql.DB, chan
 	if err != nil {
 		log.Printf("%s", err.Error())
 	} else if sent != nil {
-		_, err = database.Exec(
-			`insert into rolemsgs (msgid, emoji, roleid) values (?, ?, ?)`,
-			sent.ID, emojiId, roleID)
+		if database != nil {
+			_, err = database.Exec(
+				`insert into rolemsgs (msgid, emoji, roleid) values (?, ?, ?)`,
+				sent.ID, emojiId, roleId)
+		} else if ob != nil {
+			roleMsg := schema.RoleMsg{
+				MsgId:  sent.ID,
+				Emoji:  emojiId,
+				RoleId: roleId,
+			}
+			_, err = schema.BoxForRoleMsg(ob).Put(&roleMsg)
+		}
 		if err != nil {
 			log.Printf("%s", err.Error())
 		}
@@ -2762,115 +2825,234 @@ func DiscordSendRoleReactionMessage(s *discordgo.Session, database *sql.DB, chan
 	}
 }
 
-func DiscordReactionAdd(database *sql.DB) func(s *discordgo.Session, msg *discordgo.MessageReactionAdd) {
+func DiscordReactionAdd(database *sql.DB, ob *objectbox.ObjectBox) func(s *discordgo.Session, msg *discordgo.MessageReactionAdd) {
 	return func(s *discordgo.Session, msg *discordgo.MessageReactionAdd) {
-		tx, err := database.Begin()
-		if err != nil {
-			log.Printf("%s", err.Error())
-			return
-		}
-		defer func() {
-			_ = tx.Rollback()
-		}()
-		row := tx.QueryRow(`select emoji, roleid from rolemsgs where msgid = ?`, msg.MessageID)
-		var emojiID string
-		var roleID string
-		err = row.Scan(&emojiID, &roleID)
-		if err == nil {
-			if emojiID == msg.Emoji.ID {
-				err = s.GuildMemberRoleAdd(msg.GuildID, msg.UserID, roleID)
-				if err != nil {
-					log.Printf("%s", err.Error())
-				}
+		if database != nil {
+			tx, err := database.Begin()
+			if err != nil {
+				log.Printf("%s", err.Error())
+				return
 			}
-		} else if errors.Is(err, sql.ErrNoRows) {
-			row = tx.QueryRow(`select draft, round from pairingmsgs where msgid = ?`, msg.MessageID)
-			var draftID int64
-			var round int
-			err = row.Scan(&draftID, &round)
+			defer func() {
+				_ = tx.Rollback()
+			}()
+			row := tx.QueryRow(`select emoji, roleid from rolemsgs where msgid = ?`, msg.MessageID)
+			var emojiID string
+			var roleID string
+			err = row.Scan(&emojiID, &roleID)
 			if err == nil {
-				row = tx.QueryRow(`select id from users where discord_id = ?`, msg.UserID)
-				var user int
-				err = row.Scan(&user)
-				if err == nil {
-					if msg.Emoji.Name == "🏆" {
-						_, err = tx.Exec(`insert into results (draft, round, user, win, timestamp) values (?, ?, ?, 1, datetime('now'))`,
-							draftID, round, user)
-					} else if msg.Emoji.Name == "💀" {
-						_, err = tx.Exec(`insert into results (draft, round, user, win, timestamp) values (?, ?, ?, 0, datetime('now'))`,
-							draftID, round, user)
-					}
+				if emojiID == msg.Emoji.ID {
+					err = s.GuildMemberRoleAdd(msg.GuildID, msg.UserID, roleID)
 					if err != nil {
 						log.Printf("%s", err.Error())
 					}
-					CheckNextRoundPairings(tx, draftID, round)
-				} else {
+				}
+			} else if errors.Is(err, sql.ErrNoRows) {
+				row = tx.QueryRow(`select draft, round from pairingmsgs where msgid = ?`, msg.MessageID)
+				var draftID int64
+				var round int
+				err = row.Scan(&draftID, &round)
+				if err == nil {
+					row = tx.QueryRow(`select id from users where discord_id = ?`, msg.UserID)
+					var user int
+					err = row.Scan(&user)
+					if err == nil {
+						if msg.Emoji.Name == "🏆" {
+							_, err = tx.Exec(`insert into results (draft, round, user, win, timestamp) values (?, ?, ?, 1, datetime('now'))`,
+								draftID, round, user)
+						} else if msg.Emoji.Name == "💀" {
+							_, err = tx.Exec(`insert into results (draft, round, user, win, timestamp) values (?, ?, ?, 0, datetime('now'))`,
+								draftID, round, user)
+						}
+						if err != nil {
+							log.Printf("%s", err.Error())
+						}
+						CheckNextRoundPairings(tx, draftID, round)
+					} else {
+						log.Printf("%s", err.Error())
+					}
+				} else if !errors.Is(err, sql.ErrNoRows) {
 					log.Printf("%s", err.Error())
 				}
-			} else if !errors.Is(err, sql.ErrNoRows) {
+			} else {
 				log.Printf("%s", err.Error())
 			}
-		} else {
-			log.Printf("%s", err.Error())
-		}
-		err = tx.Commit()
-		if err != nil {
-			log.Printf("%s", err.Error())
+			err = tx.Commit()
+			if err != nil {
+				log.Printf("%s", err.Error())
+			}
+		} else if ob != nil {
+			err := ob.RunInWriteTx(func() error {
+				roleMsgs, err := schema.BoxForRoleMsg(ob).Query(schema.RoleMsg_.MsgId.Equals(msg.MessageID, true)).Find()
+				if err != nil {
+					log.Printf("%s", err.Error())
+					return err
+				}
+				if len(roleMsgs) > 0 {
+					if roleMsgs[0].Emoji == msg.Emoji.ID {
+						err = s.GuildMemberRoleAdd(msg.GuildID, msg.UserID, roleMsgs[0].RoleId)
+						if err != nil {
+							log.Printf("%s", err.Error())
+							return err
+						}
+					}
+				} else {
+					users, err := schema.BoxForUser(ob).Query(schema.User_.DiscordId.Equals(msg.UserID, true)).Find()
+					if err != nil {
+						log.Printf("%s", err.Error())
+						return err
+					}
+					if len(users) == 0 {
+						return fmt.Errorf("couldn't find user %s", msg.UserID)
+					}
+					pairingMsgs, err := schema.BoxForPairingMsg(ob).Query(schema.PairingMsg_.MsgId.Equals(msg.MessageID, true)).Find()
+					if err != nil {
+						log.Printf("%s", err.Error())
+						return err
+					}
+					if len(pairingMsgs) == 0 {
+						return fmt.Errorf("couldn't find pairing message %s", msg.MessageID)
+					}
+					if msg.Emoji.Name == "🏆" {
+						_, err = schema.BoxForResult(ob).Put(&schema.Result{
+							Draft:     pairingMsgs[0].Draft,
+							Round:     pairingMsgs[0].Round,
+							User:      users[0],
+							Win:       true,
+							Timestamp: time.Now(),
+						})
+					} else if msg.Emoji.Name == "💀" {
+						_, err = schema.BoxForResult(ob).Put(&schema.Result{
+							Draft:     pairingMsgs[0].Draft,
+							Round:     pairingMsgs[0].Round,
+							User:      users[0],
+							Win:       false,
+							Timestamp: time.Now(),
+						})
+					}
+					if err != nil {
+						log.Printf("%s", err.Error())
+						return err
+					}
+					CheckNextRoundPairingsOb(ob, pairingMsgs[0].Draft, pairingMsgs[0].Round)
+				}
+				return nil
+			})
+			if err != nil {
+				log.Printf("%s", err.Error())
+			}
 		}
 	}
 }
 
-func DiscordReactionRemove(database *sql.DB) func(s *discordgo.Session, msg *discordgo.MessageReactionRemove) {
+func DiscordReactionRemove(database *sql.DB, ob *objectbox.ObjectBox) func(s *discordgo.Session, msg *discordgo.MessageReactionRemove) {
 	return func(s *discordgo.Session, msg *discordgo.MessageReactionRemove) {
-		tx, err := database.Begin()
-		if err != nil {
-			log.Printf("%s", err.Error())
-			return
-		}
-		defer func() {
-			_ = tx.Rollback()
-		}()
-		row := tx.QueryRow(`select emoji, roleid from rolemsgs where msgid = ?`, msg.MessageID)
-		var emojiID string
-		var roleID string
-		err = row.Scan(&emojiID, &roleID)
-		if err == nil {
-			if emojiID == msg.Emoji.ID {
-				err = s.GuildMemberRoleRemove(msg.GuildID, msg.UserID, roleID)
-				if err != nil {
-					log.Printf("%s", err.Error())
-				}
+		if database != nil {
+			tx, err := database.Begin()
+			if err != nil {
+				log.Printf("%s", err.Error())
+				return
 			}
-		} else if errors.Is(err, sql.ErrNoRows) {
-			row = tx.QueryRow(`select draft, round from pairingmsgs where msgid = ?`, msg.MessageID)
-			var draftID int
-			var round int
-			err = row.Scan(&draftID, &round)
+			defer func() {
+				_ = tx.Rollback()
+			}()
+			row := tx.QueryRow(`select emoji, roleid from rolemsgs where msgid = ?`, msg.MessageID)
+			var emojiID string
+			var roleID string
+			err = row.Scan(&emojiID, &roleID)
 			if err == nil {
-				row = tx.QueryRow(`select id from users where discord_id = ?`, msg.UserID)
-				var user int
-				err = row.Scan(&user)
-				if err == nil {
-					if msg.Emoji.Name == "🏆" {
-						_, err = tx.Exec(`delete from results where draft = ? and round = ? and user = ? and win = 1`,
-							draftID, round, user)
-					} else if msg.Emoji.Name == "💀" {
-						_, err = tx.Exec(`delete from results where draft = ? and round = ? and user = ? and win = 0`,
-							draftID, round, user)
+				if emojiID == msg.Emoji.ID {
+					err = s.GuildMemberRoleRemove(msg.GuildID, msg.UserID, roleID)
+					if err != nil {
+						log.Printf("%s", err.Error())
 					}
 				}
-				if err != nil {
+			} else if errors.Is(err, sql.ErrNoRows) {
+				row = tx.QueryRow(`select draft, round from pairingmsgs where msgid = ?`, msg.MessageID)
+				var draftID int
+				var round int
+				err = row.Scan(&draftID, &round)
+				if err == nil {
+					row = tx.QueryRow(`select id from users where discord_id = ?`, msg.UserID)
+					var user int
+					err = row.Scan(&user)
+					if err == nil {
+						if msg.Emoji.Name == "🏆" {
+							_, err = tx.Exec(`delete from results where draft = ? and round = ? and user = ? and win = 1`,
+								draftID, round, user)
+						} else if msg.Emoji.Name == "💀" {
+							_, err = tx.Exec(`delete from results where draft = ? and round = ? and user = ? and win = 0`,
+								draftID, round, user)
+						}
+					}
+					if err != nil {
+						log.Printf("%s", err.Error())
+					}
+				} else if !errors.Is(err, sql.ErrNoRows) {
 					log.Printf("%s", err.Error())
 				}
-			} else if !errors.Is(err, sql.ErrNoRows) {
+			} else {
 				log.Printf("%s", err.Error())
 			}
-		} else {
-			log.Printf("%s", err.Error())
-		}
-		err = tx.Commit()
-		if err != nil {
-			log.Printf("%s", err.Error())
+			err = tx.Commit()
+			if err != nil {
+				log.Printf("%s", err.Error())
+			}
+		} else if ob != nil {
+			err := ob.RunInWriteTx(func() error {
+				roleMsgs, err := schema.BoxForRoleMsg(ob).Query(schema.RoleMsg_.MsgId.Equals(msg.MessageID, true)).Find()
+				if err != nil {
+					return err
+				}
+				if len(roleMsgs) > 0 {
+					if roleMsgs[0].Emoji == msg.Emoji.ID {
+						return s.GuildMemberRoleRemove(msg.GuildID, msg.UserID, roleMsgs[0].RoleId)
+					}
+					return nil
+				}
+				pairingMsgs, err := schema.BoxForPairingMsg(ob).Query(schema.PairingMsg_.MsgId.Equals(msg.MessageID, true)).Find()
+				if err != nil {
+					return err
+				}
+				if len(pairingMsgs) > 0 {
+					users, err := schema.BoxForUser(ob).Query(schema.User_.DiscordId.Equals(msg.UserID, true)).Find()
+					if err != nil {
+						return err
+					}
+					if len(users) == 0 {
+						return fmt.Errorf("couldn't find user %s", msg.UserID)
+					}
+					resultBox := schema.BoxForResult(ob)
+					results, err := resultBox.Query(schema.Result_.Draft.Equals(pairingMsgs[0].Draft.Id)).Find()
+					if err != nil {
+						return err
+					}
+					if len(results) > 0 {
+						var win bool
+						if msg.Emoji.Name == "🏆" {
+							win = true
+						} else if msg.Emoji.Name == "💀" {
+							win = false
+						} else {
+							return nil
+						}
+						for _, result := range results {
+							if result.User.Id == users[0].Id &&
+								result.Round == pairingMsgs[0].Round &&
+								result.Win == win {
+								err = resultBox.Remove(result)
+								if err != nil {
+									return err
+								}
+							}
+						}
+					}
+				}
+				return nil
+			})
+			if err != nil {
+				log.Printf("%s", err.Error())
+			}
 		}
 	}
 }
@@ -3040,7 +3222,7 @@ func CheckNextRoundPairings(tx *sql.Tx, draftID int64, round int) {
 				log.Printf("%s", err.Error())
 				return
 			}
-			err = PostPairings(tx, nil, draftID, draftName, round+1, pairings)
+			err = PostPairings(tx, draftID, draftName, round+1, pairings)
 			if err != nil {
 				log.Printf("%s", err.Error())
 				return
@@ -3054,59 +3236,243 @@ func CheckNextRoundPairings(tx *sql.Tx, draftID int64, round int) {
 	}
 }
 
-func ArchiveSpectatorChannels(db *sql.DB) error {
+func CheckNextRoundPairingsOb(ob *objectbox.ObjectBox, draft *schema.Draft, round int) {
+	results, err := schema.BoxForResult(ob).Query(schema.Result_.Draft.Equals(draft.Id), schema.Result_.Round.LessOrEqual(round)).Find()
+	if err != nil {
+		log.Printf("%s", err.Error())
+		return
+	}
+	if len(results) == round*8 {
+		var users []*schema.User
+		var wins [8]int
+		for _, result := range results {
+			userIndex := slices.IndexFunc(users, func(user *schema.User) bool {
+				return user.Id == result.User.Id
+			})
+			if userIndex <= -1 {
+				userIndex = len(users)
+				users = append(users, result.User)
+			}
+			if result.Win {
+				wins[userIndex]++
+			}
+		}
+		var table1 []string
+		var table2 []string
+		var table3 []string
+		var table4 []string
+		if round == 1 {
+			// Pair round 2
+			for i, user := range users {
+				seat := slices.IndexFunc(draft.Seats, func(seat *schema.Seat) bool {
+					return seat.User.Id == user.Id
+				})
+				if seat == -1 {
+					log.Printf("found error for user %d who does not have a seat in draft %d", user.Id, draft.Id)
+					return
+				}
+				var player string
+				if len(user.DiscordId) > 0 {
+					player = fmt.Sprintf("<@%s>", user.DiscordId)
+				} else {
+					player = user.DiscordName
+				}
+				if wins[i] == 1 {
+					if seat%2 == 0 {
+						table1 = append(table1, player)
+					} else {
+						table2 = append(table2, player)
+					}
+				} else {
+					if seat%2 == 0 {
+						table3 = append(table3, player)
+					} else {
+						table4 = append(table4, player)
+					}
+				}
+			}
+		} else if round == 2 {
+			var users []*schema.User
+			var wins [8]int
+			for _, result := range results {
+				userIndex := slices.IndexFunc(users, func(user *schema.User) bool {
+					return user.Id == result.User.Id
+				})
+				if userIndex <= -1 {
+					userIndex = len(users)
+					users = append(users, result.User)
+				}
+				if result.Win {
+					wins[userIndex]++
+				}
+			}
+			for i, user := range users {
+				seat := slices.IndexFunc(draft.Seats, func(seat *schema.Seat) bool {
+					return seat.User.Id == user.Id
+				})
+				if seat == -1 {
+					log.Printf("found error for user %d who does not have a seat in draft %d", user.Id, draft.Id)
+					return
+				}
+				wins := wins[i]
+				var player string
+				if len(user.DiscordId) > 0 {
+					player = fmt.Sprintf("<@%s>", user.DiscordId)
+				} else {
+					player = user.DiscordName
+				}
+				if wins == 2 {
+					table1 = append(table1, player)
+				} else if wins == 0 {
+					table4 = append(table4, player)
+				} else {
+					if seat < 4 {
+						if len(table2) < 2 {
+							table2 = append(table2, player)
+						} else {
+							table3 = append(table3, player)
+						}
+					} else {
+						if len(table3) < 2 {
+							table3 = append(table3, player)
+						} else {
+							table2 = append(table2, player)
+						}
+					}
+				}
+			}
+		} else if round == 3 {
+			if dg != nil {
+				winnerIndex := slices.Index(wins[:], 3)
+				if winnerIndex == -1 {
+					log.Printf("no winner found in draft %d", draft.Id)
+					return
+				}
+				winner := users[winnerIndex]
+				var player string
+				if len(winner.DiscordId) > 0 {
+					player = fmt.Sprintf("<@%s>", winner.DiscordId)
+				} else {
+					player = winner.DiscordName
+				}
+				adminDiscordID, err := GetAdminDiscordIdOb(ob)
+				_, err = dg.ChannelMessageSend(os.Getenv("DRAFT_ANNOUNCEMENTS_CHANNEL_ID"),
+					fmt.Sprintf("Congratulations to %s, winner of *%s*!\n\n"+
+						"All players, please ping <@%s> directly when you're ready to return cards.",
+						player, draft.Name, adminDiscordID))
+				if err != nil {
+					log.Printf("%s", err.Error())
+					return
+				}
+			}
+		}
+		if len(table1) == 2 && len(table2) == 2 && len(table3) == 2 && len(table4) == 2 {
+			pairings := fmt.Sprintf(`%s vs %s
+%s vs %s
+%s vs %s
+%s vs %s`,
+				table1[0], table1[1],
+				table2[0], table2[1],
+				table3[0], table3[1],
+				table4[0], table4[1])
+			err = PostPairingsOb(ob, draft, round+1, pairings)
+			if err != nil {
+				log.Printf("%s", err.Error())
+				return
+			}
+		}
+	}
+}
+
+func ArchiveSpectatorChannels(db *sql.DB, ob *objectbox.ObjectBox) error {
 	if dg != nil {
 		log.Printf("archiving spectator channels")
-		tx, err := db.Begin()
-		if err != nil {
-			log.Printf("error archiving spectator channels: %s", err.Error())
-			return err
-		}
-		defer func() {
-			_ = tx.Rollback()
-		}()
-
-		query := `select
-				spectatorchannelid
-				from drafts
-				join results on results.draft = drafts.id
-				group by results.draft
-				having count(results.id) = 24 and max(results.timestamp) < datetime('now', '-3 days')`
-		result, err := tx.Query(query)
-		if err != nil {
-			log.Printf("error archiving spectator channels: %s", err.Error())
-			return err
-		}
-		var channels []interface{}
-		for result.Next() {
-			var channelID string
-			err = result.Scan(&channelID)
+		if db != nil {
+			tx, err := db.Begin()
 			if err != nil {
 				log.Printf("error archiving spectator channels: %s", err.Error())
 				return err
 			}
-			log.Printf("locking channel %s", channelID)
-			err = dg.ChannelPermissionSet(channelID, EveryoneRole, 0, 0, discordgo.PermissionViewChannel)
+			defer func() {
+				_ = tx.Rollback()
+			}()
+
+			query := `select
+					spectatorchannelid
+					from drafts
+					join results on results.draft = drafts.id
+					group by results.draft
+					having count(results.id) = 24 and max(results.timestamp) < datetime('now', '-3 days')`
+			result, err := tx.Query(query)
 			if err != nil {
 				log.Printf("error archiving spectator channels: %s", err.Error())
 				return err
 			}
-			channels = append(channels, channelID)
-		}
+			var channels []interface{}
+			for result.Next() {
+				var channelID string
+				err = result.Scan(&channelID)
+				if err != nil {
+					log.Printf("error archiving spectator channels: %s", err.Error())
+					return err
+				}
+				log.Printf("locking channel %s", channelID)
+				err = dg.ChannelPermissionSet(channelID, EveryoneRole, 0, 0, discordgo.PermissionViewChannel)
+				if err != nil {
+					log.Printf("error archiving spectator channels: %s", err.Error())
+					return err
+				}
+				channels = append(channels, channelID)
+			}
 
-		if len(channels) > 0 {
-			query = `update drafts set spectatorchannelid = null where spectatorchannelid in (?` + strings.Repeat(",?", len(channels)-1) + `)`
-			_, err = tx.Exec(query, channels...)
+			if len(channels) > 0 {
+				query = `update drafts set spectatorchannelid = null where spectatorchannelid in (?` + strings.Repeat(",?", len(channels)-1) + `)`
+				_, err = tx.Exec(query, channels...)
+				if err != nil {
+					log.Printf("error archiving spectator channels: %s", err.Error())
+					return err
+				}
+			}
+
+			err = tx.Commit()
 			if err != nil {
 				log.Printf("error archiving spectator channels: %s", err.Error())
 				return err
 			}
-		}
-
-		err = tx.Commit()
-		if err != nil {
-			log.Printf("error archiving spectator channels: %s", err.Error())
-			return err
+		} else if ob != nil {
+			err := ob.RunInWriteTx(func() error {
+				draftBox := schema.BoxForDraft(ob)
+				drafts, err := draftBox.Query(schema.Draft_.SpectatorChannelId.NotEquals("", false)).Find()
+				if err != nil {
+					return err
+				}
+				for _, draft := range drafts {
+					threeDaysAgo, err := objectbox.TimeInt64ConvertToDatabaseValue(time.Now().Add(time.Duration(-36) * time.Hour))
+					if err != nil {
+						return err
+					}
+					resultsCount, err := schema.BoxForResult(ob).Query(schema.Result_.Draft.Equals(draft.Id),
+						schema.Result_.Timestamp.LessOrEqual(threeDaysAgo)).Count()
+					if resultsCount == 24 {
+						channelId := draft.SpectatorChannelId
+						draft.SpectatorChannelId = ""
+						log.Printf("locking channel %s", channelId)
+						err = dg.ChannelPermissionSet(channelId, EveryoneRole, 0, 0, discordgo.PermissionViewChannel)
+						if err != nil {
+							log.Printf("error archiving spectator channels: %s", err.Error())
+							return err
+						}
+					}
+				}
+				_, err = draftBox.PutMany(drafts)
+				if err != nil {
+					return err
+				}
+				return nil
+			})
+			if err != nil {
+				return fmt.Errorf("error archiving spectator channels: %w", err)
+			}
 		}
 	}
 

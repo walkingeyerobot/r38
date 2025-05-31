@@ -55,7 +55,9 @@
         {
           "id": "5:7498775565443963097",
           "name": "SpectatorChannelId",
-          "type": 9
+          "indexId": "15:722712850427169033",
+          "type": 9,
+          "flags": 2048
         }
       ],
       "relations": [
@@ -289,10 +291,117 @@
           "flags": 8192
         }
       ]
+    },
+    {
+      "id": "8:4584161552244482205",
+      "lastPropertyId": "4:5487559797794397540",
+      "name": "RoleMsg",
+      "properties": [
+        {
+          "id": "1:2381386492686567280",
+          "name": "Id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:7320684024754515890",
+          "name": "MsgId",
+          "indexId": "10:257225024409141033",
+          "type": 9,
+          "flags": 2048
+        },
+        {
+          "id": "3:7239069582421067485",
+          "name": "Emoji",
+          "type": 9
+        },
+        {
+          "id": "4:5487559797794397540",
+          "name": "RoleId",
+          "type": 9
+        }
+      ]
+    },
+    {
+      "id": "9:5556830914062522448",
+      "lastPropertyId": "4:6416533602933382533",
+      "name": "PairingMsg",
+      "properties": [
+        {
+          "id": "1:6875302057371330696",
+          "name": "Id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:4324538381871134955",
+          "name": "MsgId",
+          "indexId": "14:4152033847225781411",
+          "type": 9,
+          "flags": 2048
+        },
+        {
+          "id": "3:5369570367063193531",
+          "name": "Draft",
+          "indexId": "11:8482295304031901037",
+          "type": 11,
+          "flags": 520,
+          "relationTarget": "Draft"
+        },
+        {
+          "id": "4:6416533602933382533",
+          "name": "Round",
+          "type": 6
+        }
+      ]
+    },
+    {
+      "id": "10:3741662715507038888",
+      "lastPropertyId": "6:5243503137203354931",
+      "name": "Result",
+      "properties": [
+        {
+          "id": "1:2128552977513607215",
+          "name": "Id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:7878005627423439470",
+          "name": "Draft",
+          "indexId": "12:6538780904884724116",
+          "type": 11,
+          "flags": 520,
+          "relationTarget": "Draft"
+        },
+        {
+          "id": "3:5168398546860109702",
+          "name": "Round",
+          "type": 6
+        },
+        {
+          "id": "4:8695695771983877724",
+          "name": "User",
+          "indexId": "13:388245969538914106",
+          "type": 11,
+          "flags": 520,
+          "relationTarget": "User"
+        },
+        {
+          "id": "5:984428142389294433",
+          "name": "Win",
+          "type": 1
+        },
+        {
+          "id": "6:5243503137203354931",
+          "name": "Timestamp",
+          "type": 10
+        }
+      ]
     }
   ],
-  "lastEntityId": "7:582453211065114336",
-  "lastIndexId": "9:5789332885209914495",
+  "lastEntityId": "10:3741662715507038888",
+  "lastIndexId": "15:722712850427169033",
   "lastRelationId": "9:6610520635914740722",
   "modelVersion": 5,
   "modelVersionParserMinimum": 5,

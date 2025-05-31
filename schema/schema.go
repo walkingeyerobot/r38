@@ -1,5 +1,7 @@
 package schema
 
+import "time"
+
 //go:generate go run github.com/objectbox/objectbox-go/cmd/objectbox-gogen
 
 type Card struct {
@@ -16,7 +18,7 @@ type Draft struct {
 	Seats              []*Seat
 	UnassignedPacks    []*Pack
 	Events             []*Event
-	SpectatorChannelId string
+	SpectatorChannelId string `objectbox:"index"`
 }
 
 type Pack struct {
@@ -41,7 +43,7 @@ type Seat struct {
 
 type User struct {
 	Id          uint64
-	DiscordId   string `objectbox:"unique"`
+	DiscordId   string `objectbox:"unique,index"`
 	DiscordName string
 	MtgoName    string
 	Picture     string
@@ -62,4 +64,27 @@ type Event struct {
 type Skip struct {
 	Id      uint64
 	DraftId uint64
+}
+
+type RoleMsg struct {
+	Id     uint64
+	MsgId  string `objectbox:"index"`
+	Emoji  string
+	RoleId string
+}
+
+type PairingMsg struct {
+	Id    uint64
+	MsgId string `objectbox:"index"`
+	Draft *Draft `objectbox:"link"`
+	Round int
+}
+
+type Result struct {
+	Id        uint64
+	Draft     *Draft `objectbox:"link"`
+	Round     int
+	User      *User `objectbox:"link"`
+	Win       bool
+	Timestamp time.Time `objectbox:"date"`
 }
