@@ -392,18 +392,57 @@ func MakeDraft(settings Settings, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 			obPacks = []*schema.Pack{}
 		}
 
-		draft := schema.Draft{
-			Name:            *settings.Name,
-			Format:          format,
-			InPerson:        *settings.InPerson,
-			Seats:           seats,
-			UnassignedPacks: obPacks,
-			Events:          []*schema.Event{},
+		var dg *discordgo.Session
+		botToken := os.Getenv("DISCORD_BOT_TOKEN")
+		if !*settings.Simulate && len(botToken) > 0 {
+			dg, err = discordgo.New("Bot " + botToken)
+			if err != nil {
+				return fmt.Errorf("error creating spectator channel: %v", err)
+			}
+		} else {
+			dg = nil
+		}
+		var channel *discordgo.Channel
+		var channelID string
+		if dg != nil {
+			channel, err = dg.GuildChannelCreate(GuildId,
+				regexp.MustCompile("[^a-z-]").ReplaceAllString(strings.ToLower(*settings.Name), "-")+"-spectators",
+				discordgo.ChannelTypeGuildText)
+			if err != nil {
+				return fmt.Errorf("error creating spectator channel: %v", err)
+			}
+			channelID = channel.ID
+		} else {
+			channelID = ""
 		}
 
-		_, err = schema.BoxForDraft(ob).Put(&draft)
+		draft := schema.Draft{
+			Name:               *settings.Name,
+			Format:             format,
+			InPerson:           *settings.InPerson,
+			Seats:              seats,
+			UnassignedPacks:    obPacks,
+			Events:             []*schema.Event{},
+			SpectatorChannelId: channelID,
+		}
+
+		draftId, err := schema.BoxForDraft(ob).Put(&draft)
 		if err != nil {
 			return err
+		}
+
+		if dg != nil {
+			_, err = dg.ChannelEditComplex(channel.ID, &discordgo.ChannelEdit{
+				Topic:    fmt.Sprintf("<https://draftcu.be/draft/%d>", draftId),
+				ParentID: SpectatorsCategoryId,
+			})
+			if err != nil {
+				return fmt.Errorf("error creating spectator channel: %v", err)
+			}
+			err = dg.Close()
+			if err != nil {
+				log.Printf("error closing bot session: %s", err)
+			}
 		}
 	}
 
