@@ -19,8 +19,11 @@ func ObjectBoxModel() *objectbox.Model {
 	model.RegisterBinding(UserBinding)
 	model.RegisterBinding(EventBinding)
 	model.RegisterBinding(SkipBinding)
-	model.LastEntityId(7, 582453211065114336)
-	model.LastIndexId(9, 5789332885209914495)
+	model.RegisterBinding(RoleMsgBinding)
+	model.RegisterBinding(PairingMsgBinding)
+	model.RegisterBinding(ResultBinding)
+	model.LastEntityId(10, 3741662715507038888)
+	model.LastIndexId(15, 722712850427169033)
 	model.LastRelationId(9, 6610520635914740722)
 
 	return model
