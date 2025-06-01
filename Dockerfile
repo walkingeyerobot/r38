@@ -13,6 +13,10 @@ COPY . .
 RUN --mount=type=cache,target=/tmp/go-cache \
     --mount=type=cache,target=/go/pkg/mod \
  go mod download
+RUN wget https://raw.githubusercontent.com/objectbox/objectbox-go/main/install.sh && \
+     chmod +x install.sh && \
+     ./install.sh && \     
+     rm install.sh
 RUN --mount=type=cache,target=/tmp/go-cache \
     --mount=type=cache,target=/go/pkg/mod \
  go build -v .
@@ -44,7 +48,7 @@ ENTRYPOINT ["node", "../filter.js"]
 
 FROM debian:stable-slim AS go_deploy
 
-RUN apt-get update && apt-get install -y ca-certificates  sqlite3 curl && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y ca-certificates curl && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /srv/r38
 
@@ -53,10 +57,15 @@ COPY --from=gobuilder /src/r38 /srv/r38/r38
 COPY --from=gobuilder /src/makedraft_cli/makedraft_cli /srv/r38/makedraft_cli
 COPY --from=gobuilder /src/sets /srv/r38/sets
 
+RUN mkdir -p /srv/r38/objectboxlib/lib /srv/r38/socket /srv/r38/db
+
+COPY --from=gobuilder /src/objectboxlib/lib/libobjectbox.so /usr/local/lib/
+
 # the go app expects these in its working directory but they need to live on mounted volumes
-RUN ln -s db/draft.db draft.db
-RUN ln -s socket/r38.sock r38.sock
+RUN ln -s /usr/local/lib/libobjectbox.so /srv/r38/objectboxlib/lib/libobjectbox.so && \
+    ln -s /srv/r38/socket/r38.sock /srv/r38/r38.sock && \
+    ldconfig
 
 EXPOSE 12264
 
-CMD ["/srv/r38/r38"]
+CMD ["sh", "-c", "chown -R 1000:1000 /srv/r38/db && /srv/r38/r38"]
