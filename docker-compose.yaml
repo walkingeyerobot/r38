@@ -1,12 +1,11 @@
 services:
-
   filter:
     build:
       context: .
       dockerfile: Dockerfile
       target: filter_deploy
     image: git.ninefives.online/cdanis/r38-filter:latest
-    volumes: 
+    volumes:
       - &socket socket:/srv/r38/socket
     working_dir: /srv/r38/socket
     restart: always
@@ -29,7 +28,20 @@ services:
       - filter
     volumes:
       - *socket
-      - /srv/r38/db
-
+      - objectbox_data:/srv/r38/db
+  objectboxadmin:
+    image: objectboxio/admin:latest
+    environment:
+      - DB_KEY=
+      - DB_PATH=/db/data.mdb
+    ports:
+      - "8081:8081"
+    restart: always
+    depends_on:
+      - app
+    volumes:
+      - objectbox_data:/db
+    user: "1000:1000"
 volumes:
   socket:
+  objectbox_data:
