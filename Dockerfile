@@ -57,7 +57,7 @@ COPY --from=gobuilder /src/r38 /srv/r38/r38
 COPY --from=gobuilder /src/makedraft_cli/makedraft_cli /srv/r38/makedraft_cli
 COPY --from=gobuilder /src/sets /srv/r38/sets
 
-RUN mkdir -p /srv/r38/objectboxlib/lib /srv/r38/socket /srv/r38/db
+RUN mkdir -p /srv/r38/objectboxlib/lib
 
 COPY --from=gobuilder /src/objectboxlib/lib/libobjectbox.so /usr/local/lib/
 
