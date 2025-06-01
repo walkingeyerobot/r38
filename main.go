@@ -55,6 +55,9 @@ var dg *discordgo.Session
 
 func main() {
 	useAuthPtr := flag.Bool("auth", true, "bool")
+	useObjectBox := flag.Bool("objectbox", true, "bool")
+	dbFile := flag.String("dbfile", "draft.db", "string")
+	dbDir := flag.String("dbdir", "db", "string")
 	flag.Parse()
 
 	xsrfKey = os.Getenv("XSRF_KEY")
@@ -71,14 +74,27 @@ func main() {
 		xsrfKey = string(xsrfKeyBytes)
 	}
 
-	database, err := migration.Open("sqlite3", "draft.db", migrations.Migrations)
-	if err != nil {
-		log.Printf("error opening db: %s", err.Error())
-		return
-	}
-	err = database.Ping()
-	if err != nil {
-		return
+	var database *sql.DB
+	var ob *objectbox.ObjectBox
+	var err error
+	if *useObjectBox {
+		ob, err = objectbox.NewBuilder().Model(schema.ObjectBoxModel()).
+			Directory(*dbDir).Build()
+		if err != nil {
+			log.Printf("error opening db: %s", err.Error())
+			return
+		}
+		defer ob.Close()
+	} else {
+		database, err = migration.Open("sqlite3", *dbFile, migrations.Migrations)
+		if err != nil {
+			log.Printf("error opening db: %s", err.Error())
+			return
+		}
+		err = database.Ping()
+		if err != nil {
+			return
+		}
 	}
 
 	port, valid := os.LookupEnv("R38_PORT")
@@ -93,7 +109,7 @@ func main() {
 
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":%s", port),
-		Handler: NewHandler(database, nil, *useAuthPtr),
+		Handler: NewHandler(database, ob, *useAuthPtr),
 	}
 
 	dg, err = discordgo.New("Bot " + os.Getenv("DISCORD_BOT_TOKEN"))
@@ -108,9 +124,9 @@ func main() {
 			}
 		}()
 		dg.AddHandler(DiscordReady)
-		dg.AddHandler(DiscordMsgCreate(database, nil))
-		dg.AddHandler(DiscordReactionAdd(database, nil))
-		dg.AddHandler(DiscordReactionRemove(database, nil))
+		dg.AddHandler(DiscordMsgCreate(database, ob))
+		dg.AddHandler(DiscordReactionAdd(database, ob))
+		dg.AddHandler(DiscordReactionRemove(database, ob))
 		err = dg.Open()
 		if err != nil {
 			log.Printf("%s", err.Error())
@@ -118,7 +134,7 @@ func main() {
 	}
 
 	scheduler := gocron.NewScheduler(time.UTC)
-	_, err = scheduler.Every(8).Hours().Do(ArchiveSpectatorChannels, database, nil)
+	_, err = scheduler.Every(8).Hours().Do(ArchiveSpectatorChannels, database, ob)
 	if err != nil {
 		log.Printf("error setting up spectator channel archive task: %s", err.Error())
 	}
