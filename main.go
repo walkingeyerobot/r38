@@ -55,7 +55,7 @@ var dg *discordgo.Session
 
 func main() {
 	useAuthPtr := flag.Bool("auth", true, "bool")
-	useObjectBox := flag.Bool("objectbox", true, "bool")
+	useObjectBox := flag.Bool("objectbox", false, "bool")
 	dbFile := flag.String("dbfile", "draft.db", "string")
 	dbDir := flag.String("dbdir", "objectbox", "string")
 	flag.Parse()
@@ -2339,8 +2339,8 @@ func GetJSONObjectOb(ob *objectbox.ObjectBox, draftId int64) (DraftJSON, error) 
 		}
 		draftJson.Seats[seat.Position].ScanSound = int64(seat.ScanSound)
 		draftJson.Seats[seat.Position].ErrorSound = int64(seat.ErrorSound)
-		for j, pack := range seat.Packs {
-			for k, card := range pack.Cards {
+		for j, pack := range seat.OriginalPacks {
+			for k, card := range pack.OriginalCards {
 				dataObj := make(map[string]interface{})
 				err = json.Unmarshal([]byte(card.Data), &dataObj)
 				if err != nil {
@@ -2355,6 +2355,8 @@ func GetJSONObjectOb(ob *objectbox.ObjectBox, draftId int64) (DraftJSON, error) 
 
 	for _, event := range draft.Events {
 		var eventJson DraftEvent
+		eventJson.Round = int64(event.Round)
+		eventJson.Position = int64(event.Position)
 		eventJson.Cards = append(eventJson.Cards, int64(event.Card1.Id))
 		if event.Card2 != nil {
 			eventJson.Cards = append(eventJson.Cards, int64(event.Card2.Id))
