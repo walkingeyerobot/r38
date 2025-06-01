@@ -57,7 +57,7 @@ func main() {
 	useAuthPtr := flag.Bool("auth", true, "bool")
 	useObjectBox := flag.Bool("objectbox", true, "bool")
 	dbFile := flag.String("dbfile", "draft.db", "string")
-	dbDir := flag.String("dbdir", "db", "string")
+	dbDir := flag.String("dbdir", "objectbox", "string")
 	flag.Parse()
 
 	xsrfKey = os.Getenv("XSRF_KEY")
