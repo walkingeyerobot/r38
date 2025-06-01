@@ -32,7 +32,6 @@ services:
   objectboxadmin:
     image: objectboxio/admin:latest
     environment:
-      - DB_KEY=
       - DB_PATH=/db/data.mdb
     ports:
       - "8081:8081"
