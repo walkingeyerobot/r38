@@ -10,7 +10,12 @@ on:
     branches:
       - main
   workflow_dispatch:
-
+    inputs:
+      create-attestation:
+        description: "Create attestation for the built images"
+        type: boolean
+        required: false
+        default: false
 jobs:
   build-app:
     uses: ./.github/workflows/build-image.yml
