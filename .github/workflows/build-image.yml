@@ -34,9 +34,9 @@ jobs:
         id: metadata
         uses: docker/metadata-action@v5
         with:
-          images: r38-${{ inputs.image-name }}
+          images: ${{ env.REGISTRY }}/${{ github.repository }}-r38-${{ inputs.image-name }}
           tags: |
-            type=ref,event=branch
+            type=ref,event=branch,prefix=
             type=ref,event=tag
             type=sha
             type=raw,value=latest,enable={{is_default_branch}}
