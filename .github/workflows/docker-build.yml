@@ -1,4 +1,4 @@
-name: Build Caller
+name: Docker BuildBuild Caller
 
 on:
   push:
@@ -9,9 +9,6 @@ on:
   pull_request:
     branches:
       - main
-
-env:
-  REGISTRY: ghcr.io
 
 jobs:
   setup:
@@ -39,3 +36,6 @@ jobs:
       image-name: filter
       target: filter_deploy
     secrets: inherit
+
+  env:
+    REGISTRY: ghcr.io
