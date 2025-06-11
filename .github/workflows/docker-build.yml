@@ -9,6 +9,7 @@ on:
   pull_request:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   build-app:
@@ -16,6 +17,7 @@ jobs:
     with:
       image-name: app
       target: go_deploy
+      create-attestation: true
     secrets: inherit
 
   build-filter:
@@ -23,4 +25,5 @@ jobs:
     with:
       image-name: filter
       target: filter_deploy
+      create-attestation: true
     secrets: inherit
