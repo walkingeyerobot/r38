@@ -52,7 +52,7 @@ jobs:
         id: metadata
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ github.repository }}/r38-${{ inputs.image-name }}
+          images: ${{ env.REGISTRY }}/${{ github.repository }}/${{ inputs.image-name }}
           tags: |
             type=ref,event=branch
             type=ref,event=tag
@@ -76,8 +76,8 @@ jobs:
             ${{ steps.metadata.outputs.tags}}
           labels: |
             ${{ steps.metadata.outputs.labels }}
-          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ github.repository }}/r38-${{ inputs.image-name }}:buildcache
-          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ github.repository }}/r38-${{ inputs.image-name }}:buildcache,mode=max
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ github.repository }}/${{ inputs.image-name }}:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ github.repository }}/${{ inputs.image-name }}:buildcache,mode=max
           provenance: mode=min
           github-token: ${{ secrets.REGISTRY_TOKEN }}
 
@@ -85,6 +85,6 @@ jobs:
         if: github.event_name != 'pull_request' && inputs.create-attestation == true
         uses: actions/attest-build-provenance@v2
         with:
-          subject-name: ${{ env.REGISTRY }}/${{ github.repository }}/r38-${{ inputs.image-name }}
+          subject-name: ${{ env.REGISTRY }}/${{ github.repository }}/${{ inputs.image-name }}
           subject-digest: ${{ steps.build-image.outputs.digest }}
           push-to-registry: true
