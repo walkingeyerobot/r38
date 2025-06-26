@@ -12,6 +12,12 @@ R-38 is an insulation strength. For managing drafts.
 go get -v github.com/walkingeyerobot/r38/...
 ```
 
+## Install ObjectBox
+
+```bash
+bash <(curl -s https://raw.githubusercontent.com/objectbox/objectbox-go/main/install.sh)
+```
+
 ## Run the server without OAuth
 
 You can now run the server without OAuth. You will always be considered logged in as userId 1. To be logged in as a different user, add ?as=x to the end of the url you want to view, where x is the id of the user you want to view the page as.
