@@ -8,8 +8,9 @@ export const ROUTE_PICK = endpoint({
     as: 0,
   } as { as?: number },
   bodyVars: {
+    draftId: 0,
     cards: [],
     xsrfToken: "",
-  } as { cards: number[]; xsrfToken: string },
+  } as { draftId: number; cards: number[]; xsrfToken: string },
   response: {} as SourceData,
 });

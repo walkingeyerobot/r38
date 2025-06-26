@@ -5,127 +5,148 @@ The primary page for making picks during an active draft
 -->
 <template>
   <div class="_picker-page">
-    <div class="container">
-      <template v-if="loaded">
-        <div class="header">
-          {{ draftStore.draftName }}
-        </div>
-
-        <TableSeating
-          v-if="nextPick.kind == 'NotSeated' || nextPick.kind == 'WaitingToFill'"
-          class="table-seating"
-        />
-
-        <template v-else>
-          <div class="player-list">
-            <component
-              :is="isDevMode ? 'a' : 'div'"
-              v-for="seat in draftStore.currentState.seats"
-              :key="seat.position"
-              class="seated-player"
-              :href="`${route.path}?as=${seat.player.id}`"
-            >
-              <img
-                class="player-icon"
-                :src="seat.player.iconUrl"
-                :title="seat.player.name"
-                :class="{ active: seat.player.id == authStore.user?.id }"
-              />
-            </component>
-          </div>
-
-          <div class="pick-count" v-if="nextPick.kind == 'ActivePosition'">
-            <div class="pc-round">
-              <div class="pc-round-label">Pack</div>
-              <div class="pc-round-count">{{ nextPick.round }}</div>
+    <template v-if="loaded">
+      <div class="scroll-outer">
+        <div class="scroll-inner">
+          <div class="header">
+            <div class="header-left">
+              <a class="back-link" href="/" @click.prevent="$router.push(appendImpersonation('/'))"
+                >〈 Back</a
+              >
             </div>
-            <div class="pc-pick">
-              <div class="pc-pick-label">Pick</div>
-              <div class="pc-pick-count">{{ nextPick.pick + 1 }}</div>
-            </div>
-          </div>
-          <div class="pick-count-error" v-else-if="nextPick.kind == 'Error'">
-            {{ nextPick.message }}
+            <div class="title">{{ draftStore.draftName }}</div>
+            <div class="header-right"></div>
           </div>
 
-          <div class="active-pack">
-            <template v-if="activePack">
-              <div class="active-pack-label">Current pack</div>
-              <div class="active-pack-cnt">
-                <div
-                  v-for="card in activePack"
-                  :key="card.id"
-                  class="card-slate"
-                  @click="onCardClick(card)"
-                >
-                  <div class="card-name">{{ card.definition.name }}</div>
-                  <div class="card-cost">
-                    <ManaSymbol
-                      v-for="(msymb, i) in card.definition.mana_cost"
-                      :key="i"
-                      :code="msymb"
-                      class="mana-symbol"
-                    />
+          <TableSeating
+            v-if="nextPick.kind == 'NotSeated' || nextPick.kind == 'WaitingToFill'"
+            class="table-seating"
+          />
+
+          <template v-else>
+            <div class="player-list-bg"></div>
+            <div class="player-list">
+              <component
+                :is="isDevMode ? 'a' : 'div'"
+                v-for="seat in draftStore.currentState.seats"
+                :key="seat.position"
+                class="seated-player"
+                :href="`${route.path}?as=${seat.player.id}`"
+              >
+                <img
+                  class="player-icon"
+                  :src="seat.player.iconUrl"
+                  :title="seat.player.name"
+                  :class="{ active: seat.player.id == authStore.user?.id }"
+                />
+              </component>
+            </div>
+
+            <div class="boop-prompt" v-if="boopPrompt != 'none'">
+              <template v-if="boopPrompt == 'request-permission'">
+                <div>To scan cards, you must first enable booping.</div>
+                <div>
+                  <button class="boop-btn" @click="onRequestNfcPermission">Enable booping</button>
+                </div>
+              </template>
+              <template v-else>
+                <div>Your hardware doesn't appear to support card scanning 😔.</div>
+                <div style="margin-top: 10px">
+                  To participate in an in-person draft you'll need a device with an RFID reader
+                  (such as a phone).
+                </div>
+              </template>
+            </div>
+
+            <div class="pick-count" v-if="nextPick.kind == 'ActivePosition'">
+              <div class="pc-round">
+                <div class="pc-round-label">Pack</div>
+                <div class="pc-round-count">{{ nextPick.round }}</div>
+              </div>
+              <div class="pc-pick">
+                <div class="pc-pick-label">Pick</div>
+                <div class="pc-pick-count">{{ nextPick.pick + 1 }}</div>
+              </div>
+            </div>
+            <div class="pick-count-error" v-else-if="nextPick.kind == 'Error'">
+              {{ nextPick.message }}
+            </div>
+
+            <div class="active-pack">
+              <template v-if="activePack">
+                <div class="active-pack-label">Current pack</div>
+                <div class="active-pack-cnt">
+                  <div
+                    v-for="card in activePack"
+                    :key="card.id"
+                    class="card-slate"
+                    @click="onCardClick(card)"
+                  >
+                    <div class="card-name">{{ card.definition.name }}</div>
+                    <div class="card-cost">
+                      <ManaSymbol
+                        v-for="(msymb, i) in card.definition.mana_cost"
+                        :key="i"
+                        :code="msymb"
+                        class="mana-symbol"
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
-            </template>
-            <template v-else><em>Waiting for pack</em></template>
-          </div>
+              </template>
+              <template v-else><em>Waiting for pack</em></template>
+            </div>
 
-          <div v-if="previousPicks" class="previous-pick" @click="onPreviousPickClick">
-            <div class="active-pack-label">Previous pick</div>
+            <div v-if="previousPicks" class="previous-pick" @click="onPreviousPickClick">
+              <div class="active-pack-label">Previous pick</div>
 
-            <div v-for="card in previousPicks" :key="card.id" class="card-slate previous">
-              <div class="card-name">{{ card.definition.name }}</div>
-              <div class="card-cost">
-                <ManaSymbol
-                  v-for="(msymb, i) in card.definition.mana_cost"
-                  :key="i"
-                  :code="msymb"
-                  class="mana-symbol"
-                />
+              <div v-for="card in previousPicks" :key="card.id" class="card-slate previous">
+                <div class="card-name">{{ card.definition.name }}</div>
+                <div class="card-cost">
+                  <ManaSymbol
+                    v-for="(msymb, i) in card.definition.mana_cost"
+                    :key="i"
+                    :code="msymb"
+                    class="mana-symbol"
+                  />
+                </div>
               </div>
             </div>
-          </div>
-        </template>
-
-        <CardDetailDialog
-          v-if="activeDialog?.kind == 'card-detail'"
-          :card="draftStore.getCard(activeDialog.cardId)"
-          class="fullscreen-page"
-          @close="activeDialog = null"
-          @pick="onPickCard"
-        />
-        <PreviousPickDialog
-          v-else-if="activeDialog?.kind == 'previous-pick'"
-          :cards="activeDialog.cards"
-          class="fullscreen-page"
-          @close="activeDialog = null"
-          @undo="onUndoPick"
-        />
-        <LoadingDialog
-          v-else-if="activeDialog?.kind == 'loading-spinner'"
-          class="fullscreen-page"
-        />
-        <DismissableDialog
-          v-else-if="activeDialog?.kind == 'error-dialog'"
-          class="fullscreen-page"
-          @close="activeDialog = null"
-        >
-          <template #header>Flagrant System Error</template>
-          <div class="error-msg">{{ activeDialog.message }}</div>
-          <div v-if="activeDialog.escapedMessage" class="error-msg-escaped">
-            {{ activeDialog.escapedMessage }}
-          </div>
-        </DismissableDialog>
-      </template>
-    </div>
+          </template>
+        </div>
+      </div>
+      <CardDetailDialog
+        v-if="activeDialog?.kind == 'card-detail'"
+        :card="draftStore.getCard(activeDialog.cardId)"
+        class="fullscreen-page"
+        @close="activeDialog = null"
+        @pick="onPickCard"
+      />
+      <PreviousPickDialog
+        v-else-if="activeDialog?.kind == 'previous-pick'"
+        :cards="activeDialog.cards"
+        class="fullscreen-page"
+        @close="activeDialog = null"
+        @undo="onUndoPick"
+      />
+      <LoadingDialog v-else-if="activeDialog?.kind == 'loading-spinner'" class="fullscreen-page" />
+      <DismissableDialog
+        v-else-if="activeDialog?.kind == 'error-dialog'"
+        class="fullscreen-page"
+        @close="activeDialog = null"
+      >
+        <template #header>Flagrant System Error</template>
+        <div class="error-msg">{{ activeDialog.message }}</div>
+        <div v-if="activeDialog.escapedMessage" class="error-msg-escaped">
+          {{ activeDialog.escapedMessage }}
+        </div>
+      </DismissableDialog>
+    </template>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from "vue";
+import { computed, onMounted, onUnmounted, reactive, ref } from "vue";
 import { useRoute } from "vue-router";
 import { useSound } from "@vueuse/sound";
 import axios from "axios";
@@ -135,8 +156,9 @@ import DismissableDialog from "@/ui/picker/DismissableDialog.vue";
 import CardDetailDialog from "@/ui/picker/CardDetailDialog.vue";
 import LoadingDialog from "@/ui/picker/LoadingDialog.vue";
 import ManaSymbol from "@/ui/shared/mana/ManaSymbol.vue";
+import zone from "@/sfx/zone.mp3";
 
-import { fetchEndpoint, fetchEndpointEv } from "@/fetch/fetchEndpoint";
+import { fetchEndpointEv } from "@/fetch/fetchEndpoint";
 import { ROUTE_DRAFT } from "@/rest/api/draft/draft";
 import { ROUTE_UNDO_PICK } from "@/rest/api/undopick/undopick";
 import { ROUTE_PICK } from "@/rest/api/pick/pick";
@@ -154,18 +176,59 @@ const loaded = ref(false);
 const activeDialog = ref<ActiveDialog | null>(null);
 const draftId = parseInt(route.params["draftId"] as string);
 const activeRequest = ref<boolean>(false);
+
+const isNfcSupported = "NDEFReader" in window;
+const hasNfcPermission = ref<boolean>(false);
+
+let fetchingDraft = false;
+let pollingId: number;
+let wakeLock: WakeLockSentinel | null = null;
+
 const isDevMode = import.meta.env.DEV;
+const devOptions: DevOptions = reactive({
+  boopPrompt: null,
+  pollState: false,
+});
 
 onMounted(() => {
   console.log("---- Draft ID is", draftId);
 
+  // Tell iOS app to start scanning
+  postMessage("scan");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (window as any).webkit?.messageHandlers?.scanner?.postMessage("scan");
+
   document.body.addEventListener("rfidScan", onRfidScan);
 
   fetchDraft();
+
+  if (!isDevMode || devOptions.pollState) {
+    pollingId = setInterval(onPollForState, 5000) as unknown as number;
+  }
+
+  if ("wakeLock" in navigator) {
+    navigator.wakeLock.request("screen").then(
+      (lock) => {
+        console.log("Got a wake lock!");
+        wakeLock = lock;
+      },
+      (e) => {
+        console.log("Error when trying to acquire wake lock", e);
+      },
+    );
+  } else {
+    console.log("Wake locks not supported");
+  }
+
+  handleNfcScanning();
 });
 
 onUnmounted(() => {
   document.body.removeEventListener("rfidScan", onRfidScan);
+
+  clearInterval(pollingId);
+
+  wakeLock?.release();
 });
 
 const playerSeat = computed(() => {
@@ -182,7 +245,7 @@ const activePack = computed(() => {
   }
 
   const firstQueuedPack = seat.queuedPacks.packs[0];
-  if (firstQueuedPack.round == seat.round && firstQueuedPack.cards.length > 0) {
+  if (firstQueuedPack && firstQueuedPack.round == seat.round && firstQueuedPack.cards.length > 0) {
     return firstQueuedPack.cards.map((id) => draftStore.getCard(id));
   } else {
     return null;
@@ -238,6 +301,27 @@ const nextPick = computed<PickPosition>(() => {
   return nextPick;
 });
 
+const boopPrompt = computed<BoopPrompt>(() => {
+  if (isDevMode && devOptions.boopPrompt != null) {
+    return devOptions.boopPrompt;
+  }
+
+  const isAppleMobileOs = navigator.platform.substring(0, 2) == "iP";
+
+  if (
+    !draftStore.inPerson ||
+    hasNfcPermission.value ||
+    isAppleMobileOs ||
+    activePack.value != null
+  ) {
+    return "none" as const;
+  } else if (!isNfcSupported) {
+    return "missing-hardware" as const;
+  } else {
+    return "request-permission" as const;
+  }
+});
+
 const sounds = computed(() => {
   return {
     scan: PickerSounds.getScanSoundForSeat(playerSeat.value?.position),
@@ -247,6 +331,13 @@ const sounds = computed(() => {
 
 const scanSound = useSound(sounds.value.scan);
 const errorSound = useSound(sounds.value.error);
+const zoneSound = useSound(zone);
+
+function onPollForState() {
+  if (activeDialog.value == null) {
+    fetchDraft();
+  }
+}
 
 function onCardClick(card: DraftCard) {
   activeDialog.value = {
@@ -266,6 +357,19 @@ function onPreviousPickClick() {
 }
 
 async function onRfidScan(event: CustomEvent<string>) {
+  const cardRfid = decodeURIComponent(
+    Array.prototype.map
+      .call(atob(event.detail), (c) => `%${`00${c.charCodeAt(0).toString(16)}`.slice(-2)}`)
+      .slice(3)
+      .join(""),
+  );
+
+  await handleCardScanned(cardRfid);
+}
+
+async function handleCardScanned(cardRfid: string) {
+  console.log("Attempting to pick scanned card with ID", cardRfid);
+
   if (activeRequest.value) {
     return;
   }
@@ -274,13 +378,6 @@ async function onRfidScan(event: CustomEvent<string>) {
     kind: "loading-spinner",
     message: "Picking scanned card...",
   };
-
-  const cardRfid = decodeURIComponent(
-    Array.prototype.map
-      .call(atob(event.detail), (c) => `%${`00${c.charCodeAt(0).toString(16)}`.slice(-2)}`)
-      .slice(3)
-      .join(""),
-  );
 
   const [response, e] = await fetchEndpointEv(ROUTE_PICK_RFID, {
     draftId: draftStore.draftId,
@@ -294,12 +391,21 @@ async function onRfidScan(event: CustomEvent<string>) {
     activeDialog.value = null;
     scanSound.play();
   } else {
-    activeDialog.value = {
-      kind: "error-dialog",
-      message: `An error occurred while scanning card with ID "${cardRfid}"`,
-      escapedMessage: getErrorMessage(e),
-    };
-    errorSound.play();
+    if (isZoneDraftViolation(e)) {
+      activeDialog.value = {
+        kind: "error-dialog",
+        message: `Hold your horses!`,
+        escapedMessage: "Wait for the next player to take their pack before picking.",
+      };
+      zoneSound.play();
+    } else {
+      activeDialog.value = {
+        kind: "error-dialog",
+        message: `An error occurred while scanning card with ID "${cardRfid}"`,
+        escapedMessage: getErrorMessage(e),
+      };
+      errorSound.play();
+    }
   }
 
   activeRequest.value = false;
@@ -319,6 +425,7 @@ async function onPickCard(card: DraftCard) {
   };
 
   const [response, e] = await fetchEndpointEv(ROUTE_PICK, {
+    draftId,
     cards: [card.id],
     xsrfToken: draftStore.pickXsrf,
     as: authStore.user?.id,
@@ -367,12 +474,87 @@ async function onUndoPick(card: DraftCard) {
 }
 
 async function fetchDraft() {
-  const payload = await fetchEndpoint(ROUTE_DRAFT, {
+  if (fetchingDraft) {
+    return;
+  }
+  fetchingDraft = true;
+  const [payload, e] = await fetchEndpointEv(ROUTE_DRAFT, {
     id: draftId.toString(),
     as: authStore.user?.id,
   });
-  draftStore.loadDraft(payload);
-  loaded.value = true;
+  fetchingDraft = false;
+
+  if (payload) {
+    draftStore.loadDraft(payload);
+    loaded.value = true;
+  } else {
+    // TODO: Can't show an error dialog until loaded is true, woops
+    console.error("Error while loading draft", e);
+  }
+}
+
+async function handleNfcScanning() {
+  if (isNfcSupported) {
+    console.log("NFC reading supported!");
+
+    const nfcPermissionStatus = await navigator.permissions.query({
+      name: "nfc" as unknown as PermissionName,
+    });
+
+    hasNfcPermission.value = nfcPermissionStatus.state == "granted";
+    nfcPermissionStatus.addEventListener("change", (e) => {
+      console.log("NFC permission status changed to", nfcPermissionStatus.state);
+      hasNfcPermission.value = nfcPermissionStatus.state == "granted";
+    });
+
+    if (hasNfcPermission.value) {
+      console.log("Have permission, preparing to scan!");
+      scanForTag();
+    }
+  }
+}
+
+function onRequestNfcPermission() {
+  scanForTag();
+}
+
+function scanForTag() {
+  const reader = new NDEFReader();
+  reader.onreadingerror = () => {
+    console.log("Cannot read data from the NFC tag. Try another one?");
+  };
+  reader.onreading = (e) => {
+    console.log("NDEF message read.");
+    console.log("Records:");
+    for (const record of e.message.records) {
+      console.log(record.id, record.recordType);
+      if (record.recordType == "text") {
+        const td = new TextDecoder(record.encoding);
+        const text = td.decode(record.data);
+        console.log("Text:", td.decode(record.data));
+        if (CARD_UUID_PATTERN.test(text)) {
+          console.log("It's a thing!");
+          handleCardScanned(text);
+        }
+      }
+    }
+  };
+  reader
+    .scan()
+    .then(() => {
+      console.log("Scan started successfully.");
+    })
+    .catch((error) => {
+      console.log(`Error! Scan failed to start: ${error}.`);
+    });
+}
+
+function appendImpersonation(url: string) {
+  if (route.query["as"] != undefined) {
+    return url + `?as=${route.query["as"]}`;
+  } else {
+    return url;
+  }
 }
 </script>
 
@@ -417,6 +599,13 @@ function incrementPick(round: number, pick: number): PickPosition {
       kind: "DraftComplete",
     };
   }
+}
+
+function isZoneDraftViolation(e: unknown): boolean {
+  if (axios.isAxiosError(e)) {
+    return e.response?.status === 400;
+  }
+  return false;
 }
 
 function getErrorMessage(e: unknown): string {
@@ -481,36 +670,94 @@ type ActiveDialog =
       escapedMessage?: string;
     };
 
+type BoopPrompt = "none" | "missing-hardware" | "request-permission";
+
+interface DevOptions {
+  boopPrompt: BoopPrompt | null;
+  pollState: boolean;
+}
+
 // TODO: Move these into a per-draft config object
 const ROUNDS_PER_DRAFT = 3;
 const CARDS_PER_PACK = 15;
+
+const CARD_UUID_PATTERN = /\w{8}-\w{4}-\w{4}-\w{4}-\w{12}/;
 </script>
 
 <style scoped>
 ._picker-page {
-  background: #333;
-  color: white;
-
+  position: relative;
   height: 100%;
 
-  overflow-y: auto;
+  background: #333;
+  color: white;
+  overflow: hidden;
+}
+
+.scroll-outer {
+  height: 100%;
 
   display: flex;
   flex-direction: column;
   align-items: center;
+  overflow-y: auto;
 }
 
-.container {
+.scroll-inner {
   display: flex;
   flex-direction: column;
   max-width: 450px;
   width: 100%;
+  padding-bottom: 40px;
 }
 
 .header {
-  font-size: 25px;
+  font-size: 16px;
   text-align: center;
-  margin: 30px 0;
+  padding: 20px 20px;
+  display: flex;
+  align-items: center;
+
+  background-color: #1b1b1b;
+}
+
+.header-left,
+.header-right {
+  width: 80px;
+  font-size: 16px;
+}
+
+.header-left {
+  text-align: left;
+}
+
+.header-right {
+  text-align: right;
+}
+
+.title {
+  flex: 1;
+}
+
+.back-link {
+  color: #ccc;
+  text-decoration: none;
+  padding: 10px;
+  padding-left: 0px;
+}
+.back-link:hover {
+  text-decoration: underline;
+}
+
+.table-seating {
+  margin-top: 30px;
+  padding-bottom: 50px;
+}
+
+.player-list-bg {
+  width: 100%;
+  height: 35px;
+  background-color: #1b1b1b;
 }
 
 .player-list {
@@ -522,6 +769,8 @@ const CARDS_PER_PACK = 15;
 
   border-radius: 100px;
   background-color: #1b1b1b;
+
+  margin-top: -30px;
 }
 
 .player-icon {
@@ -540,6 +789,21 @@ const CARDS_PER_PACK = 15;
 
 .seated-player + .seated-player {
   margin-left: 5px;
+}
+
+.boop-prompt {
+  padding: 20px;
+  margin: 20px;
+  background: #1b1b1b;
+  border-radius: 2px;
+  border: 1px solid #8b4d4d;
+}
+
+.boop-btn {
+  padding: 10px;
+  margin-top: 20px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .pick-count {

@@ -72,248 +72,259 @@ process.on('SIGINT', stopServer);
 process.on('SIGTERM', stopServer);
 
 function doParse(client, objstr) {
-  var obj = JSON.parse(objstr);
-  var state = JSON.parse(objstr).draft.seats;
-  var myPosition = obj.draft.seats.findIndex((elem) => elem.playerId === obj.user);
-  var newEvents = [];
-  var librarian;
+  try{
+    var obj = JSON.parse(objstr);
+    var state = JSON.parse(objstr).draft.seats;
+    var objBackup = JSON.parse(objstr);
+    var myPosition = obj.draft.seats.findIndex((elem) => elem.playerId === obj.user);
+    var newEvents = [];
+    var librarian;
 
-  obj.draft.playerId = obj.user;
+    obj.draft.playerId = obj.user;
 
-  // create a map of which pack every card lives in.
-  // this isn't strictly necessary as we can limit our card searches to the pack
-  // that the player has available, but it's good to have to verify all events
-  // are valid.
-  var cardToPackAndIndex = {};
-  for (var i = 0; i < state.length; i++) {
-    state[i].round = 1;
-    var packs = state[i].packs;
-    for (var j = 0; j < packs.length; j++) {
-      var pack = packs[j];
-      pack.startSeat = i;
-      for (var k = 0; k < pack.length; k++) {
-        if (pack[k]) {
-          cardToPackAndIndex[pack[k].id] = { pack: pack, index: k };
-          if (pack[k].scryfall.name === 'Cogwork Librarian') {
-            if (librarian) {
-              throw Error('Cannot have multiple Cogwork Librarians in a draft without rewriting this logic.');
+    // create a map of which pack every card lives in.
+    // this isn't strictly necessary as we can limit our card searches to the pack
+    // that the player has available, but it's good to have to verify all events
+    // are valid.
+    var cardToPackAndIndex = {};
+    for (var i = 0; i < state.length; i++) {
+      state[i].round = 1;
+      var packs = state[i].packs;
+      /*if (packs == null) {
+        packs = state[i].packs = obj.draft.seats[i].packs = [[],[],[]]
+      }*/
+      for (var j = 0; j < packs.length; j++) {
+        var pack = packs[j];
+        pack.startSeat = i;
+        for (var k = 0; k < pack.length; k++) {
+          if (pack[k]) {
+            cardToPackAndIndex[pack[k].id] = { pack: pack, index: k };
+            if (pack[k].scryfall.name === 'Cogwork Librarian') {
+              if (librarian) {
+                throw Error('Cannot have multiple Cogwork Librarians in a draft without rewriting this logic.');
+              }
+              librarian = pack[k];
             }
-            librarian = pack[k];
           }
         }
-      }
-      packs[j] = [packs[j]];
-    }
-  }
-
-  // a map that indicates if a pack has been seen by the player or not
-  var packSeen = [
-    [false, false, false],
-    [false, false, false],
-    [false, false, false],
-    [false, false, false],
-    [false, false, false],
-    [false, false, false],
-    [false, false, false],
-    [false, false, false],
-  ];
-  // the player is always allowed to see their pack 1
-  if (myPosition >= 0) {
-    packSeen[myPosition][0] = true;
-  }
-
-  // a map from a pack's starting seat + round to what cards have been picked
-  // since the watched player last saw that pack
-  var shadowCards = {};
-  // a map from a pack's starting seat + round to the timestamp of the event
-  // that last added a card to this list. this is important because we want
-  // shadow pick events to have stable draftModified values.
-  var shadowModified = {};
-  
-  for (var i = 0; i < obj.draft.events.length; i++) {
-    var event = obj.draft.events[i];
-    var pi = cardToPackAndIndex[event.cards[0]];
-    var shadowKey = pi.pack.startSeat + '|' + event.round;
-
-    if (event.position === myPosition) {
-      // the player we're watching made a pick. if previous cards
-      // have been picked from this pack, record those picks first
-      if (shadowCards[shadowKey]) {
-        newEvents.push({
-          announcements: [],
-          cards: shadowCards[shadowKey],
-          draftModified: shadowModified[shadowKey] + 0.5,
-          librarian: false,
-          position: -1,
-          round: event.round,
-          type: 'ShadowPick',
-        });
-        delete shadowCards[shadowKey];
-        delete shadowModified[shadowKey];
-      }
-
-      newEvents.push(event);
-    } else {
-      // another player made a pick. just note that a card was picked and when
-      // so the pack can be properly passed around by the UI.
-      newEvents.push({
-        announcements: [],
-        draftModified: event.draftModified,
-        librarian: event.librarian,
-        playerModified: event.playerModified,
-        position: event.position,
-        round: event.round,
-        type: 'SecretPick'
-      });
-
-      // add the card that was picked to the list of picked cards from that pack.
-      shadowCards[shadowKey] = event.cards.concat(shadowCards[shadowKey] || []);
-      shadowCards[shadowKey].sort(); // sort by card id so pick order can't be deduced.
-      shadowModified[shadowKey] = event.draftModified;
-    }
-
-    // now do the event. the purpose of the rest of this for loop body is to mark packs as seen by the player.
-    if (event.librarian) {
-      if (!librarian) {
-        throw Error('tried to place librarian but could not find it');
-      }
-      // replace the first card picked with cogwork librarian and remove the second card picked
-      var pi2 = cardToPackAndIndex[event.cards[1]];
-      pi.pack[pi.index] = librarian
-      pi2.pack[pi2.index] = null;
-    } else {
-      // remove the picked card
-      pi.pack[pi.index] = null;
-    }
-
-    // figure out where the pack is going
-    var nextPos = event.position;
-    if (event.round % 2 === 1) {
-      nextPos++;
-      if (nextPos === 8) {
-        nextPos = 0;
-      }
-    } else {
-      nextPos--;
-      if (nextPos === -1) {
-        nextPos = 7;
+        packs[j] = [packs[j]];
       }
     }
 
-    // sanity check the round
-    var stateRound = state[event.position].round;
-    if (stateRound !== event.round) {
-      throw Error('problem with rounds');
+    // a map that indicates if a pack has been seen by the player or not
+    var packSeen = [
+      [false, false, false],
+      [false, false, false],
+      [false, false, false],
+      [false, false, false],
+      [false, false, false],
+      [false, false, false],
+      [false, false, false],
+      [false, false, false],
+    ];
+    // the player is always allowed to see their pack 1
+    if (myPosition >= 0) {
+      packSeen[myPosition][0] = true;
     }
 
-    // sanity check the pack being picked from agrees with our current state
-    if (state[event.position].packs[event.round - 1][0] !== pi.pack) {
-      throw Error('problem with pack location');
-    }
+    // a map from a pack's starting seat + round to what cards have been picked
+    // since the watched player last saw that pack
+    var shadowCards = {};
+    // a map from a pack's starting seat + round to the timestamp of the event
+    // that last added a card to this list. this is important because we want
+    // shadow pick events to have stable draftModified values.
+    var shadowModified = {};
 
-    // do the actual passing
-    var passedPack = state[event.position].packs[event.round - 1].shift();
-    state[nextPos].packs[event.round - 1].push(passedPack);
+    for (var i = 0; i < obj.draft.events.length; i++) {
+      var event = obj.draft.events[i];
+      var pi = cardToPackAndIndex[event.cards[0]];
+      var shadowKey = pi.pack.startSeat + '|' + event.round;
 
-    var startSeat = pi.pack.startSeat;
-    if (event.position === myPosition) {
-      // if the player we're watching just picked a card, they have seen the pack
-      packSeen[startSeat][event.round - 1] = true;
-    } else if (!packSeen[startSeat][event.round - 1]) {
-      // if another player has picked a card from this pack, and the player
-      // we're watching has never seen this pack, mark the card as forever hidden
-      var oldPack = obj.draft.seats[startSeat].packs[event.round - 1];
-      var oldCard = oldPack[pi.index];
-      oldPack[pi.index] = {
-        id: oldCard.id,
-        hidden: true,
-        scryfall: {
-          name: 'Forever Unknown Card',
+      if (event.position === myPosition) {
+        // the player we're watching made a pick. if previous cards
+        // have been picked from this pack, record those picks first
+        if (shadowCards[shadowKey]) {
+          newEvents.push({
+            announcements: [],
+            cards: shadowCards[shadowKey],
+            draftModified: shadowModified[shadowKey] + 0.5,
+            librarian: false,
+            position: -1,
+            round: event.round,
+            type: 'ShadowPick',
+          });
+          delete shadowCards[shadowKey];
+          delete shadowModified[shadowKey];
         }
-      };
-    }
 
-    // if the whole pack is empty, increment the round for that player
-    if (passedPack.every((x) => !x)) {
-      state[event.position].round++;
-
-      // because the whole pack is empty, we need to add the cards that have
-      // been picked from that pack to a shadow pick event only if the focused
-      // player is not the one that took the last card.
-      if (myPosition >= 0 && event.position !== myPosition && shadowCards[shadowKey]) {
+        newEvents.push(event);
+      } else {
+        // another player made a pick. just note that a card was picked and when
+        // so the pack can be properly passed around by the UI.
         newEvents.push({
           announcements: [],
-          cards: shadowCards[shadowKey],
-          draftModified: shadowModified[shadowKey] + 0.5,
-          librarian: false,
-          position: -1,
+          draftModified: event.draftModified,
+          librarian: event.librarian,
+          playerModified: event.playerModified,
+          position: event.position,
           round: event.round,
-          type: 'ShadowPick',
+          type: 'SecretPick'
         });
-        delete shadowCards[shadowKey];
-        delete shadowModified[shadowKey];
-      }
-    }
-  }
 
-  // now that we've translated all the events and hidden all the forever unknown cards,
-  // we need to see if there is a pack the watched player is able to pick from.
-  // if there is, mark that pack as seen and add that pack's most recent shadow pick
-  // to the event list
-  if (myPosition >= 0) {
-    var myRound = state[myPosition].round;
-    var availablePack = state[myPosition].packs[myRound - 1][0];
-    if (availablePack) {
-      var ss = availablePack.startSeat;
-      packSeen[ss][myRound - 1] = true;
-      var shadowKey = ss + '|' + myRound;
-      if (shadowCards[shadowKey]) {
-        newEvents.push({
-          announcements: [],
-          cards: shadowCards[shadowKey],
-          draftModified: shadowModified[shadowKey] + 0.5,
-          librarian: false,
-          position: -1,
-          round: event.round,
-          type: 'ShadowPick',
-        });
-        delete shadowCards[shadowKey];
-        delete shadowModified[shadowKey];
+        // add the card that was picked to the list of picked cards from that pack.
+        shadowCards[shadowKey] = event.cards.concat(shadowCards[shadowKey] || []);
+        shadowCards[shadowKey].sort(); // sort by card id so pick order can't be deduced.
+        shadowModified[shadowKey] = event.draftModified;
       }
-    }
-  }
 
-  // mark all cards not yet seen as unknown cards
-  for (var i = 0; i < packSeen.length; i++) {
-    for (var j = 0; j < packSeen[i].length; j++) {
-      if (!packSeen[i][j]) {
-        obj.draft.seats[i].packs[j] = obj.draft.seats[i].packs[j].map((card) => {
-          if (!card || card.hidden) {
-            return card;
+      // now do the event. the purpose of the rest of this for loop body is to mark packs as seen by the player.
+      if (event.librarian) {
+        if (!librarian) {
+          throw Error('tried to place librarian but could not find it');
+        }
+        // replace the first card picked with cogwork librarian and remove the second card picked
+        var pi2 = cardToPackAndIndex[event.cards[1]];
+        pi.pack[pi.index] = librarian
+        pi2.pack[pi2.index] = null;
+      } else {
+        // remove the picked card
+        pi.pack[pi.index] = null;
+      }
+
+      // figure out where the pack is going
+      var nextPos = event.position;
+      if (event.round % 2 === 1) {
+        nextPos++;
+        if (nextPos === 8) {
+          nextPos = 0;
+        }
+      } else {
+        nextPos--;
+        if (nextPos === -1) {
+          nextPos = 7;
+        }
+      }
+
+      // sanity check the round
+      var stateRound = state[event.position].round;
+      if (stateRound !== event.round) {
+        throw Error('problem with rounds');
+      }
+
+      // sanity check the pack being picked from agrees with our current state
+      if (state[event.position].packs[event.round - 1][0] !== pi.pack) {
+        console.error('problem with pack location');
+        console.error(JSON.stringify(objBackup));
+        // throw Error('problem with pack location');
+      }
+
+      // do the actual passing
+      var passedPack = state[event.position].packs[event.round - 1].shift();
+      state[nextPos].packs[event.round - 1].push(passedPack);
+
+      var startSeat = pi.pack.startSeat;
+      if (event.position === myPosition) {
+        // if the player we're watching just picked a card, they have seen the pack
+        packSeen[startSeat][event.round - 1] = true;
+      } else if (!packSeen[startSeat][event.round - 1]) {
+        // if another player has picked a card from this pack, and the player
+        // we're watching has never seen this pack, mark the card as forever hidden
+        var oldPack = obj.draft.seats[startSeat].packs[event.round - 1];
+        var oldCard = oldPack[pi.index];
+        oldPack[pi.index] = {
+          id: oldCard.id,
+          hidden: true,
+          scryfall: {
+            name: 'Forever Unknown Card',
           }
-          return {
-            id: card.id,
-            hidden: true,
-            scryfall: {
-              name: 'Currently Unknown Card',
-            }
-          };
-        });
+        };
+      }
+
+      // if the whole pack is empty, increment the round for that player
+      if (passedPack.every((x) => !x)) {
+        state[event.position].round++;
+
+        // because the whole pack is empty, we need to add the cards that have
+        // been picked from that pack to a shadow pick event only if the focused
+        // player is not the one that took the last card.
+        if (myPosition >= 0 && event.position !== myPosition && shadowCards[shadowKey]) {
+          newEvents.push({
+            announcements: [],
+            cards: shadowCards[shadowKey],
+            draftModified: shadowModified[shadowKey] + 0.5,
+            librarian: false,
+            position: -1,
+            round: event.round,
+            type: 'ShadowPick',
+          });
+          delete shadowCards[shadowKey];
+          delete shadowModified[shadowKey];
+        }
       }
     }
-  }
 
-  newEvents.sort((a, b) => {
-    if (a.draftModified < b.draftModified) {
-      return -1;
-    } else if (a.draftModified > b.draftModified) {
-      return 1;
+    // now that we've translated all the events and hidden all the forever unknown cards,
+    // we need to see if there is a pack the watched player is able to pick from.
+    // if there is, mark that pack as seen and add that pack's most recent shadow pick
+    // to the event list
+    if (myPosition >= 0) {
+      var myRound = state[myPosition].round;
+      var availablePack = state[myPosition].packs[myRound - 1][0];
+      if (availablePack) {
+        var ss = availablePack.startSeat;
+        packSeen[ss][myRound - 1] = true;
+        var shadowKey = ss + '|' + myRound;
+        if (shadowCards[shadowKey]) {
+          newEvents.push({
+            announcements: [],
+            cards: shadowCards[shadowKey],
+            draftModified: shadowModified[shadowKey] + 0.5,
+            librarian: false,
+            position: -1,
+            round: event.round,
+            type: 'ShadowPick',
+          });
+          delete shadowCards[shadowKey];
+          delete shadowModified[shadowKey];
+        }
+      }
     }
-    throw Error('duplicate draftModified values');
-  });
 
-  obj.draft.events = newEvents;
-  // console.log(JSON.stringify(obj.draft));
-  client.end(JSON.stringify(obj.draft));
-  client.unref();
+    // mark all cards not yet seen as unknown cards
+    for (var i = 0; i < packSeen.length; i++) {
+      for (var j = 0; j < packSeen[i].length; j++) {
+        if (!packSeen[i][j]) {
+          obj.draft.seats[i].packs[j] = obj.draft.seats[i].packs[j].map((card) => {
+            if (!card || card.hidden) {
+              return card;
+            }
+            return {
+              id: card.id,
+              hidden: true,
+              scryfall: {
+                name: 'Currently Unknown Card',
+              }
+            };
+          });
+        }
+      }
+    }
+
+    newEvents.sort((a, b) => {
+      if (a.draftModified < b.draftModified) {
+        return -1;
+      } else if (a.draftModified > b.draftModified) {
+        return 1;
+      }
+      throw Error('duplicate draftModified values');
+    });
+
+    obj.draft.events = newEvents;
+    // console.log(JSON.stringify(obj.draft));
+    client.end(JSON.stringify(obj.draft));
+    client.unref();
+  } catch (e) {
+    console.error(e);
+    console.error(JSON.stringify(objBackup));
+  }
 }

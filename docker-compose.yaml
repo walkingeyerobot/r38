@@ -1,0 +1,46 @@
+services:
+  filter:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: filter_deploy
+    image: git.ninefives.online/cdanis/r38-filter:latest
+    volumes:
+      - &socket socket:/srv/r38/socket
+    working_dir: /srv/r38/socket
+    restart: always
+
+  app:
+    image: git.ninefives.online/cdanis/r38-app:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: go_deploy
+    environment:
+      - DISCORD_CLIENT_ID=$DISCORD_CLIENT_ID
+      - DISCORD_CLIENT_SECRET=$DISCORD_CLIENT_SECRET
+      - DISCORD_REDIRECT_URL=$DISCORD_REDIRECT_URL_unencrypted
+      - SESSION_SECRET=$SESSION_SECRET
+    ports:
+      - "12264:12264"
+    restart: always
+    depends_on:
+      - filter
+    volumes:
+      - *socket
+      - objectbox_data:/srv/r38/db
+  objectboxadmin:
+    image: objectboxio/admin:latest
+    environment:
+      - DB_PATH=/db/data.mdb
+    ports:
+      - "8081:8081"
+    restart: always
+    depends_on:
+      - app
+    volumes:
+      - objectbox_data:/db
+    user: "1000:1000" # ObjectBox admin runs as 'nobody' (uid 65534) by default, which does not have permissions for the shared volume
+volumes:
+  socket:
+  objectbox_data:
