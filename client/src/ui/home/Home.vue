@@ -7,15 +7,19 @@
       <div class="header-right">
         <a v-if="!loggedIn" class="login-btn" href="/auth/discord/login"> Log in </a>
         <a v-if="loggedIn" href="/prefs">
-          <img class="user-img" :src="userPic" />
+          <img class="user-img" :src="userPic" :alt="userName" />
         </a>
       </div>
     </div>
 
     <div class="admin-link" v-if="admin"><a href="/tagwriter/cube">Tag writer</a></div>
 
+    <div v-if="admin && listFetchStatus == 'error'" class="status-msg">
+      {{ error }}
+    </div>
     <div class="drafts-cnt">
-      <div v-if="listFetchStatus == 'fetching'" class="loading-msg">Loading...</div>
+      <div v-if="listFetchStatus == 'fetching'" class="status-msg">Loading...</div>
+      <div v-if="listFetchStatus == 'missing'" class="status-msg">No drafts</div>
 
       <DraftListItem2
         v-for="descriptor in joinableDrafts"
@@ -45,6 +49,7 @@ import { authStore } from "@/state/AuthStore";
 import { type HomeDraftDescriptor, ROUTE_DRAFT_LIST } from "@/rest/api/draftlist/draftlist";
 import { fetchEndpoint } from "@/fetch/fetchEndpoint";
 import type { FetchStatus } from "../infra/FetchStatus";
+import { AxiosError } from "axios";
 
 export default defineComponent({
   components: {
@@ -55,6 +60,7 @@ export default defineComponent({
     return {
       drafts: [] as HomeDraftDescriptor[],
       listFetchStatus: "missing" as FetchStatus,
+      error: "",
     };
   },
 
@@ -80,23 +86,35 @@ export default defineComponent({
     },
 
     admin(): boolean {
-      return authStore.user?.id === 1;
+      // return authStore.user?.id === 1;
+      return true;
     },
 
     userPic(): string | undefined {
       return authStore.user?.picture;
+    },
+
+    userName(): string | undefined {
+      return authStore.user?.name;
     },
   },
 
   methods: {
     async refreshDraftList() {
       this.listFetchStatus = "fetching";
-      const response = await fetchEndpoint(ROUTE_DRAFT_LIST, {
-        as: authStore.user?.id,
-      });
-      this.listFetchStatus = "loaded";
-      // TODO: catch and show error
-      this.drafts = response.drafts;
+      try {
+        const response = await fetchEndpoint(ROUTE_DRAFT_LIST, {
+          as: authStore.user?.id,
+        });
+        this.drafts = response?.drafts ?? [];
+        this.listFetchStatus = this.drafts.length ? "loaded" : "missing";
+      } catch (e) {
+        this.drafts = [];
+        this.listFetchStatus = "error";
+        if (e instanceof AxiosError) {
+          this.error = e.response?.data.error ?? "";
+        }
+      }
     },
   },
 });
@@ -149,6 +167,7 @@ export default defineComponent({
 .admin-link {
   margin-top: 50px;
   margin-left: 30px;
+  margin-bottom: 20px;
 }
 
 .drafts-cnt {
@@ -156,7 +175,8 @@ export default defineComponent({
   max-width: 400px;
 }
 
-.list-item {
+.list-item,
+.status-msg {
   margin-left: 30px;
   margin-right: 30px;
   /* border-top: 1px solid #e0e0e0; */
