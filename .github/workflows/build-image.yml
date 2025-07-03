@@ -38,15 +38,13 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.REGISTRY_TOKEN }}
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
-          username: walkingeyerobot
-          password: ${{ secrets.REGISTRY_TOKEN }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Extract Metadata
         id: metadata
@@ -80,7 +78,7 @@ jobs:
           cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ github.repository }}/${{ inputs.image-name }}:buildcache,mode=max
           provenance: mode=max
           sbom: true
-          github-token: ${{ secrets.REGISTRY_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Generate Container Attestation
         if: github.event_name != 'pull_request' && inputs.create-attestation == true
