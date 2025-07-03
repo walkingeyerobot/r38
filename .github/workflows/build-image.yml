@@ -26,12 +26,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       REGISTRY: ghcr.io
-    permissions:
-      contents: read
-      packages: write
-      id-token: write
-      actions: read
-      attestations: write
     outputs:
       digest: ${{ steps.build-image.outputs.digest }}
 
