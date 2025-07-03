@@ -3,27 +3,49 @@ var https = require('https');
 var filename = process.argv[2];
 var finalCards = [];
 var fileType;
-
+filename = '../cube_new.csv'
+var foilIndex = 9;
+var correctLineLen = null;
+debugger;
 fs.readFile(filename, 'utf8', (err, data) => {
   if (err) {
     console.error(err);
     return
   }
   fileType = filename.split('.')[0];
+  fileType = 'cube';
   console.error('fileType: ' + fileType);
   if (fileType === 'cube') {
     var lines = data.split('\n');
-    var rawCards = lines.map((e) => {
-      var line = e.split(',');
+    var rawCards = lines.map((e, i, a) => {
+      var rawline = e.split(',');
+      var line = [];
+      for (var ii = 0; ii < rawline.length; ii++) {
+        if (rawline[ii].endsWith('"') && !rawline[ii].startsWith('"')) {
+          line[line.length - 1] += ',' + rawline[ii];
+        } else {
+          line.push(rawline[ii]);
+        }
+      }
+      if (correctLineLen == null) {
+        correctLineLen = line.length;
+      } else {
+        if (line.length !== correctLineLen) {
+          console.error(line);
+          console.error(line.length);
+          throw Error("AHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH");
+        }
+      }
+      console.error(line);
       var foilStatus = false;
-      if (line[2] === 'Foil' || line[2] === 'Foil\r') {
+      if (line[foilIndex] === 'Foil' || line[foilIndex] === 'Foil\r') {
         foilStatus = true;
-      } else if (line[2] !== 'Non-foil' && line[2] !== 'Non-foil\r') {
-        throw Error('cannot determine foil status of: "' + line + '"');
+      } else if (line[foilIndex] !== 'Non-foil' && line[foilIndex] !== 'Non-foil\r' && line[foilIndex] !== '') {
+        throw Error('cannot determine foil status of: "' + line + '" (found "' + line[foilIndex] + '")');
       }
       return {
-        set: line[0],
-        collector_number: line[1],
+        set: line[4].replaceAll('"',''),
+        collector_number: line[5].replaceAll('"',''),
         foil: foilStatus
       };
     });
@@ -69,9 +91,16 @@ function GetEntireSet(url, cb) {
 function GetIndividualCards(rawCards) {
   var idx = 0;
   function GetSingleCard(rawCard) {
+    console.error(rawCard);
     var url = 'https://api.scryfall.com/cards/' + rawCard.set + '/' + rawCard.collector_number;
-    console.error('requesting ' + idx + '/' + rawCards.length);
-    https.get(url, (resp) => {
+    var opts = {
+      headers: {
+          'User-Agent': 'cube stuff (mitch@thefoley.net)',
+          'Accept': 'text/json',
+      }
+  };
+    console.error('requesting ' + idx + '/' + rawCards.length + ' ' + url);
+    https.get(url, opts, (resp) => {
       var data = '';
 
       resp.on('data', (chunk) => {
@@ -82,7 +111,10 @@ function GetIndividualCards(rawCards) {
         var obj = JSON.parse(data);
         ProcessIndividualCard(rawCard, obj);
         if (idx < rawCards.length) {
-          GetSingleCard(rawCards[idx++]);
+          var qqqq = rawCards[idx++];
+          var gsc = GetSingleCard.bind(undefined, qqqq);
+          setTimeout(gsc, 500);
+          //GetSingleCard(rawCards[idx++]);
         } else {
           ProcessAllCards();
         }
@@ -112,7 +144,9 @@ function ProcessIndividualCard(rawCard, scryfallCard) {
   var r38Card = {
     foil: rawCard.foil,
     scryfall: {
-      id: scryfallCard.id, // this gets deleted later
+      //id: scryfallCard.id, // this gets deleted later
+      //oracle_id: scryfallCard.oracle_id, // this gets deleted later
+      id: scryfallCard.oracle_id, // this gets deleted later
 
       cmc: scryfallCard.cmc,
       color_identity: scryfallCard.color_identity,
@@ -141,6 +175,8 @@ function ProcessIndividualCard(rawCard, scryfallCard) {
     r38Card.rating = rawCard.rating;
   }
 
+  r38Card.mtgo_id = 0;
+  /*
   if (fileType === 'cube') {
     if (scryfallCard.mtgo_id && scryfallCard.mtgo_foil_id) {
       r38Card.mtgo_id = rawCard.foil ? scryfallCard.mtgo_foil_id : scryfallCard.mtgo_id;
@@ -159,6 +195,7 @@ function ProcessIndividualCard(rawCard, scryfallCard) {
   if (!r38Card.mtgo_id) {
     throw Error('no mtgo id set!');
   }
+  */
 
   if (scryfallCard.card_faces) {
     r38Card.scryfall.card_faces = [];
@@ -266,11 +303,14 @@ function ProcessAllCards() {
   finalObject.cards = finalCards.map((card) => {
     var id = card.scryfall.id;
     delete card.scryfall.id;
+    var oracle_id = card.scryfall.oracle_id;
+    delete card.scryfall.oracle_id;
     return {
       color: card.scryfall.colors ? card.scryfall.colors.join('') : card.scryfall.card_faces[0].colors.join(''),
       color_identity: card.scryfall.color_identity.join(''),
       dfc: card.scryfall.layout === 'transform',
       id: id,
+      oracle_id: oracle_id,
       rarity: card.scryfall.type_line.includes('Basic Land') ? 'basic' : card.scryfall.rarity,
       rating: card.rating,
       data: JSON.stringify(card)

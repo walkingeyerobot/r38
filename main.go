@@ -2548,7 +2548,7 @@ func doEventOb(ob *objectbox.ObjectBox, draftId int64, announcements []string, c
 }
 
 func GetDraftList(userID int64, tx *sql.Tx) (DraftList, error) {
-	var drafts DraftList
+	drafts := DraftList{Drafts: make([]DraftListEntry, 0)}
 
 	query := `select
                     drafts.id,
