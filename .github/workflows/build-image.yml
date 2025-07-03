@@ -45,7 +45,7 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
+          username: walkingeyerobot
           password: ${{ secrets.REGISTRY_TOKEN }}
 
       - name: Extract Metadata
