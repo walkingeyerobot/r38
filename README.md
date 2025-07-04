@@ -22,8 +22,16 @@ bash <(curl -s https://raw.githubusercontent.com/objectbox/objectbox-go/main/ins
 
 You can now run the server without OAuth. You will always be considered logged in as userId 1. To be logged in as a different user, add ?as=x to the end of the url you want to view, where x is the id of the user you want to view the page as.
 
+### Using sqlite
+
 ```bash
 source r38-secret*.env; go run . -auth=false
+```
+
+### Using objectbox
+
+```bash
+source r38-secret*.env; go run . -auth=false -objectbox=true
 ```
 
 ## Configure OAuth for a local environment:
@@ -82,6 +90,8 @@ EOF
 
 ## Configure a draft
 
+### Using sqlite
+
 MTGO draft:
 
 ```bash
@@ -100,6 +110,26 @@ Paper draft with automatic seat and/or pack assignment, for testing:
 go run makedraft_cli/*.go --inPerson --name="name of draft" [--assignSeats] [--assignPacks]
 ```
 
+### Using objectbox
+
+MTGO draft:
+
+```bash
+go run makedraft_cli/*.go --name="name of draft" --database_dir=objectbox
+```
+
+Paper draft:
+
+```bash
+go run makedraft_cli/*.go --inPerson --name="name of draft" --database_dir=objectbox
+```
+
+Paper draft with automatic seat and/or pack assignment, for testing:
+
+```bash
+go run makedraft_cli/*.go --inPerson --name="name of draft" --database_dir=objectbox [--assignSeats] [--assignPacks]
+```
+
 ## Initialize fake users
 
 The following will prepopulate the server with 11 fake users that you can
@@ -111,6 +141,14 @@ sqlite3 draft.db < development/InitUsers.sql
 
 ## Start the server
 
+### Using sqlite
+
 ```bash
 source r38-secret*.env; go run .
+```
+
+### Using objectbox
+
+```bash
+source r38-secret*.env; go run . --objectbox=true
 ```
