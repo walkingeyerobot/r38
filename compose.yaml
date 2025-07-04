@@ -54,6 +54,7 @@ services:
     volumes:
       - objectbox_data:/db
     command: chown -R 1000:1000 /db
+
 volumes:
   socket:
   objectbox_data:
