@@ -1,0 +1,13 @@
+# to use this, choose between:
+#   docker compose -f compose.yaml -f compose.staging.yaml up
+# or if you prefer,
+#   ln -s compose.staging.yaml compose.override.yaml
+# so compose reads that file automatically if it exists
+
+services:
+  app:
+    command:
+      - -objectbox=true
+      - -dbdir=/srv/r38/db
+    ports: !override
+      - "127.0.0.1:12265:12264"
