@@ -25,10 +25,14 @@ services:
       - "12264:12264"
     restart: always
     depends_on:
-      - filter
+      filter:
+        condition: service_started
+      fix_db_perms:
+        condition: service_completed_successfully
     volumes:
       - *socket
       - objectbox_data:/srv/r38/db
+
   objectboxadmin:
     image: objectboxio/admin:latest
     environment:
@@ -41,6 +45,12 @@ services:
     volumes:
       - objectbox_data:/db
     user: "1000:1000" # ObjectBox admin runs as 'nobody' (uid 65534) by default, which does not have permissions for the shared volume
+
+  fix_db_perms:
+    image: debian:stable-slim
+    volumes:
+      - objectbox_data:/db
+    command: chown -R 1000:1000 /db
 volumes:
   socket:
   objectbox_data:

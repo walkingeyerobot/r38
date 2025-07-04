@@ -71,4 +71,4 @@ RUN ln -s db/draft.db draft.db && \
 
 EXPOSE 12264
 
-CMD ["sh", "-c", "chown -R 1000:1000 /srv/r38/db && /srv/r38/r38"]
+ENTRYPOINT ["/srv/r38/r38"]
