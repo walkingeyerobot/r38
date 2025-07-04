@@ -1,0 +1,42 @@
+name: Docker Build Caller
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      create-attestation:
+        description: "Create attestation for the built images"
+        type: boolean
+        required: false
+        default: false
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+  actions: read
+  attestations: write
+
+jobs:
+  build-app:
+    uses: ./.github/workflows/build-image.yml
+    with:
+      image-name: app
+      target: go_deploy
+      create-attestation: ${{ github.event_name == 'workflow_dispatch' && inputs.create-attestation || false }}
+    secrets: inherit
+
+  build-filter:
+    uses: ./.github/workflows/build-image.yml
+    with:
+      image-name: filter
+      target: filter_deploy
+      create-attestation: ${{ github.event_name == 'workflow_dispatch' && inputs.create-attestation || false }}
+    secrets: inherit

@@ -12,26 +12,27 @@ on:
 
 jobs:
   build:
-
+    concurrency:
+      group: "client"
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Setup node
-      uses: actions/setup-node@v4
-      with:
-        node-version: 23.x
-        cache: 'npm'
-        cache-dependency-path: '**/package-lock.json'
-    - name: Install deps
-      run: npm ci
-      working-directory: ./client
-    - name: Build
-      run: npm run build
-      working-directory: ./client
-    - name: Lint
-      run: npx eslint .
-      working-directory: ./client
-    - name: Format
-      run: npx prettier . --check
-      working-directory: ./client
+      - uses: actions/checkout@v4
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 23.x
+          cache: "npm"
+          cache-dependency-path: "**/package-lock.json"
+      - name: Install deps
+        run: npm ci
+        working-directory: ./client
+      - name: Build
+        run: npm run build
+        working-directory: ./client
+      - name: Lint
+        run: npx eslint .
+        working-directory: ./client
+      - name: Format
+        run: npx prettier . --check
+        working-directory: ./client

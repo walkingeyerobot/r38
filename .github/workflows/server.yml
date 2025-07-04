@@ -10,31 +10,32 @@ on:
       - main
       - master
     paths:
-      - '**.go'
+      - "**.go"
 
 jobs:
-
   build:
+    concurrency:
+      group: "server"
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Set up Go
-      uses: actions/setup-go@v4
-      with:
-        go-version: '1.23.6'
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.23.6"
 
-    - name: Install ObjectBox
-      run: bash <(curl -s https://raw.githubusercontent.com/objectbox/objectbox-go/main/install.sh)
+      - name: Install ObjectBox
+        run: bash <(curl -s https://raw.githubusercontent.com/objectbox/objectbox-go/main/install.sh)
 
-    - name: Build
-      run: go build -v ./...
+      - name: Build
+        run: go build -v ./...
 
-    - name: Test
-      run: go test -v ./...
+      - name: Test
+        run: go test -v ./...
 
-    - name: Run fuzzers
-      uses: form3tech-oss/go-ci-fuzz/ci/github-actions/fuzz@2b38b4142d7fa5dde3823e60a358c28ed17635df # v0.1.3
-      with:
-        fuzz-time: 2m
-        fail-fast: true
+      - name: Run fuzzers
+        uses: form3tech-oss/go-ci-fuzz/ci/github-actions/fuzz@2b38b4142d7fa5dde3823e60a358c28ed17635df # v0.1.3
+        with:
+          fuzz-time: 2m
+          fail-fast: true
