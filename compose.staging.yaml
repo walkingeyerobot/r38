@@ -9,5 +9,6 @@ services:
     command:
       - -objectbox=true
       - -dbdir=/srv/r38/db
+      - -auth=false
     ports: !override
       - "127.0.0.1:12265:12264"
