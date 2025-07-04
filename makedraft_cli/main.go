@@ -49,7 +49,7 @@ func main() {
 
 	flagSet.Parse(os.Args[1:])
 
-	if *settings.DatabaseDir != "" {
+	if *settings.DatabaseDir == "" {
 		database, err := sql.Open("sqlite3", *settings.Database)
 		if err != nil {
 			log.Printf("error opening database %s: %s", *settings.Database, err.Error())
