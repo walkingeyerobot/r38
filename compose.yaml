@@ -5,10 +5,14 @@ services:
       dockerfile: Dockerfile
       target: filter_deploy
     image: ghcr.io/walkingeyerobot/r38/filter:latest
+    depends_on:
+      fix_db_perms:
+        condition: service_completed_successfully
     volumes:
       - &socket socket:/srv/r38/socket
     working_dir: /srv/r38/socket
     restart: always
+    user: "1000:1000"
 
   app:
     image: ghcr.io/walkingeyerobot/r38/app:latest
@@ -32,11 +36,12 @@ services:
     volumes:
       - *socket
       - objectbox_data:/srv/r38/db
+    user: "1000:1000"
 
   objectboxadmin:
     image: objectboxio/admin:latest
-    environment:
-      - DB_PATH=/db/data.mdb
+    environment: []
+      #- DB_PATH=/db/data.mdb
     ports:
       - "8081:8081"
     restart: always
@@ -53,7 +58,8 @@ services:
     image: debian:stable-slim
     volumes:
       - objectbox_data:/db
-    command: chown -R 1000:1000 /db
+      - socket:/srv/r38/socket
+    command: /bin/bash -c "chown -R 1000:1000 /db && chown -R 1000:1000 /srv/r38/socket"
 
 volumes:
   socket:

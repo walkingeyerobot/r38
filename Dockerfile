@@ -65,11 +65,6 @@ COPY --from=gobuilder /src/sets /srv/r38/sets
 COPY --from=gobuilder /src/objectboxlib/lib/libobjectbox.so /usr/local/lib/
 
 
-# race condition with objectbox admin web app
-RUN mkdir -p /srv/r38/db && \
-    touch /srv/r38/db/data.mdb && \
-    touch /srv/r38/db/lock.mdb
-
 # the go app expects these in its working directory but they need to live on mounted volumes
 RUN ln -s db/draft.db draft.db && \
     ln -s socket/r38.sock r38.sock && \
