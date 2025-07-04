@@ -135,8 +135,16 @@ go run makedraft_cli/*.go --inPerson --name="name of draft" --database_dir=objec
 The following will prepopulate the server with 11 fake users that you can
 impersonate with the `?as=` query param.
 
+### Using sqlite
+
 ```bash
 sqlite3 draft.db < development/InitUsers.sql
+```
+
+### Using objectbox
+
+```bash
+go run insertusers_cli/*.go
 ```
 
 ## Start the server
