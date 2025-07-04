@@ -24,6 +24,11 @@ WORKDIR /src/makedraft_cli
 RUN --mount=type=cache,target=/tmp/go-cache \
     --mount=type=cache,target=/go/pkg/mod \
  go build -v .
+WORKDIR /src/initusers_cli
+RUN --mount=type=cache,target=/tmp/go-cache \
+    --mount=type=cache,target=/go/pkg/mod \
+ go build -v .
+
 
 
 FROM node:23-slim AS nodebuilder
@@ -55,6 +60,7 @@ WORKDIR /srv/r38
 COPY --from=nodebuilder /src/client-dist /srv/r38/client-dist 
 COPY --from=gobuilder /src/r38 /srv/r38/r38
 COPY --from=gobuilder /src/makedraft_cli/makedraft_cli /srv/r38/makedraft_cli
+COPY --from=gobuilder /src/initusers_cli/initusers_cli /srv/r38/initusers_cli
 COPY --from=gobuilder /src/sets /srv/r38/sets
 COPY --from=gobuilder /src/objectboxlib/lib/libobjectbox.so /usr/local/lib/
 
