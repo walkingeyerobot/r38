@@ -41,7 +41,10 @@ services:
       - "8081:8081"
     restart: always
     depends_on:
-      - app
+      app:
+        condition: service_started
+      fix_db_perms:
+        condition: service_completed_successfully
     volumes:
       - objectbox_data:/db
     user: "1000:1000" # ObjectBox admin runs as 'nobody' (uid 65534) by default, which does not have permissions for the shared volume
