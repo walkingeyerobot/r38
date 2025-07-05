@@ -16,7 +16,7 @@
 
 <script setup lang="ts">
 defineSlots<{
-  header(): void;
+  header?(): void;
   default(): void;
 }>();
 
