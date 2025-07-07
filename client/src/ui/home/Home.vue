@@ -12,7 +12,7 @@
       </div>
     </div>
 
-    <div class="admin-link" v-if="admin"><a href="/tagwriter/cube">Tag writer</a></div>
+    <div class="admin-link" v-if="admin"><a href="/tagwriter/new_rfids">Tag writer</a></div>
 
     <div v-if="admin && listFetchStatus == 'error'" class="status-msg">
       {{ error }}
