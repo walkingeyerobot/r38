@@ -1,0 +1,310 @@
+{
+  "hoppers": [
+    {
+      "type": "CubeHopper"
+    },
+    {
+      "type": "Pointer",
+      "refs": [
+        0
+      ]
+    },
+    {
+      "type": "Pointer",
+      "refs": [
+        0
+      ]
+    },
+    {
+      "type": "Pointer",
+      "refs": [
+        0
+      ]
+    },
+    {
+      "type": "Pointer",
+      "refs": [
+        0
+      ]
+    },
+    {
+      "type": "Pointer",
+      "refs": [
+        0
+      ]
+    },
+    {
+      "type": "Pointer",
+      "refs": [
+        0
+      ]
+    },
+    {
+      "type": "Pointer",
+      "refs": [
+        0
+      ]
+    },
+    {
+      "type": "Pointer",
+      "refs": [
+        0
+      ]
+    },
+    {
+      "type": "Pointer",
+      "refs": [
+        0
+      ]
+    },
+    {
+      "type": "Pointer",
+      "refs": [
+        0
+      ]
+    },
+    {
+      "type": "Pointer",
+      "refs": [
+        0
+      ]
+    },
+    {
+      "type": "Pointer",
+      "refs": [
+        0
+      ]
+    },
+    {
+      "type": "Pointer",
+      "refs": [
+        0
+      ]
+    },
+    {
+      "type": "Pointer",
+      "refs": [
+        0
+      ]
+    }
+  ],
+  "flags": [],
+  "cards": [
+    {
+      "color": "U",
+      "color_identity": "U",
+      "dfc": false,
+      "id": "4dcd0583-cee0-46a6-ba43-93bca5eb0428",
+      "rarity": "rare",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"U\"],\"layout\":\"normal\",\"name\":\"Astrologian's Planisphere\",\"type_line\":\"Artifact — Equipment\",\"collector_number\":\"46\",\"rarity\":\"rare\",\"set\":\"fin\",\"colors\":[\"U\"],\"mana_cost\":\"{1}{U}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/b/f/bfa4e927-1d6f-4a64-9801-7d168a5ef3f6.jpg?1748705924\"],\"mtgo_id\":0}"
+    },
+    {
+      "color": "B",
+      "color_identity": "BW",
+      "dfc": true,
+      "id": "e4719557-d94e-490f-8a56-c1867a01d2ef",
+      "rarity": "rare",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":1,\"color_identity\":[\"B\",\"W\"],\"layout\":\"transform\",\"name\":\"Cecil, Dark Knight // Cecil, Redeemed Paladin\",\"type_line\":\"Legendary Creature — Human Knight // Legendary Creature — Human Knight\",\"collector_number\":\"91\",\"rarity\":\"rare\",\"set\":\"fin\",\"card_faces\":[{\"mana_cost\":\"{B}\",\"name\":\"Cecil, Dark Knight\",\"type_line\":\"Legendary Creature — Human Knight\",\"colors\":[\"B\"]},{\"mana_cost\":\"\",\"name\":\"Cecil, Redeemed Paladin\",\"type_line\":\"Legendary Creature — Human Knight\",\"colors\":[\"W\"]}]},\"image_uris\":[\"https://cards.scryfall.io/normal/front/0/2/026e7167-d665-43d0-a51e-8df2d68cdb5e.jpg?1748707809\",\"https://cards.scryfall.io/normal/back/0/2/026e7167-d665-43d0-a51e-8df2d68cdb5e.jpg?1748707809\"],\"mtgo_id\":0}"
+    },
+    {
+      "color": "W",
+      "color_identity": "W",
+      "dfc": false,
+      "id": "33d2584b-bf29-4c22-bd45-14ba2fb98c0e",
+      "rarity": "mythic",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"W\"],\"layout\":\"normal\",\"name\":\"Cloud, Midgar Mercenary\",\"type_line\":\"Legendary Creature — Human Soldier Mercenary\",\"collector_number\":\"10\",\"rarity\":\"mythic\",\"set\":\"fin\",\"colors\":[\"W\"],\"mana_cost\":\"{W}{W}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/2/c/2cf7e8a3-fad7-413d-b17c-7519a9cf5fb5.jpg?1748705791\"],\"mtgo_id\":0}"
+    },
+    {
+      "color": "U",
+      "color_identity": "U",
+      "dfc": false,
+      "id": "ff78f166-cca2-44bc-abe3-3a338bf543be",
+      "rarity": "rare",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"U\"],\"layout\":\"normal\",\"name\":\"Duelist of the Mind\",\"type_line\":\"Creature — Human Advisor\",\"collector_number\":\"45\",\"rarity\":\"rare\",\"set\":\"otj\",\"colors\":[\"U\"],\"mana_cost\":\"{1}{U}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/2/b/2b58e47b-c165-4a58-aa2a-033a35645adc.jpg?1716283553\"],\"mtgo_id\":0}"
+    },
+    {
+      "color": "R",
+      "color_identity": "R",
+      "dfc": false,
+      "id": "9e96d12b-8381-4706-8089-3521aa2b5422",
+      "rarity": "rare",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"R\"],\"layout\":\"normal\",\"name\":\"Gau, Feral Youth\",\"type_line\":\"Legendary Creature — Human Berserker\",\"collector_number\":\"152\",\"rarity\":\"rare\",\"set\":\"fic\",\"colors\":[\"R\"],\"mana_cost\":\"{1}{R}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/c/7/c7f4920b-cbf6-407c-ae02-6f6cc047187d.jpg?1748704749\"],\"mtgo_id\":0}"
+    },
+    {
+      "color": "W",
+      "color_identity": "BW",
+      "dfc": false,
+      "id": "6df03db9-e4b3-4931-94e3-c582d2b04110",
+      "rarity": "rare",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"B\",\"W\"],\"layout\":\"adventure\",\"name\":\"Hildibrand Manderville // Gentleman's Rise\",\"type_line\":\"Legendary Creature — Human Detective // Instant — Adventure\",\"collector_number\":\"83\",\"rarity\":\"rare\",\"set\":\"fic\",\"card_faces\":[{\"mana_cost\":\"{1}{W}\",\"name\":\"Hildibrand Manderville\",\"type_line\":\"Legendary Creature — Human Detective\"},{\"mana_cost\":\"{2}{B}\",\"name\":\"Gentleman's Rise\",\"type_line\":\"Instant — Adventure\"}],\"colors\":[\"W\"],\"mana_cost\":\"{1}{W} // {2}{B}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/6/0/60aed76e-2265-471d-8e41-1d8605603b78.jpg?1748704500\"],\"mtgo_id\":0}"
+    },
+    {
+      "color": "U",
+      "color_identity": "U",
+      "dfc": false,
+      "id": "0728b195-2dfe-4d73-91ae-e658a97b0b9a",
+      "rarity": "common",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":1,\"color_identity\":[\"U\"],\"layout\":\"normal\",\"name\":\"Hard Evidence\",\"type_line\":\"Sorcery\",\"collector_number\":\"46\",\"rarity\":\"common\",\"set\":\"mh2\",\"colors\":[\"U\"],\"mana_cost\":\"{U}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/5/0/501599d6-1072-4124-b05d-01f96de153f3.jpg?1710406503\"],\"mtgo_id\":0}"
+    },
+    {
+      "color": "W",
+      "color_identity": "W",
+      "dfc": false,
+      "id": "c206bdcb-d2c4-4bda-a979-6c0627ef8f73",
+      "rarity": "common",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":1,\"color_identity\":[\"W\"],\"layout\":\"normal\",\"name\":\"Novice Inspector\",\"type_line\":\"Creature — Human Detective\",\"collector_number\":\"29\",\"rarity\":\"common\",\"set\":\"mkm\",\"colors\":[\"W\"],\"mana_cost\":\"{W}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/0/a/0ad38866-fc5f-4f62-89c1-afc0f50765aa.jpg?1706241527\"],\"mtgo_id\":0}"
+    },
+    {
+      "color": "U",
+      "color_identity": "UW",
+      "dfc": false,
+      "id": "1c95b7cf-be4d-4961-9073-3e39487492c8",
+      "rarity": "rare",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":3,\"color_identity\":[\"U\",\"W\"],\"layout\":\"normal\",\"name\":\"Plagon, Lord of the Beach\",\"type_line\":\"Legendary Creature — Starfish Wizard\",\"collector_number\":\"37\",\"rarity\":\"rare\",\"set\":\"j25\",\"colors\":[\"U\"],\"mana_cost\":\"{2}{U}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/7/f/7f8a6bfe-6033-4f6b-ab45-6b553f8b51a1.jpg?1730485829\"],\"mtgo_id\":0}"
+    },
+    {
+      "color": "W",
+      "color_identity": "W",
+      "dfc": false,
+      "id": "3c7ea603-c985-4107-806b-a467b5fcca36",
+      "rarity": "rare",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"W\"],\"layout\":\"normal\",\"name\":\"Scholar of New Horizons\",\"type_line\":\"Creature — Human Scout\",\"collector_number\":\"53\",\"rarity\":\"rare\",\"set\":\"brc\",\"colors\":[\"W\"],\"mana_cost\":\"{1}{W}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/8/2/82f4c741-c59b-48d2-82da-cf299abc203f.jpg?1686852025\"],\"mtgo_id\":0}"
+    },
+    {
+      "color": "B",
+      "color_identity": "B",
+      "dfc": true,
+      "id": "70113003-be5e-406a-9aec-cb480468c36d",
+      "rarity": "mythic",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":3,\"color_identity\":[\"B\"],\"layout\":\"transform\",\"name\":\"Sephiroth, Fabled SOLDIER // Sephiroth, One-Winged Angel\",\"type_line\":\"Legendary Creature — Human Avatar Soldier // Legendary Creature — Angel Nightmare Avatar\",\"collector_number\":\"115\",\"rarity\":\"mythic\",\"set\":\"fin\",\"card_faces\":[{\"mana_cost\":\"{2}{B}\",\"name\":\"Sephiroth, Fabled SOLDIER\",\"type_line\":\"Legendary Creature — Human Avatar Soldier\",\"colors\":[\"B\"]},{\"mana_cost\":\"\",\"name\":\"Sephiroth, One-Winged Angel\",\"type_line\":\"Legendary Creature — Angel Nightmare Avatar\",\"colors\":[\"B\"]}]},\"image_uris\":[\"https://cards.scryfall.io/normal/front/8/5/85eaf5e7-77dc-4842-a70c-ce4ac7f724df.jpg?1748707811\",\"https://cards.scryfall.io/normal/back/8/5/85eaf5e7-77dc-4842-a70c-ce4ac7f724df.jpg?1748707811\"],\"mtgo_id\":0}"
+    },
+    {
+      "color": "GW",
+      "color_identity": "GW",
+      "dfc": false,
+      "id": "b06c9a4b-f309-45b3-ae5b-0ce3f067a5cb",
+      "rarity": "rare",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"G\",\"W\"],\"layout\":\"normal\",\"name\":\"Shelinda, Yevon Acolyte\",\"type_line\":\"Legendary Creature — Human Cleric\",\"collector_number\":\"94\",\"rarity\":\"rare\",\"set\":\"fic\",\"colors\":[\"G\",\"W\"],\"mana_cost\":\"{G}{W}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/6/f/6f2cec5d-50ea-4d0f-8925-eba06222d015.jpg?1748704541\"],\"mtgo_id\":0}"
+    },
+    {
+      "color": "BGU",
+      "color_identity": "BGU",
+      "dfc": false,
+      "id": "3bcc378c-4470-4757-a0d5-025a32c918ea",
+      "rarity": "rare",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":7,\"color_identity\":[\"B\",\"G\",\"U\"],\"layout\":\"normal\",\"name\":\"Sin, Spira's Punishment\",\"type_line\":\"Legendary Creature — Leviathan Avatar\",\"collector_number\":\"242\",\"rarity\":\"rare\",\"set\":\"fin\",\"colors\":[\"B\",\"G\",\"U\"],\"mana_cost\":\"{4}{B}{G}{U}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/6/5/659be746-bd31-4a70-8cec-7798da78b0b5.jpg?1748706689\"],\"mtgo_id\":0}"
+    },
+    {
+      "color": "U",
+      "color_identity": "U",
+      "dfc": false,
+      "id": "33d6f4f0-e1ad-4363-a012-46a1bd9daeb7",
+      "rarity": "uncommon",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":1,\"color_identity\":[\"U\"],\"layout\":\"normal\",\"name\":\"Sleep Magic\",\"type_line\":\"Enchantment — Aura\",\"collector_number\":\"74\",\"rarity\":\"uncommon\",\"set\":\"fin\",\"colors\":[\"U\"],\"mana_cost\":\"{U}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/c/9/c96cae63-7625-48e3-aaba-5b1632a8642d.jpg?1748706038\"],\"mtgo_id\":0}"
+    },
+    {
+      "color": "",
+      "color_identity": "",
+      "dfc": false,
+      "id": "d04e0975-f401-41b8-a9db-9bcf9cbbce66",
+      "rarity": "rare",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":0,\"color_identity\":[],\"layout\":\"normal\",\"name\":\"Starting Town\",\"type_line\":\"Land — Town\",\"collector_number\":\"289\",\"rarity\":\"rare\",\"set\":\"fin\",\"colors\":[]},\"image_uris\":[\"https://cards.scryfall.io/normal/front/f/c/fc7d1912-7e27-49ef-bd98-375d975a42b0.jpg?1748706861\"],\"mtgo_id\":0}"
+    },
+    {
+      "color": "",
+      "color_identity": "",
+      "dfc": false,
+      "id": "fe9f6825-597b-4d80-ab7c-f4ee4e824b6f",
+      "rarity": "mythic",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":9,\"color_identity\":[],\"layout\":\"saga\",\"name\":\"Summon: Bahamut\",\"type_line\":\"Enchantment Creature — Saga Dragon\",\"collector_number\":\"1\",\"rarity\":\"mythic\",\"set\":\"fin\",\"colors\":[],\"mana_cost\":\"{9}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/9/5/95318d85-4a08-47ac-a43d-ea83c0bea81c.jpg?1748705758\"],\"mtgo_id\":0}"
+    },
+    {
+      "color": "R",
+      "color_identity": "R",
+      "dfc": false,
+      "id": "bab5e9ce-6d55-4d1e-a9ac-c2b954191be9",
+      "rarity": "rare",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"R\"],\"layout\":\"normal\",\"name\":\"Summon: Brynhildr\",\"type_line\":\"Enchantment Creature — Saga Knight\",\"collector_number\":\"160\",\"rarity\":\"rare\",\"set\":\"fin\",\"colors\":[\"R\"],\"mana_cost\":\"{1}{R}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/8/a/8ab5429a-1075-49aa-9608-0610080fbf7a.jpg?1748706360\"],\"mtgo_id\":0}"
+    },
+    {
+      "color": "R",
+      "color_identity": "R",
+      "dfc": false,
+      "id": "cecd2f49-8ccb-472d-9cf1-fd0f4d93546d",
+      "rarity": "rare",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":4,\"color_identity\":[\"R\"],\"layout\":\"saga\",\"name\":\"Summon: Esper Valigarmanda\",\"type_line\":\"Enchantment Creature — Saga Drake\",\"collector_number\":\"60\",\"rarity\":\"rare\",\"set\":\"fic\",\"colors\":[\"R\"],\"mana_cost\":\"{3}{R}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/7/f/7f0298b4-c7ca-49b8-baaa-b9fad4c2bfd5.jpg?1748704414\"],\"mtgo_id\":0}"
+    },
+    {
+      "color": "W",
+      "color_identity": "W",
+      "dfc": false,
+      "id": "2148820c-85b6-4598-adf2-10873001a779",
+      "rarity": "rare",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":5,\"color_identity\":[\"W\"],\"layout\":\"saga\",\"name\":\"Summon: Good King Mog XII\",\"type_line\":\"Enchantment Creature — Saga Moogle\",\"collector_number\":\"26\",\"rarity\":\"rare\",\"set\":\"fic\",\"colors\":[\"W\"],\"mana_cost\":\"{4}{W}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/c/1/c14098d6-28ae-492f-8ffc-7d115d83ce6a.jpg?1749121855\"],\"mtgo_id\":0}"
+    },
+    {
+      "color": "W",
+      "color_identity": "W",
+      "dfc": false,
+      "id": "73122880-d7f4-422f-a336-18773bcb7bfe",
+      "rarity": "mythic",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":8,\"color_identity\":[\"W\"],\"layout\":\"saga\",\"name\":\"Summon: Knights of Round\",\"type_line\":\"Enchantment Creature — Saga Knight\",\"collector_number\":\"36\",\"rarity\":\"mythic\",\"set\":\"fin\",\"colors\":[\"W\"],\"mana_cost\":\"{6}{W}{W}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/4/4/44d23652-077e-4c1f-b640-b284685db911.jpg?1748705889\"],\"mtgo_id\":0}"
+    },
+    {
+      "color": "R",
+      "color_identity": "R",
+      "dfc": false,
+      "id": "9fe77f70-85cf-4a18-9451-2fad4c341f07",
+      "rarity": "rare",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":6,\"color_identity\":[\"R\"],\"layout\":\"saga\",\"name\":\"Summon: Kujata\",\"type_line\":\"Enchantment Creature — Saga Ox\",\"collector_number\":\"61\",\"rarity\":\"rare\",\"set\":\"fic\",\"colors\":[\"R\"],\"mana_cost\":\"{5}{R}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/b/a/ba934866-efd0-4126-b1ff-9c7e82b73bd6.jpg?1748704418\"],\"mtgo_id\":0}"
+    },
+    {
+      "color": "W",
+      "color_identity": "W",
+      "dfc": false,
+      "id": "ff70d743-280e-476f-a3b8-92026419419d",
+      "rarity": "rare",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":4,\"color_identity\":[\"W\"],\"layout\":\"saga\",\"name\":\"Summon: Yojimbo\",\"type_line\":\"Enchantment Creature — Saga Samurai\",\"collector_number\":\"196\",\"rarity\":\"rare\",\"set\":\"fic\",\"colors\":[\"W\"],\"mana_cost\":\"{3}{W}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/f/b/fb7f1e73-183f-4041-907d-700e248ac5af.jpg?1748704913\"],\"mtgo_id\":0}"
+    },
+    {
+      "color": "R",
+      "color_identity": "R",
+      "dfc": false,
+      "id": "2d1bbeda-2e81-4aaa-9494-094ec3dd6c3b",
+      "rarity": "common",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":2,\"color_identity\":[\"R\"],\"layout\":\"normal\",\"name\":\"Suplex\",\"type_line\":\"Sorcery\",\"collector_number\":\"164\",\"rarity\":\"common\",\"set\":\"fin\",\"colors\":[\"R\"],\"mana_cost\":\"{1}{R}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/f/6/f61693a2-7042-44e0-85ba-9bf12ab94e7e.jpg?1748706376\"],\"mtgo_id\":0}"
+    },
+    {
+      "color": "",
+      "color_identity": "",
+      "dfc": false,
+      "id": "c4ea0931-43e0-4214-9e0b-213eee3a7e69",
+      "rarity": "mythic",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":3,\"color_identity\":[],\"layout\":\"normal\",\"name\":\"Tangle Wire\",\"type_line\":\"Artifact\",\"collector_number\":\"8\",\"rarity\":\"mythic\",\"set\":\"v13\",\"colors\":[],\"mana_cost\":\"{3}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/7/4/74d29b3d-f588-431d-bf4e-f7215683ab39.jpg?1570072882\"],\"mtgo_id\":0}"
+    },
+    {
+      "color": "RU",
+      "color_identity": "RU",
+      "dfc": false,
+      "id": "0452be2a-e97a-4269-a9e3-b616265ecb2e",
+      "rarity": "mythic",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":3,\"color_identity\":[\"R\",\"U\"],\"layout\":\"normal\",\"name\":\"Vivi Ornitier\",\"type_line\":\"Legendary Creature — Wizard\",\"collector_number\":\"321\",\"rarity\":\"mythic\",\"set\":\"fin\",\"colors\":[\"R\",\"U\"],\"mana_cost\":\"{1}{U}{R}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/a/d/ada6aeb6-8c9f-4498-9326-b4da0fcb19a3.jpg?1750668593\"],\"mtgo_id\":0}"
+    },
+    {
+      "color": "R",
+      "color_identity": "R",
+      "dfc": false,
+      "id": "acdcbb49-9d71-4c36-8ccb-650fb11c3a58",
+      "rarity": "rare",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":3,\"color_identity\":[\"R\"],\"layout\":\"normal\",\"name\":\"Yuffie, Materia Hunter\",\"type_line\":\"Legendary Creature — Human Ninja\",\"collector_number\":\"158\",\"rarity\":\"rare\",\"set\":\"fic\",\"colors\":[\"R\"],\"mana_cost\":\"{2}{R}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/3/5/3504bbeb-b4f0-4b43-9ab9-ff456f080b7f.jpg?1748704770\"],\"mtgo_id\":0}"
+    },
+    {
+      "color": "G",
+      "color_identity": "G",
+      "dfc": false,
+      "id": "77dd6ce0-91fc-4e71-99ff-47cdf3359067",
+      "rarity": "rare",
+      "data": "{\"foil\":false,\"scryfall\":{\"cmc\":4,\"color_identity\":[\"G\"],\"layout\":\"normal\",\"name\":\"Yuna's Decision\",\"type_line\":\"Sorcery\",\"collector_number\":\"74\",\"rarity\":\"rare\",\"set\":\"fic\",\"colors\":[\"G\"],\"mana_cost\":\"{3}{G}\"},\"image_uris\":[\"https://cards.scryfall.io/normal/front/5/0/5044eedb-f7d9-4b65-aa5b-fb494d00facd.jpg?1748704464\"],\"mtgo_id\":0}"
+    }
+  ]
+}
