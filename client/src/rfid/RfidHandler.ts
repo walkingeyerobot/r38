@@ -1,0 +1,120 @@
+import { ref } from "vue";
+
+export type BoopPrompt = "none" | "missing-hardware" | "request-permission";
+
+const CARD_UUID_PATTERN = /\w{8}-\w{4}-\w{4}-\w{4}-\w{12}/;
+
+export class RfidHandler {
+  private isNfcSupported = "NDEFReader" in window;
+  private hasNfcPermission = ref<boolean>(false);
+  private scanListener = (event: CustomEvent<string>) => this.onRfidScan(event);
+  private wakeLock: WakeLockSentinel | null = null;
+
+  constructor(private readonly handleCardScanned: ((cardRfid: string) => void) | undefined) {}
+
+  async start() {
+    // Tell iOS app to start scanning
+    postMessage("scan");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any).webkit?.messageHandlers?.scanner?.postMessage("scan");
+
+    document.body.addEventListener("rfidScan", this.scanListener);
+
+    if ("wakeLock" in navigator) {
+      navigator.wakeLock.request("screen").then(
+        (lock) => {
+          console.log("Got a wake lock!");
+          this.wakeLock = lock;
+        },
+        (e) => {
+          console.log("Error when trying to acquire wake lock", e);
+        },
+      );
+    } else {
+      console.log("Wake locks not supported");
+    }
+
+    if (this.isNfcSupported) {
+      console.log("NFC reading supported!");
+
+      const nfcPermissionStatus = await navigator.permissions.query({
+        name: "nfc" as unknown as PermissionName,
+      });
+
+      this.hasNfcPermission.value = nfcPermissionStatus.state == "granted";
+      nfcPermissionStatus.addEventListener("change", () => {
+        console.log("NFC permission status changed to", nfcPermissionStatus.state);
+        this.hasNfcPermission.value = nfcPermissionStatus.state == "granted";
+      });
+
+      if (this.hasNfcPermission.value) {
+        console.log("Have permission, preparing to scan!");
+        this.scanForTag();
+      }
+    }
+  }
+
+  scanForTag() {
+    const reader = new NDEFReader();
+    reader.onreadingerror = () => {
+      console.log("Cannot read data from the NFC tag. Try another one?");
+    };
+    reader.onreading = (e) => {
+      console.log("NDEF message read.");
+      console.log("Records:");
+      for (const record of e.message.records) {
+        console.log(record.id, record.recordType);
+        if (record.recordType == "text") {
+          const td = new TextDecoder(record.encoding);
+          const text = td.decode(record.data);
+          console.log("Text:", td.decode(record.data));
+          if (CARD_UUID_PATTERN.test(text)) {
+            console.log("It's a thing!");
+            if (this.handleCardScanned) {
+              this.handleCardScanned(text);
+            }
+          }
+        }
+      }
+    };
+    reader
+      .scan()
+      .then(() => {
+        console.log("Scan started successfully.");
+      })
+      .catch((error) => {
+        console.log(`Error! Scan failed to start: ${error}.`);
+      });
+  }
+
+  stop() {
+    document.body.removeEventListener("rfidScan", this.scanListener);
+
+    this.wakeLock?.release();
+  }
+
+  getPrompt(): BoopPrompt {
+    const isAppleMobileOs = navigator.platform.substring(0, 2) == "iP";
+
+    if (this.hasNfcPermission.value || isAppleMobileOs) {
+      return "none" as const;
+    } else if (!this.isNfcSupported) {
+      return "missing-hardware" as const;
+    } else {
+      return "request-permission" as const;
+    }
+  }
+
+  private async onRfidScan(event: CustomEvent<string>) {
+    const cardRfid = decodeURIComponent(
+      Array.prototype.map
+        .call(atob(event.detail), (c) => `%${`00${c.charCodeAt(0).toString(16)}`.slice(-2)}`)
+        .slice(3)
+        .join(""),
+    );
+
+    if (this.handleCardScanned) {
+      this.handleCardScanned(cardRfid);
+    }
+  }
+}
