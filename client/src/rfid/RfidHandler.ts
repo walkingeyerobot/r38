@@ -1,4 +1,7 @@
 import { ref } from "vue";
+import { useSound } from "@vueuse/sound";
+import beep from "../sfx/beep.mp3";
+import error from "../sfx/error.mp3";
 
 export type BoopPrompt = "none" | "missing-hardware" | "request-permission";
 
@@ -12,7 +15,7 @@ export class RfidHandler {
 
   constructor(private readonly handleCardScanned: ((cardRfid: string) => void) | undefined) {}
 
-  async start() {
+  async start(scan = true) {
     // Tell iOS app to start scanning
     postMessage("scan");
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -47,7 +50,7 @@ export class RfidHandler {
         this.hasNfcPermission.value = nfcPermissionStatus.state == "granted";
       });
 
-      if (this.hasNfcPermission.value) {
+      if (this.hasNfcPermission.value && scan) {
         console.log("Have permission, preparing to scan!");
         this.scanForTag();
       }
@@ -85,6 +88,17 @@ export class RfidHandler {
       .catch((error) => {
         console.log(`Error! Scan failed to start: ${error}.`);
       });
+  }
+
+  async writeTag(card: string | null) {
+    const reader = new NDEFReader();
+    let data = card ? `{card: "${card}"}` : "{card: null}";
+    try {
+      await reader.write({ records: [{ recordType: "text", data }] });
+      useSound(beep).play();
+    } catch (e) {
+      useSound(error).play();
+    }
   }
 
   stop() {
