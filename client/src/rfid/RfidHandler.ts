@@ -58,6 +58,7 @@ export class RfidHandler {
   }
 
   scanForTag() {
+    if (!this.hasNfcPermission.value) return;
     const reader = new NDEFReader();
     reader.onreadingerror = () => {
       console.log("Cannot read data from the NFC tag. Try another one?");
@@ -91,12 +92,13 @@ export class RfidHandler {
   }
 
   async writeTag(card: string | null) {
+    if (!this.hasNfcPermission.value) return;
     const reader = new NDEFReader();
-    let data = card ? `{card: "${card}"}` : "{card: null}";
+    const data = card ? `{card: "${card}"}` : "{card: null}";
     try {
       await reader.write({ records: [{ recordType: "text", data }] });
       useSound(beep).play();
-    } catch (e) {
+    } catch {
       useSound(error).play();
     }
   }
