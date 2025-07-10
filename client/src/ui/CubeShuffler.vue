@@ -1,4 +1,9 @@
 <template>
+  <template v-if="prompt == 'request-permission'">
+    <div>
+      <button class="boop-btn" @click="onRequestNfcPermission">Enable booping</button>
+    </div>
+  </template>
   <div class="_shuffler">
     <Transition mode="out-in">
       <span :key="pack">{{ pack }}</span>
@@ -6,50 +11,49 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent } from "vue";
+<script setup lang="ts">
+import { computed, onMounted, onUnmounted, ref } from "vue";
 import { fetchEndpoint } from "@/fetch/fetchEndpoint.ts";
 import { ROUTE_GET_CARD_PACK } from "@/rest/api/getcardpack/getcardpack.ts";
 import { useSound } from "@vueuse/sound";
 import beep from "../sfx/beep.mp3";
+import { type BoopPrompt, RfidHandler } from "@/rfid/RfidHandler.ts";
 
-export default defineComponent({
-  name: "CubeShuffler",
-
-  props: {
-    draftId: {
-      type: String,
-      required: true,
-    },
+const props = defineProps({
+  draftId: {
+    type: String,
+    required: true,
   },
+});
 
-  data() {
-    return {
-      pack: "SCAN NOW",
-      scanListener: this.onRfidScan as EventListener,
-      beep: useSound(beep),
-    };
-  },
+const pack = ref("SCAN NOW");
+const beepRef = ref(useSound(beep));
+const rfidHandler = new RfidHandler(onRfidScan);
 
-  methods: {
-    async onRfidScan(event: CustomEvent) {
-      this.pack = "";
-      const response = await fetchEndpoint(ROUTE_GET_CARD_PACK, {
-        draftId: Number(this.draftId),
-        cardRfid: event.detail as string,
-      });
-      this.pack = response.pack === 0 ? "DISCARD" : `PACK ${response.pack}`;
-      this.beep.play();
-    },
-  },
+const prompt = computed<BoopPrompt>(() => {
+  return rfidHandler.getPrompt();
+});
 
-  mounted() {
-    document.body.addEventListener("rfidScan", this.scanListener);
-  },
+function onRequestNfcPermission() {
+  rfidHandler.scanForTag();
+}
 
-  beforeUnmount() {
-    document.body.removeEventListener("rfidScan", this.scanListener);
-  },
+async function onRfidScan(cardRfid: string) {
+  pack.value = "";
+  const response = await fetchEndpoint(ROUTE_GET_CARD_PACK, {
+    draftId: Number(props.draftId),
+    cardRfid,
+  });
+  pack.value = response.pack === 0 ? "DISCARD" : `PACK ${response.pack}`;
+  beepRef.value.play();
+}
+
+onMounted(() => {
+  rfidHandler.start();
+});
+
+onUnmounted(() => {
+  rfidHandler.stop();
 });
 </script>
 

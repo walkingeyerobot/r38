@@ -36,6 +36,7 @@ The primary page for making picks during an active draft
                 <img
                   class="player-icon"
                   :src="seat.player.iconUrl"
+                  :alt="seat.player.name"
                   :title="seat.player.name"
                   :class="{ active: seat.player.id == authStore.user?.id }"
                 />
@@ -151,6 +152,7 @@ import { useRoute } from "vue-router";
 import { useSound } from "@vueuse/sound";
 import axios from "axios";
 
+import type { BoopPrompt } from "@/rfid/RfidHandler.ts";
 import PreviousPickDialog from "@/ui/picker/PreviousPickDialog.vue";
 import DismissableDialog from "@/ui/picker/DismissableDialog.vue";
 import CardDetailDialog from "@/ui/picker/CardDetailDialog.vue";
@@ -169,6 +171,7 @@ import { isPickEvent } from "@/state/util/isPickEvent";
 import type { DraftCard, DraftState } from "@/draft/DraftState";
 import { PickerSounds } from "@/ui/picker/PickerSounds";
 import TableSeating from "@/ui/picker/TableSeating.vue";
+import { RfidHandler } from "@/rfid/RfidHandler.ts";
 
 const route = useRoute();
 
@@ -176,13 +179,10 @@ const loaded = ref(false);
 const activeDialog = ref<ActiveDialog | null>(null);
 const draftId = parseInt(route.params["draftId"] as string);
 const activeRequest = ref<boolean>(false);
-
-const isNfcSupported = "NDEFReader" in window;
-const hasNfcPermission = ref<boolean>(false);
+const rfidHandler = new RfidHandler(handleCardScanned);
 
 let fetchingDraft = false;
 let pollingId: number;
-let wakeLock: WakeLockSentinel | null = null;
 
 const isDevMode = import.meta.env.DEV;
 const devOptions: DevOptions = reactive({
@@ -193,42 +193,18 @@ const devOptions: DevOptions = reactive({
 onMounted(() => {
   console.log("---- Draft ID is", draftId);
 
-  // Tell iOS app to start scanning
-  postMessage("scan");
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (window as any).webkit?.messageHandlers?.scanner?.postMessage("scan");
-
-  document.body.addEventListener("rfidScan", onRfidScan);
-
+  rfidHandler.start();
   fetchDraft();
 
   if (!isDevMode || devOptions.pollState) {
     pollingId = setInterval(onPollForState, 5000) as unknown as number;
   }
-
-  if ("wakeLock" in navigator) {
-    navigator.wakeLock.request("screen").then(
-      (lock) => {
-        console.log("Got a wake lock!");
-        wakeLock = lock;
-      },
-      (e) => {
-        console.log("Error when trying to acquire wake lock", e);
-      },
-    );
-  } else {
-    console.log("Wake locks not supported");
-  }
-
-  handleNfcScanning();
 });
 
 onUnmounted(() => {
-  document.body.removeEventListener("rfidScan", onRfidScan);
+  rfidHandler.stop();
 
   clearInterval(pollingId);
-
-  wakeLock?.release();
 });
 
 const playerSeat = computed(() => {
@@ -246,7 +222,7 @@ const activePack = computed(() => {
 
   const firstQueuedPack = seat.queuedPacks.packs[0];
   if (firstQueuedPack && firstQueuedPack.round == seat.round && firstQueuedPack.cards.length > 0) {
-    return firstQueuedPack.cards.map((id) => draftStore.getCard(id));
+    return firstQueuedPack.cards.map((id: number) => draftStore.getCard(id));
   } else {
     return null;
   }
@@ -306,19 +282,10 @@ const boopPrompt = computed<BoopPrompt>(() => {
     return devOptions.boopPrompt;
   }
 
-  const isAppleMobileOs = navigator.platform.substring(0, 2) == "iP";
-
-  if (
-    !draftStore.inPerson ||
-    hasNfcPermission.value ||
-    isAppleMobileOs ||
-    activePack.value != null
-  ) {
+  if (!draftStore.inPerson || activePack.value != null) {
     return "none" as const;
-  } else if (!isNfcSupported) {
-    return "missing-hardware" as const;
   } else {
-    return "request-permission" as const;
+    return rfidHandler.getPrompt();
   }
 });
 
@@ -354,17 +321,6 @@ function onPreviousPickClick() {
     };
     scanSound.play();
   }
-}
-
-async function onRfidScan(event: CustomEvent<string>) {
-  const cardRfid = decodeURIComponent(
-    Array.prototype.map
-      .call(atob(event.detail), (c) => `%${`00${c.charCodeAt(0).toString(16)}`.slice(-2)}`)
-      .slice(3)
-      .join(""),
-  );
-
-  await handleCardScanned(cardRfid);
 }
 
 async function handleCardScanned(cardRfid: string) {
@@ -493,60 +449,8 @@ async function fetchDraft() {
   }
 }
 
-async function handleNfcScanning() {
-  if (isNfcSupported) {
-    console.log("NFC reading supported!");
-
-    const nfcPermissionStatus = await navigator.permissions.query({
-      name: "nfc" as unknown as PermissionName,
-    });
-
-    hasNfcPermission.value = nfcPermissionStatus.state == "granted";
-    nfcPermissionStatus.addEventListener("change", (e) => {
-      console.log("NFC permission status changed to", nfcPermissionStatus.state);
-      hasNfcPermission.value = nfcPermissionStatus.state == "granted";
-    });
-
-    if (hasNfcPermission.value) {
-      console.log("Have permission, preparing to scan!");
-      scanForTag();
-    }
-  }
-}
-
 function onRequestNfcPermission() {
-  scanForTag();
-}
-
-function scanForTag() {
-  const reader = new NDEFReader();
-  reader.onreadingerror = () => {
-    console.log("Cannot read data from the NFC tag. Try another one?");
-  };
-  reader.onreading = (e) => {
-    console.log("NDEF message read.");
-    console.log("Records:");
-    for (const record of e.message.records) {
-      console.log(record.id, record.recordType);
-      if (record.recordType == "text") {
-        const td = new TextDecoder(record.encoding);
-        const text = td.decode(record.data);
-        console.log("Text:", td.decode(record.data));
-        if (CARD_UUID_PATTERN.test(text)) {
-          console.log("It's a thing!");
-          handleCardScanned(text);
-        }
-      }
-    }
-  };
-  reader
-    .scan()
-    .then(() => {
-      console.log("Scan started successfully.");
-    })
-    .catch((error) => {
-      console.log(`Error! Scan failed to start: ${error}.`);
-    });
+  rfidHandler.scanForTag();
 }
 
 function appendImpersonation(url: string) {
@@ -670,8 +574,6 @@ type ActiveDialog =
       escapedMessage?: string;
     };
 
-type BoopPrompt = "none" | "missing-hardware" | "request-permission";
-
 interface DevOptions {
   boopPrompt: BoopPrompt | null;
   pollState: boolean;
@@ -680,8 +582,6 @@ interface DevOptions {
 // TODO: Move these into a per-draft config object
 const ROUNDS_PER_DRAFT = 3;
 const CARDS_PER_PACK = 15;
-
-const CARD_UUID_PATTERN = /\w{8}-\w{4}-\w{4}-\w{4}-\w{12}/;
 </script>
 
 <style scoped>
