@@ -8,55 +8,42 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent } from "vue";
+<script setup lang="ts">
+import { onMounted, onUnmounted, ref } from "vue";
 import { fetchEndpoint } from "@/fetch/fetchEndpoint.ts";
 import { ROUTE_SET } from "@/rest/api/set/set.ts";
 import type { SourceSet } from "@/parse/SourceData.ts";
+import { RfidHandler } from "@/rfid/RfidHandler.ts";
 
-export default defineComponent({
-  name: "TagWriter",
-
-  props: {
-    set: {
-      type: String,
-      required: true,
-    },
+const props = defineProps({
+  set: {
+    type: String,
+    required: true,
   },
+});
 
-  data() {
-    return {
-      cards: [] as SourceSet,
-      index: 0,
-    };
-  },
+const cards = ref<SourceSet>([]);
+const index = ref(0);
+const rfidHandler = new RfidHandler(() => {});
 
-  methods: {
-    nextCard() {
-      this.index++;
-      this.setCard(this.cards[this.index].id);
-    },
+function nextCard() {
+  index.value++;
+  setCard(cards.value[index.value].id);
+}
 
-    setCard(card: string | null) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      if ((window as any).kmpJsBridge) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (window as any).kmpJsBridge.callNative(
-          "setCard",
-          card ? `{card: "${card}"}` : "{card: null}",
-        );
-      }
-    },
-  },
+function setCard(card: string | null) {
+  rfidHandler.writeTag(card);
+}
 
-  async mounted() {
-    this.cards = await fetchEndpoint(ROUTE_SET, { set: this.set });
-    this.setCard(this.cards[0].id);
-  },
+onMounted(async () => {
+  await rfidHandler.start(false);
+  cards.value = await fetchEndpoint(ROUTE_SET, { set: props.set });
+  setCard(cards.value[0].id);
+});
 
-  beforeUnmount() {
-    this.setCard(null);
-  },
+onUnmounted(() => {
+  setCard(null);
+  rfidHandler.stop();
 });
 </script>
 
