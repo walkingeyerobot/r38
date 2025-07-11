@@ -86,8 +86,7 @@ export default defineComponent({
     },
 
     admin(): boolean {
-      // return authStore.user?.id === 1;
-      return true;
+      return authStore.user?.id === 1;
     },
 
     userPic(): string | undefined {
