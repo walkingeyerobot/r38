@@ -28,15 +28,15 @@ const props = defineProps({
 const cards = ref<SourceSet>([]);
 const index = ref(0);
 const rfidHandler = new RfidHandler(() => {});
-const tag = ref("");
+const tag = ref<string | null>("");
 
 function nextCard() {
   index.value++;
   setCard(cards.value[index.value].id);
 }
 
-function setCard(card: string | null) {
-  tag.value = card ? `{card: "${card}"}` : "{card: null}";
+function setCard(card: string) {
+  tag.value = card;
   rfidHandler.writeTag(card);
 }
 
@@ -47,7 +47,6 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
-  setCard(null);
   rfidHandler.stop();
 });
 </script>

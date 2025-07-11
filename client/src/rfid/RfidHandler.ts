@@ -91,13 +91,12 @@ export class RfidHandler {
       });
   }
 
-  async writeTag(card: string | null) {
+  async writeTag(card: string) {
     const reader = new NDEFReader();
-    const data = card ? `{card: "${card}"}` : "{card: null}";
-    console.log(`Writing ${data}.`);
+    console.log(`Writing ${card}.`);
     try {
-      await reader.write({ records: [{ recordType: "text", data }] });
-      console.log(`Wrote ${data}.`);
+      await reader.write(card);
+      console.log(`Wrote ${card}.`);
       useSound(beep).play();
     } catch (e) {
       console.log(`Write failed: ${e}`);
