@@ -83,17 +83,11 @@ func oauthDiscordCallback(w http.ResponseWriter, r *http.Request, _ int64, tx *s
 	}
 
 	if tx != nil {
-		statement, err := tx.Prepare(`INSERT INTO users (discord_id, discord_name, picture) VALUES (?, ?, ?)`)
+		statement, err := tx.Prepare(`INSERT OR REPLACE INTO users (discord_id, discord_name, picture) VALUES (?, ?, ?)`)
 		if err != nil {
 			return err
 		}
 		_, err = statement.Exec(p.ID, p.Name, p.Picture)
-		if err != nil {
-			return err
-		}
-
-		query := `update users set discord_name = ?, picture = ? where discord_id = ?`
-		_, err = tx.Exec(query, p.Name, p.Picture, p.ID)
 		if err != nil {
 			return err
 		}
