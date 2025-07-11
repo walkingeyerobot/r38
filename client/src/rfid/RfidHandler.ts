@@ -45,6 +45,7 @@ export class RfidHandler {
       });
 
       this.hasNfcPermission.value = nfcPermissionStatus.state == "granted";
+      console.log("Initial NFC permission status is", nfcPermissionStatus.state);
       nfcPermissionStatus.addEventListener("change", () => {
         console.log("NFC permission status changed to", nfcPermissionStatus.state);
         this.hasNfcPermission.value = nfcPermissionStatus.state == "granted";
@@ -93,10 +94,13 @@ export class RfidHandler {
   async writeTag(card: string | null) {
     const reader = new NDEFReader();
     const data = card ? `{card: "${card}"}` : "{card: null}";
+    console.log(`Writing ${data}.`);
     try {
       await reader.write({ records: [{ recordType: "text", data }] });
+      console.log(`Wrote ${data}.`);
       useSound(beep).play();
     } catch {
+      console.log("Write failed.");
       useSound(error).play();
     }
   }
