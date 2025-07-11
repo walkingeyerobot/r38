@@ -99,8 +99,8 @@ export class RfidHandler {
       await reader.write({ records: [{ recordType: "text", data }] });
       console.log(`Wrote ${data}.`);
       useSound(beep).play();
-    } catch {
-      console.log("Write failed.");
+    } catch (e) {
+      console.log(`Write failed: ${e}`);
       useSound(error).play();
     }
   }
