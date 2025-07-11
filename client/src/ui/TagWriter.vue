@@ -6,6 +6,9 @@
       @click="nextCard"
     />
   </div>
+  <div>
+    {{ tag }}
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -25,6 +28,7 @@ const props = defineProps({
 const cards = ref<SourceSet>([]);
 const index = ref(0);
 const rfidHandler = new RfidHandler(() => {});
+const tag = ref("");
 
 function nextCard() {
   index.value++;
@@ -32,6 +36,7 @@ function nextCard() {
 }
 
 function setCard(card: string | null) {
+  tag.value = card ? `{card: "${card}"}` : "{card: null}";
   rfidHandler.writeTag(card);
 }
 
