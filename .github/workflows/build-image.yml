@@ -46,7 +46,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ github.repository }}/${{ inputs.image-name }}
           tags: |
-            type=ref,event=branch
+            type=ref,event=pr
             type=ref,event=tag
             type=raw,value=latest,enable={{is_default_branch}}
 
@@ -62,7 +62,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           builder: ${{ steps.setup-builder.outputs.name }}
-          push: ${{ github.event_name != 'pull_request' }}
+          push: true
           target: ${{ inputs.target }}
           tags: |
             ${{ steps.metadata.outputs.tags}}
