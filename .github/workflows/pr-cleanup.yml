@@ -1,0 +1,37 @@
+name: Delete Docker Images on PR Merge
+
+on:
+  pull_request_target:
+    types:
+      - closed
+
+jobs:
+  delete-images:
+    if: github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main'
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    steps:
+      - name: Delete Docker images
+        run: |
+          pr_tag="pr-${{ github.event.pull_request.number }}"
+          for package in "r38/app" "r38/filter"; do
+            encoded_package_name="${package//\//%2F}"
+            packageVersions=$(gh api -H "Accept: application/vnd.github+json" \
+              /user/packages/container/$encoded_package_name/versions \
+              --jq ".[] | select(.metadata.container.tags[]? == \"$pr_tag\") | .id")
+
+            if [ -z "$packageVersions" ]; then
+              echo "No package versions found for $package with tag $pr_tag."
+              continue
+            fi
+
+            echo "Deleting package versions for $package with tag $pr_tag..."
+            for version in $packageVersions; do
+              gh api -X DELETE -H "Accept: application/vnd.github+json" \
+                /user/packages/container/$encoded_package_name/versions/$version
+            done
+          done
+          echo "Done"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
