@@ -167,8 +167,12 @@ func NewHandler(database *sql.DB, ob *objectbox.ObjectBox, useAuth bool) http.Ha
 
 	addHandler := func(route string, serveFunc r38handler, readonly bool) {
 		isAuthRoute := strings.HasPrefix(route, "/auth/")
+		isApiRoute := strings.HasPrefix(route, "/api/")
 		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			var userID int64
+			if isApiRoute {
+				w.Header().Set("Content-Type", "application/json")
+			}
 			if useAuth {
 				if isAuthRoute {
 					userID = 0
@@ -237,7 +241,7 @@ func NewHandler(database *sql.DB, ob *objectbox.ObjectBox, useAuth bool) http.Ha
 				}
 			}
 			if err != nil {
-				if strings.HasPrefix(route, "/api/") {
+				if isApiRoute {
 					if errors.Is(err, ZoneDraftError) {
 						w.WriteHeader(http.StatusBadRequest)
 					} else if errors.Is(err, MethodNotAllowedError) {
