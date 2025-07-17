@@ -2557,7 +2557,7 @@ func GetDraftList(userID int64, tx *sql.Tx) (DraftList, error) {
 	query := `select
                     drafts.id,
                     drafts.name,
-                    sum(seats.user is null and seats.reserveduser is null and seats.position is not null and seats.position <> 8) as empty_seats,
+                    sum(seats.user is null and seats.reserveduser is null and seats.position is not null) as empty_seats,
                     sum(seats.reserveduser not null and seats.user is null) as reserved_seats,
                     coalesce(sum(seats.user = ?), 0) as joined,
                     coalesce(sum(seats.reserveduser = ?), 0) as reserved,
@@ -2567,6 +2567,7 @@ func GetDraftList(userID int64, tx *sql.Tx) (DraftList, error) {
                   from drafts
                   left join seats on drafts.id = seats.draft
                   left join skips on drafts.id = skips.draft and skips.user = ?
+                  where seats.position <> 8
                   group by drafts.id
                   order by drafts.id`
 
