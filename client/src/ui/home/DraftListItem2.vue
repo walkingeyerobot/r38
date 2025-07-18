@@ -33,6 +33,9 @@ const isShufflable = computed(() => {
 });
 
 const draftUrl = computed(() => {
+  if (descriptor.finished) {
+    return wrapUrl(`/draft/${descriptor.id}`);
+  }
   switch (descriptor.status) {
     case "joinable":
     case "reserved":
@@ -47,6 +50,9 @@ const draftUrl = computed(() => {
 });
 
 const draftSubtitle = computed(() => {
+  if (descriptor.finished) {
+    return `Finished`;
+  }
   switch (descriptor.status) {
     case "joinable":
       return `${descriptor.availableSeats} seats available`;
