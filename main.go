@@ -514,6 +514,12 @@ func ServeAPIPickRfid(w http.ResponseWriter, r *http.Request, userId int64, tx *
 					}
 				}
 			}
+			if slices.ContainsFunc(seat.PickedCards, func(pickedCard *schema.Card) bool {
+				return pickedCard.CardId == cardRfid
+			}) {
+				// duplicate scan
+				return nil
+			}
 			return fmt.Errorf("couldn't find card %s", cardRfid)
 		}
 	}

@@ -211,6 +211,52 @@ func TestInPersonDraftUndoFirstPickOB(t *testing.T) {
 	}
 }
 
+func TestInPersonDraftIgnoresDuplicatePick(t *testing.T) {
+	ob, err := doSetupOB(t, SEED)
+	defer ob.Close()
+
+	makeDraftOB(t, ob, SEED)
+
+	handlers := NewHandler(nil, ob, false)
+
+	players, seats := populateDraft(t, handlers)
+
+	player := players[0] + 1
+	card := findCardToPickOB(t, ob, seats[0], 0, 0)
+
+	token := xsrftoken.Generate(xsrfKey, strconv.FormatInt(int64(player), 16), "pick1")
+
+	handlers.ServeHTTP(httptest.NewRecorder(),
+		httptest.NewRequest("POST", fmt.Sprintf("/api/pickrfid/?as=%d", player),
+			strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cardRfids": ["%s"], "xsrfToken": "%s"}`, card.CardId, token))))
+
+	w := httptest.NewRecorder()
+	handlers.ServeHTTP(w,
+		httptest.NewRequest("POST", fmt.Sprintf("/api/pickrfid/?as=%d", player),
+			strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cardRfids": ["%s"], "xsrfToken": "%s"}`, card.CardId, token))))
+	res := w.Result()
+	if res.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(res.Body)
+		t.Errorf("error on duplicate scan: %s", body)
+	}
+
+	draft, err := schema.BoxForDraft(ob).Get(1)
+	if err != nil {
+		t.Errorf("couldn't get draft: %s", err.Error())
+	}
+	if len(draft.Events) != 1 {
+		t.Errorf("wrong number of events (%d)", len(draft.Events))
+	}
+
+	for _, seat := range draft.Seats {
+		if seat.Position == seats[0] {
+			if len(seat.PickedCards) != 1 {
+				t.Errorf("wrong number of picked cards in seat (%d)", len(seat.PickedCards))
+			}
+		}
+	}
+}
+
 func TestInPersonDraftUndoSubsequentPickOB(t *testing.T) {
 	ob, err := doSetupOB(t, SEED)
 	defer ob.Close()
