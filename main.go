@@ -2608,9 +2608,14 @@ func GetDraftListOb(userId int64, ob *objectbox.ObjectBox) (DraftList, error) {
 	if err != nil {
 		return draftList, err
 	}
-	user, err := schema.BoxForUser(ob).Get(uint64(userId))
-	if err != nil {
-		return draftList, err
+	var user *schema.User
+	if userId == 0 {
+		user = &schema.User{}
+	} else {
+		user, err = schema.BoxForUser(ob).Get(uint64(userId))
+		if err != nil {
+			return draftList, err
+		}
 	}
 	for _, draft := range drafts {
 		draftList.Drafts = append(draftList.Drafts, draftToDraftListEntry(draft, user))
@@ -2659,9 +2664,14 @@ func GetDraftListEntry(userId int64, tx *sql.Tx, ob *objectbox.ObjectBox, draftI
 			return ret, err
 		}
 
-		user, err := schema.BoxForUser(ob).Get(uint64(userId))
-		if err != nil {
-			return ret, err
+		var user *schema.User
+		if userId == 0 {
+			user = &schema.User{}
+		} else {
+			user, err = schema.BoxForUser(ob).Get(uint64(userId))
+			if err != nil {
+				return ret, err
+			}
 		}
 
 		return draftToDraftListEntry(draft, user), nil
