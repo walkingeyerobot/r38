@@ -2343,7 +2343,7 @@ func GetJSONObjectOb(ob *objectbox.ObjectBox, draftId int64) (DraftJSON, error) 
 		}
 		draftJson.Seats[seat.Position].ScanSound = int64(seat.ScanSound)
 		draftJson.Seats[seat.Position].ErrorSound = int64(seat.ErrorSound)
-		for j, pack := range seat.OriginalPacks {
+		for _, pack := range seat.OriginalPacks {
 			for k, card := range pack.OriginalCards {
 				dataObj := make(map[string]interface{})
 				err = json.Unmarshal([]byte(card.Data), &dataObj)
@@ -2352,7 +2352,7 @@ func GetJSONObjectOb(ob *objectbox.ObjectBox, draftId int64) (DraftJSON, error) 
 					dataObj = nil
 				}
 				dataObj["id"] = card.Id
-				draftJson.Seats[seat.Position].Packs[j][k] = dataObj
+				draftJson.Seats[seat.Position].Packs[pack.Round-1][k] = dataObj
 			}
 		}
 	}
