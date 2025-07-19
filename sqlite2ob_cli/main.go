@@ -8,7 +8,9 @@ import (
 	"github.com/walkingeyerobot/r38/makedraft"
 	"github.com/walkingeyerobot/r38/schema"
 	"log"
+	"maps"
 	"os"
+	"slices"
 )
 
 func main() {
@@ -48,7 +50,7 @@ func main() {
 		_ = tx.Rollback()
 	}()
 
-	err = os.RemoveAll(*settings.DatabaseDir)
+	err = os.RemoveAll(*settings.DatabaseDir + "/data.mdb")
 	if err != nil {
 		log.Printf("can't remove existing objectbox dir: %s", err.Error())
 		os.Exit(1)
@@ -58,10 +60,9 @@ func main() {
 	defer ob.Close()
 
 	err = ob.RunInWriteTx(func() error {
-
 		userBox := schema.BoxForUser(ob)
-		var users []*schema.User
-		rows, err := tx.Query("select discord_id, discord_name, picture, mtgo_name from users order by id")
+		users := make(map[int]*schema.User)
+		rows, err := tx.Query("select id, discord_id, discord_name, picture, mtgo_name from users order by id")
 		if err != nil {
 			return err
 		}
@@ -71,6 +72,7 @@ func main() {
 			}
 			var mtgoName sql.NullString
 			err = rows.Scan(
+				&user.Id,
 				&user.DiscordId,
 				&user.DiscordName,
 				&user.Picture,
@@ -85,18 +87,22 @@ func main() {
 			if err != nil {
 				return err
 			}
-			users = append(users, &user)
+			users[int(user.Id)] = &user
 		}
 
 		draftBox := schema.BoxForDraft(ob)
-		var drafts []*schema.Draft
-		rows, err = tx.Query("select name, format, spectatorchannelid, inperson from drafts order by id")
+		drafts := make(map[int]*schema.Draft)
+		rows, err = tx.Query("select id, name, format, spectatorchannelid, inperson from drafts order by id")
 		if err != nil {
 			return err
 		}
 		for rows.Next() {
-			draft := schema.Draft{}
+			draft := schema.Draft{
+				Seats:           make([]*schema.Seat, 0),
+				UnassignedPacks: make([]*schema.Pack, 0),
+			}
 			err = rows.Scan(
+				&draft.Id,
 				&draft.Name,
 				&draft.Format,
 				&draft.SpectatorChannelId,
@@ -105,21 +111,26 @@ func main() {
 			if err != nil {
 				return err
 			}
-			drafts = append(drafts, &draft)
+			drafts[int(draft.Id)] = &draft
 		}
 
 		seatBox := schema.BoxForSeat(ob)
-		var seats []*schema.Seat
-		rows, err = tx.Query("select position, user, draft, round, reserveduser, scansound, errorsound from seats order by id")
+		seats := make(map[int]*schema.Seat)
+		rows, err = tx.Query("select id, position, user, draft, round, reserveduser, scansound, errorsound from seats where position <> 8 order by id")
 		if err != nil {
 			return err
 		}
 		for rows.Next() {
-			seat := schema.Seat{}
+			seat := schema.Seat{
+				Packs:         make([]*schema.Pack, 0),
+				OriginalPacks: make([]*schema.Pack, 0),
+				PickedCards:   make([]*schema.Card, 0),
+			}
 			var userId sql.NullInt64
 			var reservedUserId sql.NullInt64
 			var draftId uint64
 			err = rows.Scan(
+				&seat.Id,
 				&seat.Position,
 				&userId,
 				&draftId,
@@ -132,19 +143,18 @@ func main() {
 				return err
 			}
 			if userId.Valid {
-				seat.User = users[userId.Int64-1]
-				drafts[draftId-1].Seats = append(drafts[draftId-1].Seats, &seat)
+				seat.User = users[int(userId.Int64)]
+				drafts[int(draftId)].Seats = append(drafts[int(draftId)].Seats, &seat)
 			}
 			if reservedUserId.Valid {
-				seat.ReservedUser = users[reservedUserId.Int64-1]
+				seat.ReservedUser = users[int(reservedUserId.Int64)]
 			}
-			seats = append(seats, &seat)
+			seats[int(seat.Id)] = &seat
 		}
 
 		packBox := schema.BoxForPack(ob)
-		sqlPackIdToObPackId := map[uint64]uint64{}
-		pickedPackIdToSeatId := map[uint64]uint64{}
-		var packs []*schema.Pack
+		pickedPackIdToSeatId := make(map[int]int)
+		packs := make(map[int]*schema.Pack)
 		rows, err = tx.Query("select id, seat, round, original_seat from packs order by id")
 		if err != nil {
 			return err
@@ -154,11 +164,10 @@ func main() {
 				Cards:         []*schema.Card{},
 				OriginalCards: []*schema.Card{},
 			}
-			var packId uint64
-			var seatId uint64
+			var seatId int
 			var originalSeatId uint64
 			err = rows.Scan(
-				&packId,
+				&pack.Id,
 				&seatId,
 				&pack.Round,
 				&originalSeatId,
@@ -167,26 +176,26 @@ func main() {
 				return err
 			}
 			if pack.Round != 0 {
-				seats[seatId-1].Packs = append(seats[seatId-1].Packs, &pack)
-				seats[originalSeatId-1].OriginalPacks = append(seats[originalSeatId-1].OriginalPacks, &pack)
-				packs = append(packs, &pack)
-				sqlPackIdToObPackId[packId] = uint64(len(packs))
+				seats[seatId].Packs = append(seats[seatId].Packs, &pack)
+				seats[int(originalSeatId)].OriginalPacks = append(seats[int(originalSeatId)].OriginalPacks, &pack)
+				packs[int(pack.Id)] = &pack
 			} else {
-				pickedPackIdToSeatId[packId] = seatId
+				pickedPackIdToSeatId[int(pack.Id)] = seatId
 			}
 		}
 
 		cardBox := schema.BoxForCard(ob)
-		var cards []*schema.Card
-		rows, err = tx.Query("select pack, original_pack, data, cardid from cards order by id")
+		cards := make(map[int]*schema.Card)
+		rows, err = tx.Query("select id, pack, original_pack, data, cardid from cards order by id")
 		if err != nil {
 			return err
 		}
 		for rows.Next() {
 			card := schema.Card{}
-			var packId uint64
-			var originalPackId uint64
+			var packId int
+			var originalPackId int
 			err = rows.Scan(
+				&card.Id,
 				&packId,
 				&originalPackId,
 				&card.Data,
@@ -195,30 +204,30 @@ func main() {
 			if err != nil {
 				return err
 			}
-			obPackId, isRealPack := sqlPackIdToObPackId[packId]
+			_, isRealPack := packs[packId]
 			if isRealPack {
-				packs[obPackId-1].Cards = append(packs[obPackId-1].Cards, &card)
+				packs[packId].Cards = append(packs[packId].Cards, &card)
 			} else {
 				seat := seats[pickedPackIdToSeatId[packId]]
 				seat.PickedCards = append(seat.PickedCards, &card)
 			}
-			obOriginalPackId := sqlPackIdToObPackId[originalPackId]
-			packs[obOriginalPackId-1].OriginalCards = append(packs[obOriginalPackId-1].OriginalCards, &card)
-			cards = append(cards, &card)
+			packs[originalPackId].OriginalCards = append(packs[originalPackId].OriginalCards, &card)
+			cards[int(card.Id)] = &card
 		}
 
 		eventBox := schema.BoxForEvent(ob)
-		var events []*schema.Event
-		rows, err = tx.Query("select draft, card1, modified, round, position, pack from events order by id")
+		events := make(map[int]*schema.Event)
+		rows, err = tx.Query("select id, draft, card1, modified, round, position, pack from events order by id")
 		if err != nil {
 			return err
 		}
 		for rows.Next() {
 			event := schema.Event{}
-			var draftId uint64
-			var cardId uint64
-			var packId uint64
+			var draftId int
+			var cardId int
+			var packId int
 			err = rows.Scan(
+				&event.Id,
 				&draftId,
 				&cardId,
 				&event.Modified,
@@ -229,33 +238,33 @@ func main() {
 			if err != nil {
 				return err
 			}
-			event.Pack = packs[sqlPackIdToObPackId[packId]-1]
-			event.Card1 = cards[cardId-1]
-			drafts[draftId-1].Events = append(drafts[draftId-1].Events, &event)
-			events = append(events, &event)
+			event.Pack = packs[packId]
+			event.Card1 = cards[cardId]
+			drafts[draftId].Events = append(drafts[draftId].Events, &event)
+			events[int(event.Id)] = &event
 		}
 
-		_, err = eventBox.PutMany(events)
+		_, err = eventBox.PutMany(slices.Collect(maps.Values(events)))
 		if err != nil {
 			return err
 		}
-		_, err = cardBox.PutMany(cards)
+		_, err = cardBox.PutMany(slices.Collect(maps.Values(cards)))
 		if err != nil {
 			return err
 		}
-		_, err = packBox.PutMany(packs)
+		_, err = packBox.PutMany(slices.Collect(maps.Values(packs)))
 		if err != nil {
 			return err
 		}
-		_, err = seatBox.PutMany(seats)
+		_, err = seatBox.PutMany(slices.Collect(maps.Values(seats)))
 		if err != nil {
 			return err
 		}
-		_, err = userBox.PutMany(users)
+		_, err = userBox.PutMany(slices.Collect(maps.Values(users)))
 		if err != nil {
 			return err
 		}
-		_, err = draftBox.PutMany(drafts)
+		_, err = draftBox.PutMany(slices.Collect(maps.Values(drafts)))
 		if err != nil {
 			return err
 		}
@@ -269,7 +278,11 @@ func main() {
 
 	draftsCount, _ := schema.BoxForDraft(ob).Count()
 	usersCount, _ := schema.BoxForUser(ob).Count()
+	seatsCount, _ := schema.BoxForSeat(ob).Count()
+	packsCount, _ := schema.BoxForPack(ob).Count()
+	cardsCount, _ := schema.BoxForCard(ob).Count()
+	eventsCount, _ := schema.BoxForEvent(ob).Count()
 
-	log.Printf("migrated %d drafts and %d users", draftsCount, usersCount)
+	log.Printf("migrated %d users, %d drafts, %d seats, %d packs, %d cards, %d events", usersCount, draftsCount, seatsCount, packsCount, cardsCount, eventsCount)
 	os.Exit(0)
 }
