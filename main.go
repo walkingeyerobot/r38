@@ -1785,7 +1785,7 @@ func doPickOb(ob *objectbox.ObjectBox, userId int64, draftId int64, cardId int64
 		nextSeat := draft.Seats[nextSeatIndex]
 
 		if len(pack.Cards) > 0 {
-			if zoneDrafting {
+			if len(pack.Cards) > 1 && zoneDrafting {
 				// Enforce zone drafting: can't pass yet if there are two packs
 				// belonging to the new position.
 				packsCount := len(nextSeat.Packs)
