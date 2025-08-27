@@ -53,6 +53,7 @@ type Settings struct {
 	AbortMissingCommonColor                   *bool
 	AbortMissingCommonColorIdentity           *bool
 	AbortDuplicateThreeColorIdentityUncommons *bool
+	PickTwo                                   *bool
 }
 
 func MakeDraft(settings Settings, tx *sql.Tx, ob *objectbox.ObjectBox) error {
@@ -122,6 +123,9 @@ func MakeDraft(settings Settings, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 	settings.AbortDuplicateThreeColorIdentityUncommons = flagSet.Bool(
 		"abort-duplicate-three-color-identity-uncommons", false,
 		"If true, only one uncommon of a color identity triplet will be allowed per pack.")
+	settings.PickTwo = flagSet.Bool(
+		"pick-two", false,
+		"If true, the created draft is a Pick Two draft (four players, two picks per pack).")
 
 	if len(cfg.Flags) != 0 {
 		jsonFlags := strings.Join(cfg.Flags, " ")
@@ -151,6 +155,12 @@ func MakeDraft(settings Settings, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 
 	log.Printf("generating draft %s.", *settings.Name)
 
+	var numPacks int
+	if *settings.PickTwo {
+		numPacks = 12
+	} else {
+		numPacks = 24
+	}
 	var packIDs [24]int64
 
 	var allCards CardSet
@@ -241,7 +251,7 @@ func MakeDraft(settings Settings, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 		resetHoppers()
 		resetDraft := false
 		draftAttempts++
-		for i := 0; i < 24; { // we'll manually increment i
+		for i := 0; i < numPacks; { // we'll manually increment i
 			packAttempts++
 			for j, hopper := range hoppers {
 				var empty bool
@@ -314,9 +324,15 @@ func MakeDraft(settings Settings, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 	}
 
 	if ob != nil {
+		var numSeats int
+		if *settings.PickTwo {
+			numSeats = 4
+		} else {
+			numSeats = 8
+		}
 		var numUsers int
 		if assignSeats {
-			numUsers = 8
+			numUsers = numSeats
 		} else {
 			numUsers = 0
 		}
@@ -324,11 +340,11 @@ func MakeDraft(settings Settings, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 		if err != nil {
 			return err
 		}
-		scanSounds := rand.Perm(8)
-		errorSounds := rand.Perm(8)
+		scanSounds := rand.Perm(numSeats)
+		errorSounds := rand.Perm(numSeats)
 
 		var seats []*schema.Seat
-		for i := 0; i < 8; i++ {
+		for i := 0; i < numSeats; i++ {
 			if len(assignedUsers) > i {
 				reservedUser, err := schema.BoxForUser(ob).Get(uint64(assignedUsers[i]))
 				if err != nil {
@@ -424,6 +440,7 @@ func MakeDraft(settings Settings, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 			UnassignedPacks:    obPacks,
 			Events:             []*schema.Event{},
 			SpectatorChannelId: channelID,
+			PickTwo:            *settings.PickTwo,
 		}
 
 		draftId, err := schema.BoxForDraft(ob).Put(&draft)
