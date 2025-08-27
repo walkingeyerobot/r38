@@ -247,15 +247,22 @@ func MakeDraft(settings Settings, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 	packAttempts := 0
 	draftAttempts := 0
 
+	var cardsPerPack int
+	if *settings.PickTwo {
+		cardsPerPack = 14
+	} else {
+		cardsPerPack = 15
+	}
+
 	for {
 		resetHoppers()
 		resetDraft := false
 		draftAttempts++
 		for i := 0; i < numPacks; { // we'll manually increment i
 			packAttempts++
-			for j, hopper := range hoppers {
+			for j := range cardsPerPack {
 				var empty bool
-				packs[i][j], empty = hopper.Pop()
+				packs[i][j], empty = hoppers[j].Pop()
 				if empty {
 					resetDraft = true
 					break
