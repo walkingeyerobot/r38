@@ -37,6 +37,9 @@ func main() {
 	settings.AssignPacks = flagSet.Bool(
 		"assignPacks", false,
 		"If true, players will be preassigned their first packs even for an in-person draft.")
+	settings.PickTwo = flagSet.Bool(
+		"pickTwo", false,
+		"If true, the created draft is a Pick Two draft (four players, two picks per pack).")
 	settings.Verbose = flagSet.Bool(
 		"v", false,
 		"If true, will enable verbose output.")

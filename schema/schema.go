@@ -19,6 +19,7 @@ type Draft struct {
 	UnassignedPacks    []*Pack
 	Events             []*Event
 	SpectatorChannelId string `objectbox:"index"`
+	PickTwo            bool
 }
 
 type Pack struct {

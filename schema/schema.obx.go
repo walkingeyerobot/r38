@@ -368,6 +368,7 @@ var Draft_ = struct {
 	Format             *objectbox.PropertyString
 	InPerson           *objectbox.PropertyBool
 	SpectatorChannelId *objectbox.PropertyString
+	PickTwo            *objectbox.PropertyBool
 	Seats              *objectbox.RelationToMany
 	UnassignedPacks    *objectbox.RelationToMany
 	Events             *objectbox.RelationToMany
@@ -399,6 +400,12 @@ var Draft_ = struct {
 	SpectatorChannelId: &objectbox.PropertyString{
 		BaseProperty: &objectbox.BaseProperty{
 			Id:     5,
+			Entity: &DraftBinding.Entity,
+		},
+	},
+	PickTwo: &objectbox.PropertyBool{
+		BaseProperty: &objectbox.BaseProperty{
+			Id:     6,
 			Entity: &DraftBinding.Entity,
 		},
 	},
@@ -435,7 +442,8 @@ func (draft_EntityInfo) AddToModel(model *objectbox.Model) {
 	model.Property("SpectatorChannelId", 9, 5, 7498775565443963097)
 	model.PropertyFlags(2048)
 	model.PropertyIndex(15, 722712850427169033)
-	model.EntityLastPropertyId(5, 7498775565443963097)
+	model.Property("PickTwo", 1, 6, 5211646500085160914)
+	model.EntityLastPropertyId(6, 5211646500085160914)
 	model.Relation(1, 751382817597970823, SeatBinding.Id, SeatBinding.Uid)
 	model.Relation(2, 5954888830735860335, PackBinding.Id, PackBinding.Uid)
 	model.Relation(8, 3916323228265520547, EventBinding.Id, EventBinding.Uid)
@@ -477,12 +485,13 @@ func (draft_EntityInfo) Flatten(object interface{}, fbb *flatbuffers.Builder, id
 	var offsetSpectatorChannelId = fbutils.CreateStringOffset(fbb, obj.SpectatorChannelId)
 
 	// build the FlatBuffers object
-	fbb.StartObject(5)
+	fbb.StartObject(6)
 	fbutils.SetUint64Slot(fbb, 0, id)
 	fbutils.SetUOffsetTSlot(fbb, 1, offsetName)
 	fbutils.SetUOffsetTSlot(fbb, 2, offsetFormat)
 	fbutils.SetBoolSlot(fbb, 3, obj.InPerson)
 	fbutils.SetUOffsetTSlot(fbb, 4, offsetSpectatorChannelId)
+	fbutils.SetBoolSlot(fbb, 5, obj.PickTwo)
 	return nil
 }
 
@@ -535,6 +544,7 @@ func (draft_EntityInfo) Load(ob *objectbox.ObjectBox, bytes []byte) (interface{}
 		UnassignedPacks:    relUnassignedPacks,
 		Events:             relEvents,
 		SpectatorChannelId: fbutils.GetStringSlot(table, 12),
+		PickTwo:            fbutils.GetBoolSlot(table, 14),
 	}, nil
 }
 
