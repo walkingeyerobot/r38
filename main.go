@@ -1726,6 +1726,8 @@ func doPickOb(ob *objectbox.ObjectBox, userId int64, draftId int64, cardId int64
 		return myPackID, announcements, round, nil, err
 	}
 
+	numSeats, cardsPerPack := getNumSeatsAndCardsPerPack(draft)
+
 	seatIndex := slices.IndexFunc(draft.Seats, func(seat *schema.Seat) bool {
 		return seat.User != nil && seat.User.Id == uint64(userId)
 	})
@@ -1770,11 +1772,11 @@ func doPickOb(ob *objectbox.ObjectBox, userId int64, draftId int64, cardId int64
 		if round%2 == 0 {
 			newPosition = seat.Position - 1
 			if newPosition == -1 {
-				newPosition = 7
+				newPosition = numSeats - 1
 			}
 		} else {
 			newPosition = seat.Position + 1
-			if newPosition == 8 {
+			if newPosition == numSeats {
 				newPosition = 0
 			}
 		}
@@ -1831,7 +1833,7 @@ func doPickOb(ob *objectbox.ObjectBox, userId int64, draftId int64, cardId int64
 			// If we're only doing normal drafts, round is effectively something that can be calculated,
 			// but by explicitly storing it, we allow ourselves the possibility of expanding support to
 			// weirder formats.
-			seat.Round = len(seat.PickedCards)/15 + 1
+			seat.Round = len(seat.PickedCards)/cardsPerPack + 1
 			round = int64(seat.Round)
 
 			// If the rounds do NOT match from earlier, we have a situation where players are in different
@@ -1859,7 +1861,7 @@ func doPickOb(ob *objectbox.ObjectBox, userId int64, draftId int64, cardId int64
 						nextRoundPlayers++
 					}
 				}
-				if nextRoundPlayers == 8 && len(seat.PickedCards) == 45 {
+				if nextRoundPlayers == numSeats && len(seat.PickedCards) == cardsPerPack*3 {
 					// The draft is over. Notify the admin.
 					err = NotifyEndOfDraft(nil, ob, draftId)
 					if err != nil {
@@ -1903,6 +1905,19 @@ func doPickOb(ob *objectbox.ObjectBox, userId int64, draftId int64, cardId int64
 		userId, draftId, seat.Position, cardId, myPackID)
 
 	return myPackID, announcements, round, seat, nil
+}
+
+func getNumSeatsAndCardsPerPack(draft *schema.Draft) (int, int) {
+	var numSeats int
+	var cardsPerPack int
+	if draft.PickTwo {
+		numSeats = 4
+		cardsPerPack = 14
+	} else {
+		numSeats = 8
+		cardsPerPack = 15
+	}
+	return numSeats, cardsPerPack
 }
 
 // NotifyByDraftAndDiscordID sends a discord alert to a user.
@@ -2044,14 +2059,22 @@ func PostFirstRoundPairingsOb(ob *objectbox.ObjectBox, draft *schema.Draft) erro
 		}
 	}
 
-	pairings := fmt.Sprintf(`%s vs %s
+	var pairings string
+	if len(draft.Seats) == 8 {
+		pairings = fmt.Sprintf(`%s vs %s
 %s vs %s
 %s vs %s
 %s vs %s`,
-		drafterIds[0], drafterIds[4],
-		drafterIds[1], drafterIds[5],
-		drafterIds[2], drafterIds[6],
-		drafterIds[3], drafterIds[7])
+			drafterIds[0], drafterIds[4],
+			drafterIds[1], drafterIds[5],
+			drafterIds[2], drafterIds[6],
+			drafterIds[3], drafterIds[7])
+	} else {
+		pairings = fmt.Sprintf(`%s vs %s
+%s vs %s`,
+			drafterIds[0], drafterIds[2],
+			drafterIds[1], drafterIds[3])
+	}
 	round := 1
 	err := PostPairingsOb(ob, draft, round, pairings)
 	return err
@@ -3294,7 +3317,8 @@ func CheckNextRoundPairingsOb(ob *objectbox.ObjectBox, draft *schema.Draft, roun
 		log.Printf("%s", err.Error())
 		return
 	}
-	if len(results) == round*8 {
+	numSeats, _ := getNumSeatsAndCardsPerPack(draft)
+	if len(results) == round*numSeats {
 		var users []*schema.User
 		var wins [8]int
 		for _, result := range results {
