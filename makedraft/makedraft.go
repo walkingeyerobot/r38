@@ -123,9 +123,6 @@ func MakeDraft(settings Settings, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 	settings.AbortDuplicateThreeColorIdentityUncommons = flagSet.Bool(
 		"abort-duplicate-three-color-identity-uncommons", false,
 		"If true, only one uncommon of a color identity triplet will be allowed per pack.")
-	settings.PickTwo = flagSet.Bool(
-		"pick-two", false,
-		"If true, the created draft is a Pick Two draft (four players, two picks per pack).")
 
 	if len(cfg.Flags) != 0 {
 		jsonFlags := strings.Join(cfg.Flags, " ")
@@ -274,8 +271,8 @@ func MakeDraft(settings Settings, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 			}
 
 			if *settings.Verbose {
-				for _, card := range packs[i] {
-					log.Printf("%s\t%v\t%s", card.Rarity, card.Foil, card.Data)
+				for j := range cardsPerPack {
+					log.Printf("%s\t%v\t%s", packs[i][j].Rarity, packs[i][j].Foil, packs[i][j].Data)
 				}
 			}
 
@@ -383,9 +380,11 @@ func MakeDraft(settings Settings, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 		}
 
 		var obPacks []*schema.Pack
-		for _, pack := range packs {
+		for i := range numPacks {
+			pack := packs[i]
 			var obCards []*schema.Card
-			for _, card := range pack {
+			for j := range cardsPerPack {
+				card := pack[j]
 				var data string
 				if card.Foil {
 					data = re.ReplaceAllString(card.Data, "true")
@@ -611,7 +610,14 @@ func okPack(pack [15]Card, settings Settings) bool {
 	uncommonColorIdentities := make(map[string]int)
 	var ratings []float64
 	totalCommons := 0
-	for _, card := range pack {
+	var cardsPerPack int
+	if *settings.PickTwo {
+		cardsPerPack = 14
+	} else {
+		cardsPerPack = 15
+	}
+	for i := range cardsPerPack {
+		card := pack[i]
 		if *settings.Verbose {
 			log.Printf("%v %v", card, settings.DfcMode)
 		}
@@ -747,8 +753,19 @@ func okDraft(packs [24][15]Card, settings Settings) bool {
 	colorHash := make(map[rune]float64)
 	colorIdentityHash := make(map[rune]float64)
 	q := make(map[string]int)
-	for _, pack := range packs {
-		for _, card := range pack {
+	var numPacks int
+	var cardsPerPack int
+	if *settings.PickTwo {
+		numPacks = 12
+		cardsPerPack = 14
+	} else {
+		numPacks = 24
+		cardsPerPack = 15
+	}
+	for i := range numPacks {
+		pack := packs[i]
+		for j := range cardsPerPack {
+			card := pack[j]
 			cardHash[card.ID]++
 			qty := cardHash[card.ID]
 			if card.Rarity != "B" && qty > q[card.Rarity] {
