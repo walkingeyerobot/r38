@@ -79,6 +79,7 @@ func makeDraft(t *testing.T, err error, db *sql.DB, seed int) {
 		AbortMissingCommonColor:          ptr(false),
 		AbortMissingCommonColorIdentity:  ptr(false),
 		AbortDuplicateThreeColorIdentityUncommons: ptr(false),
+		PickTwo: ptr(false),
 	}, tx, nil)
 	if err != nil {
 		t.Error(err)
@@ -89,10 +90,10 @@ func makeDraft(t *testing.T, err error, db *sql.DB, seed int) {
 	}
 }
 
-func populateDraft(t *testing.T, handlers http.Handler) (players []int, seats []int) {
+func populateDraft(t *testing.T, handlers http.Handler, numSeats int) (players []int, seats []int) {
 	players = rand.Perm(12)
-	seats = rand.Perm(8)
-	for seat := range 8 {
+	seats = rand.Perm(numSeats)
+	for seat := range numSeats {
 		t.Logf("joining seat %d as player %d", seats[seat]+1, players[seat]+1)
 		w := httptest.NewRecorder()
 		handlers.ServeHTTP(w,
@@ -157,7 +158,7 @@ func FuzzInPersonDraft(f *testing.F) {
 
 		handlers := NewHandler(db, nil, false)
 
-		players, seats := populateDraft(t, handlers)
+		players, seats := populateDraft(t, handlers, 8)
 
 		for round := range 3 {
 			for card := range 15 {
@@ -193,7 +194,7 @@ func TestInPersonDraftUndoFirstPick(t *testing.T) {
 
 	handlers := NewHandler(db, nil, false)
 
-	players, seats := populateDraft(t, handlers)
+	players, seats := populateDraft(t, handlers, 8)
 
 	player := players[0] + 1
 	cardRfid := findCardToPick(t, db, player, 0, 0)
@@ -267,7 +268,7 @@ func TestInPersonDraftUndoSubsequentPick(t *testing.T) {
 
 	handlers := NewHandler(db, nil, false)
 
-	players, seats := populateDraft(t, handlers)
+	players, seats := populateDraft(t, handlers, 8)
 
 	player := players[0] + 1
 
@@ -356,7 +357,7 @@ func TestInPersonDraftEnforceZoneDraftingNextPlayerMakingFirstPick(t *testing.T)
 
 	handlers := NewHandler(db, nil, false)
 
-	players, seats := populateDraft(t, handlers)
+	players, seats := populateDraft(t, handlers, 8)
 
 	player := players[0] + 1
 	seat := seats[0]
@@ -403,7 +404,7 @@ func TestInPersonDraftEnforceZoneDraftingNextPlayerMakingSubsequentPick(t *testi
 
 	handlers := NewHandler(db, nil, false)
 
-	players, seats := populateDraft(t, handlers)
+	players, seats := populateDraft(t, handlers, 8)
 
 	player := players[0] + 1
 	seat := seats[0]

@@ -51,7 +51,7 @@ func doSetupOB(t *testing.T, seed int) (*objectbox.ObjectBox, error) {
 	return ob, err
 }
 
-func makeDraftOB(t *testing.T, ob *objectbox.ObjectBox, seed int) {
+func makeDraftOB(t *testing.T, ob *objectbox.ObjectBox, seed int, pickTwo bool) {
 	err := ob.RunInWriteTx(func() error {
 		err := makedraft.MakeDraft(makedraft.Settings{
 			Set:                              ptr("sets/cube.json"),
@@ -77,6 +77,7 @@ func makeDraftOB(t *testing.T, ob *objectbox.ObjectBox, seed int) {
 			AbortMissingCommonColor:          ptr(false),
 			AbortMissingCommonColorIdentity:  ptr(false),
 			AbortDuplicateThreeColorIdentityUncommons: ptr(false),
+			PickTwo: ptr(pickTwo),
 		}, nil, ob)
 		return err
 	})
@@ -100,8 +101,14 @@ func findCardToPickOB(t *testing.T, ob *objectbox.ObjectBox, seat int, round int
 			return s.Position == seat
 		})
 		packs := draft.Seats[seatIndex].Packs
+		var cardsPerPack int
+		if draft.PickTwo {
+			cardsPerPack = 14
+		} else {
+			cardsPerPack = 15
+		}
 		for _, pack := range packs {
-			if pack.Round == round+1 && len(pack.Cards) == 15-card {
+			if pack.Round == round+1 && len(pack.Cards) == cardsPerPack-card {
 				if len(pack.Cards) == 0 {
 					t.Errorf("no cards in pack for seat %d, pack %d, pick %d", seat, round+1, card+1)
 				}
@@ -123,11 +130,11 @@ func TestInPersonDraftOB(t *testing.T) {
 	}
 	defer ob.Close()
 
-	makeDraftOB(t, ob, SEED)
+	makeDraftOB(t, ob, SEED, false)
 
 	handlers := NewHandler(nil, ob, false)
 
-	players, seats := populateDraft(t, handlers)
+	players, seats := populateDraft(t, handlers, 8)
 
 	for round := range 3 {
 		for card := range 15 {
@@ -156,15 +163,63 @@ func TestInPersonDraftOB(t *testing.T) {
 	}
 }
 
+func TestInPersonPickTwoDraftOB(t *testing.T) {
+	ob, err := doSetupOB(t, SEED)
+	if err != nil {
+		t.Errorf("error in setup: %s", err.Error())
+		t.FailNow()
+	}
+	defer ob.Close()
+
+	makeDraftOB(t, ob, SEED, true)
+
+	handlers := NewHandler(nil, ob, false)
+
+	players, seats := populateDraft(t, handlers, 4)
+
+	for round := range 3 {
+		for cardPair := range 7 {
+			var pickedFirst [4]bool
+			for _, seat := range rand.Perm(8) {
+				seat /= 2
+				card := cardPair * 2
+				if pickedFirst[seat] {
+					card++
+				} else {
+					pickedFirst[seat] = true
+				}
+				player := players[seat] + 1
+
+				cardId := findCardToPickOB(t, ob, seats[seat], round, card).CardId
+
+				token := xsrftoken.Generate(xsrfKey, strconv.FormatInt(int64(player), 16), "pick1")
+
+				t.Logf("pack %d pick %d: player %d (position %d) picking card %s", round+1, card+1, player, seats[seat]+1, cardId)
+				w := httptest.NewRecorder()
+				handlers.ServeHTTP(w,
+					httptest.NewRequest("POST", fmt.Sprintf("/api/pickrfid/?as=%d", player),
+						strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cardRfids": ["%s"], "xsrfToken": "%s"}`, cardId, token))))
+				res := w.Result()
+				if res.StatusCode != http.StatusOK {
+					body, _ := io.ReadAll(res.Body)
+					t.Errorf("pick failed: %s", body)
+					spew.Dump(schema.BoxForDraft(ob).Get(1))
+					t.FailNow()
+				}
+			}
+		}
+	}
+}
+
 func TestInPersonDraftUndoFirstPickOB(t *testing.T) {
 	ob, err := doSetupOB(t, SEED)
 	defer ob.Close()
 
-	makeDraftOB(t, ob, SEED)
+	makeDraftOB(t, ob, SEED, false)
 
 	handlers := NewHandler(nil, ob, false)
 
-	players, seats := populateDraft(t, handlers)
+	players, seats := populateDraft(t, handlers, 8)
 
 	player := players[0] + 1
 	card := findCardToPickOB(t, ob, seats[0], 0, 0)
@@ -215,11 +270,11 @@ func TestInPersonDraftIgnoresDuplicatePick(t *testing.T) {
 	ob, err := doSetupOB(t, SEED)
 	defer ob.Close()
 
-	makeDraftOB(t, ob, SEED)
+	makeDraftOB(t, ob, SEED, false)
 
 	handlers := NewHandler(nil, ob, false)
 
-	players, seats := populateDraft(t, handlers)
+	players, seats := populateDraft(t, handlers, 8)
 
 	player := players[0] + 1
 	card := findCardToPickOB(t, ob, seats[0], 0, 0)
@@ -261,11 +316,11 @@ func TestInPersonDraftUndoSubsequentPickOB(t *testing.T) {
 	ob, err := doSetupOB(t, SEED)
 	defer ob.Close()
 
-	makeDraftOB(t, ob, SEED)
+	makeDraftOB(t, ob, SEED, false)
 
 	handlers := NewHandler(nil, ob, false)
 
-	players, seats := populateDraft(t, handlers)
+	players, seats := populateDraft(t, handlers, 8)
 
 	player := players[0] + 1
 
@@ -339,11 +394,11 @@ func TestInPersonDraftEnforceZoneDraftingNextPlayerMakingFirstPickOB(t *testing.
 	}
 	defer ob.Close()
 
-	makeDraftOB(t, ob, SEED)
+	makeDraftOB(t, ob, SEED, false)
 
 	handlers := NewHandler(nil, ob, false)
 
-	players, seats := populateDraft(t, handlers)
+	players, seats := populateDraft(t, handlers, 8)
 
 	player := players[0] + 1
 	seat := seats[0]
@@ -389,11 +444,11 @@ func TestInPersonDraftEnforceZoneDraftingNextPlayerMakingSubsequentPickOB(t *tes
 	}
 	defer ob.Close()
 
-	makeDraftOB(t, ob, SEED)
+	makeDraftOB(t, ob, SEED, false)
 
 	handlers := NewHandler(nil, ob, false)
 
-	players, seats := populateDraft(t, handlers)
+	players, seats := populateDraft(t, handlers, 8)
 
 	player := players[0] + 1
 	seat := seats[0]
