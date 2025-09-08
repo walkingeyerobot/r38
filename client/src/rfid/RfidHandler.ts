@@ -11,7 +11,6 @@ export class RfidHandler {
   private isNfcSupported = "NDEFReader" in window;
   private hasNfcPermission = ref<boolean>(false);
   private scanListener = (event: CustomEvent<string>) => this.onRfidScan(event);
-  private wakeLock: WakeLockSentinel | null = null;
 
   constructor(private readonly handleCardScanned: ((cardRfid: string) => void) | undefined) {}
 
@@ -22,20 +21,6 @@ export class RfidHandler {
     (window as any).webkit?.messageHandlers?.scanner?.postMessage("scan");
 
     document.body.addEventListener("rfidScan", this.scanListener);
-
-    if ("wakeLock" in navigator) {
-      navigator.wakeLock.request("screen").then(
-        (lock) => {
-          console.log("Got a wake lock!");
-          this.wakeLock = lock;
-        },
-        (e) => {
-          console.log("Error when trying to acquire wake lock", e);
-        },
-      );
-    } else {
-      console.log("Wake locks not supported");
-    }
 
     if (this.isNfcSupported) {
       console.log("NFC reading supported!");
@@ -106,8 +91,6 @@ export class RfidHandler {
 
   stop() {
     document.body.removeEventListener("rfidScan", this.scanListener);
-
-    this.wakeLock?.release();
   }
 
   getPrompt(): BoopPrompt {
