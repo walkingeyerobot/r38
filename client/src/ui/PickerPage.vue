@@ -172,6 +172,7 @@ import type { DraftCard, DraftState } from "@/draft/DraftState";
 import { PickerSounds } from "@/ui/picker/PickerSounds";
 import TableSeating from "@/ui/picker/TableSeating.vue";
 import { RfidHandler } from "@/rfid/RfidHandler.ts";
+import { useWakelock } from "@/browser/wakelock/useWakelock";
 
 const route = useRoute();
 
@@ -180,6 +181,7 @@ const activeDialog = ref<ActiveDialog | null>(null);
 const draftId = parseInt(route.params["draftId"] as string);
 const activeRequest = ref<boolean>(false);
 const rfidHandler = new RfidHandler(handleCardScanned);
+useWakelock();
 
 let fetchingDraft = false;
 let pollingId: number;
