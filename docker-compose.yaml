@@ -16,9 +16,7 @@ services:
       context: .
       dockerfile: Dockerfile
       target: go_deploy
-    command:
-      - -objectbox=true
-      - -dbdir=/srv/r38/db
+    command: -objectbox=true -dbdir=/srv/r38/db
     environment:
       - DISCORD_CLIENT_ID=$DISCORD_CLIENT_ID
       - DISCORD_CLIENT_SECRET=$DISCORD_CLIENT_SECRET
