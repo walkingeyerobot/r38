@@ -16,6 +16,9 @@ services:
       context: .
       dockerfile: Dockerfile
       target: go_deploy
+    command:
+      - -objectbox=true
+      - -dbdir=/srv/r38/db
     environment:
       - DISCORD_CLIENT_ID=$DISCORD_CLIENT_ID
       - DISCORD_CLIENT_SECRET=$DISCORD_CLIENT_SECRET
@@ -29,18 +32,6 @@ services:
     volumes:
       - *socket
       - objectbox_data:/srv/r38/db
-  objectboxadmin:
-    image: objectboxio/admin:latest
-    environment:
-      - DB_PATH=/db/data.mdb
-    ports:
-      - "8081:8081"
-    restart: always
-    depends_on:
-      - app
-    volumes:
-      - objectbox_data:/db
-    user: "1000:1000" # ObjectBox admin runs as 'nobody' (uid 65534) by default, which does not have permissions for the shared volume
 volumes:
   socket:
   objectbox_data:
