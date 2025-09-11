@@ -16,7 +16,7 @@ services:
       context: .
       dockerfile: Dockerfile
       target: go_deploy
-    command: -objectbox=true -dbdir=/srv/r38/db
+    command: sh -c "chown -R 1000:1000 /srv/r38/db && /srv/r38/r38 -objectbox=true -dbdir=/srv/r38/db"
     environment:
       - DISCORD_CLIENT_ID=$DISCORD_CLIENT_ID
       - DISCORD_CLIENT_SECRET=$DISCORD_CLIENT_SECRET
