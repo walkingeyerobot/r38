@@ -20,6 +20,7 @@ type Draft struct {
 	Events             []*Event
 	SpectatorChannelId string `objectbox:"index"`
 	PickTwo            bool
+	Archived           bool `objectbox:"index"`
 }
 
 type Pack struct {
