@@ -2786,7 +2786,7 @@ func DiscordReady(s *discordgo.Session, _ *discordgo.Ready) {
 func DiscordMsgCreate(database *sql.DB, ob *objectbox.ObjectBox) func(s *discordgo.Session, msg *discordgo.MessageCreate) {
 	return func(s *discordgo.Session, msg *discordgo.MessageCreate) {
 		if msg.Author.ID == Boss || msg.Author.ID == Henchman {
-			log.Printf("Message from the boss %v", msg)
+			log.Printf("Message from the boss %+v", msg)
 			if msg.GuildID == "" {
 				args, err := shlex.Split(msg.Content)
 				if err != nil {
