@@ -183,15 +183,25 @@ func NewHandler(database *sql.DB, ob *objectbox.ObjectBox, useAuth bool) http.Ha
 					if err != nil {
 						userID = 0
 					} else {
-						userIDStr := session.Values["userid"]
-						if userIDStr == nil {
+						userIDVal := session.Values["userid"]
+						if userIDVal == nil {
 							userID = 0
 						} else {
-							userIDInt, err := strconv.Atoi(userIDStr.(string))
-							if err != nil {
-								userID = 0
+							userIDStr, ok := userIDVal.(string)
+							if ok {
+								userIDInt, err := strconv.Atoi(userIDStr)
+								if err != nil {
+									userID = 0
+								} else {
+									userID = int64(userIDInt)
+								}
 							} else {
-								userID = int64(userIDInt)
+								userIDInt, ok := userIDVal.(uint64)
+								if ok {
+									userID = int64(userIDInt)
+								} else {
+									userID = 0
+								}
 							}
 						}
 					}
