@@ -45,6 +45,7 @@ const DraftAlertsRole = "692079611680653442"
 const DraftFriendRole = "692865288554938428"
 const EveryoneRole = "685333271793500161"
 const Boss = "176164707026206720"
+const Henchman = "360954995866075136"
 const Pink = 0xE50389
 
 var secretKeyNoOneWillEverGuess = []byte(os.Getenv("SESSION_SECRET"))
@@ -2784,7 +2785,8 @@ func DiscordReady(s *discordgo.Session, _ *discordgo.Ready) {
 
 func DiscordMsgCreate(database *sql.DB, ob *objectbox.ObjectBox) func(s *discordgo.Session, msg *discordgo.MessageCreate) {
 	return func(s *discordgo.Session, msg *discordgo.MessageCreate) {
-		if msg.Author.ID == Boss {
+		if msg.Author.ID == Boss || msg.Author.ID == Henchman {
+			log.Printf("Message from the boss %v", msg)
 			if msg.GuildID == "" {
 				args, err := shlex.Split(msg.Content)
 				if err != nil {
@@ -2793,6 +2795,9 @@ func DiscordMsgCreate(database *sql.DB, ob *objectbox.ObjectBox) func(s *discord
 				}
 				if strings.HasPrefix(msg.Content, "makedraft") {
 					settings, err := makedraft.ParseSettings(args)
+					if msg.Author.ID == Henchman {
+						*settings.Simulate = true
+					}
 
 					var resp string
 					if err != nil {
@@ -2954,6 +2959,14 @@ func DiscordReactionAdd(database *sql.DB, ob *objectbox.ObjectBox) func(s *disco
 						}
 					}
 				} else {
+					pairingMsgs, err := schema.BoxForPairingMsg(ob).Query(schema.PairingMsg_.MsgId.Equals(msg.MessageID, true)).Find()
+					if err != nil {
+						log.Printf("%s", err.Error())
+						return err
+					}
+					if len(pairingMsgs) == 0 {
+						return nil
+					}
 					users, err := schema.BoxForUser(ob).Query(schema.User_.DiscordId.Equals(msg.UserID, true)).Find()
 					if err != nil {
 						log.Printf("%s", err.Error())
@@ -2961,14 +2974,6 @@ func DiscordReactionAdd(database *sql.DB, ob *objectbox.ObjectBox) func(s *disco
 					}
 					if len(users) == 0 {
 						return fmt.Errorf("couldn't find user %s", msg.UserID)
-					}
-					pairingMsgs, err := schema.BoxForPairingMsg(ob).Query(schema.PairingMsg_.MsgId.Equals(msg.MessageID, true)).Find()
-					if err != nil {
-						log.Printf("%s", err.Error())
-						return err
-					}
-					if len(pairingMsgs) == 0 {
-						return fmt.Errorf("couldn't find pairing message %s", msg.MessageID)
 					}
 					if msg.Emoji.Name == "🏆" {
 						_, err = schema.BoxForResult(ob).Put(&schema.Result{
