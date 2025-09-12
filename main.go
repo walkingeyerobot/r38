@@ -2782,32 +2782,12 @@ func DiscordMsgCreate(database *sql.DB, ob *objectbox.ObjectBox) func(s *discord
 					return
 				}
 				if strings.HasPrefix(msg.Content, "makedraft") {
-					flagSet := flag.NewFlagSet(args[0], flag.ContinueOnError)
-
-					settings := makedraft.Settings{}
-					settings.Set = flagSet.String(
-						"set", "sets/cube.json",
-						"A .json file containing relevant set data.")
-					settings.Database = flagSet.String(
-						"database", "draft.db",
-						"The sqlite3 database to insert to.")
-					settings.Seed = flagSet.Int(
-						"seed", 0,
-						"The random seed to use to generate the draft. If 0, time.Now().UnixNano() will be used.")
-					settings.Verbose = flagSet.Bool(
-						"v", false,
-						"If true, will enable verbose output.")
-					settings.Simulate = flagSet.Bool(
-						"simulate", false,
-						"If true, won't commit to the database.")
-					settings.Name = flagSet.String(
-						"name", "untitled draft",
-						"The name of the draft.")
-
-					err = flagSet.Parse(args[1:])
+					settings, err := makedraft.ParseSettings(args)
 
 					var resp string
-					if database != nil {
+					if err != nil {
+						resp = fmt.Sprintf("%s", err.Error())
+					} else if database != nil {
 						tx, err := database.Begin()
 						if err != nil {
 							log.Printf("%s", err.Error())
