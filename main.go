@@ -114,7 +114,7 @@ func main() {
 
 	dg, err = discordgo.New("Bot " + os.Getenv("DISCORD_BOT_TOKEN"))
 	if err != nil {
-		log.Printf("%s", err.Error())
+		log.Printf("Error initializing discord bot: %s", err.Error())
 	} else {
 		defer func() {
 			log.Printf("Closing discord bot")
@@ -129,7 +129,9 @@ func main() {
 		dg.AddHandler(DiscordReactionRemove(database, ob))
 		err = dg.Open()
 		if err != nil {
-			log.Printf("%s", err.Error())
+			log.Printf("Error initializing discord bot: %s", err.Error())
+		} else {
+			log.Printf("Discord bot initialized.")
 		}
 	}
 
@@ -2766,7 +2768,7 @@ func GetUserPrefs(userID int64, tx *sql.Tx) (UserFormatPrefs, error) {
 func DiscordReady(s *discordgo.Session, _ *discordgo.Ready) {
 	err := s.UpdateCustomStatus("Tier 5 Wolf Combo")
 	if err != nil {
-		log.Printf("%s", err.Error())
+		log.Printf("Error readying discord bot: %s", err.Error())
 	}
 }
 
@@ -2844,7 +2846,7 @@ func DiscordMsgCreate(database *sql.DB, ob *objectbox.ObjectBox) func(s *discord
 					}
 					_, err = dg.ChannelMessageSend(msg.ChannelID, resp)
 					if err != nil {
-						log.Printf("%s", err)
+						log.Printf("Error responding to discord bot DM: %s", err)
 					}
 				}
 			} else if msg.Content == "!alerts" {
@@ -2866,7 +2868,7 @@ func DiscordSendRoleReactionMessage(s *discordgo.Session, database *sql.DB, ob *
 			Color: Pink,
 		})
 	if err != nil {
-		log.Printf("%s", err.Error())
+		log.Printf("Error responding to discord bot !alerts: %s", err.Error())
 	} else if sent != nil {
 		if database != nil {
 			_, err = database.Exec(
@@ -2881,11 +2883,11 @@ func DiscordSendRoleReactionMessage(s *discordgo.Session, database *sql.DB, ob *
 			_, err = schema.BoxForRoleMsg(ob).Put(&roleMsg)
 		}
 		if err != nil {
-			log.Printf("%s", err.Error())
+			log.Printf("Error responding to discord bot !alerts: %s", err.Error())
 		}
 		err = s.MessageReactionAdd(sent.ChannelID, sent.ID, emoji)
 		if err != nil {
-			log.Printf("%s", err.Error())
+			log.Printf("Error responding to discord bot !alerts: %s", err.Error())
 		}
 	}
 }
@@ -3004,7 +3006,7 @@ func DiscordReactionAdd(database *sql.DB, ob *objectbox.ObjectBox) func(s *disco
 				return nil
 			})
 			if err != nil {
-				log.Printf("%s", err.Error())
+				log.Printf("Error handling discord bot reaction add: %s", err.Error())
 			}
 		}
 	}
@@ -3116,7 +3118,7 @@ func DiscordReactionRemove(database *sql.DB, ob *objectbox.ObjectBox) func(s *di
 				return nil
 			})
 			if err != nil {
-				log.Printf("%s", err.Error())
+				log.Printf("Error handling discord bot reaction add: %s", err.Error())
 			}
 		}
 	}
