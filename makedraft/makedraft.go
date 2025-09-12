@@ -56,6 +56,49 @@ type Settings struct {
 	PickTwo                                   *bool
 }
 
+func ParseSettings(args []string) (Settings, error) {
+	flagSet := flag.NewFlagSet(args[0], flag.ContinueOnError)
+
+	settings := Settings{}
+	settings.Set = flagSet.String(
+		"set", "sets/cube.json",
+		"A .json file containing relevant set data.")
+	settings.Database = flagSet.String(
+		"database", "draft.db",
+		"The sqlite3 database to insert to.")
+	settings.DatabaseDir = flagSet.String(
+		"database_dir", "",
+		"The objectbox database directory to insert to.")
+	settings.Seed = flagSet.Int(
+		"seed", 0,
+		"The random seed to use to generate the draft. If 0, time.Now().UnixNano() will be used.")
+	settings.InPerson = flagSet.Bool(
+		"inPerson", false,
+		"If true, draft will be initialized with empty packs.")
+	settings.AssignSeats = flagSet.Bool(
+		"assignSeats", false,
+		"If true, players will be preassigned seats even for an in-person draft.")
+	settings.AssignPacks = flagSet.Bool(
+		"assignPacks", false,
+		"If true, players will be preassigned their first packs even for an in-person draft.")
+	settings.PickTwo = flagSet.Bool(
+		"pickTwo", false,
+		"If true, the created draft is a Pick Two draft (four players, two picks per pack).")
+	settings.Verbose = flagSet.Bool(
+		"v", false,
+		"If true, will enable verbose output.")
+	settings.Simulate = flagSet.Bool(
+		"simulate", false,
+		"If true, won't commit to the database.")
+	settings.Name = flagSet.String(
+		"name", "untitled draft",
+		"The name of the draft.")
+
+	err := flagSet.Parse(args[1:])
+
+	return settings, err
+}
+
 func MakeDraft(settings Settings, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 	if *settings.Set == "" {
 		return fmt.Errorf("you must specify a set json file to continue")
