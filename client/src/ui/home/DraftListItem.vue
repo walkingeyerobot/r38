@@ -53,6 +53,7 @@ Represents one entry in the list of drafts that a user might view/join
     >
       Skip
     </button>
+    <button v-if="admin" class="join-btn" @click.stop="onArchiveClicked()">Archive</button>
     <button v-if="isShufflable" class="join-btn" @click.stop="onShuffleClicked()">Shuffle</button>
   </div>
 </template>
@@ -66,6 +67,7 @@ import { pushDraftUrl } from "@/router/url_manipulation";
 import { ROUTE_JOIN_DRAFT } from "@/rest/api/join/join";
 import { ROUTE_SKIP_DRAFT } from "@/rest/api/skip/skip";
 import { authStore } from "@/state/AuthStore.ts";
+import { ROUTE_ARCHIVE_DRAFT } from "@/rest/api/archive/archive.ts";
 
 export default defineComponent({
   props: {
@@ -101,6 +103,10 @@ export default defineComponent({
         this.descriptor.status != "closed"
       );
     },
+
+    admin(): boolean {
+      return authStore.user?.id === 1;
+    },
   },
 
   methods: {
@@ -112,6 +118,13 @@ export default defineComponent({
         }
         this.$router.push(path);
       }
+    },
+
+    async onArchiveClicked() {
+      const _response = await fetchEndpoint(ROUTE_ARCHIVE_DRAFT, {
+        id: String(this.descriptor.id),
+      });
+      location.reload();
     },
 
     onShuffleClicked() {

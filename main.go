@@ -281,6 +281,7 @@ func NewHandler(database *sql.DB, ob *objectbox.ObjectBox, useAuth bool) http.Ha
 		addHandler("/auth/discord/callback", oauthDiscordCallback, false)
 	}
 
+	addHandler("/api/archive/", ServeAPIArchive, false)
 	addHandler("/api/draft/", ServeAPIDraft, true)
 	addHandler("/api/draftlist/", ServeAPIDraftList, true)
 	addHandler("/api/pick/", ServeAPIPick, false)
@@ -303,6 +304,36 @@ func NewHandler(database *sql.DB, ob *objectbox.ObjectBox, useAuth bool) http.Ha
 
 func HandleIndex(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "client-dist/index.html")
+}
+
+// ServeAPIArchive serves the /api/archive endpoint.
+func ServeAPIArchive(w http.ResponseWriter, r *http.Request, userID int64, tx *sql.Tx, ob *objectbox.ObjectBox) error {
+	if userID != 1 {
+		return nil
+	}
+
+	re := regexp.MustCompile(`/api/archive/(\d+)`)
+	parseResult := re.FindStringSubmatch(r.URL.Path)
+	if parseResult == nil {
+		return fmt.Errorf("bad api url")
+	}
+	draftID, err := strconv.ParseInt(parseResult[1], 10, 64)
+	if err != nil {
+		return fmt.Errorf("bad api url: %w", err)
+	}
+
+	if ob != nil {
+		box := schema.BoxForDraft(ob)
+		var draft *schema.Draft
+		draft, err = box.Get(uint64(draftID))
+		if err != nil {
+			return fmt.Errorf("couldn't find draft to archive: %w", err)
+		}
+		draft.Archived = true
+		_, err = box.Put(draft)
+	}
+
+	return err
 }
 
 // ServeAPIDraft serves the /api/draft endpoint.
@@ -2636,7 +2667,7 @@ func GetDraftListOb(userId int64, ob *objectbox.ObjectBox) (DraftList, error) {
 	draftList := DraftList{
 		Drafts: []DraftListEntry{},
 	}
-	drafts, err := schema.BoxForDraft(ob).GetAll()
+	drafts, err := schema.BoxForDraft(ob).Query(schema.Draft_.Archived.Equals(false)).Find()
 	if err != nil {
 		return draftList, err
 	}
