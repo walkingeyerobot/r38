@@ -217,7 +217,8 @@ func MakeDraft(settings Settings, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 	var allCards CardSet
 	var dfcCards CardSet
 
-	for _, card := range cfg.Cards {
+	configCards := draftconfig.GetCards(cfg)
+	for _, card := range configCards {
 		var currentSet *CardSet
 		if *settings.DfcMode && card.Dfc {
 			currentSet = &dfcCards
