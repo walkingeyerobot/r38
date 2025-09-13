@@ -217,7 +217,10 @@ func MakeDraft(settings Settings, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 	var allCards CardSet
 	var dfcCards CardSet
 
-	configCards := draftconfig.GetCards(cfg)
+	configCards, err := draftconfig.GetCards(cfg)
+	if err != nil {
+		return fmt.Errorf("error getting cards: %w", err)
+	}
 	for _, card := range configCards {
 		var currentSet *CardSet
 		if *settings.DfcMode && card.Dfc {
@@ -229,6 +232,7 @@ func MakeDraft(settings Settings, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 
 		switch card.Rarity {
 		case "mythic":
+		case "bonus":
 		case "special":
 			currentSet.Mythics = append(currentSet.Mythics, card)
 		case "rare":
