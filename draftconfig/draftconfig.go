@@ -20,3 +20,7 @@ type Card struct {
 	Data          string  `json:"data"`
 	Foil          bool
 }
+
+func GetCards(cfg DraftConfig) []Card {
+	return cfg.Cards
+}

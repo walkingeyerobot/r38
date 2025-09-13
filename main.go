@@ -1291,7 +1291,8 @@ func ServeAPISet(w http.ResponseWriter, r *http.Request, _ int64, _ *sql.Tx, _ *
 	}
 
 	var cards []SetCardData
-	for _, card := range cfg.Cards {
+	configCards := draftconfig.GetCards(cfg)
+	for _, card := range configCards {
 		var cardData R38CardData
 		err = json.Unmarshal([]byte(card.Data), &cardData)
 		if err != nil {
