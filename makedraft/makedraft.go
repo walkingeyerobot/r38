@@ -111,29 +111,6 @@ type CardSet struct {
 }
 
 func MakeDraft(settings Settings, tx *sql.Tx, ob *objectbox.ObjectBox) error {
-	if *settings.Set == "" {
-		return fmt.Errorf("you must specify a set json file to continue")
-	}
-
-	jsonFile, err := os.Open(*settings.Set)
-	if err != nil {
-		return fmt.Errorf("error opening json file: %w", err)
-	}
-	defer func() {
-		_ = jsonFile.Close()
-	}()
-
-	byteValue, err := io.ReadAll(jsonFile)
-	if err != nil {
-		return fmt.Errorf("error readalling: %w", err)
-	}
-
-	var cfg draftconfig.DraftConfig
-	err = json.Unmarshal(byteValue, &cfg)
-	if err != nil {
-		return fmt.Errorf("error unmarshalling: %w", err)
-	}
-
 	flagSet := flag.FlagSet{}
 	settings.MaxMythic = flagSet.Int(
 		"max-mythic", 2,
@@ -178,6 +155,10 @@ func MakeDraft(settings Settings, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 		"abort-duplicate-three-color-identity-uncommons", false,
 		"If true, only one uncommon of a color identity triplet will be allowed per pack.")
 
+	cfg, err := getDraftConfig(settings)
+	if err != nil {
+		return err
+	}
 	if len(cfg.Flags) != 0 {
 		jsonFlags := strings.Join(cfg.Flags, " ")
 		r := csv.NewReader(strings.NewReader(jsonFlags))
@@ -212,97 +193,6 @@ func MakeDraft(settings Settings, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 	} else {
 		numPacks = 24
 	}
-	var packIDs [24]int64
-
-	var allCards CardSet
-	var dfcCards CardSet
-
-	configCards, err := draftconfig.GetCards(cfg)
-	if err != nil {
-		return fmt.Errorf("error getting cards: %w", err)
-	}
-	for _, card := range configCards {
-		var currentSet *CardSet
-		if *settings.DfcMode && card.Dfc {
-			currentSet = &dfcCards
-		} else {
-			currentSet = &allCards
-		}
-		currentSet.All = append(currentSet.All, card)
-
-		switch card.Rarity {
-		case "mythic":
-		case "bonus":
-		case "special":
-			currentSet.Mythics = append(currentSet.Mythics, card)
-		case "rare":
-			currentSet.Rares = append(currentSet.Rares, card)
-		case "uncommon":
-			currentSet.Uncommons = append(currentSet.Uncommons, card)
-		case "common":
-			currentSet.Commons = append(currentSet.Commons, card)
-		case "basic":
-			currentSet.Basics = append(currentSet.Basics, card)
-		default:
-			return fmt.Errorf("error with determining rarity for %v", card)
-		}
-	}
-
-	var hoppers [15]draftconfig.Hopper
-	resetHoppers := func() {
-		for i, hopdef := range cfg.Hoppers {
-			switch hopdef.Type {
-			case "RareHopper":
-				hoppers[i] = draftconfig.MakeNormalHopper(false, allCards.Mythics, allCards.Rares, allCards.Rares)
-			case "RareRefillHopper":
-				hoppers[i] = draftconfig.MakeNormalHopper(true, allCards.Mythics, allCards.Rares, allCards.Rares)
-			case "UncommonHopper":
-				hoppers[i] = draftconfig.MakeNormalHopper(false, allCards.Uncommons, allCards.Uncommons)
-			case "UncommonRefillHopper":
-				hoppers[i] = draftconfig.MakeNormalHopper(true, allCards.Uncommons, allCards.Uncommons)
-			case "CommonHopper":
-				hoppers[i] = draftconfig.MakeNormalHopper(false, allCards.Commons, allCards.Commons)
-			case "CommonRefillHopper":
-				hoppers[i] = draftconfig.MakeNormalHopper(true, allCards.Commons, allCards.Commons)
-			case "BasicLandHopper":
-				hoppers[i] = draftconfig.MakeBasicLandHopper(allCards.Basics)
-			case "CubeHopper":
-				hoppers[i] = draftconfig.MakeNormalHopper(false, allCards.All)
-			case "Pointer":
-				hoppers[i] = hoppers[hopdef.Refs[0]]
-			case "DfcHopper":
-				hoppers[i] = draftconfig.MakeNormalHopper(false,
-					dfcCards.Mythics,
-					dfcCards.Rares, dfcCards.Rares,
-					dfcCards.Uncommons, dfcCards.Uncommons, dfcCards.Uncommons,
-					dfcCards.Uncommons, dfcCards.Uncommons, dfcCards.Uncommons,
-					dfcCards.Commons, dfcCards.Commons, dfcCards.Commons, dfcCards.Commons,
-					dfcCards.Commons, dfcCards.Commons, dfcCards.Commons, dfcCards.Commons,
-					dfcCards.Commons, dfcCards.Commons, dfcCards.Commons)
-			case "DfcRefillHopper":
-				hoppers[i] = draftconfig.MakeNormalHopper(true,
-					dfcCards.Mythics,
-					dfcCards.Rares, dfcCards.Rares,
-					dfcCards.Uncommons, dfcCards.Uncommons, dfcCards.Uncommons,
-					dfcCards.Uncommons, dfcCards.Uncommons, dfcCards.Uncommons,
-					dfcCards.Commons, dfcCards.Commons, dfcCards.Commons, dfcCards.Commons,
-					dfcCards.Commons, dfcCards.Commons, dfcCards.Commons, dfcCards.Commons,
-					dfcCards.Commons, dfcCards.Commons, dfcCards.Commons)
-			case "FoilHopper":
-				hoppers[i] = draftconfig.MakeFoilHopper(&hoppers[hopdef.Refs[0]], &hoppers[hopdef.Refs[1]], &hoppers[hopdef.Refs[2]],
-					allCards.Mythics,
-					allCards.Rares, allCards.Rares,
-					allCards.Uncommons, allCards.Uncommons, allCards.Uncommons,
-					allCards.Commons, allCards.Commons, allCards.Commons, allCards.Commons,
-					allCards.Basics, allCards.Basics, allCards.Basics, allCards.Basics)
-			}
-		}
-	}
-
-	var packs [24][15]draftconfig.Card
-	packAttempts := 0
-	draftAttempts := 0
-
 	var cardsPerPack int
 	if *settings.PickTwo {
 		cardsPerPack = 14
@@ -310,47 +200,9 @@ func MakeDraft(settings Settings, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 		cardsPerPack = 15
 	}
 
-	for {
-		resetHoppers()
-		resetDraft := false
-		draftAttempts++
-		for i := 0; i < numPacks; { // we'll manually increment i
-			packAttempts++
-			for j := range cardsPerPack {
-				var empty bool
-				packs[i][j], empty = hoppers[j].Pop()
-				if empty {
-					resetDraft = true
-					break
-				}
-			}
-
-			if resetDraft {
-				break
-			}
-
-			if *settings.Verbose {
-				for j := range cardsPerPack {
-					log.Printf("%s\t%v\t%s", packs[i][j].Rarity, packs[i][j].Foil, packs[i][j].Data)
-				}
-			}
-
-			if okPack(packs[i], settings) {
-				i++
-			}
-		}
-		if !resetDraft && (okDraft(packs, settings)) {
-			break
-		}
-
-		if *settings.Verbose {
-			log.Printf("RESETTING DRAFT")
-		}
-	}
-
-	if *settings.Verbose {
-		log.Printf("draft attempts: %d", draftAttempts)
-		log.Printf("pack attempts: %d", packAttempts)
+	packs, err := GeneratePacks(settings)
+	if err != nil {
+		return err
 	}
 
 	format := path.Base(*settings.Set)
@@ -360,7 +212,7 @@ func MakeDraft(settings Settings, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 	re := regexp.MustCompile(`"FOIL_STATUS"`)
 
 	if tx != nil {
-		packIDs, err = generateEmptyDraft(tx, *settings.Name, format, *settings.InPerson, assignSeats, assignPacks, *settings.Simulate)
+		packIDs, err := generateEmptyDraft(tx, *settings.Name, format, *settings.InPerson, assignSeats, assignPacks, *settings.Simulate)
 		if err != nil {
 			return err
 		}
@@ -529,6 +381,185 @@ func MakeDraft(settings Settings, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 	}
 
 	return nil
+}
+
+func getDraftConfig(settings Settings) (draftconfig.DraftConfig, error) {
+	if *settings.Set == "" {
+		return draftconfig.DraftConfig{}, fmt.Errorf("you must specify a set json file to continue")
+	}
+
+	jsonFile, err := os.Open(*settings.Set)
+	if err != nil {
+		return draftconfig.DraftConfig{}, fmt.Errorf("error opening json file: %w", err)
+	}
+	defer func() {
+		_ = jsonFile.Close()
+	}()
+
+	byteValue, err := io.ReadAll(jsonFile)
+	if err != nil {
+		return draftconfig.DraftConfig{}, fmt.Errorf("error readalling: %w", err)
+	}
+
+	var cfg draftconfig.DraftConfig
+	err = json.Unmarshal(byteValue, &cfg)
+	if err != nil {
+		return draftconfig.DraftConfig{}, fmt.Errorf("error unmarshalling: %w", err)
+	}
+	return cfg, nil
+}
+
+func GeneratePacks(settings Settings) ([24][15]draftconfig.Card, error) {
+	cfg, err := getDraftConfig(settings)
+	if err != nil {
+		return [24][15]draftconfig.Card{}, fmt.Errorf("error reading draft config: %w", err)
+	}
+
+	var numPacks int
+	if *settings.PickTwo {
+		numPacks = 12
+	} else {
+		numPacks = 24
+	}
+	var cardsPerPack int
+	if *settings.PickTwo {
+		cardsPerPack = 14
+	} else {
+		cardsPerPack = 15
+	}
+
+	var allCards CardSet
+	var dfcCards CardSet
+
+	configCards, err := draftconfig.GetCards(cfg)
+	if err != nil {
+		return [24][15]draftconfig.Card{}, fmt.Errorf("error getting cards: %w", err)
+	}
+	for _, card := range configCards {
+		var currentSet *CardSet
+		if *settings.DfcMode && card.Dfc {
+			currentSet = &dfcCards
+		} else {
+			currentSet = &allCards
+		}
+		currentSet.All = append(currentSet.All, card)
+
+		switch card.Rarity {
+		case "mythic":
+		case "bonus":
+		case "special":
+			currentSet.Mythics = append(currentSet.Mythics, card)
+		case "rare":
+			currentSet.Rares = append(currentSet.Rares, card)
+		case "uncommon":
+			currentSet.Uncommons = append(currentSet.Uncommons, card)
+		case "common":
+			currentSet.Commons = append(currentSet.Commons, card)
+		case "basic":
+			currentSet.Basics = append(currentSet.Basics, card)
+		default:
+			return [24][15]draftconfig.Card{}, fmt.Errorf("error with determining rarity for %v", card)
+		}
+	}
+
+	var hoppers [15]draftconfig.Hopper
+	resetHoppers := func() {
+		for i, hopdef := range cfg.Hoppers {
+			switch hopdef.Type {
+			case "RareHopper":
+				hoppers[i] = draftconfig.MakeNormalHopper(false, allCards.Mythics, allCards.Rares, allCards.Rares)
+			case "RareRefillHopper":
+				hoppers[i] = draftconfig.MakeNormalHopper(true, allCards.Mythics, allCards.Rares, allCards.Rares)
+			case "UncommonHopper":
+				hoppers[i] = draftconfig.MakeNormalHopper(false, allCards.Uncommons, allCards.Uncommons)
+			case "UncommonRefillHopper":
+				hoppers[i] = draftconfig.MakeNormalHopper(true, allCards.Uncommons, allCards.Uncommons)
+			case "CommonHopper":
+				hoppers[i] = draftconfig.MakeNormalHopper(false, allCards.Commons, allCards.Commons)
+			case "CommonRefillHopper":
+				hoppers[i] = draftconfig.MakeNormalHopper(true, allCards.Commons, allCards.Commons)
+			case "BasicLandHopper":
+				hoppers[i] = draftconfig.MakeBasicLandHopper(allCards.Basics)
+			case "CubeHopper":
+				hoppers[i] = draftconfig.MakeNormalHopper(false, allCards.All)
+			case "Pointer":
+				hoppers[i] = hoppers[hopdef.Refs[0]]
+			case "DfcHopper":
+				hoppers[i] = draftconfig.MakeNormalHopper(false,
+					dfcCards.Mythics,
+					dfcCards.Rares, dfcCards.Rares,
+					dfcCards.Uncommons, dfcCards.Uncommons, dfcCards.Uncommons,
+					dfcCards.Uncommons, dfcCards.Uncommons, dfcCards.Uncommons,
+					dfcCards.Commons, dfcCards.Commons, dfcCards.Commons, dfcCards.Commons,
+					dfcCards.Commons, dfcCards.Commons, dfcCards.Commons, dfcCards.Commons,
+					dfcCards.Commons, dfcCards.Commons, dfcCards.Commons)
+			case "DfcRefillHopper":
+				hoppers[i] = draftconfig.MakeNormalHopper(true,
+					dfcCards.Mythics,
+					dfcCards.Rares, dfcCards.Rares,
+					dfcCards.Uncommons, dfcCards.Uncommons, dfcCards.Uncommons,
+					dfcCards.Uncommons, dfcCards.Uncommons, dfcCards.Uncommons,
+					dfcCards.Commons, dfcCards.Commons, dfcCards.Commons, dfcCards.Commons,
+					dfcCards.Commons, dfcCards.Commons, dfcCards.Commons, dfcCards.Commons,
+					dfcCards.Commons, dfcCards.Commons, dfcCards.Commons)
+			case "FoilHopper":
+				hoppers[i] = draftconfig.MakeFoilHopper(&hoppers[hopdef.Refs[0]], &hoppers[hopdef.Refs[1]], &hoppers[hopdef.Refs[2]],
+					allCards.Mythics,
+					allCards.Rares, allCards.Rares,
+					allCards.Uncommons, allCards.Uncommons, allCards.Uncommons,
+					allCards.Commons, allCards.Commons, allCards.Commons, allCards.Commons,
+					allCards.Basics, allCards.Basics, allCards.Basics, allCards.Basics)
+			}
+		}
+	}
+
+	var packs [24][15]draftconfig.Card
+	packAttempts := 0
+	draftAttempts := 0
+
+	for {
+		resetHoppers()
+		resetDraft := false
+		draftAttempts++
+		for i := 0; i < numPacks; { // we'll manually increment i
+			packAttempts++
+			for j := range cardsPerPack {
+				var empty bool
+				packs[i][j], empty = hoppers[j].Pop()
+				if empty {
+					resetDraft = true
+					break
+				}
+			}
+
+			if resetDraft {
+				break
+			}
+
+			if *settings.Verbose {
+				for j := range cardsPerPack {
+					log.Printf("%s\t%v\t%s", packs[i][j].Rarity, packs[i][j].Foil, packs[i][j].Data)
+				}
+			}
+
+			if okPack(packs[i], settings) {
+				i++
+			}
+		}
+		if !resetDraft && (okDraft(packs, settings)) {
+			break
+		}
+
+		if *settings.Verbose {
+			log.Printf("RESETTING DRAFT")
+		}
+	}
+
+	if *settings.Verbose {
+		log.Printf("draft attempts: %d", draftAttempts)
+		log.Printf("pack attempts: %d", packAttempts)
+	}
+	return packs, nil
 }
 
 func generateEmptyDraft(tx *sql.Tx, name string, format string, inPerson bool, assignSeats bool, assignPacks bool, simulate bool) ([24]int64, error) {
