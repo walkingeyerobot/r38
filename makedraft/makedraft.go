@@ -7,6 +7,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/objectbox/objectbox-go/objectbox"
+	"github.com/walkingeyerobot/r38/draftconfig"
 	"github.com/walkingeyerobot/r38/schema"
 	"io"
 	"log"
@@ -99,6 +100,16 @@ func ParseSettings(args []string) (Settings, error) {
 	return settings, err
 }
 
+// CardSet helps us lookup cards by rarity.
+type CardSet struct {
+	All       []draftconfig.Card
+	Mythics   []draftconfig.Card
+	Rares     []draftconfig.Card
+	Uncommons []draftconfig.Card
+	Commons   []draftconfig.Card
+	Basics    []draftconfig.Card
+}
+
 func MakeDraft(settings Settings, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 	if *settings.Set == "" {
 		return fmt.Errorf("you must specify a set json file to continue")
@@ -117,7 +128,7 @@ func MakeDraft(settings Settings, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 		return fmt.Errorf("error readalling: %w", err)
 	}
 
-	var cfg DraftConfig
+	var cfg draftconfig.DraftConfig
 	err = json.Unmarshal(byteValue, &cfg)
 	if err != nil {
 		return fmt.Errorf("error unmarshalling: %w", err)
@@ -232,30 +243,30 @@ func MakeDraft(settings Settings, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 		}
 	}
 
-	var hoppers [15]Hopper
+	var hoppers [15]draftconfig.Hopper
 	resetHoppers := func() {
 		for i, hopdef := range cfg.Hoppers {
 			switch hopdef.Type {
 			case "RareHopper":
-				hoppers[i] = MakeNormalHopper(false, allCards.Mythics, allCards.Rares, allCards.Rares)
+				hoppers[i] = draftconfig.MakeNormalHopper(false, allCards.Mythics, allCards.Rares, allCards.Rares)
 			case "RareRefillHopper":
-				hoppers[i] = MakeNormalHopper(true, allCards.Mythics, allCards.Rares, allCards.Rares)
+				hoppers[i] = draftconfig.MakeNormalHopper(true, allCards.Mythics, allCards.Rares, allCards.Rares)
 			case "UncommonHopper":
-				hoppers[i] = MakeNormalHopper(false, allCards.Uncommons, allCards.Uncommons)
+				hoppers[i] = draftconfig.MakeNormalHopper(false, allCards.Uncommons, allCards.Uncommons)
 			case "UncommonRefillHopper":
-				hoppers[i] = MakeNormalHopper(true, allCards.Uncommons, allCards.Uncommons)
+				hoppers[i] = draftconfig.MakeNormalHopper(true, allCards.Uncommons, allCards.Uncommons)
 			case "CommonHopper":
-				hoppers[i] = MakeNormalHopper(false, allCards.Commons, allCards.Commons)
+				hoppers[i] = draftconfig.MakeNormalHopper(false, allCards.Commons, allCards.Commons)
 			case "CommonRefillHopper":
-				hoppers[i] = MakeNormalHopper(true, allCards.Commons, allCards.Commons)
+				hoppers[i] = draftconfig.MakeNormalHopper(true, allCards.Commons, allCards.Commons)
 			case "BasicLandHopper":
-				hoppers[i] = MakeBasicLandHopper(allCards.Basics)
+				hoppers[i] = draftconfig.MakeBasicLandHopper(allCards.Basics)
 			case "CubeHopper":
-				hoppers[i] = MakeNormalHopper(false, allCards.All)
+				hoppers[i] = draftconfig.MakeNormalHopper(false, allCards.All)
 			case "Pointer":
 				hoppers[i] = hoppers[hopdef.Refs[0]]
 			case "DfcHopper":
-				hoppers[i] = MakeNormalHopper(false,
+				hoppers[i] = draftconfig.MakeNormalHopper(false,
 					dfcCards.Mythics,
 					dfcCards.Rares, dfcCards.Rares,
 					dfcCards.Uncommons, dfcCards.Uncommons, dfcCards.Uncommons,
@@ -264,7 +275,7 @@ func MakeDraft(settings Settings, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 					dfcCards.Commons, dfcCards.Commons, dfcCards.Commons, dfcCards.Commons,
 					dfcCards.Commons, dfcCards.Commons, dfcCards.Commons)
 			case "DfcRefillHopper":
-				hoppers[i] = MakeNormalHopper(true,
+				hoppers[i] = draftconfig.MakeNormalHopper(true,
 					dfcCards.Mythics,
 					dfcCards.Rares, dfcCards.Rares,
 					dfcCards.Uncommons, dfcCards.Uncommons, dfcCards.Uncommons,
@@ -273,7 +284,7 @@ func MakeDraft(settings Settings, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 					dfcCards.Commons, dfcCards.Commons, dfcCards.Commons, dfcCards.Commons,
 					dfcCards.Commons, dfcCards.Commons, dfcCards.Commons)
 			case "FoilHopper":
-				hoppers[i] = MakeFoilHopper(&hoppers[hopdef.Refs[0]], &hoppers[hopdef.Refs[1]], &hoppers[hopdef.Refs[2]],
+				hoppers[i] = draftconfig.MakeFoilHopper(&hoppers[hopdef.Refs[0]], &hoppers[hopdef.Refs[1]], &hoppers[hopdef.Refs[2]],
 					allCards.Mythics,
 					allCards.Rares, allCards.Rares,
 					allCards.Uncommons, allCards.Uncommons, allCards.Uncommons,
@@ -283,7 +294,7 @@ func MakeDraft(settings Settings, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 		}
 	}
 
-	var packs [24][15]Card
+	var packs [24][15]draftconfig.Card
 	packAttempts := 0
 	draftAttempts := 0
 
@@ -645,7 +656,7 @@ func generateEmptyDraft(tx *sql.Tx, name string, format string, inPerson bool, a
 	return packIds, nil
 }
 
-func okPack(pack [15]Card, settings Settings) bool {
+func okPack(pack [15]draftconfig.Card, settings Settings) bool {
 	passes := true
 	cardHash := make(map[string]int)
 	colorHash := make(map[rune]float64)
@@ -786,7 +797,7 @@ func okPack(pack [15]Card, settings Settings) bool {
 	return passes
 }
 
-func okDraft(packs [24][15]Card, settings Settings) bool {
+func okDraft(packs [24][15]draftconfig.Card, settings Settings) bool {
 	if *settings.Verbose {
 		log.Printf("analyzing entire draft pool...")
 	}

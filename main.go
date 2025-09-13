@@ -10,6 +10,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/objectbox/objectbox-go/objectbox"
+	"github.com/walkingeyerobot/r38/draftconfig"
 	"github.com/walkingeyerobot/r38/schema"
 	"io"
 	"log"
@@ -1283,7 +1284,7 @@ func ServeAPISet(w http.ResponseWriter, r *http.Request, _ int64, _ *sql.Tx, _ *
 		return fmt.Errorf("error readalling: %w", err)
 	}
 
-	var cfg makedraft.DraftConfig
+	var cfg draftconfig.DraftConfig
 	err = json.Unmarshal(byteValue, &cfg)
 	if err != nil {
 		return fmt.Errorf("error unmarshalling: %w", err)
