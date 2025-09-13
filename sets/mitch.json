@@ -1,0 +1,93 @@
+{
+  "hoppers": [
+    {
+      "type": "CubeHopper"
+    },
+    {
+      "type": "Pointer",
+      "refs": [
+        0
+      ]
+    },
+    {
+      "type": "Pointer",
+      "refs": [
+        0
+      ]
+    },
+    {
+      "type": "Pointer",
+      "refs": [
+        0
+      ]
+    },
+    {
+      "type": "Pointer",
+      "refs": [
+        0
+      ]
+    },
+    {
+      "type": "Pointer",
+      "refs": [
+        0
+      ]
+    },
+    {
+      "type": "Pointer",
+      "refs": [
+        0
+      ]
+    },
+    {
+      "type": "Pointer",
+      "refs": [
+        0
+      ]
+    },
+    {
+      "type": "Pointer",
+      "refs": [
+        0
+      ]
+    },
+    {
+      "type": "Pointer",
+      "refs": [
+        0
+      ]
+    },
+    {
+      "type": "Pointer",
+      "refs": [
+        0
+      ]
+    },
+    {
+      "type": "Pointer",
+      "refs": [
+        0
+      ]
+    },
+    {
+      "type": "Pointer",
+      "refs": [
+        0
+      ]
+    },
+    {
+      "type": "Pointer",
+      "refs": [
+        0
+      ]
+    },
+    {
+      "type": "Pointer",
+      "refs": [
+        0
+      ]
+    }
+  ],
+  "flags": [],
+  "cube_cobra_id": "f0aad653-43d0-40c0-bb65-84f92080467d"
+}
