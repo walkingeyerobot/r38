@@ -111,72 +111,9 @@ type CardSet struct {
 }
 
 func MakeDraft(settings Settings, tx *sql.Tx, ob *objectbox.ObjectBox) error {
-	flagSet := flag.FlagSet{}
-	settings.MaxMythic = flagSet.Int(
-		"max-mythic", 2,
-		"Maximum number of copies of a given mythic allowed in a draft. 0 to disable.")
-	settings.MaxRare = flagSet.Int(
-		"max-rare", 3,
-		"Maximum number of copies of a given rare allowed in a draft. 0 to disable.")
-	settings.MaxUncommon = flagSet.Int(
-		"max-uncommon", 4,
-		"Maximum number of copies of a given uncommon allowed in a draft. 0 to disable.")
-	settings.MaxCommon = flagSet.Int(
-		"max-common", 6,
-		"Maximum number of copies of a given common allowed in a draft. 0 to disable.")
-	settings.PackCommonColorStdevMax = flagSet.Float64(
-		"pack-common-color-stdev-max", 0,
-		"Maximum standard deviation allowed in a pack of color distribution among commons. 0 to disable.")
-	settings.PackCommonRatingMin = flagSet.Float64(
-		"pack-common-rating-min", 0,
-		"Minimum average rating allowed in a pack among commons. 0 to disable.")
-	settings.PackCommonRatingMax = flagSet.Float64(
-		"pack-common-rating-max", 0,
-		"Maximum average rating allowed in a pack among commons. 0 to disable.")
-	settings.DraftCommonColorStdevMax = flagSet.Float64(
-		"draft-common-color-stdev-max", 0,
-		"Maximum standard deviation allowed in the entire draft of color distribution among commons. 0 to disable.")
-	settings.PackCommonColorIdentityStdevMax = flagSet.Float64(
-		"pack-common-color-identity-stdev-max", 0,
-		"Maximum standard deviation allowed in a pack of color identity distribution among commons. 0 to disable.")
-	settings.DraftCommonColorIdentityStdevMax = flagSet.Float64(
-		"draft-common-color-identity-stdev-max", 0,
-		"Maximum standard deviation allowed in the entire draft of color identity distribution among commons. 0 to disable.")
-	settings.DfcMode = flagSet.Bool(
-		"dfc-mode", false,
-		"If true, include DFCs only in DFC specific hoppers and exclude them from color distribution stats.")
-	settings.AbortMissingCommonColor = flagSet.Bool(
-		"abort-missing-common-color", false,
-		"If true, every color will be represented in the colors of commons in every pack.")
-	settings.AbortMissingCommonColorIdentity = flagSet.Bool(
-		"abort-missing-common-color-identity", false,
-		"If true, every color will be represented in the color identities of commons in every pack.")
-	settings.AbortDuplicateThreeColorIdentityUncommons = flagSet.Bool(
-		"abort-duplicate-three-color-identity-uncommons", false,
-		"If true, only one uncommon of a color identity triplet will be allowed per pack.")
-
-	cfg, err := getDraftConfig(settings)
+	err := AddDraftConfigSettings(&settings)
 	if err != nil {
 		return err
-	}
-	if len(cfg.Flags) != 0 {
-		jsonFlags := strings.Join(cfg.Flags, " ")
-		r := csv.NewReader(strings.NewReader(jsonFlags))
-		r.Comma = ' '
-		fields, err := r.Read()
-		if err != nil {
-			return fmt.Errorf("error parsing json flags: %w", err)
-		}
-		var allFlags []string
-		for _, field := range fields {
-			if field != "" {
-				allFlags = append(allFlags, field)
-			}
-		}
-		err = flagSet.Parse(allFlags)
-		if err != nil {
-			return fmt.Errorf("error parsing json flags: %w", err)
-		}
 	}
 
 	if *settings.Seed == 0 {
@@ -380,6 +317,77 @@ func MakeDraft(settings Settings, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 		}
 	}
 
+	return nil
+}
+
+func AddDraftConfigSettings(settings *Settings) error {
+	flagSet := flag.FlagSet{}
+	settings.MaxMythic = flagSet.Int(
+		"max-mythic", 2,
+		"Maximum number of copies of a given mythic allowed in a draft. 0 to disable.")
+	settings.MaxRare = flagSet.Int(
+		"max-rare", 3,
+		"Maximum number of copies of a given rare allowed in a draft. 0 to disable.")
+	settings.MaxUncommon = flagSet.Int(
+		"max-uncommon", 4,
+		"Maximum number of copies of a given uncommon allowed in a draft. 0 to disable.")
+	settings.MaxCommon = flagSet.Int(
+		"max-common", 6,
+		"Maximum number of copies of a given common allowed in a draft. 0 to disable.")
+	settings.PackCommonColorStdevMax = flagSet.Float64(
+		"pack-common-color-stdev-max", 0,
+		"Maximum standard deviation allowed in a pack of color distribution among commons. 0 to disable.")
+	settings.PackCommonRatingMin = flagSet.Float64(
+		"pack-common-rating-min", 0,
+		"Minimum average rating allowed in a pack among commons. 0 to disable.")
+	settings.PackCommonRatingMax = flagSet.Float64(
+		"pack-common-rating-max", 0,
+		"Maximum average rating allowed in a pack among commons. 0 to disable.")
+	settings.DraftCommonColorStdevMax = flagSet.Float64(
+		"draft-common-color-stdev-max", 0,
+		"Maximum standard deviation allowed in the entire draft of color distribution among commons. 0 to disable.")
+	settings.PackCommonColorIdentityStdevMax = flagSet.Float64(
+		"pack-common-color-identity-stdev-max", 0,
+		"Maximum standard deviation allowed in a pack of color identity distribution among commons. 0 to disable.")
+	settings.DraftCommonColorIdentityStdevMax = flagSet.Float64(
+		"draft-common-color-identity-stdev-max", 0,
+		"Maximum standard deviation allowed in the entire draft of color identity distribution among commons. 0 to disable.")
+	settings.DfcMode = flagSet.Bool(
+		"dfc-mode", false,
+		"If true, include DFCs only in DFC specific hoppers and exclude them from color distribution stats.")
+	settings.AbortMissingCommonColor = flagSet.Bool(
+		"abort-missing-common-color", false,
+		"If true, every color will be represented in the colors of commons in every pack.")
+	settings.AbortMissingCommonColorIdentity = flagSet.Bool(
+		"abort-missing-common-color-identity", false,
+		"If true, every color will be represented in the color identities of commons in every pack.")
+	settings.AbortDuplicateThreeColorIdentityUncommons = flagSet.Bool(
+		"abort-duplicate-three-color-identity-uncommons", false,
+		"If true, only one uncommon of a color identity triplet will be allowed per pack.")
+
+	cfg, err := getDraftConfig(*settings)
+	if err != nil {
+		return err
+	}
+	if len(cfg.Flags) != 0 {
+		jsonFlags := strings.Join(cfg.Flags, " ")
+		r := csv.NewReader(strings.NewReader(jsonFlags))
+		r.Comma = ' '
+		fields, err := r.Read()
+		if err != nil {
+			return fmt.Errorf("error parsing json flags: %w", err)
+		}
+		var allFlags []string
+		for _, field := range fields {
+			if field != "" {
+				allFlags = append(allFlags, field)
+			}
+		}
+		err = flagSet.Parse(allFlags)
+		if err != nil {
+			return fmt.Errorf("error parsing json flags: %w", err)
+		}
+	}
 	return nil
 }
 

@@ -20,6 +20,19 @@ export function parseInitialState(srcData: SourceData): StateParseResult {
   return new StateParser().parse(srcData);
 }
 
+export function parseCard(srcCard: SourceCard, sourcePackIndex: number) {
+  const card: DraftCard = {
+    id: srcCard.id,
+    sourcePackIndex,
+    pickedIn: [],
+    hidden: srcCard.hidden || false,
+    // TODO: We should freeze the entire DraftCard, but pickedIn is still
+    // mutable at the moment.
+    definition: Object.freeze(parseCardDefinition(srcCard)),
+  };
+  return card;
+}
+
 class StateParser {
   private _nextLocationId = 0;
   private _nextContainerId = 0;
@@ -125,15 +138,7 @@ class StateParser {
     for (let i = 0; i < srcPack.length; i++) {
       const srcCard = srcPack[i];
       if (!srcCard) continue;
-      const card: DraftCard = {
-        id: srcCard.id,
-        sourcePackIndex: i,
-        pickedIn: [],
-        hidden: srcCard.hidden || false,
-        // TODO: We should freeze the entire DraftCard, but pickedIn is still
-        // mutable at the moment.
-        definition: Object.freeze(parseCardDefinition(srcCard)),
-      };
+      const card = parseCard(srcCard, i);
       if (this._cards.has(card.id)) {
         throw new Error(`Duplicate card ${card.id}`);
       }
