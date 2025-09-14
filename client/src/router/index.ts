@@ -55,6 +55,18 @@ const router = createRouter({
       component: () => import("../ui/TagWriter.vue"),
       props: true,
     },
+    {
+      path: "/samplepack/:set",
+      redirect: (to) => {
+        return to.path + `/${Math.floor(Math.random() * Math.pow(2, 63))}`;
+      },
+    },
+    {
+      path: "/samplepack/:set/:seed",
+      name: "samplepack",
+      component: () => import("../ui/SamplePack.vue"),
+      props: (route) => ({ set: route.params.set, seed: Number(route.params.seed) }),
+    },
   ],
 });
 

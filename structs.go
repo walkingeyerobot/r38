@@ -133,6 +133,12 @@ type PostedGetCardPack struct {
 	CardRfid string `json:"cardRfid"`
 }
 
+// PostedSet is JSON accepted from the client to request a sample pack.
+type PostedSamplePack struct {
+	Set  string `json:"set"`
+	Seed int    `json:"seed"`
+}
+
 // PostedSet is JSON accepted from the client to request the cards in a set.
 type PostedSet struct {
 	Set string `json:"set"`

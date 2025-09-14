@@ -294,6 +294,7 @@ func NewHandler(database *sql.DB, ob *objectbox.ObjectBox, useAuth bool) http.Ha
 	addHandler("/api/undopick/", ServeAPIUndoPick, false)
 	addHandler("/api/userinfo/", ServeAPIUserInfo, true)
 	addHandler("/api/getcardpack/", ServeAPIGetCardPack, true)
+	addHandler("/api/samplepack/", ServeAPISamplePack, true)
 	addHandler("/api/set/", ServeAPISet, true)
 
 	addHandler("/api/dev/forceEnd/", ServeAPIForceEnd, false)
@@ -1257,6 +1258,53 @@ func ServeAPIGetCardPack(w http.ResponseWriter, r *http.Request, _ int64, tx *sq
 	}
 
 	return errors.New("didn't find pack in draft")
+}
+
+// ServeAPISamplePack serves the /api/samplepack endpoint.
+func ServeAPISamplePack(w http.ResponseWriter, r *http.Request, _ int64, _ *sql.Tx, _ *objectbox.ObjectBox) error {
+	bodyBytes, err := io.ReadAll(r.Body)
+	if err != nil {
+		return fmt.Errorf("error reading post body: %w", err)
+	}
+	var setRequest PostedSamplePack
+	err = json.Unmarshal(bodyBytes, &setRequest)
+	if err != nil {
+		return fmt.Errorf("error parsing post body: %w", err)
+	}
+
+	setPath := "sets/" + setRequest.Set + ".json"
+	settings, err := makedraft.ParseSettings([]string{"", "--set", setPath, "--seed", strconv.Itoa(setRequest.Seed)})
+	if err != nil {
+		return err
+	}
+	err = makedraft.AddDraftConfigSettings(&settings)
+	if err != nil {
+		return err
+	}
+
+	packs, err := makedraft.GeneratePacks(settings)
+	if err != nil {
+		return fmt.Errorf("error generating pack: %w", err)
+	}
+
+	pack := packs[0]
+
+	var clientPack []R38CardData
+	for _, card := range pack {
+		var cardData R38CardData
+		err = json.Unmarshal([]byte(card.Data), &cardData)
+		if err != nil {
+			return fmt.Errorf("error unmarshalling: %w", err)
+		}
+		clientPack = append(clientPack, cardData)
+	}
+
+	err = json.NewEncoder(w).Encode(clientPack)
+	if err != nil {
+		return fmt.Errorf("error marshalling: %w", err)
+	}
+
+	return nil
 }
 
 // ServeAPISet serves the /api/set endpoint.
