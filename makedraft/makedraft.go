@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"github.com/bwmarrin/discordgo"
+	_ "github.com/mattn/go-sqlite3"
 	"github.com/objectbox/objectbox-go/objectbox"
 	"github.com/walkingeyerobot/r38/draftconfig"
 	"github.com/walkingeyerobot/r38/schema"
@@ -20,9 +22,6 @@ import (
 	"sort"
 	"strings"
 	"time"
-
-	"github.com/bwmarrin/discordgo"
-	_ "github.com/mattn/go-sqlite3"
 )
 
 const GuildId = "685333271793500161"
@@ -116,11 +115,7 @@ func MakeDraft(settings Settings, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 		return err
 	}
 
-	if *settings.Seed == 0 {
-		rand.Seed(time.Now().UnixNano())
-	} else {
-		rand.Seed(int64(*settings.Seed))
-	}
+	random := getRNG(settings)
 
 	log.Printf("generating draft %s.", *settings.Name)
 
@@ -149,7 +144,7 @@ func MakeDraft(settings Settings, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 	re := regexp.MustCompile(`"FOIL_STATUS"`)
 
 	if tx != nil {
-		packIDs, err := generateEmptyDraft(tx, *settings.Name, format, *settings.InPerson, assignSeats, assignPacks, *settings.Simulate)
+		packIDs, err := generateEmptyDraft(tx, random, *settings.Name, format, *settings.InPerson, assignSeats, assignPacks, *settings.Simulate)
 		if err != nil {
 			return err
 		}
@@ -192,8 +187,8 @@ func MakeDraft(settings Settings, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 		if err != nil {
 			return err
 		}
-		scanSounds := rand.Perm(numSeats)
-		errorSounds := rand.Perm(numSeats)
+		scanSounds := random.Perm(numSeats)
+		errorSounds := random.Perm(numSeats)
 
 		var seats []*schema.Seat
 		for i := 0; i < numSeats; i++ {
@@ -253,7 +248,7 @@ func MakeDraft(settings Settings, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 		}
 
 		if assignPacks {
-			randPacks := rand.Perm(len(obPacks))
+			randPacks := random.Perm(len(obPacks))
 			for i, seat := range seats {
 				for j := range 3 {
 					seat.Packs = append(seat.Packs, obPacks[randPacks[i*3+j]])
@@ -318,6 +313,16 @@ func MakeDraft(settings Settings, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 	}
 
 	return nil
+}
+
+func getRNG(settings Settings) *rand.Rand {
+	var random *rand.Rand
+	if *settings.Seed == 0 {
+		random = rand.New(rand.NewSource(time.Now().UnixNano()))
+	} else {
+		random = rand.New(rand.NewSource(int64(*settings.Seed)))
+	}
+	return random
 }
 
 func AddDraftConfigSettings(settings *Settings) error {
@@ -423,6 +428,8 @@ func GeneratePacks(settings Settings) ([24][15]draftconfig.Card, error) {
 		return [24][15]draftconfig.Card{}, fmt.Errorf("error reading draft config: %w", err)
 	}
 
+	random := getRNG(settings)
+
 	var numPacks int
 	if *settings.PickTwo {
 		numPacks = 12
@@ -475,25 +482,26 @@ func GeneratePacks(settings Settings) ([24][15]draftconfig.Card, error) {
 		for i, hopdef := range cfg.Hoppers {
 			switch hopdef.Type {
 			case "RareHopper":
-				hoppers[i] = draftconfig.MakeNormalHopper(false, allCards.Mythics, allCards.Rares, allCards.Rares)
+				hoppers[i] = draftconfig.MakeNormalHopper(false, random, allCards.Mythics, allCards.Rares, allCards.Rares)
 			case "RareRefillHopper":
-				hoppers[i] = draftconfig.MakeNormalHopper(true, allCards.Mythics, allCards.Rares, allCards.Rares)
+				hoppers[i] = draftconfig.MakeNormalHopper(true, random, allCards.Mythics, allCards.Rares, allCards.Rares)
 			case "UncommonHopper":
-				hoppers[i] = draftconfig.MakeNormalHopper(false, allCards.Uncommons, allCards.Uncommons)
+				hoppers[i] = draftconfig.MakeNormalHopper(false, random, allCards.Uncommons, allCards.Uncommons)
 			case "UncommonRefillHopper":
-				hoppers[i] = draftconfig.MakeNormalHopper(true, allCards.Uncommons, allCards.Uncommons)
+				hoppers[i] = draftconfig.MakeNormalHopper(true, random, allCards.Uncommons, allCards.Uncommons)
 			case "CommonHopper":
-				hoppers[i] = draftconfig.MakeNormalHopper(false, allCards.Commons, allCards.Commons)
+				hoppers[i] = draftconfig.MakeNormalHopper(false, random, allCards.Commons, allCards.Commons)
 			case "CommonRefillHopper":
-				hoppers[i] = draftconfig.MakeNormalHopper(true, allCards.Commons, allCards.Commons)
+				hoppers[i] = draftconfig.MakeNormalHopper(true, random, allCards.Commons, allCards.Commons)
 			case "BasicLandHopper":
-				hoppers[i] = draftconfig.MakeBasicLandHopper(allCards.Basics)
+				hoppers[i] = draftconfig.MakeBasicLandHopper(random, allCards.Basics)
 			case "CubeHopper":
-				hoppers[i] = draftconfig.MakeNormalHopper(false, allCards.All)
+				hoppers[i] = draftconfig.MakeNormalHopper(false, random, allCards.All)
 			case "Pointer":
 				hoppers[i] = hoppers[hopdef.Refs[0]]
 			case "DfcHopper":
 				hoppers[i] = draftconfig.MakeNormalHopper(false,
+					random,
 					dfcCards.Mythics,
 					dfcCards.Rares, dfcCards.Rares,
 					dfcCards.Uncommons, dfcCards.Uncommons, dfcCards.Uncommons,
@@ -503,6 +511,7 @@ func GeneratePacks(settings Settings) ([24][15]draftconfig.Card, error) {
 					dfcCards.Commons, dfcCards.Commons, dfcCards.Commons)
 			case "DfcRefillHopper":
 				hoppers[i] = draftconfig.MakeNormalHopper(true,
+					random,
 					dfcCards.Mythics,
 					dfcCards.Rares, dfcCards.Rares,
 					dfcCards.Uncommons, dfcCards.Uncommons, dfcCards.Uncommons,
@@ -512,6 +521,7 @@ func GeneratePacks(settings Settings) ([24][15]draftconfig.Card, error) {
 					dfcCards.Commons, dfcCards.Commons, dfcCards.Commons)
 			case "FoilHopper":
 				hoppers[i] = draftconfig.MakeFoilHopper(&hoppers[hopdef.Refs[0]], &hoppers[hopdef.Refs[1]], &hoppers[hopdef.Refs[2]],
+					random,
 					allCards.Mythics,
 					allCards.Rares, allCards.Rares,
 					allCards.Uncommons, allCards.Uncommons, allCards.Uncommons,
@@ -533,7 +543,7 @@ func GeneratePacks(settings Settings) ([24][15]draftconfig.Card, error) {
 			packAttempts++
 			for j := range cardsPerPack {
 				var empty bool
-				packs[i][j], empty = hoppers[j].Pop()
+				packs[i][j], empty = hoppers[j].Pop(random)
 				if empty {
 					resetDraft = true
 					break
@@ -570,7 +580,7 @@ func GeneratePacks(settings Settings) ([24][15]draftconfig.Card, error) {
 	return packs, nil
 }
 
-func generateEmptyDraft(tx *sql.Tx, name string, format string, inPerson bool, assignSeats bool, assignPacks bool, simulate bool) ([24]int64, error) {
+func generateEmptyDraft(tx *sql.Tx, random *rand.Rand, name string, format string, inPerson bool, assignSeats bool, assignPacks bool, simulate bool) ([24]int64, error) {
 	var packIds [24]int64
 
 	var dg *discordgo.Session
@@ -642,8 +652,8 @@ func generateEmptyDraft(tx *sql.Tx, name string, format string, inPerson bool, a
 		numSeats = 9
 	}
 	var seatIds [9]int64
-	scanSounds := rand.Perm(8)
-	errorSounds := rand.Perm(8)
+	scanSounds := random.Perm(8)
+	errorSounds := random.Perm(8)
 	for i := 0; i < numSeats; i++ {
 		var scanSound int
 		var errorSound int

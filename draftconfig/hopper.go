@@ -12,8 +12,8 @@ type HopperDefinition struct {
 
 // Hopper is effectively a stack of cards waiting to be put into packs.
 type Hopper interface {
-	Refill()
-	Pop() (Card, bool)
+	Refill(random *rand.Rand)
+	Pop(random *rand.Rand) (Card, bool)
 }
 
 // NormalHopper is a hopper with no special logic.
@@ -37,68 +37,68 @@ type BasicLandHopper struct {
 }
 
 // Pop returns a card from the hopper and reports if the hopper is now empty.
-func (h *NormalHopper) Pop() (Card, bool) {
+func (h *NormalHopper) Pop(random *rand.Rand) (Card, bool) {
 	ret := h.Cards[0]
 	h.Cards = h.Cards[1:]
 	if h.Refillable && len(h.Cards) == 0 {
-		h.Refill()
+		h.Refill(random)
 	}
 	return ret, len(h.Cards) == 0
 }
 
 // Pop returns a card from the hopper and reports if the hopper is now empty.
-func (h *FoilHopper) Pop() (Card, bool) {
+func (h *FoilHopper) Pop(random *rand.Rand) (Card, bool) {
 	var ret Card
 	var empty bool
 
-	r := rand.Intn(4)
+	r := random.Intn(4)
 	if r == 3 {
 		ret = h.Cards[0]
 		h.Cards = h.Cards[1:]
 		empty = len(h.Cards) == 0
 	} else {
-		ret, empty = (*h.OtherHoppers[r]).Pop()
+		ret, empty = (*h.OtherHoppers[r]).Pop(random)
 	}
 
 	return ret, empty
 }
 
 // Pop returns a card from the hopper and reports if the hopper is now empty.
-func (h *BasicLandHopper) Pop() (Card, bool) {
+func (h *BasicLandHopper) Pop(random *rand.Rand) (Card, bool) {
 	ret := h.Cards[0]
 	h.Cards = h.Cards[1:]
 	if len(h.Cards) == 0 {
-		h.Refill()
+		h.Refill(random)
 	}
 	return ret, false
 }
 
 // Refill refills the hopper from its source cards.
-func (h *NormalHopper) Refill() {
+func (h *NormalHopper) Refill(random *rand.Rand) {
 	for _, v := range h.Source {
 		var copiedCard Card
 		copiedCard = v // this copies???
 		h.Cards = append(h.Cards, copiedCard)
 	}
-	rand.Shuffle(len(h.Cards), func(i, j int) {
+	random.Shuffle(len(h.Cards), func(i, j int) {
 		h.Cards[i], h.Cards[j] = h.Cards[j], h.Cards[i]
 	})
 }
 
 // Refill refills the hopper from its source cards.
-func (h *FoilHopper) Refill() {
+func (h *FoilHopper) Refill(random *rand.Rand) {
 	for _, v := range h.Source {
 		var copiedCard Card
 		copiedCard = v // this copies???
 		h.Cards = append(h.Cards, copiedCard)
 	}
-	rand.Shuffle(len(h.Cards), func(i, j int) {
+	random.Shuffle(len(h.Cards), func(i, j int) {
 		h.Cards[i], h.Cards[j] = h.Cards[j], h.Cards[i]
 	})
 }
 
 // Refill refills the hopper from its source cards.
-func (h *BasicLandHopper) Refill() {
+func (h *BasicLandHopper) Refill(_ *rand.Rand) {
 	for _, v := range h.Source {
 		var copiedCard Card
 		copiedCard = v // this copies???
@@ -108,7 +108,7 @@ func (h *BasicLandHopper) Refill() {
 }
 
 // MakeNormalHopper creates a NormalHopper.
-func MakeNormalHopper(refillable bool, sources ...[]Card) *NormalHopper {
+func MakeNormalHopper(refillable bool, random *rand.Rand, sources ...[]Card) *NormalHopper {
 	ret := NormalHopper{}
 	for _, cardList := range sources {
 		for _, v := range cardList {
@@ -117,13 +117,13 @@ func MakeNormalHopper(refillable bool, sources ...[]Card) *NormalHopper {
 			ret.Source = append(ret.Source, copiedCard)
 		}
 	}
-	ret.Refill()
+	ret.Refill(random)
 	ret.Refillable = refillable
 	return &ret
 }
 
 // MakeFoilHopper creates a FoilHopper.
-func MakeFoilHopper(commonHopper1 *Hopper, commonHopper2 *Hopper, commonHopper3 *Hopper, sources ...[]Card) *FoilHopper {
+func MakeFoilHopper(commonHopper1 *Hopper, commonHopper2 *Hopper, commonHopper3 *Hopper, random *rand.Rand, sources ...[]Card) *FoilHopper {
 	ret := FoilHopper{OtherHoppers: []*Hopper{commonHopper1, commonHopper2, commonHopper3}}
 	for _, cardList := range sources {
 		for _, v := range cardList {
@@ -133,12 +133,12 @@ func MakeFoilHopper(commonHopper1 *Hopper, commonHopper2 *Hopper, commonHopper3 
 			ret.Source = append(ret.Source, copiedCard)
 		}
 	}
-	ret.Refill()
+	ret.Refill(random)
 	return &ret
 }
 
 // MakeBasicLandHopper creates a BasicLandHopper.
-func MakeBasicLandHopper(sources ...[]Card) *BasicLandHopper {
+func MakeBasicLandHopper(random *rand.Rand, sources ...[]Card) *BasicLandHopper {
 	ret := BasicLandHopper{}
 	for _, cardList := range sources {
 		for _, v := range cardList {
@@ -147,6 +147,6 @@ func MakeBasicLandHopper(sources ...[]Card) *BasicLandHopper {
 			ret.Source = append(ret.Source, copiedCard)
 		}
 	}
-	ret.Refill()
+	ret.Refill(random)
 	return &ret
 }
