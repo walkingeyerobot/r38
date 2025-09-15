@@ -2720,7 +2720,8 @@ func GetDraftListOb(userId int64, ob *objectbox.ObjectBox) (DraftList, error) {
 	draftList := DraftList{
 		Drafts: []DraftListEntry{},
 	}
-	drafts, err := schema.BoxForDraft(ob).Query(schema.Draft_.Archived.Equals(false)).Find()
+	drafts, err := schema.BoxForDraft(ob).Query(objectbox.Any(schema.Draft_.Archived.Equals(false),
+		schema.Draft_.Archived.IsNil())).Find()
 	if err != nil {
 		return draftList, err
 	}
