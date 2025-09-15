@@ -599,7 +599,7 @@ func generateEmptyDraft(tx *sql.Tx, random *rand.Rand, name string, format strin
 	var channelID string
 	if dg != nil {
 		channel, err = dg.GuildChannelCreate(GuildId,
-			regexp.MustCompile("[^a-z-]").ReplaceAllString(strings.ToLower(name), "-")+"-spectators",
+			regexp.MustCompile("[^a-z0-9-]").ReplaceAllString(strings.ToLower(name), "-")+"-spectators",
 			discordgo.ChannelTypeGuildText)
 		if err != nil {
 			return packIds, fmt.Errorf("error creating spectator channel: %s", err)
