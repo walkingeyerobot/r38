@@ -139,7 +139,7 @@ func MakeDraft(settings Settings, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 
 	format := path.Base(*settings.Set)
 	format = strings.TrimSuffix(format, path.Ext(format))
-	assignSeats := *settings.AssignSeats || !*settings.InPerson
+	assignSeats := *settings.AssignSeats
 	assignPacks := *settings.AssignPacks || !*settings.InPerson
 	re := regexp.MustCompile(`"FOIL_STATUS"`)
 
