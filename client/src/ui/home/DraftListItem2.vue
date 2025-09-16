@@ -9,6 +9,7 @@
       </div>
     </component>
     <a v-if="isShufflable" class="shuffle-section" :href="`/shuffler/${descriptor.id}`">Shuffle</a>
+    <a v-if="isAdminUser" class="shuffle-section" :href="`/draftpacks/${descriptor.id}`">Packs</a>
   </div>
 </template>
 
