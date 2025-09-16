@@ -251,7 +251,9 @@ func MakeDraft(settings Settings, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 			randPacks := random.Perm(len(obPacks))
 			for i, seat := range seats {
 				for j := range 3 {
-					seat.Packs = append(seat.Packs, obPacks[randPacks[i*3+j]])
+					pack := obPacks[randPacks[i*3+j]]
+					pack.Round = j + 1
+					seat.Packs = append(seat.Packs, pack)
 				}
 			}
 			obPacks = []*schema.Pack{}
