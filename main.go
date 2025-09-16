@@ -9,6 +9,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/objectbox/objectbox-go/objectbox"
 	"github.com/walkingeyerobot/r38/draftconfig"
 	"github.com/walkingeyerobot/r38/schema"
@@ -285,6 +286,7 @@ func NewHandler(database *sql.DB, ob *objectbox.ObjectBox, useAuth bool) http.Ha
 	addHandler("/api/archive/", ServeAPIArchive, false)
 	addHandler("/api/draft/", ServeAPIDraft, true)
 	addHandler("/api/draftlist/", ServeAPIDraftList, true)
+	addHandler("/api/draftpacks/", ServeAPIDraftPacks, true)
 	addHandler("/api/pick/", ServeAPIPick, false)
 	addHandler("/api/pickrfid/", ServeAPIPickRfid, false)
 	addHandler("/api/join/", ServeAPIJoin, false)
@@ -372,6 +374,64 @@ func ServeAPIDraftList(w http.ResponseWriter, _ *http.Request, userId int64, tx 
 		return err
 	}
 	return json.NewEncoder(w).Encode(drafts)
+}
+
+// ServeAPIDraftPacks serves the /api/draftpacks endpoint.
+func ServeAPIDraftPacks(w http.ResponseWriter, r *http.Request, userId int64, _ *sql.Tx, ob *objectbox.ObjectBox) error {
+	if userId != 1 {
+		return fmt.Errorf("not allowed")
+	}
+	re := regexp.MustCompile(`/api/draftpacks/(\d+)`)
+	parseResult := re.FindStringSubmatch(r.URL.Path)
+	if parseResult == nil {
+		return fmt.Errorf("bad api url")
+	}
+	draftID, err := strconv.ParseInt(parseResult[1], 10, 64)
+	if err != nil {
+		return fmt.Errorf("bad api url: %w", err)
+	}
+
+	draft, err := schema.BoxForDraft(ob).Get(uint64(draftID))
+	if err != nil {
+		return fmt.Errorf("error getting draft: %w", err)
+	}
+
+	spew.Dump(draft)
+
+	var clientPacks [][]R38CardData
+	for _, seat := range draft.Seats {
+		for _, pack := range seat.OriginalPacks {
+			var clientPack []R38CardData
+			for _, card := range pack.OriginalCards {
+				var cardData R38CardData
+				err = json.Unmarshal([]byte(card.Data), &cardData)
+				if err != nil {
+					return fmt.Errorf("error unmarshalling: %w", err)
+				}
+				clientPack = append(clientPack, cardData)
+			}
+			clientPacks = append(clientPacks, clientPack)
+		}
+	}
+	for _, pack := range draft.UnassignedPacks {
+		var clientPack []R38CardData
+		for _, card := range pack.OriginalCards {
+			var cardData R38CardData
+			err = json.Unmarshal([]byte(card.Data), &cardData)
+			if err != nil {
+				return fmt.Errorf("error unmarshalling: %w", err)
+			}
+			clientPack = append(clientPack, cardData)
+		}
+		clientPacks = append(clientPacks, clientPack)
+	}
+
+	err = json.NewEncoder(w).Encode(clientPacks)
+	if err != nil {
+		return fmt.Errorf("error marshalling: %w", err)
+	}
+
+	return nil
 }
 
 // ServeAPIPrefs serves the /api/prefs endpoint.
