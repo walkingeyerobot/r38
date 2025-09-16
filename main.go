@@ -847,10 +847,10 @@ func doJoinOb(ob *objectbox.ObjectBox, userId int64, draftId int64) error {
 	var reservedSeat *schema.Seat
 	var openSeat *schema.Seat
 	for _, seat := range draft.Seats {
-		if seat.User.Id == uint64(userId) {
+		if seat.User != nil && seat.User.Id == uint64(userId) {
 			return fmt.Errorf("user %d already joined %d", userId, draftId)
 		}
-		if seat.ReservedUser.Id == uint64(userId) {
+		if seat.ReservedUser != nil && seat.ReservedUser.Id == uint64(userId) {
 			reservedSeat = seat
 		} else if openSeat == nil && seat.User == nil {
 			openSeat = seat
@@ -2473,6 +2473,7 @@ func GetJSONObjectOb(ob *objectbox.ObjectBox, draftId int64) (DraftJSON, error) 
 		}
 	}
 
+	draftJson.Events = []DraftEvent{}
 	for _, event := range draft.Events {
 		var eventJson DraftEvent
 		eventJson.Round = int64(event.Round)
