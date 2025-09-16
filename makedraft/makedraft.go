@@ -254,6 +254,7 @@ func MakeDraft(settings Settings, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 					pack := obPacks[randPacks[i*3+j]]
 					pack.Round = j + 1
 					seat.Packs = append(seat.Packs, pack)
+					seat.OriginalPacks = append(seat.Packs, pack)
 				}
 			}
 			obPacks = []*schema.Pack{}
