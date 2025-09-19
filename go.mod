@@ -10,7 +10,6 @@ require (
 	github.com/google/flatbuffers v23.5.26+incompatible
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/gorilla/sessions v1.4.0
-	github.com/mattn/go-sqlite3 v1.14.24
 	github.com/objectbox/objectbox-go v1.9.0
 	golang.org/x/net v0.35.0
 	golang.org/x/oauth2 v0.26.0

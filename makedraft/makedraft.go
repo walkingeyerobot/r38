@@ -1,13 +1,11 @@
 package makedraft
 
 import (
-	"database/sql"
 	"encoding/csv"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"github.com/bwmarrin/discordgo"
-	_ "github.com/mattn/go-sqlite3"
 	"github.com/objectbox/objectbox-go/objectbox"
 	"github.com/walkingeyerobot/r38/draftconfig"
 	"github.com/walkingeyerobot/r38/schema"
@@ -63,9 +61,6 @@ func ParseSettings(args []string) (Settings, error) {
 	settings.Set = flagSet.String(
 		"set", "sets/cube.json",
 		"A .json file containing relevant set data.")
-	settings.Database = flagSet.String(
-		"database", "draft.db",
-		"The sqlite3 database to insert to.")
 	settings.DatabaseDir = flagSet.String(
 		"database_dir", "",
 		"The objectbox database directory to insert to.")
@@ -109,7 +104,7 @@ type CardSet struct {
 	Basics    []draftconfig.Card
 }
 
-func MakeDraft(settings Settings, tx *sql.Tx, ob *objectbox.ObjectBox) error {
+func MakeDraft(settings Settings, ob *objectbox.ObjectBox) error {
 	err := AddDraftConfigSettings(&settings)
 	if err != nil {
 		return err
@@ -143,175 +138,146 @@ func MakeDraft(settings Settings, tx *sql.Tx, ob *objectbox.ObjectBox) error {
 	assignPacks := *settings.AssignPacks || !*settings.InPerson
 	re := regexp.MustCompile(`"FOIL_STATUS"`)
 
-	if tx != nil {
-		packIDs, err := generateEmptyDraft(tx, random, *settings.Name, format, *settings.InPerson, assignSeats, assignPacks, *settings.Simulate)
-		if err != nil {
-			return err
-		}
+	var numSeats int
+	if *settings.PickTwo {
+		numSeats = 4
+	} else {
+		numSeats = 8
+	}
+	var numUsers int
+	if assignSeats {
+		numUsers = numSeats
+	} else {
+		numUsers = 0
+	}
+	assignedUsers, err := AssignSeats(ob, 0, numUsers)
+	if err != nil {
+		return err
+	}
+	scanSounds := random.Perm(numSeats)
+	errorSounds := random.Perm(numSeats)
 
-		if *settings.Verbose {
-			log.Printf("inserting into db...")
-		}
-		query := `INSERT INTO cards (pack, original_pack, data, cardid) VALUES (?, ?, ?, ?)`
-		for i, pack := range packs {
-			for _, card := range pack {
-				packID := packIDs[i]
-				var data string
-				if card.Foil {
-					data = re.ReplaceAllString(card.Data, "true")
-				} else {
-					data = re.ReplaceAllString(card.Data, "false")
-				}
-				_, err = tx.Exec(query, packID, packID, data, card.ID)
-				if err != nil {
-					return err
-				}
+	var seats []*schema.Seat
+	for i := 0; i < numSeats; i++ {
+		if len(assignedUsers) > i {
+			reservedUser, err := schema.BoxForUser(ob).Get(uint64(assignedUsers[i]))
+			if err != nil {
+				return err
 			}
+			seat := schema.Seat{
+				Position:      i,
+				Round:         1,
+				ReservedUser:  reservedUser,
+				ScanSound:     scanSounds[i],
+				ErrorSound:    errorSounds[i],
+				Packs:         []*schema.Pack{},
+				OriginalPacks: []*schema.Pack{},
+				PickedCards:   []*schema.Card{},
+			}
+			seats = append(seats, &seat)
+		} else {
+			seat := schema.Seat{
+				Position:      i,
+				Round:         1,
+				ScanSound:     scanSounds[i],
+				ErrorSound:    errorSounds[i],
+				Packs:         []*schema.Pack{},
+				OriginalPacks: []*schema.Pack{},
+				PickedCards:   []*schema.Card{},
+			}
+			seats = append(seats, &seat)
 		}
 	}
 
-	if ob != nil {
-		var numSeats int
-		if *settings.PickTwo {
-			numSeats = 4
-		} else {
-			numSeats = 8
-		}
-		var numUsers int
-		if assignSeats {
-			numUsers = numSeats
-		} else {
-			numUsers = 0
-		}
-		assignedUsers, err := AssignSeatsOb(ob, 0, numUsers)
-		if err != nil {
-			return err
-		}
-		scanSounds := random.Perm(numSeats)
-		errorSounds := random.Perm(numSeats)
-
-		var seats []*schema.Seat
-		for i := 0; i < numSeats; i++ {
-			if len(assignedUsers) > i {
-				reservedUser, err := schema.BoxForUser(ob).Get(uint64(assignedUsers[i]))
-				if err != nil {
-					return err
-				}
-				seat := schema.Seat{
-					Position:      i,
-					Round:         1,
-					ReservedUser:  reservedUser,
-					ScanSound:     scanSounds[i],
-					ErrorSound:    errorSounds[i],
-					Packs:         []*schema.Pack{},
-					OriginalPacks: []*schema.Pack{},
-					PickedCards:   []*schema.Card{},
-				}
-				seats = append(seats, &seat)
+	var obPacks []*schema.Pack
+	for i := range numPacks {
+		pack := packs[i]
+		var obCards []*schema.Card
+		for j := range cardsPerPack {
+			card := pack[j]
+			var data string
+			if card.Foil {
+				data = re.ReplaceAllString(card.Data, "true")
 			} else {
-				seat := schema.Seat{
-					Position:      i,
-					Round:         1,
-					ScanSound:     scanSounds[i],
-					ErrorSound:    errorSounds[i],
-					Packs:         []*schema.Pack{},
-					OriginalPacks: []*schema.Pack{},
-					PickedCards:   []*schema.Card{},
-				}
-				seats = append(seats, &seat)
+				data = re.ReplaceAllString(card.Data, "false")
 			}
-		}
-
-		var obPacks []*schema.Pack
-		for i := range numPacks {
-			pack := packs[i]
-			var obCards []*schema.Card
-			for j := range cardsPerPack {
-				card := pack[j]
-				var data string
-				if card.Foil {
-					data = re.ReplaceAllString(card.Data, "true")
-				} else {
-					data = re.ReplaceAllString(card.Data, "false")
-				}
-				obCards = append(obCards, &schema.Card{
-					Data:   data,
-					CardId: card.ID,
-				})
-			}
-			obPack := schema.Pack{
-				Round:         0,
-				OriginalCards: obCards,
-				Cards:         obCards,
-			}
-			obPacks = append(obPacks, &obPack)
-		}
-
-		if assignPacks {
-			randPacks := random.Perm(len(obPacks))
-			for i, seat := range seats {
-				for j := range 3 {
-					pack := obPacks[randPacks[i*3+j]]
-					pack.Round = j + 1
-					seat.Packs = append(seat.Packs, pack)
-					seat.OriginalPacks = append(seat.Packs, pack)
-				}
-			}
-			obPacks = []*schema.Pack{}
-		}
-
-		var dg *discordgo.Session
-		botToken := os.Getenv("DISCORD_BOT_TOKEN")
-		if !*settings.Simulate && len(botToken) > 0 {
-			dg, err = discordgo.New("Bot " + botToken)
-			if err != nil {
-				return fmt.Errorf("error creating spectator channel: %v", err)
-			}
-		} else {
-			dg = nil
-		}
-		var channel *discordgo.Channel
-		var channelID string
-		if dg != nil {
-			channel, err = dg.GuildChannelCreate(GuildId,
-				regexp.MustCompile("[^a-z-]").ReplaceAllString(strings.ToLower(*settings.Name), "-")+"-spectators",
-				discordgo.ChannelTypeGuildText)
-			if err != nil {
-				return fmt.Errorf("error creating spectator channel: %v", err)
-			}
-			channelID = channel.ID
-		} else {
-			channelID = ""
-		}
-
-		draft := schema.Draft{
-			Name:               *settings.Name,
-			Format:             format,
-			InPerson:           *settings.InPerson,
-			Seats:              seats,
-			UnassignedPacks:    obPacks,
-			Events:             []*schema.Event{},
-			SpectatorChannelId: channelID,
-			PickTwo:            *settings.PickTwo,
-		}
-
-		draftId, err := schema.BoxForDraft(ob).Put(&draft)
-		if err != nil {
-			return err
-		}
-
-		if dg != nil {
-			_, err = dg.ChannelEditComplex(channel.ID, &discordgo.ChannelEdit{
-				Topic:    fmt.Sprintf("<https://draftcu.be/draft/%d>", draftId),
-				ParentID: SpectatorsCategoryId,
+			obCards = append(obCards, &schema.Card{
+				Data:   data,
+				CardId: card.ID,
 			})
-			if err != nil {
-				return fmt.Errorf("error creating spectator channel: %v", err)
+		}
+		obPack := schema.Pack{
+			Round:         0,
+			OriginalCards: obCards,
+			Cards:         obCards,
+		}
+		obPacks = append(obPacks, &obPack)
+	}
+
+	if assignPacks {
+		randPacks := random.Perm(len(obPacks))
+		for i, seat := range seats {
+			for j := range 3 {
+				pack := obPacks[randPacks[i*3+j]]
+				pack.Round = j + 1
+				seat.Packs = append(seat.Packs, pack)
+				seat.OriginalPacks = append(seat.Packs, pack)
 			}
-			err = dg.Close()
-			if err != nil {
-				log.Printf("error closing bot session: %s", err)
-			}
+		}
+		obPacks = []*schema.Pack{}
+	}
+
+	var dg *discordgo.Session
+	botToken := os.Getenv("DISCORD_BOT_TOKEN")
+	if !*settings.Simulate && len(botToken) > 0 {
+		dg, err = discordgo.New("Bot " + botToken)
+		if err != nil {
+			return fmt.Errorf("error creating spectator channel: %v", err)
+		}
+	} else {
+		dg = nil
+	}
+	var channel *discordgo.Channel
+	var channelID string
+	if dg != nil {
+		channel, err = dg.GuildChannelCreate(GuildId,
+			regexp.MustCompile("[^a-z-]").ReplaceAllString(strings.ToLower(*settings.Name), "-")+"-spectators",
+			discordgo.ChannelTypeGuildText)
+		if err != nil {
+			return fmt.Errorf("error creating spectator channel: %v", err)
+		}
+		channelID = channel.ID
+	} else {
+		channelID = ""
+	}
+
+	draft := schema.Draft{
+		Name:               *settings.Name,
+		Format:             format,
+		InPerson:           *settings.InPerson,
+		Seats:              seats,
+		UnassignedPacks:    obPacks,
+		Events:             []*schema.Event{},
+		SpectatorChannelId: channelID,
+		PickTwo:            *settings.PickTwo,
+	}
+
+	draftId, err := schema.BoxForDraft(ob).Put(&draft)
+	if err != nil {
+		return err
+	}
+
+	if dg != nil {
+		_, err = dg.ChannelEditComplex(channel.ID, &discordgo.ChannelEdit{
+			Topic:    fmt.Sprintf("<https://draftcu.be/draft/%d>", draftId),
+			ParentID: SpectatorsCategoryId,
+		})
+		if err != nil {
+			return fmt.Errorf("error creating spectator channel: %v", err)
+		}
+		err = dg.Close()
+		if err != nil {
+			log.Printf("error closing bot session: %s", err)
 		}
 	}
 
@@ -583,136 +549,6 @@ func GeneratePacks(settings Settings) ([24][15]draftconfig.Card, error) {
 	return packs, nil
 }
 
-func generateEmptyDraft(tx *sql.Tx, random *rand.Rand, name string, format string, inPerson bool, assignSeats bool, assignPacks bool, simulate bool) ([24]int64, error) {
-	var packIds [24]int64
-
-	var dg *discordgo.Session
-	var err error
-	botToken := os.Getenv("DISCORD_BOT_TOKEN")
-	if !simulate && len(botToken) > 0 {
-		dg, err = discordgo.New("Bot " + botToken)
-		if err != nil {
-			return packIds, fmt.Errorf("error creating spectator channel: %s", err)
-		}
-	} else {
-		dg = nil
-	}
-
-	var channel *discordgo.Channel
-	var channelID string
-	if dg != nil {
-		channel, err = dg.GuildChannelCreate(GuildId,
-			regexp.MustCompile("[^a-z0-9-]").ReplaceAllString(strings.ToLower(name), "-")+"-spectators",
-			discordgo.ChannelTypeGuildText)
-		if err != nil {
-			return packIds, fmt.Errorf("error creating spectator channel: %s", err)
-		}
-		channelID = channel.ID
-	} else {
-		channelID = ""
-	}
-
-	query := `INSERT INTO drafts (name, spectatorchannelid, format, inperson) VALUES (?, ?, ?, ?);`
-	res, err := tx.Exec(query, name, channelID, format, inPerson)
-	if err != nil {
-		return packIds, fmt.Errorf("error creating draft: %s", err)
-	}
-
-	draftID, err := res.LastInsertId()
-	if err != nil {
-		return packIds, fmt.Errorf("could not get draft ID: %s", err)
-	}
-
-	if dg != nil {
-		_, err = dg.ChannelEditComplex(channel.ID, &discordgo.ChannelEdit{
-			Topic:    fmt.Sprintf("<https://draftcu.be/draft/%d>", draftID),
-			ParentID: SpectatorsCategoryId,
-		})
-		if err != nil {
-			return packIds, fmt.Errorf("error creating spectator channel: %s", err)
-		}
-		err = dg.Close()
-		if err != nil {
-			log.Printf("error closing bot session: %s", err)
-		}
-	}
-
-	var numUsers int
-	if assignSeats {
-		numUsers = 8
-	} else {
-		numUsers = 0
-	}
-	assignedUsers, err := AssignSeats(tx, draftID, format, numUsers)
-	if err != nil {
-		return packIds, fmt.Errorf("error assigning users: %s", err.Error())
-	}
-	var numSeats int
-	if assignPacks {
-		numSeats = 8
-	} else {
-		// Seat ID 8 holds unknown packs until a pick is made from them.
-		numSeats = 9
-	}
-	var seatIds [9]int64
-	scanSounds := random.Perm(8)
-	errorSounds := random.Perm(8)
-	for i := 0; i < numSeats; i++ {
-		var scanSound int
-		var errorSound int
-		if i == 8 {
-			scanSound = 0
-			errorSound = 0
-		} else {
-			scanSound = scanSounds[i]
-			errorSound = errorSounds[i]
-		}
-		if len(assignedUsers) > i {
-			query = `INSERT INTO seats (position, draft, scansound, errorsound, reserveduser) VALUES (?, ?, ?, ?, ?)`
-			res, err = tx.Exec(query, i, draftID, scanSound, errorSound, assignedUsers[i])
-		} else {
-			query = `INSERT INTO seats (position, draft, scansound, errorsound) VALUES (?, ?, ?, ?)`
-			res, err = tx.Exec(query, i, draftID, scanSound, errorSound)
-		}
-		if err != nil {
-			return packIds, fmt.Errorf("could not create seats in draft: %s", err)
-		}
-		seatIds[i], err = res.LastInsertId()
-		if err != nil {
-			return packIds, fmt.Errorf("could not finalize seat creation: %s", err)
-		}
-	}
-
-	// We create 4 packs here. The first one will stay empty; this is where picked cards will go.
-	// The other three packs will have cards in them at the start of the draft.
-	query = `INSERT INTO packs (seat, original_seat, round) VALUES (?, ?, ?)`
-	for i := 0; i < 8; i++ {
-		for j := 0; j < 4; j++ {
-			var seatId int64
-			var round int
-			if assignPacks || j == 0 {
-				seatId = seatIds[i]
-				round = j
-			} else {
-				seatId = seatIds[8]
-				round = 0
-			}
-			res, err = tx.Exec(query, seatId, seatId, round)
-			if err != nil {
-				return packIds, fmt.Errorf("error creating packs: %s", err)
-			}
-			if j != 0 {
-				packIds[(3*i)+(j-1)], err = res.LastInsertId()
-				if err != nil {
-					return packIds, fmt.Errorf("error creating packs: %s", err)
-				}
-			}
-		}
-	}
-
-	return packIds, nil
-}
-
 func okPack(pack [15]draftconfig.Card, settings Settings) bool {
 	passes := true
 	cardHash := make(map[string]int)
@@ -968,63 +804,7 @@ func okDraft(packs [24][15]draftconfig.Card, settings Settings) bool {
 	return passes
 }
 
-func AssignSeats(tx *sql.Tx, draftID int64, format string, numUsers int) ([]int, error) {
-	if numUsers == 0 {
-		return []int{}, nil
-	}
-
-	var minEpoch int
-	var maxEpoch int
-	query := `SELECT
-				min(epoch), max(epoch)
-				from userformats
-				where elig = 1 and format = ?`
-	row := tx.QueryRow(query, format)
-	err := row.Scan(&minEpoch, &maxEpoch)
-	if err != nil {
-		return nil, err
-	}
-	var draftEpoch int
-	if minEpoch == maxEpoch {
-		draftEpoch = maxEpoch + 1
-	} else {
-		draftEpoch = maxEpoch
-	}
-
-	query = `select
-				userformats.user
-				from userformats
-				left outer join skips on userformats.user = skips.user and skips.draft = ?
-				left outer join seats 
-				    on (userformats.user = seats.reserveduser or userformats.user = seats.user)
-						and seats.draft = ?
-				where elig = 1 and format = ? and skips.id is null and seats.id is null
-				order by epoch, random()
-				limit ?`
-	result, err := tx.Query(query, draftID, draftID, format, numUsers)
-	if err != nil {
-		return nil, err
-	}
-	var users []int
-	for result.Next() {
-		var user int
-		err = result.Scan(&user)
-		if err != nil {
-			return users, err
-		}
-		users = append(users, user)
-
-		query = `UPDATE userformats SET epoch = max(?, epoch + 1) where user = ? and format = ?`
-		_, err = tx.Exec(query, draftEpoch, user, format)
-		if err != nil {
-			return users, err
-		}
-	}
-
-	return users, nil
-}
-
-func AssignSeatsOb(ob *objectbox.ObjectBox, draftId int64, numUsers int) ([]int, error) {
+func AssignSeats(ob *objectbox.ObjectBox, draftId int64, numUsers int) ([]int, error) {
 	var userIds []int
 	if numUsers == 0 {
 		return userIds, nil

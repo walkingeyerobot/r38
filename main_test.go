@@ -1,11 +1,11 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
-	"github.com/BurntSushi/migration"
+	"github.com/davecgh/go-spew/spew"
+	"github.com/objectbox/objectbox-go/objectbox"
 	"github.com/walkingeyerobot/r38/makedraft"
-	"github.com/walkingeyerobot/r38/migrations"
+	"github.com/walkingeyerobot/r38/schema"
 	"golang.org/x/net/xsrftoken"
 	"io"
 	"math/rand"
@@ -16,6 +16,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 )
 
 func ptr[T any](v T) *T {
@@ -24,69 +25,71 @@ func ptr[T any](v T) *T {
 
 var SEED = 677483
 
-func doSetup(t *testing.T, seed int) (*sql.DB, error) {
+func doSetup(t *testing.T, seed int) (*objectbox.ObjectBox, error) {
 	xsrfKey = "test"
 	sock = ""
 
-	db, err := migration.Open("sqlite3", "file::memory:?cache=shared", migrations.Migrations)
+	ob, err := objectbox.NewBuilder().Model(schema.ObjectBoxModel()).
+		Directory(fmt.Sprintf("memory:test-db-%d-%d", time.Now().UnixNano(), os.Getpid())).Build()
 	if err != nil {
 		t.Error(err)
 	}
 
-	var testDataQuery []byte
-	testDataQuery, err = os.ReadFile("testdata/InitQuery.sql")
-	if err != nil {
-		t.Error(err)
-	}
-
-	_, err = db.Exec(string(testDataQuery))
+	_, err = schema.BoxForUser(ob).PutMany([]*schema.User{
+		{DiscordName: "Ashiok"},
+		{DiscordName: "Chandra"},
+		{DiscordName: "Elspeth"},
+		{DiscordName: "Jaya"},
+		{DiscordName: "Kaya"},
+		{DiscordName: "Liliana"},
+		{DiscordName: "Nahiri"},
+		{DiscordName: "Serra"},
+		{DiscordName: "Jace"},
+		{DiscordName: "Basri"},
+		{DiscordName: "Ajani"},
+		{DiscordName: "Gideon"},
+	})
 	if err != nil {
 		t.Error(err)
 	}
 
 	rand.Seed(int64(seed))
-	return db, err
+	return ob, err
 }
 
-func makeDraft(t *testing.T, err error, db *sql.DB, seed int) {
-	var tx *sql.Tx
-
-	tx, err = db.Begin()
+func makeDraft(t *testing.T, ob *objectbox.ObjectBox, seed int, inPerson bool, pickTwo bool) {
+	err := ob.RunInWriteTx(func() error {
+		err := makedraft.MakeDraft(makedraft.Settings{
+			Set:                              ptr("sets/cube.json"),
+			Database:                         ptr(""),
+			Seed:                             &seed,
+			InPerson:                         ptr(inPerson),
+			AssignSeats:                      ptr(false),
+			AssignPacks:                      ptr(false),
+			Verbose:                          ptr(false),
+			Simulate:                         ptr(false),
+			Name:                             ptr("test draft"),
+			MaxMythic:                        ptr(0),
+			MaxRare:                          ptr(0),
+			MaxUncommon:                      ptr(0),
+			MaxCommon:                        ptr(0),
+			PackCommonColorStdevMax:          ptr(0.0),
+			PackCommonRatingMin:              ptr(0.0),
+			PackCommonRatingMax:              ptr(0.0),
+			DraftCommonColorStdevMax:         ptr(0.0),
+			PackCommonColorIdentityStdevMax:  ptr(0.0),
+			DraftCommonColorIdentityStdevMax: ptr(0.0),
+			DfcMode:                          ptr(false),
+			AbortMissingCommonColor:          ptr(false),
+			AbortMissingCommonColorIdentity:  ptr(false),
+			AbortDuplicateThreeColorIdentityUncommons: ptr(false),
+			PickTwo: ptr(pickTwo),
+		}, ob)
+		return err
+	})
 	if err != nil {
 		t.Error(err)
-	}
-	err = makedraft.MakeDraft(makedraft.Settings{
-		Set:                              ptr("sets/cube.json"),
-		Database:                         ptr(""),
-		Seed:                             &seed,
-		InPerson:                         ptr(true),
-		AssignSeats:                      ptr(false),
-		AssignPacks:                      ptr(false),
-		Verbose:                          ptr(false),
-		Simulate:                         ptr(false),
-		Name:                             ptr("test draft"),
-		MaxMythic:                        ptr(0),
-		MaxRare:                          ptr(0),
-		MaxUncommon:                      ptr(0),
-		MaxCommon:                        ptr(0),
-		PackCommonColorStdevMax:          ptr(0.0),
-		PackCommonRatingMin:              ptr(0.0),
-		PackCommonRatingMax:              ptr(0.0),
-		DraftCommonColorStdevMax:         ptr(0.0),
-		PackCommonColorIdentityStdevMax:  ptr(0.0),
-		DraftCommonColorIdentityStdevMax: ptr(0.0),
-		DfcMode:                          ptr(false),
-		AbortMissingCommonColor:          ptr(false),
-		AbortMissingCommonColorIdentity:  ptr(false),
-		AbortDuplicateThreeColorIdentityUncommons: ptr(false),
-		PickTwo: ptr(false),
-	}, tx, nil)
-	if err != nil {
-		t.Error(err)
-	}
-	err = tx.Commit()
-	if err != nil {
-		t.Error(err)
+		t.FailNow()
 	}
 }
 
@@ -108,55 +111,135 @@ func populateDraft(t *testing.T, handlers http.Handler, numSeats int) (players [
 	return
 }
 
-func findCardToPick(t *testing.T, db *sql.DB, player int, round int, card int) string {
-	var rows *sql.Rows
-	var err error
-	if card == 0 {
-		query := `select cards.cardId from cards 
-								join packs on packs.id = cards.pack
-								join seats on seats.id = packs.seat
-								where seats.position = 8`
-		rows, err = db.Query(query)
-	} else {
-		query := `select cards.cardId from cards
-								join v_packs on v_packs.id = cards.pack
-								join seats on seats.id = v_packs.seat
-								where seats.user = ?
-								and v_packs.round = ?
-								and v_packs.count = ?`
-		rows, err = db.Query(query, player, round+1, 15-card)
-	}
+func findCardToPick(t *testing.T, ob *objectbox.ObjectBox, seat int, round int, card int, inPerson bool) *schema.Card {
+	draft, err := schema.BoxForDraft(ob).Get(1)
 	if err != nil {
-		t.Errorf("error finding card to pick for player %d, pack %d, pick %d: %s",
-			player, round+1, card+1, err.Error())
+		t.Errorf("error reading draft %s", err.Error())
+		t.FailNow()
 	}
-
-	var cardId string
-	var cards []string
-	for rows.Next() {
-		err = rows.Scan(&cardId)
-		if err != nil {
-			t.Errorf("error finding card to pick for player %d, pack %d, pick %d: %s",
-				player, round+1, card+1, err.Error())
+	if inPerson && card == 0 {
+		pack := draft.UnassignedPacks[rand.Intn(len(draft.UnassignedPacks))]
+		return pack.Cards[rand.Intn(len(pack.Cards))]
+	} else {
+		seatIndex := slices.IndexFunc(draft.Seats, func(s *schema.Seat) bool {
+			return s.Position == seat
+		})
+		packs := draft.Seats[seatIndex].Packs
+		var cardsPerPack int
+		if draft.PickTwo {
+			cardsPerPack = 14
+		} else {
+			cardsPerPack = 15
 		}
-		cards = append(cards, cardId)
+		for _, pack := range packs {
+			if pack.Round == round+1 && len(pack.Cards) == cardsPerPack-card {
+				if len(pack.Cards) == 0 {
+					t.Errorf("no cards in pack for seat %d, pack %d, pick %d", seat, round+1, card+1)
+				}
+				return pack.Cards[rand.Intn(len(pack.Cards))]
+			}
+		}
+		spew.Dump(packs)
 	}
-	if len(cards) == 0 {
-		t.Errorf("no cards in pack for player %d, pack %d, pick %d", player, round+1, card+1)
+	t.Errorf("no pack found for seat %d, pack %d, pick %d", seat, round+1, card+1)
+	t.FailNow()
+	return nil
+}
+
+func TestOnlineDraft(t *testing.T) {
+	ob, err := doSetup(t, SEED)
+	if err != nil {
+		t.Errorf("error in setup: %s", err.Error())
+		t.FailNow()
 	}
-	cardId = cards[rand.Intn(len(cards))]
-	return cardId
+	defer ob.Close()
+
+	makeDraft(t, ob, SEED, false, false)
+
+	handlers := NewHandler(ob, false)
+
+	players, seats := populateDraft(t, handlers, 8)
+
+	for round := range 3 {
+		for card := range 15 {
+			for _, seat := range rand.Perm(8) {
+				player := players[seat] + 1
+
+				cardId := findCardToPick(t, ob, seats[seat], round, card, false).Id
+
+				token := xsrftoken.Generate(xsrfKey, strconv.FormatInt(int64(player), 16), "pick1")
+
+				t.Logf("pack %d pick %d: player %d (position %d) picking card %d", round+1, card+1, player, seats[seat]+1, cardId)
+				w := httptest.NewRecorder()
+				handlers.ServeHTTP(w,
+					httptest.NewRequest("POST", fmt.Sprintf("/api/pick/?as=%d", player),
+						strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cards": [%d], "xsrfToken": "%s"}`, cardId, token))))
+				res := w.Result()
+				if res.StatusCode != http.StatusOK {
+					body, _ := io.ReadAll(res.Body)
+					t.Errorf("pick failed: %s", body)
+					spew.Dump(schema.BoxForDraft(ob).Get(1))
+					t.FailNow()
+				}
+			}
+		}
+	}
+}
+
+func TestInPersonDraft(t *testing.T) {
+	ob, err := doSetup(t, SEED)
+	if err != nil {
+		t.Errorf("error in setup: %s", err.Error())
+		t.FailNow()
+	}
+	defer ob.Close()
+
+	makeDraft(t, ob, SEED, true, false)
+
+	handlers := NewHandler(ob, false)
+
+	players, seats := populateDraft(t, handlers, 8)
+
+	for round := range 3 {
+		for card := range 15 {
+			for _, seat := range rand.Perm(8) {
+				player := players[seat] + 1
+
+				cardId := findCardToPick(t, ob, seats[seat], round, card, true).CardId
+
+				token := xsrftoken.Generate(xsrfKey, strconv.FormatInt(int64(player), 16), "pick1")
+
+				t.Logf("pack %d pick %d: player %d (position %d) picking card %s", round+1, card+1, player, seats[seat]+1, cardId)
+				w := httptest.NewRecorder()
+				handlers.ServeHTTP(w,
+					httptest.NewRequest("POST", fmt.Sprintf("/api/pickrfid/?as=%d", player),
+						strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cardRfids": ["%s"], "xsrfToken": "%s"}`, cardId, token))))
+				res := w.Result()
+				if res.StatusCode != http.StatusOK {
+					body, _ := io.ReadAll(res.Body)
+					t.Errorf("pick failed: %s", body)
+					spew.Dump(schema.BoxForDraft(ob).Get(1))
+					t.FailNow()
+				}
+			}
+
+		}
+	}
 }
 
 func FuzzInPersonDraft(f *testing.F) {
 	f.Add(SEED)
 	f.Fuzz(func(t *testing.T, seed int) {
-		db, err := doSetup(t, seed)
-		defer db.Close()
+		ob, err := doSetup(t, seed)
+		if err != nil {
+			t.Errorf("error in setup: %s", err.Error())
+			t.FailNow()
+		}
+		defer ob.Close()
 
-		makeDraft(t, err, db, seed)
+		makeDraft(t, ob, SEED, true, false)
 
-		handlers := NewHandler(db, nil, false)
+		handlers := NewHandler(ob, false)
 
 		players, seats := populateDraft(t, handlers, 8)
 
@@ -165,7 +248,7 @@ func FuzzInPersonDraft(f *testing.F) {
 				for _, seat := range rand.Perm(8) {
 					player := players[seat] + 1
 
-					cardId := findCardToPick(t, db, player, round, card)
+					cardId := findCardToPick(t, ob, seats[seat], round, card, true).CardId
 
 					token := xsrftoken.Generate(xsrfKey, strconv.FormatInt(int64(player), 16), "pick1")
 
@@ -178,6 +261,8 @@ func FuzzInPersonDraft(f *testing.F) {
 					if res.StatusCode != http.StatusOK {
 						body, _ := io.ReadAll(res.Body)
 						t.Errorf("pick failed: %s", body)
+						spew.Dump(schema.BoxForDraft(ob).Get(1))
+						t.FailNow()
 					}
 				}
 
@@ -186,37 +271,72 @@ func FuzzInPersonDraft(f *testing.F) {
 	})
 }
 
+func TestInPersonPickTwoDraft(t *testing.T) {
+	ob, err := doSetup(t, SEED)
+	if err != nil {
+		t.Errorf("error in setup: %s", err.Error())
+		t.FailNow()
+	}
+	defer ob.Close()
+
+	makeDraft(t, ob, SEED, true, true)
+
+	handlers := NewHandler(ob, false)
+
+	players, seats := populateDraft(t, handlers, 4)
+
+	for round := range 3 {
+		for cardPair := range 7 {
+			var pickedFirst [4]bool
+			for _, seat := range rand.Perm(8) {
+				seat /= 2
+				card := cardPair * 2
+				if pickedFirst[seat] {
+					card++
+				} else {
+					pickedFirst[seat] = true
+				}
+				player := players[seat] + 1
+
+				cardId := findCardToPick(t, ob, seats[seat], round, card, true).CardId
+
+				token := xsrftoken.Generate(xsrfKey, strconv.FormatInt(int64(player), 16), "pick1")
+
+				t.Logf("pack %d pick %d: player %d (position %d) picking card %s", round+1, card+1, player, seats[seat]+1, cardId)
+				w := httptest.NewRecorder()
+				handlers.ServeHTTP(w,
+					httptest.NewRequest("POST", fmt.Sprintf("/api/pickrfid/?as=%d", player),
+						strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cardRfids": ["%s"], "xsrfToken": "%s"}`, cardId, token))))
+				res := w.Result()
+				if res.StatusCode != http.StatusOK {
+					body, _ := io.ReadAll(res.Body)
+					t.Errorf("pick failed: %s", body)
+					spew.Dump(schema.BoxForDraft(ob).Get(1))
+					t.FailNow()
+				}
+			}
+		}
+	}
+}
+
 func TestInPersonDraftUndoFirstPick(t *testing.T) {
-	db, err := doSetup(t, SEED)
-	defer db.Close()
+	ob, err := doSetup(t, SEED)
+	defer ob.Close()
 
-	makeDraft(t, err, db, SEED)
+	makeDraft(t, ob, SEED, true, false)
 
-	handlers := NewHandler(db, nil, false)
+	handlers := NewHandler(ob, false)
 
 	players, seats := populateDraft(t, handlers, 8)
 
 	player := players[0] + 1
-	cardRfid := findCardToPick(t, db, player, 0, 0)
-	row := db.QueryRow(`select id, pack from cards where cardid = ?`, cardRfid)
-	var cardId int64
-	var origPackID int64
-	err = row.Scan(&cardId, &origPackID)
-	if err != nil {
-		t.Errorf("couldn't find picked card ID: %s", err.Error())
-	}
-	row = db.QueryRow(`select id from seats where position = ?`, seats[0])
-	var origSeatID int64
-	err = row.Scan(&origSeatID)
-	if err != nil {
-		t.Errorf("couldn't find pack seat ID: %s", err.Error())
-	}
+	card := findCardToPick(t, ob, seats[0], 0, 0, true)
 
 	token := xsrftoken.Generate(xsrfKey, strconv.FormatInt(int64(player), 16), "pick1")
 
 	handlers.ServeHTTP(httptest.NewRecorder(),
 		httptest.NewRequest("POST", fmt.Sprintf("/api/pickrfid/?as=%d", player),
-			strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cardRfids": ["%s"], "xsrfToken": "%s"}`, cardRfid, token))))
+			strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cardRfids": ["%s"], "xsrfToken": "%s"}`, card.CardId, token))))
 
 	w := httptest.NewRecorder()
 	handlers.ServeHTTP(w,
@@ -228,45 +348,87 @@ func TestInPersonDraftUndoFirstPick(t *testing.T) {
 		t.Errorf("undo failed: %s", body)
 	}
 
-	row = db.QueryRow(`select count(*) from events where draft = 1 and position = ? and card1 = ?`,
-		seats[0], cardId)
-	var eventsCount int64
-	err = row.Scan(&eventsCount)
+	draft, err := schema.BoxForDraft(ob).Get(1)
 	if err != nil {
-		t.Errorf("couldn't execute events count query: %s", err.Error())
+		t.Errorf("couldn't get draft: %s", err.Error())
+		t.FailNow()
 	}
-	if eventsCount != 0 {
+	if len(draft.Events) != 0 {
 		t.Error("didn't delete event")
 	}
 
-	row = db.QueryRow(`select pack from cards where id = ?`, cardId)
-	var packID int64
-	err = row.Scan(&packID)
-	if err != nil {
-		t.Errorf("couldn't execute pack query: %s", err.Error())
+	for _, seat := range draft.Seats {
+		if seat.Position == seats[0] {
+			if len(seat.PickedCards) != 0 {
+				t.Errorf("didn't remove card from picked cards")
+			}
+			if len(seat.Packs) != 1 {
+				t.Errorf("removed pack from seat")
+			}
+			cardIndex := slices.IndexFunc(seat.Packs[0].Cards, func(c *schema.Card) bool {
+				return c.Id == card.Id
+			})
+			if cardIndex == -1 {
+				t.Errorf("didn't put card back in pack")
+			}
+		}
 	}
-	if packID != origPackID {
-		t.Errorf("didn't reset card's pack (was %d, expected %d)", packID, origPackID)
+}
+
+func TestInPersonDraftIgnoresDuplicatePick(t *testing.T) {
+	ob, err := doSetup(t, SEED)
+	defer ob.Close()
+
+	makeDraft(t, ob, SEED, true, false)
+
+	handlers := NewHandler(ob, false)
+
+	players, seats := populateDraft(t, handlers, 8)
+
+	player := players[0] + 1
+	card := findCardToPick(t, ob, seats[0], 0, 0, true)
+
+	token := xsrftoken.Generate(xsrfKey, strconv.FormatInt(int64(player), 16), "pick1")
+
+	handlers.ServeHTTP(httptest.NewRecorder(),
+		httptest.NewRequest("POST", fmt.Sprintf("/api/pickrfid/?as=%d", player),
+			strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cardRfids": ["%s"], "xsrfToken": "%s"}`, card.CardId, token))))
+
+	w := httptest.NewRecorder()
+	handlers.ServeHTTP(w,
+		httptest.NewRequest("POST", fmt.Sprintf("/api/pickrfid/?as=%d", player),
+			strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cardRfids": ["%s"], "xsrfToken": "%s"}`, card.CardId, token))))
+	res := w.Result()
+	if res.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(res.Body)
+		t.Errorf("error on duplicate scan: %s", body)
 	}
 
-	row = db.QueryRow(`select seat from packs where id = ?`, origPackID)
-	var seatID int64
-	err = row.Scan(&seatID)
+	draft, err := schema.BoxForDraft(ob).Get(1)
 	if err != nil {
-		t.Errorf("couldn't execute seat query: %s", err.Error())
+		t.Errorf("couldn't get draft: %s", err.Error())
+		t.FailNow()
 	}
-	if seatID != origSeatID {
-		t.Errorf("didn't reset pack's seat (was %d, expected %d)", seatID, origSeatID)
+	if len(draft.Events) != 1 {
+		t.Errorf("wrong number of events (%d)", len(draft.Events))
+	}
+
+	for _, seat := range draft.Seats {
+		if seat.Position == seats[0] {
+			if len(seat.PickedCards) != 1 {
+				t.Errorf("wrong number of picked cards in seat (%d)", len(seat.PickedCards))
+			}
+		}
 	}
 }
 
 func TestInPersonDraftUndoSubsequentPick(t *testing.T) {
-	db, err := doSetup(t, SEED)
-	defer db.Close()
+	ob, err := doSetup(t, SEED)
+	defer ob.Close()
 
-	makeDraft(t, err, db, SEED)
+	makeDraft(t, ob, SEED, true, false)
 
-	handlers := NewHandler(db, nil, false)
+	handlers := NewHandler(ob, false)
 
 	players, seats := populateDraft(t, handlers, 8)
 
@@ -276,36 +438,23 @@ func TestInPersonDraftUndoSubsequentPick(t *testing.T) {
 		for _, seat := range rand.Perm(8) {
 			player := players[seat] + 1
 
-			cardId := findCardToPick(t, db, player, 0, card)
+			card := findCardToPick(t, ob, seats[seat], 0, card, true)
 
 			token := xsrftoken.Generate(xsrfKey, strconv.FormatInt(int64(player), 16), "pick1")
 
 			handlers.ServeHTTP(httptest.NewRecorder(),
 				httptest.NewRequest("POST", fmt.Sprintf("/api/pickrfid/?as=%d", player),
-					strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cardRfids": ["%s"], "xsrfToken": "%s"}`, cardId, token))))
+					strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cardRfids": ["%s"], "xsrfToken": "%s"}`, card.CardId, token))))
 		}
 	}
 
-	cardRfid := findCardToPick(t, db, player, 0, 5)
-	row := db.QueryRow(`select id, pack from cards where cardid = ?`, cardRfid)
-	var cardId int64
-	var origPackID int64
-	err = row.Scan(&cardId, &origPackID)
-	if err != nil {
-		t.Errorf("couldn't find picked card ID: %s", err.Error())
-	}
-	row = db.QueryRow(`select id from seats where position = ?`, seats[0])
-	var origSeatID int64
-	err = row.Scan(&origSeatID)
-	if err != nil {
-		t.Errorf("couldn't find pack seat ID: %s", err.Error())
-	}
+	card := findCardToPick(t, ob, seats[0], 0, 5, true)
 
 	token := xsrftoken.Generate(xsrfKey, strconv.FormatInt(int64(player), 16), "pick1")
 
 	handlers.ServeHTTP(httptest.NewRecorder(),
 		httptest.NewRequest("POST", fmt.Sprintf("/api/pickrfid/?as=%d", player),
-			strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cardRfids": ["%s"], "xsrfToken": "%s"}`, cardRfid, token))))
+			strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cardRfids": ["%s"], "xsrfToken": "%s"}`, card.CardId, token))))
 
 	w := httptest.NewRecorder()
 	handlers.ServeHTTP(w,
@@ -317,45 +466,47 @@ func TestInPersonDraftUndoSubsequentPick(t *testing.T) {
 		t.Errorf("undo failed: %s", body)
 	}
 
-	row = db.QueryRow(`select count(*) from events where draft = 1 and position = ? and card1 = ?`,
-		seats[0], cardId)
-	var eventsCount int64
-	err = row.Scan(&eventsCount)
+	draft, err := schema.BoxForDraft(ob).Get(1)
 	if err != nil {
-		t.Errorf("couldn't execute events count query: %s", err.Error())
-	}
-	if eventsCount != 0 {
-		t.Error("didn't delete event")
+		t.Errorf("couldn't find draft: %s", err.Error())
+		t.FailNow()
 	}
 
-	row = db.QueryRow(`select pack from cards where id = ?`, cardId)
-	var packID int64
-	err = row.Scan(&packID)
-	if err != nil {
-		t.Errorf("couldn't execute pack query: %s", err.Error())
-	}
-	if packID != origPackID {
-		t.Errorf("didn't reset card's pack (was %d, expected %d)", packID, origPackID)
+	for _, event := range draft.Events {
+		if event.Card1.Id == card.Id {
+			t.Errorf("didn't delete event")
+			break
+		}
 	}
 
-	row = db.QueryRow(`select seat from packs where id = ?`, origPackID)
-	var seatID int64
-	err = row.Scan(&seatID)
-	if err != nil {
-		t.Errorf("couldn't execute seat query: %s", err.Error())
-	}
-	if seatID != origSeatID {
-		t.Errorf("didn't reset pack's seat (was %d, expected %d)", seatID, origSeatID)
+	for _, seat := range draft.Seats {
+		if seat.Position == seats[0] {
+			if slices.IndexFunc(seat.PickedCards, func(c *schema.Card) bool {
+				return c.Id == card.Id
+			}) != -1 {
+				t.Errorf("didn't remove card from picked cards")
+			}
+			if slices.IndexFunc(seat.Packs, func(pack *schema.Pack) bool {
+				return slices.IndexFunc(pack.Cards, func(c *schema.Card) bool {
+					return c.Id == card.Id
+				}) != -1
+			}) == -1 {
+				t.Errorf("didn't put card back in pack or pack back in seat")
+			}
+		}
 	}
 }
 
 func TestInPersonDraftEnforceZoneDraftingNextPlayerMakingFirstPick(t *testing.T) {
-	db, err := doSetup(t, SEED)
-	defer db.Close()
+	ob, err := doSetup(t, SEED)
+	if err != nil {
+		t.Errorf("setup error: %s", err.Error())
+	}
+	defer ob.Close()
 
-	makeDraft(t, err, db, SEED)
+	makeDraft(t, ob, SEED, true, false)
 
-	handlers := NewHandler(db, nil, false)
+	handlers := NewHandler(ob, false)
 
 	players, seats := populateDraft(t, handlers, 8)
 
@@ -371,24 +522,24 @@ func TestInPersonDraftEnforceZoneDraftingNextPlayerMakingFirstPick(t *testing.T)
 	token := xsrftoken.Generate(xsrfKey, strconv.FormatInt(int64(player), 16), "pick1")
 
 	// test player makes first pick
-	cardId := findCardToPick(t, db, player, 0, 0)
+	card := findCardToPick(t, ob, seat, 0, 0, true)
 	handlers.ServeHTTP(httptest.NewRecorder(),
 		httptest.NewRequest("POST", fmt.Sprintf("/api/pickrfid/?as=%d", player),
-			strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cardRfids": ["%s"], "xsrfToken": "%s"}`, cardId, token))))
+			strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cardRfids": ["%s"], "xsrfToken": "%s"}`, card.CardId, token))))
 
 	// player before test player makes first pick
-	cardId = findCardToPick(t, db, previousPlayer, 0, 0)
+	card = findCardToPick(t, ob, previousSeat, 0, 0, true)
 	prevToken := xsrftoken.Generate(xsrfKey, strconv.FormatInt(int64(previousPlayer), 16), "pick1")
 	handlers.ServeHTTP(httptest.NewRecorder(),
 		httptest.NewRequest("POST", fmt.Sprintf("/api/pickrfid/?as=%d", previousPlayer),
-			strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cardRfids": ["%s"], "xsrfToken": "%s"}`, cardId, prevToken))))
+			strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cardRfids": ["%s"], "xsrfToken": "%s"}`, card.CardId, prevToken))))
 
 	// test player makes second pick in violation
-	cardId = findCardToPick(t, db, player, 0, 1)
+	card = findCardToPick(t, ob, seat, 0, 1, true)
 	w := httptest.NewRecorder()
 	handlers.ServeHTTP(w,
 		httptest.NewRequest("POST", fmt.Sprintf("/api/pickrfid/?as=%d", player),
-			strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cardRfids": ["%s"], "xsrfToken": "%s"}`, cardId, token))))
+			strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cardRfids": ["%s"], "xsrfToken": "%s"}`, card.CardId, token))))
 
 	res := w.Result()
 	if res.StatusCode != http.StatusBadRequest {
@@ -397,12 +548,15 @@ func TestInPersonDraftEnforceZoneDraftingNextPlayerMakingFirstPick(t *testing.T)
 }
 
 func TestInPersonDraftEnforceZoneDraftingNextPlayerMakingSubsequentPick(t *testing.T) {
-	db, err := doSetup(t, SEED)
-	defer db.Close()
+	ob, err := doSetup(t, SEED)
+	if err != nil {
+		t.Errorf("setup error: %s", err.Error())
+	}
+	defer ob.Close()
 
-	makeDraft(t, err, db, SEED)
+	makeDraft(t, ob, SEED, true, false)
 
-	handlers := NewHandler(db, nil, false)
+	handlers := NewHandler(ob, false)
 
 	players, seats := populateDraft(t, handlers, 8)
 
@@ -436,47 +590,47 @@ func TestInPersonDraftEnforceZoneDraftingNextPlayerMakingSubsequentPick(t *testi
 	token := xsrftoken.Generate(xsrfKey, strconv.FormatInt(int64(player), 16), "pick1")
 
 	t.Logf("player %d making first pick", player)
-	cardId := findCardToPick(t, db, player, 0, 0)
+	card := findCardToPick(t, ob, seat, 0, 0, true)
 	handlers.ServeHTTP(httptest.NewRecorder(),
 		httptest.NewRequest("POST", fmt.Sprintf("/api/pickrfid/?as=%d", player),
-			strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cardRfids": ["%s"], "xsrfToken": "%s"}`, cardId, token))))
+			strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cardRfids": ["%s"], "xsrfToken": "%s"}`, card.CardId, token))))
 
 	t.Logf("left player %d making first pick", previousPlayer)
-	cardId = findCardToPick(t, db, previousPlayer, 0, 0)
+	card = findCardToPick(t, ob, previousSeat, 0, 0, true)
 	handlers.ServeHTTP(httptest.NewRecorder(),
 		httptest.NewRequest("POST", fmt.Sprintf("/api/pickrfid/?as=%d", previousPlayer),
-			strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cardRfids": ["%s"], "xsrfToken": "%s"}`, cardId, prevToken))))
+			strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cardRfids": ["%s"], "xsrfToken": "%s"}`, card.CardId, prevToken))))
 
 	t.Logf("right player %d making first pick", nextPlayer)
-	cardId = findCardToPick(t, db, nextPlayer, 0, 0)
+	card = findCardToPick(t, ob, nextSeat, 0, 0, true)
 	handlers.ServeHTTP(httptest.NewRecorder(),
 		httptest.NewRequest("POST", fmt.Sprintf("/api/pickrfid/?as=%d", nextPlayer),
-			strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cardRfids": ["%s"], "xsrfToken": "%s"}`, cardId, nextToken))))
+			strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cardRfids": ["%s"], "xsrfToken": "%s"}`, card.CardId, nextToken))))
 
 	t.Logf("player %d making second pick", player)
-	cardId = findCardToPick(t, db, player, 0, 1)
+	card = findCardToPick(t, ob, seat, 0, 1, true)
 	handlers.ServeHTTP(httptest.NewRecorder(),
 		httptest.NewRequest("POST", fmt.Sprintf("/api/pickrfid/?as=%d", player),
-			strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cardRfids": ["%s"], "xsrfToken": "%s"}`, cardId, token))))
+			strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cardRfids": ["%s"], "xsrfToken": "%s"}`, card.CardId, token))))
 
 	t.Logf("2 left player %d making first pick", prevPrevPlayer)
-	cardId = findCardToPick(t, db, prevPrevPlayer, 0, 0)
+	card = findCardToPick(t, ob, prevPrevSeat, 0, 0, true)
 	handlers.ServeHTTP(httptest.NewRecorder(),
 		httptest.NewRequest("POST", fmt.Sprintf("/api/pickrfid/?as=%d", prevPrevPlayer),
-			strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cardRfids": ["%s"], "xsrfToken": "%s"}`, cardId, prevPrevToken))))
+			strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cardRfids": ["%s"], "xsrfToken": "%s"}`, card.CardId, prevPrevToken))))
 
 	t.Logf("left player %d making second pick", previousPlayer)
-	cardId = findCardToPick(t, db, previousPlayer, 0, 1)
+	card = findCardToPick(t, ob, previousSeat, 0, 1, true)
 	handlers.ServeHTTP(httptest.NewRecorder(),
 		httptest.NewRequest("POST", fmt.Sprintf("/api/pickrfid/?as=%d", previousPlayer),
-			strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cardRfids": ["%s"], "xsrfToken": "%s"}`, cardId, prevToken))))
+			strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cardRfids": ["%s"], "xsrfToken": "%s"}`, card.CardId, prevToken))))
 
 	t.Logf("player %d making third pick", player)
-	cardId = findCardToPick(t, db, player, 0, 2)
+	card = findCardToPick(t, ob, seat, 0, 2, true)
 	w := httptest.NewRecorder()
 	handlers.ServeHTTP(w,
 		httptest.NewRequest("POST", fmt.Sprintf("/api/pickrfid/?as=%d", player),
-			strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cardRfids": ["%s"], "xsrfToken": "%s"}`, cardId, token))))
+			strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cardRfids": ["%s"], "xsrfToken": "%s"}`, card.CardId, token))))
 
 	res := w.Result()
 	if res.StatusCode != http.StatusBadRequest {
