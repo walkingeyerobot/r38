@@ -69,7 +69,7 @@ const router = createRouter({
     },
     {
       path: "/draftpacks/:id",
-      name: "samplepack",
+      name: "draftpacks",
       component: () => import("../ui/DraftPacks.vue"),
       props: true,
     },
