@@ -8,7 +8,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/objectbox/objectbox-go/objectbox"
 	"github.com/walkingeyerobot/r38/draftconfig"
 	"github.com/walkingeyerobot/r38/schema"
@@ -355,8 +354,6 @@ func ServeAPIDraftPacks(w http.ResponseWriter, r *http.Request, userId int64, ob
 	if err != nil {
 		return fmt.Errorf("error getting draft: %w", err)
 	}
-
-	spew.Dump(draft)
 
 	var clientPacks [][]R38CardData
 	for _, seat := range draft.Seats {
