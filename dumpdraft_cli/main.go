@@ -15,7 +15,7 @@ func main() {
 	flagSet := flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
 
 	draftId := flagSet.Uint64("id", 0, "ID of the draft to dump.")
-	dbDir := flag.String("dbdir", "objectbox", "ObjectBox database directory.")
+	dbDir := flagSet.String("dbdir", "objectbox", "ObjectBox database directory.")
 
 	err := flagSet.Parse(os.Args[1:])
 	if err != nil {
