@@ -49,6 +49,7 @@ export default defineComponent({
         name: result.name,
         picture: result.picture || DefaultAvatar,
         mtgoName: result.mtgoName,
+        isImpersonated: asPlayerId != undefined,
       });
     },
 

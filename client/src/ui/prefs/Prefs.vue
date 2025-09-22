@@ -54,6 +54,7 @@ export default defineComponent({
           mtgoName: "Unknown user",
           name: "Unknown user",
           picture: "__unknown_image",
+          isImpersonated: false,
         }
       );
     },

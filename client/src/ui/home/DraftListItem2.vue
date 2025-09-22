@@ -40,10 +40,19 @@ const draftUrl = computed(() => {
   switch (descriptor.status) {
     case "joinable":
     case "reserved":
+      return wrapUrl(`/draft/${descriptor.id}/join`);
     case "member":
-      return wrapUrl(`/picker/${descriptor.id}`);
+      if (descriptor.inPerson) {
+        if (descriptor.availableSeats > 0) {
+          return wrapUrl(`/draft/${descriptor.id}/join`);
+        } else {
+          return wrapUrl(`/draft/${descriptor.id}/pick`);
+        }
+      } else {
+        return wrapUrl(`/draft/${descriptor.id}/replay`);
+      }
     case "spectator":
-      return wrapUrl(`/draft/${descriptor.id}`);
+      return wrapUrl(`/draft/${descriptor.id}/replay`);
     case "closed":
     default:
       return undefined;
@@ -58,7 +67,7 @@ const draftSubtitle = computed(() => {
     case "joinable":
       return `${descriptor.availableSeats} seats available`;
     case "reserved":
-      return `Reserved`;
+      return `Spot reserved`;
     case "member":
       return `Joined`;
     case "spectator":

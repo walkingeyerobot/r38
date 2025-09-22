@@ -18,102 +18,95 @@ The primary page for making picks during an active draft
             <div class="header-right"></div>
           </div>
 
-          <TableSeating
-            v-if="nextPick.kind == 'NotSeated' || nextPick.kind == 'WaitingToFill'"
-            class="table-seating"
-          />
+          <div class="player-list-bg"></div>
+          <div class="player-list">
+            <component
+              :is="isDevMode ? 'a' : 'div'"
+              v-for="seat in draftStore.currentState.seats"
+              :key="seat.position"
+              class="seated-player"
+              :href="`${route.path}?as=${seat.player.id}`"
+            >
+              <img
+                class="player-icon"
+                :src="seat.player.iconUrl"
+                :alt="seat.player.name"
+                :title="seat.player.name"
+                :class="{ active: seat.player.id == authStore.user?.id }"
+              />
+            </component>
+          </div>
 
-          <template v-else>
-            <div class="player-list-bg"></div>
-            <div class="player-list">
-              <component
-                :is="isDevMode ? 'a' : 'div'"
-                v-for="seat in draftStore.currentState.seats"
-                :key="seat.position"
-                class="seated-player"
-                :href="`${route.path}?as=${seat.player.id}`"
-              >
-                <img
-                  class="player-icon"
-                  :src="seat.player.iconUrl"
-                  :alt="seat.player.name"
-                  :title="seat.player.name"
-                  :class="{ active: seat.player.id == authStore.user?.id }"
-                />
-              </component>
-            </div>
-
-            <div class="boop-prompt" v-if="boopPrompt != 'none'">
-              <template v-if="boopPrompt == 'request-permission'">
-                <div>To scan cards, you must first enable booping.</div>
-                <div>
-                  <button class="boop-btn" @click="onRequestNfcPermission">Enable booping</button>
-                </div>
-              </template>
-              <template v-else>
-                <div>Your hardware doesn't appear to support card scanning 😔.</div>
-                <div style="margin-top: 10px">
-                  To participate in an in-person draft you'll need a device with an RFID reader
-                  (such as a phone).
-                </div>
-              </template>
-            </div>
-
-            <div class="pick-count" v-if="nextPick.kind == 'ActivePosition'">
-              <div class="pc-round">
-                <div class="pc-round-label">Pack</div>
-                <div class="pc-round-count">{{ nextPick.round }}</div>
+          <div class="boop-prompt" v-if="boopPrompt != 'none'">
+            <template v-if="boopPrompt == 'request-permission'">
+              <div>To scan cards, you must first enable booping.</div>
+              <div>
+                <button class="boop-btn" @click="onRequestNfcPermission">Enable booping</button>
               </div>
-              <div class="pc-pick">
-                <div class="pc-pick-label">Pick</div>
-                <div class="pc-pick-count">{{ nextPick.pick + 1 }}</div>
+            </template>
+            <template v-else>
+              <div>Your hardware doesn't appear to support card scanning 😔.</div>
+              <div style="margin-top: 10px">
+                To participate in an in-person draft you'll need a device with an RFID reader (such
+                as a phone).
               </div>
-            </div>
-            <div class="pick-count-error" v-else-if="nextPick.kind == 'Error'">
-              {{ nextPick.message }}
-            </div>
+            </template>
+          </div>
 
-            <div class="active-pack">
-              <template v-if="activePack">
-                <div class="active-pack-label">Current pack</div>
-                <div class="active-pack-cnt">
-                  <div
-                    v-for="card in activePack"
-                    :key="card.id"
-                    class="card-slate"
-                    @click="onCardClick(card)"
-                  >
-                    <div class="card-name">{{ card.definition.name }}</div>
-                    <div class="card-cost">
-                      <ManaSymbol
-                        v-for="(msymb, i) in card.definition.mana_cost"
-                        :key="i"
-                        :code="msymb"
-                        class="mana-symbol"
-                      />
-                    </div>
+          <div class="pick-count" v-if="nextPick.kind == 'ActivePosition'">
+            <div class="pc-round">
+              <div class="pc-round-label">Pack</div>
+              <div class="pc-round-count">{{ nextPick.round }}</div>
+            </div>
+            <div class="pc-pick">
+              <div class="pc-pick-label">Pick</div>
+              <div class="pc-pick-count">{{ nextPick.pick + 1 }}</div>
+            </div>
+          </div>
+          <div class="pick-count-error" v-else-if="nextPick.kind == 'Error'">
+            {{ nextPick.message }}
+          </div>
+
+          <div class="active-pack">
+            <template v-if="activePack">
+              <div class="active-pack-label">Current pack</div>
+              <div class="active-pack-cnt">
+                <div
+                  v-for="card in activePack"
+                  :key="card.id"
+                  class="card-slate"
+                  @click="onCardClick(card)"
+                >
+                  <div class="card-name">{{ card.definition.name }}</div>
+                  <div class="card-cost">
+                    <ManaSymbol
+                      v-for="(msymb, i) in card.definition.mana_cost"
+                      :key="i"
+                      :code="msymb"
+                      class="mana-symbol"
+                    />
                   </div>
                 </div>
-              </template>
-              <template v-else><em>Waiting for pack</em></template>
-            </div>
+              </div>
+            </template>
+            <template v-else><em>Waiting for pack</em></template>
+          </div>
 
-            <div v-if="previousPicks" class="previous-pick" @click="onPreviousPickClick">
-              <div class="active-pack-label">Previous pick</div>
+          <div v-if="previousPicks" class="previous-pick" @click="onPreviousPickClick">
+            <div class="active-pack-label">Previous pick</div>
 
-              <div v-for="card in previousPicks" :key="card.id" class="card-slate previous">
-                <div class="card-name">{{ card.definition.name }}</div>
-                <div class="card-cost">
-                  <ManaSymbol
-                    v-for="(msymb, i) in card.definition.mana_cost"
-                    :key="i"
-                    :code="msymb"
-                    class="mana-symbol"
-                  />
-                </div>
+            <div v-for="card in previousPicks" :key="card.id" class="card-slate previous">
+              <div class="card-name">{{ card.definition.name }}</div>
+              <div class="card-cost">
+                <ManaSymbol
+                  v-for="(msymb, i) in card.definition.mana_cost"
+                  :key="i"
+                  :code="msymb"
+                  class="mana-symbol"
+                />
               </div>
             </div>
-          </template>
+          </div>
         </div>
       </div>
       <CardDetailDialog
@@ -170,7 +163,6 @@ import { draftStore, type DraftStore } from "@/state/DraftStore";
 import { isPickEvent } from "@/state/util/isPickEvent";
 import type { DraftCard, DraftState } from "@/draft/DraftState";
 import { PickerSounds } from "@/ui/picker/PickerSounds";
-import TableSeating from "@/ui/picker/TableSeating.vue";
 import { RfidHandler } from "@/rfid/RfidHandler.ts";
 import { useWakelock } from "@/browser/wakelock/useWakelock";
 
@@ -198,7 +190,7 @@ onMounted(() => {
   rfidHandler.start();
   fetchDraft();
 
-  if (!isDevMode || devOptions.pollState) {
+  if (!import.meta.env.VITE_DISABLE_STATE_POLLING) {
     pollingId = setInterval(onPollForState, 5000) as unknown as number;
   }
 });
@@ -260,7 +252,7 @@ const nextPick = computed<PickPosition>(() => {
   const seat = findPlayerSeat(userId, draftStore.currentState);
 
   if (seat == null) {
-    return { kind: "NotSeated" };
+    return pickPositionError("You are not seated in this draft");
   }
 
   const pickEvent = getMostRecentPickEvent(draftStore, seat.position);
@@ -268,7 +260,7 @@ const nextPick = computed<PickPosition>(() => {
   let nextPick: PickPosition;
   if (pickEvent == null) {
     if (draftStore.hasSeatsAvailable) {
-      nextPick = { kind: "WaitingToFill" };
+      nextPick = pickPositionError("Waiting for draft to fill");
     } else {
       nextPick = { kind: "ActivePosition", round: 1, pick: 0 };
     }
@@ -539,12 +531,6 @@ function pickPositionError(message: string): PickPosition {
 
 type PickPosition =
   | {
-      kind: "NotSeated";
-    }
-  | {
-      kind: "WaitingToFill";
-    }
-  | {
       kind: "ActivePosition";
       round: number;
       pick: number;
@@ -649,11 +635,6 @@ const CARDS_PER_PACK = 15;
 }
 .back-link:hover {
   text-decoration: underline;
-}
-
-.table-seating {
-  margin-top: 30px;
-  padding-bottom: 50px;
 }
 
 .player-list-bg {
