@@ -213,7 +213,11 @@ func NewHandler(ob *objectbox.ObjectBox, useAuth bool) http.Handler {
 
 			var err error
 			handle := func() error {
-				return serveFunc(w, r, userID, ob)
+				err := serveFunc(w, r, userID, ob)
+				if err != nil {
+					log.Printf("error serving %s: %s", route, err.Error())
+				}
+				return err
 			}
 			if readonly {
 				err = ob.RunInReadTx(handle)
