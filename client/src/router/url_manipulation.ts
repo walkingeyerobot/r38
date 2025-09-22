@@ -53,7 +53,7 @@ export function pushDraftUrlFromState(
 }
 
 function generateDraftUrl(params: DraftUrlState) {
-  let path = `/replay/${params.draftId}/`;
+  let path = `/draft/${params.draftId}/replay/`;
 
   if (params.eventIndex != undefined) {
     const timeModeCode = checkNotNil(params.timeMode) == "synchronized" ? "s" : "t";
@@ -113,7 +113,7 @@ export function parseDraftUrl(route: RouteLocationNormalized) {
 
     const value = parseInt(params[i]);
     if (Number.isNaN(value)) {
-      console.error("Invalid value:", value);
+      console.error("Invalid value:", params[i]);
       continue;
     }
 

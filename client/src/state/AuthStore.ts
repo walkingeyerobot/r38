@@ -34,4 +34,5 @@ export interface AuthenticatedUser {
   name: string;
   picture: string;
   mtgoName: string;
+  isImpersonated: boolean;
 }

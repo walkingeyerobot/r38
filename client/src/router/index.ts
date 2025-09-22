@@ -24,19 +24,19 @@ const router = createRouter({
       component: () => import("../ui/prefs/Prefs.vue"),
     },
     {
-      path: `/replay/:draftId(\\d+)/:param*`,
-      name: "draft",
-      component: () => import("../ui/Replay.vue"),
+      path: `/draft/:draftId(\\d+)/join`,
+      name: "join",
+      component: () => import("../ui/draft/join/JoinPage.vue"),
     },
     {
-      path: `/draft/:draftId(\\d+)/:param*`,
-      name: "replay",
-      component: () => import("../ui/Replay.vue"),
-    },
-    {
-      path: `/picker/:draftId(\\d+)/`,
+      path: `/draft/:draftId(\\d+)/pick`,
       name: "picker",
       component: () => import("../ui/PickerPage.vue"),
+    },
+    {
+      path: `/draft/:draftId(\\d+)/replay/:param*`,
+      name: "replay",
+      component: () => import("../ui/Replay.vue"),
     },
     {
       path: "/deckbuilder/:draftId(\\d+)",

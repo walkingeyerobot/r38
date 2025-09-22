@@ -16,7 +16,7 @@
         :href="`${route.path}?as=${seat.player.id}`"
       >
         <img
-          v-if="seat.player.id == authStore.user?.id"
+          v-if="seat.player.id != null && seat.player.id == authStore.user?.id"
           class="selection-halo"
           src="./selection_halo.svg"
         />
@@ -34,13 +34,6 @@
         </div>
       </component>
     </div>
-
-    <div class="footer">
-      <button v-if="canJoin" class="join-btn" @click="onJoinClick">Join</button>
-      <template v-else-if="draftStore.hasSeatsAvailable">Waiting for seats to fill</template>
-      <template v-else-if="isSelfSeated">Take your seat</template>
-      <template v-else>Ready to start</template>
-    </div>
   </div>
 </template>
 
@@ -49,44 +42,10 @@ import { useRoute } from "vue-router";
 
 import { authStore } from "@/state/AuthStore";
 import { draftStore } from "@/state/DraftStore";
-import { computed } from "vue";
-import { fetchEndpoint, fetchEndpointEv } from "@/fetch/fetchEndpoint";
-import { ROUTE_JOIN_DRAFT } from "@/rest/api/join/join";
-import { ROUTE_DRAFT } from "@/rest/api/draft/draft";
 
 const route = useRoute();
 
 const isDevMode = import.meta.env.DEV;
-
-const ownSeatPosition = computed(() => {
-  for (const seat of draftStore.currentState.seats) {
-    if (seat.player.id == authStore.user?.id) {
-      return seat.position;
-    }
-  }
-  return null;
-});
-
-const isSelfSeated = computed(() => {
-  return ownSeatPosition.value != null;
-});
-
-const canJoin = computed(() => {
-  return !isSelfSeated.value && draftStore.hasSeatsAvailable;
-});
-
-async function onJoinClick() {
-  const [response, e] = await fetchEndpointEv(ROUTE_JOIN_DRAFT, {
-    id: draftStore.draftId,
-    position: undefined,
-    as: authStore.user?.id,
-  });
-  const payload = await fetchEndpoint(ROUTE_DRAFT, {
-    id: draftStore.draftId.toString(),
-    as: authStore.user?.id,
-  });
-  draftStore.loadDraft(payload);
-}
 </script>
 
 <script lang="ts">
@@ -206,15 +165,5 @@ const TABLE_POSITIONS = [
   100% {
     transform: rotate3d(0, 0, 1, 360deg);
   }
-}
-
-.footer {
-  margin-top: 60px;
-}
-
-.join-btn {
-  padding: 20px;
-  min-width: 160px;
-  font-size: 16px;
 }
 </style>
