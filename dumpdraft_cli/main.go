@@ -15,6 +15,7 @@ func main() {
 	flagSet := flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
 
 	draftId := flagSet.Uint64("id", 0, "ID of the draft to dump.")
+	dbDir := flag.String("dbdir", "objectbox", "ObjectBox database directory.")
 
 	err := flagSet.Parse(os.Args[1:])
 	if err != nil {
@@ -22,7 +23,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	ob, err := objectbox.NewBuilder().Model(schema.ObjectBoxModel()).Build()
+	ob, err := objectbox.NewBuilder().Model(schema.ObjectBoxModel()).
+		Directory(*dbDir).Build()
 	if err != nil {
 		log.Printf("error opening database: %s", err.Error())
 		os.Exit(1)
