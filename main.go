@@ -606,7 +606,7 @@ func ServeAPIUndoPick(_ http.ResponseWriter, r *http.Request, userID int64, ob *
 	}
 
 	if !xsrftoken.Valid(undo.XsrfToken, xsrfKey, strconv.FormatInt(userID, 16), fmt.Sprintf("pick%d", undo.DraftId)) {
-		err = fmt.Errorf("invalid XSRF token")
+		return fmt.Errorf("invalid XSRF token")
 	}
 
 	draftBox := schema.BoxForDraft(ob)
@@ -617,6 +617,10 @@ func ServeAPIUndoPick(_ http.ResponseWriter, r *http.Request, userID int64, ob *
 	seatIndex := slices.IndexFunc(draft.Seats, func(seat *schema.Seat) bool {
 		return seat.User.Id == uint64(userID)
 	})
+	if seatIndex < 0 {
+		return fmt.Errorf("couldn't undo pick; user %d has no seat in draft %d", userID, draft.Id)
+	}
+
 	seat := draft.Seats[seatIndex]
 	var lastEvent *schema.Event = nil
 	for _, event := range draft.Events {
