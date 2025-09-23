@@ -10,6 +10,9 @@
     </component>
     <a v-if="isShufflable" class="shuffle-section" :href="`/shuffler/${descriptor.id}`">Shuffle</a>
     <a v-if="isAdminUser" class="shuffle-section" :href="`/draftpacks/${descriptor.id}`">Packs</a>
+    <a v-if="isAdminUser" class="shuffle-section" href="#" @click.stop="onArchiveClicked()"
+      >Archive</a
+    >
   </div>
 </template>
 
@@ -18,6 +21,8 @@ import type { HomeDraftDescriptor } from "@/rest/api/draftlist/draftlist";
 import { authStore } from "@/state/AuthStore";
 import { computed } from "vue";
 import { useRoute } from "vue-router";
+import { fetchEndpoint } from "@/fetch/fetchEndpoint.ts";
+import { ROUTE_ARCHIVE_DRAFT } from "@/rest/api/archive/archive.ts";
 
 const route = useRoute();
 
@@ -78,6 +83,13 @@ const draftSubtitle = computed(() => {
       return undefined;
   }
 });
+
+async function onArchiveClicked() {
+  const _response = await fetchEndpoint(ROUTE_ARCHIVE_DRAFT, {
+    id: String(descriptor.id),
+  });
+  location.reload();
+}
 
 function wrapUrl(url: string) {
   if (route.query["as"] != undefined) {
