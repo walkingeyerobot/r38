@@ -39,6 +39,10 @@ const router = createRouter({
       component: () => import("../ui/Replay.vue"),
     },
     {
+      path: `/draft/:draftId(\\d+)/`,
+      redirect: { name: "replay" },
+    },
+    {
       path: "/deckbuilder/:draftId(\\d+)",
       name: "deckbuilder",
       component: () => import("../ui/DeckBuilder.vue"),

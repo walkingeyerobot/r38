@@ -103,47 +103,49 @@ export function parseDraftUrl(route: RouteLocationNormalized) {
 
   const params = route.params["param"];
 
-  for (let i = 0; i < params.length; i++) {
-    const param = params[i];
-    i++;
+  if (params != undefined) {
+    for (let i = 0; i < params.length; i++) {
+      const param = params[i];
+      i++;
 
-    if (i >= params.length) {
-      break;
-    }
+      if (i >= params.length) {
+        break;
+      }
 
-    const value = parseInt(params[i]);
-    if (Number.isNaN(value)) {
-      console.error("Invalid value:", params[i]);
-      continue;
-    }
+      const value = parseInt(params[i]);
+      if (Number.isNaN(value)) {
+        console.error("Invalid value:", params[i]);
+        continue;
+      }
 
-    switch (param) {
-      case "s":
-        parsedUrl.timeMode = "synchronized";
-        parsedUrl.eventIndex = value;
-        break;
-      case "t":
-        parsedUrl.timeMode = "original";
-        parsedUrl.eventIndex = value;
-        break;
-      case "pack":
-        parsedUrl.selection = {
-          type: "pack",
-          id: value,
-        };
-        break;
-      case "seat":
-        parsedUrl.selection = {
-          type: "seat",
-          id: value,
-        };
-        break;
-      case "":
-        // No params, ignore this stub
-        break;
-      default:
-        console.warn("Unrecognized URL param:", param);
-        break;
+      switch (param) {
+        case "s":
+          parsedUrl.timeMode = "synchronized";
+          parsedUrl.eventIndex = value;
+          break;
+        case "t":
+          parsedUrl.timeMode = "original";
+          parsedUrl.eventIndex = value;
+          break;
+        case "pack":
+          parsedUrl.selection = {
+            type: "pack",
+            id: value,
+          };
+          break;
+        case "seat":
+          parsedUrl.selection = {
+            type: "seat",
+            id: value,
+          };
+          break;
+        case "":
+          // No params, ignore this stub
+          break;
+        default:
+          console.warn("Unrecognized URL param:", param);
+          break;
+      }
     }
   }
 
