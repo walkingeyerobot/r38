@@ -51,6 +51,14 @@ var store = sessions.NewCookieStore(secretKeyNoOneWillEverGuess)
 var sock string
 var dg *discordgo.Session
 
+type DiscordCall struct {
+	Type      string
+	ChannelId string
+	Message   string
+}
+
+var ignoredDiscordCalls []DiscordCall
+
 func main() {
 	useAuthPtr := flag.Bool("auth", true, "bool")
 	flag.Bool("objectbox", false, "bool")
@@ -1157,9 +1165,11 @@ func doPick(ob *objectbox.ObjectBox, userId int64, draftId int64, cardId int64, 
 		}
 
 		// Get the number of remaining packs in the Position.
-		packsLeftInSeat := len(seat.Packs)
+		hasPacksLeft := slices.ContainsFunc(seat.Packs, func(pack *schema.Pack) bool {
+			return pack.Round == int(round)
+		})
 
-		if packsLeftInSeat == 0 {
+		if hasPacksLeft {
 			// If there are 0 packs left in the Position, check to see if the player we passed the pack to
 			// is in the same round as us. If the rounds match, NotifyByDraftAndPosition.
 			roundsMatch := seat.Round == nextSeat.Round
@@ -1396,6 +1406,11 @@ func UnlockSpectatorChannel(channelId string) error {
 				return err
 			}
 		}
+	} else {
+		ignoredDiscordCalls = append(ignoredDiscordCalls, DiscordCall{
+			Type:      "unlock",
+			ChannelId: channelId,
+		})
 	}
 	return nil
 }
@@ -1405,6 +1420,12 @@ func DiscordNotify(channelId string, message string) error {
 	if dg != nil {
 		_, err := dg.ChannelMessageSend(channelId, message)
 		return err
+	} else {
+		ignoredDiscordCalls = append(ignoredDiscordCalls, DiscordCall{
+			Type:      "notify",
+			ChannelId: channelId,
+			Message:   message,
+		})
 	}
 	return nil
 }
@@ -1414,6 +1435,12 @@ func DiscordNotifyEmbed(channelId string, message *discordgo.MessageEmbed) (*dis
 	if dg != nil {
 		msg, err := dg.ChannelMessageSendEmbed(channelId, message)
 		return msg, err
+	} else {
+		ignoredDiscordCalls = append(ignoredDiscordCalls, DiscordCall{
+			Type:      "notifyEmbed",
+			ChannelId: channelId,
+			Message:   fmt.Sprintf("%+v", message),
+		})
 	}
 	return nil, nil
 }
@@ -2023,28 +2050,35 @@ func CheckNextRoundPairings(ob *objectbox.ObjectBox, draft *schema.Draft, round 
 				}
 			}
 		} else if round == 3 {
+			winnerIndex := slices.Index(wins[:], 3)
+			if winnerIndex == -1 {
+				log.Printf("no winner found in draft %d", draft.Id)
+				return
+			}
+			winner := users[winnerIndex]
+			var player string
+			if len(winner.DiscordId) > 0 {
+				player = fmt.Sprintf("<@%s>", winner.DiscordId)
+			} else {
+				player = winner.DiscordName
+			}
+			adminDiscordID, err := GetAdminDiscordId(ob)
+			channelId := os.Getenv("DRAFT_ANNOUNCEMENTS_CHANNEL_ID")
+			message := fmt.Sprintf("Congratulations to %s, winner of *%s*!\n\n"+
+				"All players, please ping <@%s> directly when you're ready to return cards.",
+				player, draft.Name, adminDiscordID)
 			if dg != nil {
-				winnerIndex := slices.Index(wins[:], 3)
-				if winnerIndex == -1 {
-					log.Printf("no winner found in draft %d", draft.Id)
-					return
-				}
-				winner := users[winnerIndex]
-				var player string
-				if len(winner.DiscordId) > 0 {
-					player = fmt.Sprintf("<@%s>", winner.DiscordId)
-				} else {
-					player = winner.DiscordName
-				}
-				adminDiscordID, err := GetAdminDiscordId(ob)
-				_, err = dg.ChannelMessageSend(os.Getenv("DRAFT_ANNOUNCEMENTS_CHANNEL_ID"),
-					fmt.Sprintf("Congratulations to %s, winner of *%s*!\n\n"+
-						"All players, please ping <@%s> directly when you're ready to return cards.",
-						player, draft.Name, adminDiscordID))
+				_, err = dg.ChannelMessageSend(channelId, message)
 				if err != nil {
 					log.Printf("%s", err.Error())
 					return
 				}
+			} else {
+				ignoredDiscordCalls = append(ignoredDiscordCalls, DiscordCall{
+					Type:      "postWinner",
+					ChannelId: channelId,
+					Message:   message,
+				})
 			}
 		}
 		if len(table1) == 2 && len(table2) == 2 && len(table3) == 2 && len(table4) == 2 {
@@ -2101,6 +2135,10 @@ func ArchiveSpectatorChannels(ob *objectbox.ObjectBox) error {
 		if err != nil {
 			return fmt.Errorf("error archiving spectator channels: %w", err)
 		}
+	} else {
+		ignoredDiscordCalls = append(ignoredDiscordCalls, DiscordCall{
+			Type: "archiveChannels",
+		})
 	}
 
 	log.Printf("done archiving spectator channels")
