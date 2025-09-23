@@ -241,7 +241,7 @@ func MakeDraft(settings Settings, ob *objectbox.ObjectBox) error {
 	var channelID string
 	if dg != nil {
 		channel, err = dg.GuildChannelCreate(GuildId,
-			regexp.MustCompile("[^a-z-]").ReplaceAllString(strings.ToLower(*settings.Name), "-")+"-spectators",
+			regexp.MustCompile("[^a-z0-9-]").ReplaceAllString(strings.ToLower(*settings.Name), "-")+"-spectators",
 			discordgo.ChannelTypeGuildText)
 		if err != nil {
 			return fmt.Errorf("error creating spectator channel: %v", err)
