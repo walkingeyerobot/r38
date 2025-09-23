@@ -610,7 +610,7 @@ func ServeAPIUndoPick(_ http.ResponseWriter, r *http.Request, userID int64, ob *
 	}
 
 	draftBox := schema.BoxForDraft(ob)
-	draft, err := draftBox.Get(1)
+	draft, err := draftBox.Get(uint64(undo.DraftId))
 	if err != nil {
 		return err
 	}
