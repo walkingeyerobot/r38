@@ -25,6 +25,8 @@ import (
 const GuildId = "685333271793500161"
 const SpectatorsCategoryId = "711340302966980698"
 
+var FakeSpectatorChannelID = ""
+
 // Settings stores all the settings that can be passed in.
 type Settings struct {
 	Set                                       *string
@@ -247,6 +249,8 @@ func MakeDraft(settings Settings, ob *objectbox.ObjectBox) error {
 			return fmt.Errorf("error creating spectator channel: %v", err)
 		}
 		channelID = channel.ID
+	} else if FakeSpectatorChannelID != "" {
+		channelID = FakeSpectatorChannelID
 	} else {
 		channelID = ""
 	}
