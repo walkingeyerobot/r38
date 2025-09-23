@@ -28,6 +28,7 @@ var SEED = 677483
 func doSetup(t *testing.T, seed int) (*objectbox.ObjectBox, error) {
 	xsrfKey = "test"
 	sock = ""
+	ignoredDiscordCalls = nil
 
 	ob, err := objectbox.NewBuilder().Model(schema.ObjectBoxModel()).
 		Directory(fmt.Sprintf("memory:test-db-%d-%d", time.Now().UnixNano(), os.Getpid())).Build()
