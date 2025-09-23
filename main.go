@@ -1465,6 +1465,7 @@ func GetJSONObject(ob *objectbox.ObjectBox, draftId int64) (DraftJSON, error) {
 			eventJson.Announcements = strings.Split(event.Announcement, "\n")
 		}
 		eventJson.Type = "Pick"
+		eventJson.DraftModified = int64(event.Modified)
 		draftJson.Events = append(draftJson.Events, eventJson)
 	}
 
@@ -1581,7 +1582,7 @@ func doEvent(ob *objectbox.ObjectBox, draftId int64, announcements []string, car
 			Card1:        card1,
 			Card2:        card2,
 			Pack:         pack,
-			Modified:     len(seat.PickedCards),
+			Modified:     len(draft.Events),
 			Round:        int(round),
 		})
 	} else {
@@ -1591,7 +1592,7 @@ func doEvent(ob *objectbox.ObjectBox, draftId int64, announcements []string, car
 			Card1:        card1,
 			Card2:        nil,
 			Pack:         pack,
-			Modified:     len(seat.PickedCards),
+			Modified:     len(draft.Events),
 			Round:        int(round),
 		})
 	}
