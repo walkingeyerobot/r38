@@ -326,5 +326,7 @@ function doParse(client, objstr) {
   } catch (e) {
     console.error(e);
     console.error(JSON.stringify(objBackup));
+    client.end(e.message);
+    client.unref();
   }
 }
