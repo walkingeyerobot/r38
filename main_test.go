@@ -36,18 +36,18 @@ func doSetup(t *testing.T, seed int) (*objectbox.ObjectBox, error) {
 	}
 
 	_, err = schema.BoxForUser(ob).PutMany([]*schema.User{
-		{DiscordName: "Ashiok"},
-		{DiscordName: "Chandra"},
-		{DiscordName: "Elspeth"},
-		{DiscordName: "Jaya"},
-		{DiscordName: "Kaya"},
-		{DiscordName: "Liliana"},
-		{DiscordName: "Nahiri"},
-		{DiscordName: "Serra"},
-		{DiscordName: "Jace"},
-		{DiscordName: "Basri"},
-		{DiscordName: "Ajani"},
-		{DiscordName: "Gideon"},
+		{DiscordName: "Ashiok", DiscordId: "1"},
+		{DiscordName: "Chandra", DiscordId: "2"},
+		{DiscordName: "Elspeth", DiscordId: "3"},
+		{DiscordName: "Jaya", DiscordId: "4"},
+		{DiscordName: "Kaya", DiscordId: "5"},
+		{DiscordName: "Liliana", DiscordId: "6"},
+		{DiscordName: "Nahiri", DiscordId: "7"},
+		{DiscordName: "Serra", DiscordId: "8"},
+		{DiscordName: "Jace", DiscordId: "9"},
+		{DiscordName: "Basri", DiscordId: "10"},
+		{DiscordName: "Ajani", DiscordId: "11"},
+		{DiscordName: "Gideon", DiscordId: "12"},
 	})
 	if err != nil {
 		t.Error(err)
@@ -635,5 +635,88 @@ func TestInPersonDraftEnforceZoneDraftingNextPlayerMakingSubsequentPick(t *testi
 	res := w.Result()
 	if res.StatusCode != http.StatusBadRequest {
 		t.Errorf("expected pick to fail due to zone drafting violation, but status code was %d", res.StatusCode)
+	}
+}
+
+func TestOnlineDraftNotifiesPlayerOfPicksAvailable(t *testing.T) {
+	ob, err := doSetup(t, SEED)
+	if err != nil {
+		t.Errorf("error in setup: %s", err.Error())
+		t.FailNow()
+	}
+	defer ob.Close()
+
+	makeDraft(t, ob, SEED, false, false)
+
+	handlers := NewHandler(ob, false)
+
+	players, seats := populateDraft(t, handlers, 8)
+
+	player := players[0] + 1
+	seat := seats[0]
+
+	token := xsrftoken.Generate(xsrfKey, strconv.FormatInt(int64(player), 16), "pick1")
+
+	// test player makes first pick
+	cardId := findCardToPick(t, ob, seat, 0, 0, false).Id
+	handlers.ServeHTTP(httptest.NewRecorder(),
+		httptest.NewRequest("POST", fmt.Sprintf("/api/pick/?as=%d", player),
+			strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cards": [%d], "xsrfToken": "%s"}`, cardId, token))))
+
+	if !slices.ContainsFunc(ignoredDiscordCalls, func(call DiscordCall) bool {
+		return call.Type == "notify" && strings.Contains(call.Message, fmt.Sprintf("<@%d>", players[7]+1))
+	}) {
+		t.Error("didn't notify player of picks")
+	}
+}
+
+func TestOnlineDraftDoesNotNotifyPlayerOfPicksWhenPassingPlayerHasMorePacks(t *testing.T) {
+	ob, err := doSetup(t, SEED)
+	if err != nil {
+		t.Errorf("error in setup: %s", err.Error())
+		t.FailNow()
+	}
+	defer ob.Close()
+
+	makeDraft(t, ob, SEED, false, false)
+
+	handlers := NewHandler(ob, false)
+
+	players, seats := populateDraft(t, handlers, 8)
+
+	player := players[0] + 1
+	seat := seats[0]
+	nextSeat := seat + 1
+	if nextSeat >= 8 {
+		nextSeat -= 8
+	}
+	nextSeatIndex := slices.Index(seats, nextSeat)
+	nextPlayer := players[nextSeatIndex] + 1
+	followingSeat := seat + 2
+	if followingSeat >= 8 {
+		followingSeat -= 8
+	}
+	followingSeatIndex := slices.Index(seats, followingSeat)
+	followingPlayer := players[followingSeatIndex] + 1
+
+	token := xsrftoken.Generate(xsrfKey, strconv.FormatInt(int64(player), 16), "pick1")
+
+	// test player makes first pick
+	cardId := findCardToPick(t, ob, seat, 0, 0, false).Id
+	handlers.ServeHTTP(httptest.NewRecorder(),
+		httptest.NewRequest("POST", fmt.Sprintf("/api/pick/?as=%d", player),
+			strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cards": [%d], "xsrfToken": "%s"}`, cardId, token))))
+
+	// next player first pick
+	cardId = findCardToPick(t, ob, nextSeat, 0, 0, false).Id
+	nextToken := xsrftoken.Generate(xsrfKey, strconv.FormatInt(int64(nextPlayer), 16), "pick1")
+	handlers.ServeHTTP(httptest.NewRecorder(),
+		httptest.NewRequest("POST", fmt.Sprintf("/api/pick/?as=%d", nextPlayer),
+			strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cards": [%d], "xsrfToken": "%s"}`, cardId, nextToken))))
+
+	if slices.ContainsFunc(ignoredDiscordCalls, func(call DiscordCall) bool {
+		return call.Type == "notify" && strings.Contains(call.Message, fmt.Sprintf("<@%d>", followingPlayer))
+	}) {
+		t.Error("notified player of picks prematurely")
 	}
 }

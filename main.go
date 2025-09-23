@@ -1169,7 +1169,7 @@ func doPick(ob *objectbox.ObjectBox, userId int64, draftId int64, cardId int64, 
 			return pack.Round == int(round)
 		})
 
-		if hasPacksLeft {
+		if !hasPacksLeft {
 			// If there are 0 packs left in the Position, check to see if the player we passed the pack to
 			// is in the same round as us. If the rounds match, NotifyByDraftAndPosition.
 			roundsMatch := seat.Round == nextSeat.Round
