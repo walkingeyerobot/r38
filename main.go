@@ -1551,7 +1551,11 @@ func GetFilteredJSON(ob *objectbox.ObjectBox, draftId int64, userId int64) (stri
 		}
 	}
 
-	return buff.String(), nil
+	response := buff.String()
+	if !strings.HasPrefix(response, "{") {
+		return "", fmt.Errorf("error from filter.js: %s", response)
+	}
+	return response, nil
 }
 
 // doEvent records an event (pick) into the database.
