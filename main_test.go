@@ -59,6 +59,7 @@ func doSetup(t *testing.T, seed int) (*objectbox.ObjectBox, error) {
 }
 
 func makeDraft(t *testing.T, ob *objectbox.ObjectBox, seed int, inPerson bool, pickTwo bool) {
+	makedraft.FakeSpectatorChannelID = "spectator-channel"
 	err := ob.RunInWriteTx(func() error {
 		err := makedraft.MakeDraft(makedraft.Settings{
 			Set:                              ptr("sets/cube.json"),
@@ -719,5 +720,29 @@ func TestOnlineDraftDoesNotNotifyPlayerOfPicksWhenPassingPlayerHasMorePacks(t *t
 		return call.Type == "notify" && strings.Contains(call.Message, fmt.Sprintf("<@%d>", followingPlayer))
 	}) {
 		t.Error("notified player of picks prematurely")
+	}
+}
+
+func TestOnlineDraftLocksSpectatorChannelOnJoin(t *testing.T) {
+	ob, err := doSetup(t, SEED)
+	if err != nil {
+		t.Errorf("error in setup: %s", err.Error())
+		t.FailNow()
+	}
+	defer ob.Close()
+
+	makeDraft(t, ob, SEED, false, false)
+
+	handlers := NewHandler(ob, false)
+
+	w := httptest.NewRecorder()
+	handlers.ServeHTTP(w,
+		httptest.NewRequest("POST", fmt.Sprintf("/api/join/?as=3"),
+			strings.NewReader("{\"id\": 1}")))
+
+	if !slices.ContainsFunc(ignoredDiscordCalls, func(call DiscordCall) bool {
+		return call.Type == "lockChannel" && call.Message == "3" && call.ChannelId == "spectator-channel"
+	}) {
+		t.Error("didn't lock channel")
 	}
 }

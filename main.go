@@ -732,9 +732,9 @@ func doJoin(ob *objectbox.ObjectBox, userId int64, draftId int64) error {
 	}
 
 	if reservedSeat != nil {
-		err = doJoinSeat(ob, userId, reservedSeat)
+		err = doJoinSeat(ob, userId, draft, reservedSeat)
 	} else if len(openSeats) > 0 {
-		err = doJoinSeat(ob, userId, openSeats[mathrand.IntN(len(openSeats))])
+		err = doJoinSeat(ob, userId, draft, openSeats[mathrand.IntN(len(openSeats))])
 	} else {
 		return fmt.Errorf("no non-reserved seats available for user %d in draft %d", userId, draftId)
 	}
@@ -766,17 +766,35 @@ func doJoinSeatPosition(ob *objectbox.ObjectBox, userId int64, draftId int64, po
 		return fmt.Errorf("seat %d (position %d) in draft %d already reserved by user %d", seat.Id, position, draft.Id, seat.ReservedUser.Id)
 	}
 
-	err = doJoinSeat(ob, userId, seat)
+	err = doJoinSeat(ob, userId, draft, seat)
 	return err
 }
 
-func doJoinSeat(ob *objectbox.ObjectBox, userId int64, seat *schema.Seat) error {
+func doJoinSeat(ob *objectbox.ObjectBox, userId int64, draft *schema.Draft, seat *schema.Seat) error {
 	user, err := schema.BoxForUser(ob).Get(uint64(userId))
 	if err != nil {
 		return err
 	}
+
 	seat.User = user
 	_, err = schema.BoxForSeat(ob).Put(seat)
+	if err != nil {
+		return err
+	}
+
+	if dg != nil && draft.SpectatorChannelId != "" && user.DiscordId != "" {
+		err = dg.ChannelPermissionSet(draft.SpectatorChannelId, user.DiscordId, 1, 0, discordgo.PermissionViewChannel)
+		if err != nil {
+			log.Printf("error locking spectator channel for user %s: %s", user.DiscordId, err.Error())
+		}
+	} else {
+		ignoredDiscordCalls = append(ignoredDiscordCalls, DiscordCall{
+			Type:      "lockChannel",
+			ChannelId: draft.SpectatorChannelId,
+			Message:   user.DiscordId,
+		})
+	}
+
 	return err
 }
 
