@@ -1521,6 +1521,7 @@ func GetFilteredJSON(ob *objectbox.ObjectBox, draftId int64, userId int64) (stri
 		return string(ret), nil
 	}
 
+	response := ""
 	var buff bytes.Buffer
 	if sock != "" {
 		conn, err := net.Dial("unix", sock)
@@ -1551,12 +1552,13 @@ func GetFilteredJSON(ob *objectbox.ObjectBox, draftId int64, userId int64) (stri
 		if err != nil {
 			return "", err
 		}
+
+		response = buff.String()
+		if !strings.HasPrefix(response, "{") {
+			return "", fmt.Errorf("error from filter.js: %s", response)
+		}
 	}
 
-	response := buff.String()
-	if !strings.HasPrefix(response, "{") {
-		return "", fmt.Errorf("error from filter.js: %s", response)
-	}
 	return response, nil
 }
 
