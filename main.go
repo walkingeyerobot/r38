@@ -13,6 +13,7 @@ import (
 	"github.com/walkingeyerobot/r38/schema"
 	"io"
 	"log"
+	mathrand "math/rand/v2"
 	"net"
 	"net/http"
 	"os"
@@ -710,22 +711,22 @@ func doJoin(ob *objectbox.ObjectBox, userId int64, draftId int64) error {
 	}
 
 	var reservedSeat *schema.Seat
-	var openSeat *schema.Seat
+	var openSeats []*schema.Seat
 	for _, seat := range draft.Seats {
 		if seat.User != nil && seat.User.Id == uint64(userId) {
 			return fmt.Errorf("user %d already joined %d", userId, draftId)
 		}
 		if seat.ReservedUser != nil && seat.ReservedUser.Id == uint64(userId) {
 			reservedSeat = seat
-		} else if openSeat == nil && seat.User == nil {
-			openSeat = seat
+		} else if seat.User == nil {
+			openSeats = append(openSeats, seat)
 		}
 	}
 
 	if reservedSeat != nil {
 		err = doJoinSeat(ob, userId, reservedSeat)
-	} else if openSeat != nil {
-		err = doJoinSeat(ob, userId, openSeat)
+	} else if len(openSeats) > 0 {
+		err = doJoinSeat(ob, userId, openSeats[mathrand.IntN(len(openSeats))])
 	} else {
 		return fmt.Errorf("no non-reserved seats available for user %d in draft %d", userId, draftId)
 	}
