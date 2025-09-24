@@ -499,6 +499,70 @@ func TestInPersonDraftUndoSubsequentPick(t *testing.T) {
 	}
 }
 
+func TestInPersonDraftPickAfterUndo(t *testing.T) {
+	ob, err := doSetup(t, SEED)
+	defer ob.Close()
+
+	makeDraft(t, ob, SEED, true, false)
+
+	handlers := NewHandler(ob, false)
+
+	players, seats := populateDraft(t, handlers, 8)
+
+	player := players[0] + 1
+
+	card := findCardToPick(t, ob, seats[0], 0, 0, true)
+
+	token := xsrftoken.Generate(xsrfKey, strconv.FormatInt(int64(player), 16), "pick1")
+
+	handlers.ServeHTTP(httptest.NewRecorder(),
+		httptest.NewRequest("POST", fmt.Sprintf("/api/pickrfid/?as=%d", player),
+			strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cardRfids": ["%s"], "xsrfToken": "%s"}`, card.CardId, token))))
+
+	for _, seat := range rand.Perm(3) {
+		player := players[seat+1] + 1
+
+		card := findCardToPick(t, ob, seats[seat+1], 0, 0, true)
+
+		token := xsrftoken.Generate(xsrfKey, strconv.FormatInt(int64(player), 16), "pick1")
+
+		handlers.ServeHTTP(httptest.NewRecorder(),
+			httptest.NewRequest("POST", fmt.Sprintf("/api/pickrfid/?as=%d", player),
+				strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cardRfids": ["%s"], "xsrfToken": "%s"}`, card.CardId, token))))
+	}
+
+	w := httptest.NewRecorder()
+	handlers.ServeHTTP(w,
+		httptest.NewRequest("POST", fmt.Sprintf("/api/undopick/?as=%d", player),
+			strings.NewReader(fmt.Sprintf(`{"draftId": 1, "xsrfToken": "%s"}`, token))))
+	res := w.Result()
+	if res.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(res.Body)
+		t.Errorf("undo failed: %s", body)
+	}
+
+	card = findCardToPick(t, ob, seats[0], 0, 0, true)
+
+	handlers.ServeHTTP(httptest.NewRecorder(),
+		httptest.NewRequest("POST", fmt.Sprintf("/api/pickrfid/?as=%d", player),
+			strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cardRfids": ["%s"], "xsrfToken": "%s"}`, card.CardId, token))))
+
+	draft, err := schema.BoxForDraft(ob).Get(1)
+	if err != nil {
+		t.Errorf("couldn't find draft: %s", err.Error())
+		t.FailNow()
+	}
+
+	for _, event := range draft.Events {
+		for _, otherEvent := range draft.Events {
+			if event.Id != otherEvent.Id && event.Modified == otherEvent.Modified {
+				t.Errorf("duplicate events %+v %+v", event, otherEvent)
+				break
+			}
+		}
+	}
+}
+
 func TestInPersonDraftEnforceZoneDraftingNextPlayerMakingFirstPick(t *testing.T) {
 	ob, err := doSetup(t, SEED)
 	if err != nil {
