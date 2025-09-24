@@ -1634,7 +1634,7 @@ func doEvent(ob *objectbox.ObjectBox, draftId int64, announcements []string, car
 			Card1:        card1,
 			Card2:        card2,
 			Pack:         pack,
-			Modified:     len(draft.Events),
+			Modified:     nextEventModifiedValue(draft),
 			Round:        int(round),
 		})
 	} else {
@@ -1644,13 +1644,22 @@ func doEvent(ob *objectbox.ObjectBox, draftId int64, announcements []string, car
 			Card1:        card1,
 			Card2:        nil,
 			Pack:         pack,
-			Modified:     len(draft.Events),
+			Modified:     nextEventModifiedValue(draft),
 			Round:        int(round),
 		})
 	}
 
 	_, err = draftBox.Put(draft)
 	return err
+}
+
+func nextEventModifiedValue(draft *schema.Draft) int {
+	if len(draft.Events) == 0 {
+		return 1
+	}
+	return slices.MaxFunc(draft.Events, func(a, b *schema.Event) int {
+		return a.Modified - b.Modified
+	}).Modified + 1
 }
 
 func GetDraftList(userId int64, ob *objectbox.ObjectBox) (DraftList, error) {
