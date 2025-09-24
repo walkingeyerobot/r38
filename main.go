@@ -615,7 +615,7 @@ func ServeAPIUndoPick(_ http.ResponseWriter, r *http.Request, userID int64, ob *
 		return err
 	}
 	seatIndex := slices.IndexFunc(draft.Seats, func(seat *schema.Seat) bool {
-		return seat.User.Id == uint64(userID)
+		return seat.User != nil && seat.User.Id == uint64(userID)
 	})
 	if seatIndex < 0 {
 		return fmt.Errorf("couldn't undo pick; user %d has no seat in draft %d", userID, draft.Id)
