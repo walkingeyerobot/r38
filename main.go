@@ -48,7 +48,8 @@ const Pink = 0xE50389
 var secretKeyNoOneWillEverGuess = []byte(os.Getenv("SESSION_SECRET"))
 var xsrfKey string
 var store = sessions.NewCookieStore(secretKeyNoOneWillEverGuess)
-var sock string
+var filterSocket string
+var makeDraftSocket string
 var dg *discordgo.Session
 
 type DiscordCall struct {
@@ -95,9 +96,42 @@ func main() {
 		port = "12264"
 	}
 
-	sock, valid = os.LookupEnv("R38_SOCK")
+	filterSocket, valid = os.LookupEnv("R38_SOCK")
 	if !valid {
-		sock = "./r38.sock"
+		filterSocket = "./r38.sock"
+	}
+
+	makeDraftSocket = "./r38.makedraft.sock"
+	listener, err := net.Listen("unix", makeDraftSocket)
+	if err != nil {
+		log.Printf("Error opening makedraft socket: %s", err.Error())
+	} else {
+		defer func(listener net.Listener) {
+			err := listener.Close()
+			if err != nil {
+				log.Printf("Error closing makedraft socket: %s", err.Error())
+			}
+		}(listener)
+		go func() {
+			for {
+				conn, err := listener.Accept()
+				if err != nil {
+					return
+				}
+				buffer := make([]byte, 1024)
+				n, err := conn.Read(buffer)
+				if err != nil {
+					return
+				}
+
+				msg := string(buffer[:n])
+				_, err = MakeDraftFromMessage(ob, msg, "")
+				if err != nil {
+					log.Printf("Error handling makedraft message: %s", err.Error())
+					return
+				}
+			}
+		}()
 	}
 
 	server := &http.Server{
@@ -1572,8 +1606,8 @@ func GetFilteredJSON(ob *objectbox.ObjectBox, draftId int64, userId int64) (stri
 
 	response := ""
 	var buff bytes.Buffer
-	if sock != "" {
-		conn, err := net.Dial("unix", sock)
+	if filterSocket != "" {
+		conn, err := net.Dial("unix", filterSocket)
 		if err != nil {
 			return "", fmt.Errorf("error connecting to filter service: %w", err)
 		}
@@ -1781,34 +1815,44 @@ func DiscordReady(s *discordgo.Session, _ *discordgo.Ready) {
 	}
 }
 
+func MakeDraftFromMessage(ob *objectbox.ObjectBox, msg string, authorID string) (string, error) {
+	args, err := shlex.Split(msg)
+	if err != nil {
+		return "", err
+	}
+	if strings.HasPrefix(msg, "makedraft") {
+		settings, err := makedraft.ParseSettings(args)
+		if authorID == Henchman {
+			*settings.Simulate = true
+		}
+
+		var resp string
+		if err != nil {
+			resp = fmt.Sprintf("%s", err.Error())
+		} else {
+			err = ob.RunInWriteTx(func() error {
+				return makedraft.MakeDraft(settings, ob)
+			})
+			if err != nil {
+				resp = fmt.Sprintf("can't commit :( %s", err.Error())
+			} else {
+				resp = fmt.Sprintf("done!")
+			}
+		}
+		return resp, nil
+	}
+	return "Unknown command", nil
+}
+
 func DiscordMsgCreate(ob *objectbox.ObjectBox) func(s *discordgo.Session, msg *discordgo.MessageCreate) {
 	return func(s *discordgo.Session, msg *discordgo.MessageCreate) {
 		if msg.Author.ID == Boss || msg.Author.ID == Henchman {
 			if msg.GuildID == "" {
-				args, err := shlex.Split(msg.Content)
+				resp, err := MakeDraftFromMessage(ob, msg.Content, msg.Author.ID)
 				if err != nil {
 					_, _ = dg.ChannelMessageSend(msg.ChannelID, err.Error())
 					return
-				}
-				if strings.HasPrefix(msg.Content, "makedraft") {
-					settings, err := makedraft.ParseSettings(args)
-					if msg.Author.ID == Henchman {
-						*settings.Simulate = true
-					}
-
-					var resp string
-					if err != nil {
-						resp = fmt.Sprintf("%s", err.Error())
-					} else {
-						err = ob.RunInWriteTx(func() error {
-							return makedraft.MakeDraft(settings, ob)
-						})
-						if err != nil {
-							resp = fmt.Sprintf("can't commit :( %s", err.Error())
-						} else {
-							resp = fmt.Sprintf("done!")
-						}
-					}
+				} else if len(resp) > 0 {
 					_, err = dg.ChannelMessageSend(msg.ChannelID, resp)
 					if err != nil {
 						log.Printf("Error responding to discord bot DM: %s", err)
