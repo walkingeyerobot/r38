@@ -1,4 +1,5 @@
 draft.db*
+/objectbox/
 *.csv
 /*.env
 run.sh
