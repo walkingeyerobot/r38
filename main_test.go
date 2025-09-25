@@ -27,7 +27,7 @@ var SEED = 677483
 
 func doSetup(t *testing.T, seed int) (*objectbox.ObjectBox, error) {
 	xsrfKey = "test"
-	sock = ""
+	filterSocket = ""
 	ignoredDiscordCalls = nil
 
 	ob, err := objectbox.NewBuilder().Model(schema.ObjectBoxModel()).

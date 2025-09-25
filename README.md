@@ -22,14 +22,6 @@ bash <(curl -s https://raw.githubusercontent.com/objectbox/objectbox-go/main/ins
 
 You can now run the server without OAuth. You will always be considered logged in as userId 1. To be logged in as a different user, add ?as=x to the end of the url you want to view, where x is the id of the user you want to view the page as.
 
-### Using sqlite
-
-```bash
-source r38-secret*.env; go run . -auth=false
-```
-
-### Using objectbox
-
 ```bash
 source r38-secret*.env; go run . -auth=false -objectbox=true
 ```
@@ -90,27 +82,7 @@ EOF
 
 ## Configure a draft
 
-### Using sqlite
-
-MTGO draft:
-
-```bash
-go run makedraft_cli/*.go --name="name of draft"
-```
-
-Paper draft:
-
-```bash
-go run makedraft_cli/*.go --inPerson --name="name of draft"
-```
-
-Paper draft with automatic seat and/or pack assignment, for testing:
-
-```bash
-go run makedraft_cli/*.go --inPerson --name="name of draft" [--assignSeats] [--assignPacks]
-```
-
-### Using objectbox
+### With no server running
 
 MTGO draft:
 
@@ -130,32 +102,24 @@ Paper draft with automatic seat and/or pack assignment, for testing:
 go run makedraft_cli/*.go --inPerson --name="name of draft" --database_dir=objectbox [--assignSeats] [--assignPacks]
 ```
 
+### With server running
+
+Same flags as above, but send them to the server's socket:
+
+```bash
+echo "makedraft --name=\"name of draft\" --database_dir=objectbox" | nc -U -l ./r38.makedraft.sock
+````
+
 ## Initialize fake users
 
 The following will prepopulate the server with 11 fake users that you can
 impersonate with the `?as=` query param.
-
-### Using sqlite
-
-```bash
-sqlite3 draft.db < development/InitUsers.sql
-```
-
-### Using objectbox
 
 ```bash
 go run insertusers_cli/*.go
 ```
 
 ## Start the server
-
-### Using sqlite
-
-```bash
-source r38-secret*.env; go run .
-```
-
-### Using objectbox
 
 ```bash
 source r38-secret*.env; go run . --objectbox=true
