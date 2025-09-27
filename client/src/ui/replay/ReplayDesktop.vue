@@ -9,12 +9,7 @@ Root component for desktop layout
     <ControlsRow />
     <div class="main">
       <PlayerSelector class="table" />
-      <DraftPicker
-        v-if="showDraftPicker"
-        class="picker"
-        :showDeckBuilder="true"
-        :inPersonDraft="inPersonDraft"
-      />
+      <DraftPicker v-if="showDraftPicker" class="picker" :showDeckBuilder="true" />
       <DraftView v-else class="grid" />
     </div>
   </div>
@@ -37,10 +32,6 @@ export default defineComponent({
 
   props: {
     showDraftPicker: {
-      type: Boolean,
-      required: true,
-    },
-    inPersonDraft: {
       type: Boolean,
       required: true,
     },
