@@ -117,10 +117,9 @@ async function fetchDraft(force: boolean = false) {
     draftStore.loadDraft(response);
     loaded.value = true;
 
-    // Auto-advance to the drafting/spectating view if the draft is filled and we're
-    // not in person (for in person drafts we give the user a chance to see where they're sitting
-    // before advancing)
-    if (!draftStore.hasSeatsAvailable && !draftStore.inPerson) {
+    // Auto-advance to the drafting/spectating view if we're not in-person (for in-person drafts
+    // we give the user a chance to see where they're sitting before advancing)
+    if (isSelfSeated.value && !draftStore.inPerson) {
       router.replace(appendImpersonation(`/draft/${draftId}/replay`));
     }
   }, force);
