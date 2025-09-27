@@ -208,6 +208,8 @@ function doParse(client, objstr) {
       // sanity check the round
       var stateRound = state[event.position].round;
       if (stateRound !== event.round) {
+        console.error(JSON.stringify(event));
+        console.error(JSON.stringify(state[event.position]));
         throw Error('problem with rounds');
       }
 
