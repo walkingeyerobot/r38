@@ -310,6 +310,7 @@ func NewHandler(ob *objectbox.ObjectBox, useAuth bool) http.Handler {
 	addHandler("/api/getcardpack/", ServeAPIGetCardPack, true)
 	addHandler("/api/samplepack/", ServeAPISamplePack, true)
 	addHandler("/api/set/", ServeAPISet, true)
+	addHandler("/api/makedraft/", ServeAPIMakeDraft, false)
 
 	addHandler("/api/dev/forceEnd/", ServeAPIForceEnd, false)
 
@@ -350,6 +351,44 @@ func ServeAPIArchive(_ http.ResponseWriter, r *http.Request, userID int64, ob *o
 	}
 
 	return err
+}
+
+// ServeAPIMakeDraft serves the /api/makedraft endpoint.
+func ServeAPIMakeDraft(_ http.ResponseWriter, r *http.Request, userID int64, ob *objectbox.ObjectBox) error {
+	if r.Method != "POST" {
+		return MethodNotAllowedError
+	}
+	if userID != 1 {
+		return nil
+	}
+
+	bodyBytes, err := io.ReadAll(r.Body)
+	if err != nil {
+		return fmt.Errorf("error reading post body: %w", err)
+	}
+	var postedSettings PostedMakeDraft
+	err = json.Unmarshal(bodyBytes, &postedSettings)
+	if err != nil {
+		return fmt.Errorf("error parsing post body: %w", err)
+	}
+
+	if len(postedSettings.Set) == 0 {
+		postedSettings.Set = "sets/cube.json"
+	}
+	flagVal := false
+	settings := makedraft.Settings{
+		Name:        &postedSettings.Name,
+		Set:         &postedSettings.Set,
+		InPerson:    &postedSettings.InPerson,
+		AssignPacks: &postedSettings.AssignPacks,
+		AssignSeats: &postedSettings.AssignSeats,
+		PickTwo:     &postedSettings.PickTwo,
+		Seed:        &postedSettings.Seed,
+		Verbose:     &flagVal,
+		Simulate:    &flagVal,
+	}
+
+	return makedraft.MakeDraft(settings, ob)
 }
 
 // ServeAPIDraft serves the /api/draft endpoint.
