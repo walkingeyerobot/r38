@@ -19,10 +19,6 @@ import (
 	"time"
 )
 
-func ptr[T any](v T) *T {
-	return &v
-}
-
 var SEED = 677483
 
 func doSetup(t *testing.T, seed int) (*objectbox.ObjectBox, error) {
@@ -58,39 +54,22 @@ func doSetup(t *testing.T, seed int) (*objectbox.ObjectBox, error) {
 	return ob, err
 }
 
-func makeDraft(t *testing.T, ob *objectbox.ObjectBox, seed int, inPerson bool, pickTwo bool) {
+func makeDraft(t *testing.T, handlers http.Handler, seed int, inPerson bool, pickTwo bool) {
 	makedraft.FakeSpectatorChannelID = "spectator-channel"
-	err := ob.RunInWriteTx(func() error {
-		err := makedraft.MakeDraft(makedraft.Settings{
-			Set:                              ptr("sets/cube.json"),
-			Database:                         ptr(""),
-			Seed:                             &seed,
-			InPerson:                         ptr(inPerson),
-			AssignSeats:                      ptr(false),
-			AssignPacks:                      ptr(false),
-			Verbose:                          ptr(false),
-			Simulate:                         ptr(false),
-			Name:                             ptr("test draft"),
-			MaxMythic:                        ptr(0),
-			MaxRare:                          ptr(0),
-			MaxUncommon:                      ptr(0),
-			MaxCommon:                        ptr(0),
-			PackCommonColorStdevMax:          ptr(0.0),
-			PackCommonRatingMin:              ptr(0.0),
-			PackCommonRatingMax:              ptr(0.0),
-			DraftCommonColorStdevMax:         ptr(0.0),
-			PackCommonColorIdentityStdevMax:  ptr(0.0),
-			DraftCommonColorIdentityStdevMax: ptr(0.0),
-			DfcMode:                          ptr(false),
-			AbortMissingCommonColor:          ptr(false),
-			AbortMissingCommonColorIdentity:  ptr(false),
-			AbortDuplicateThreeColorIdentityUncommons: ptr(false),
-			PickTwo: ptr(pickTwo),
-		}, ob)
-		return err
-	})
-	if err != nil {
-		t.Error(err)
+	w := httptest.NewRecorder()
+	handlers.ServeHTTP(w,
+		httptest.NewRequest("POST", "/api/makedraft/?as=1",
+			strings.NewReader(fmt.Sprintf(`{
+				"name": "test draft",
+				"seed": %d,
+				"inPerson": %t,
+				"pickTwo": %t
+			}`, seed, inPerson, pickTwo))))
+
+	res := w.Result()
+	if res.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(res.Body)
+		t.Errorf("error making draft: %s", body)
 		t.FailNow()
 	}
 }
@@ -156,9 +135,9 @@ func TestOnlineDraft(t *testing.T) {
 	}
 	defer ob.Close()
 
-	makeDraft(t, ob, SEED, false, false)
-
 	handlers := NewHandler(ob, false)
+
+	makeDraft(t, handlers, SEED, false, false)
 
 	players, seats := populateDraft(t, handlers, 8)
 
@@ -196,9 +175,9 @@ func TestInPersonDraft(t *testing.T) {
 	}
 	defer ob.Close()
 
-	makeDraft(t, ob, SEED, true, false)
-
 	handlers := NewHandler(ob, false)
+
+	makeDraft(t, handlers, SEED, true, false)
 
 	players, seats := populateDraft(t, handlers, 8)
 
@@ -239,9 +218,9 @@ func FuzzInPersonDraft(f *testing.F) {
 		}
 		defer ob.Close()
 
-		makeDraft(t, ob, SEED, true, false)
-
 		handlers := NewHandler(ob, false)
+
+		makeDraft(t, handlers, SEED, true, false)
 
 		players, seats := populateDraft(t, handlers, 8)
 
@@ -281,9 +260,9 @@ func TestInPersonPickTwoDraft(t *testing.T) {
 	}
 	defer ob.Close()
 
-	makeDraft(t, ob, SEED, true, true)
-
 	handlers := NewHandler(ob, false)
+
+	makeDraft(t, handlers, SEED, true, true)
 
 	players, seats := populateDraft(t, handlers, 4)
 
@@ -325,9 +304,9 @@ func TestInPersonDraftUndoFirstPick(t *testing.T) {
 	ob, err := doSetup(t, SEED)
 	defer ob.Close()
 
-	makeDraft(t, ob, SEED, true, false)
-
 	handlers := NewHandler(ob, false)
+
+	makeDraft(t, handlers, SEED, true, false)
 
 	players, seats := populateDraft(t, handlers, 8)
 
@@ -381,9 +360,9 @@ func TestInPersonDraftIgnoresDuplicatePick(t *testing.T) {
 	ob, err := doSetup(t, SEED)
 	defer ob.Close()
 
-	makeDraft(t, ob, SEED, true, false)
-
 	handlers := NewHandler(ob, false)
+
+	makeDraft(t, handlers, SEED, true, false)
 
 	players, seats := populateDraft(t, handlers, 8)
 
@@ -428,9 +407,9 @@ func TestInPersonDraftUndoSubsequentPick(t *testing.T) {
 	ob, err := doSetup(t, SEED)
 	defer ob.Close()
 
-	makeDraft(t, ob, SEED, true, false)
-
 	handlers := NewHandler(ob, false)
+
+	makeDraft(t, handlers, SEED, true, false)
 
 	players, seats := populateDraft(t, handlers, 8)
 
@@ -503,9 +482,9 @@ func TestInPersonDraftPickAfterUndo(t *testing.T) {
 	ob, err := doSetup(t, SEED)
 	defer ob.Close()
 
-	makeDraft(t, ob, SEED, true, false)
-
 	handlers := NewHandler(ob, false)
+
+	makeDraft(t, handlers, SEED, true, false)
 
 	players, seats := populateDraft(t, handlers, 8)
 
@@ -570,9 +549,9 @@ func TestInPersonDraftEnforceZoneDraftingNextPlayerMakingFirstPick(t *testing.T)
 	}
 	defer ob.Close()
 
-	makeDraft(t, ob, SEED, true, false)
-
 	handlers := NewHandler(ob, false)
+
+	makeDraft(t, handlers, SEED, true, false)
 
 	players, seats := populateDraft(t, handlers, 8)
 
@@ -620,9 +599,9 @@ func TestInPersonDraftEnforceZoneDraftingNextPlayerMakingSubsequentPick(t *testi
 	}
 	defer ob.Close()
 
-	makeDraft(t, ob, SEED, true, false)
-
 	handlers := NewHandler(ob, false)
+
+	makeDraft(t, handlers, SEED, true, false)
 
 	players, seats := populateDraft(t, handlers, 8)
 
@@ -712,9 +691,9 @@ func TestOnlineDraftNotifiesPlayerOfPicksAvailable(t *testing.T) {
 	}
 	defer ob.Close()
 
-	makeDraft(t, ob, SEED, false, false)
-
 	handlers := NewHandler(ob, false)
+
+	makeDraft(t, handlers, SEED, false, false)
 
 	players, seats := populateDraft(t, handlers, 8)
 
@@ -744,9 +723,9 @@ func TestOnlineDraftDoesNotNotifyPlayerOfPicksWhenPassingPlayerHasMorePacks(t *t
 	}
 	defer ob.Close()
 
-	makeDraft(t, ob, SEED, false, false)
-
 	handlers := NewHandler(ob, false)
+
+	makeDraft(t, handlers, SEED, false, false)
 
 	players, seats := populateDraft(t, handlers, 8)
 
@@ -795,9 +774,9 @@ func TestOnlineDraftLocksSpectatorChannelOnJoin(t *testing.T) {
 	}
 	defer ob.Close()
 
-	makeDraft(t, ob, SEED, false, false)
-
 	handlers := NewHandler(ob, false)
+
+	makeDraft(t, handlers, SEED, false, false)
 
 	w := httptest.NewRecorder()
 	handlers.ServeHTTP(w,

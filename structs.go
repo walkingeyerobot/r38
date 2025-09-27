@@ -144,6 +144,17 @@ type PostedSet struct {
 	Set string `json:"set"`
 }
 
+// PostedMakeDraft is JSON accepted from the client to make a new draft.
+type PostedMakeDraft struct {
+	Name        string `json:"name"`
+	Set         string `json:"set"`
+	InPerson    bool   `json:"inPerson"`
+	AssignSeats bool   `json:"assignSeats"`
+	AssignPacks bool   `json:"assignPacks"`
+	PickTwo     bool   `json:"pickTwo"`
+	Seed        int    `json:"seed"`
+}
+
 // These structs are for exporting in bulk to .dek files.
 
 // BulkMTGOExport is used to bulk export .dek files for the admin.
