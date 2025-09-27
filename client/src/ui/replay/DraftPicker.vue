@@ -1,11 +1,7 @@
 <!-- eslint-disable vue/no-deprecated-v-on-native-modifier -->
 <template>
   <div class="_draft-picker">
-    <div v-if="inPersonDraft" class="main-content scan">
-      <span @click.native="postScanMessage()"> Scan now </span>
-      <button @click.native="onUndoPickClicked()">Undo last pick</button>
-    </div>
-    <div v-else-if="availablePack" class="main-content picks">
+    <div v-if="availablePack" class="main-content picks">
       <CardView
         v-for="(cardId, i) in availablePack.cards"
         :key="cardId"
@@ -33,9 +29,6 @@ import type { CardPack, DraftSeat } from "@/draft/DraftState";
 import { fetchEndpoint } from "@/fetch/fetchEndpoint";
 import { ROUTE_PICK } from "@/rest/api/pick/pick";
 import { delay } from "@/util/delay";
-import { ROUTE_PICK_RFID } from "@/rest/api/pickrfid/pickrfid.ts";
-import { ROUTE_UNDO_PICK } from "@/rest/api/undopick/undopick.ts";
-import { playErrorSound, playScanSound } from "@/sfx/sfx.ts";
 
 export default defineComponent({
   components: {
@@ -45,10 +38,6 @@ export default defineComponent({
 
   props: {
     showDeckBuilder: {
-      type: Boolean,
-      required: true,
-    },
-    inPersonDraft: {
       type: Boolean,
       required: true,
     },
@@ -64,7 +53,6 @@ export default defineComponent({
       animationDelays,
       submittingPick: false,
       pickedCardId: null as number | null,
-      scanListener: this.onRfidScan as EventListener,
     };
   },
 
@@ -124,54 +112,6 @@ export default defineComponent({
       this.pickedCardId = null;
     },
 
-    async onRfidScan(event: CustomEvent) {
-      if (this.submittingPick) {
-        return;
-      }
-      this.submittingPick = true;
-
-      const cardRfid = decodeURIComponent(
-        Array.prototype.map
-          .call(atob(event.detail), (c) => `%${`00${c.charCodeAt(0).toString(16)}`.slice(-2)}`)
-          .slice(3)
-          .join(""),
-      );
-
-      const start = Date.now();
-      try {
-        const response = await fetchEndpoint(ROUTE_PICK_RFID, {
-          draftId: draftStore.draftId,
-          cardRfids: [cardRfid],
-          xsrfToken: draftStore.pickXsrf,
-          as: authStore.user?.id,
-        });
-        playScanSound(this.currentSeat.player);
-        const elapsed = Date.now() - start;
-        await delay(500 - elapsed);
-
-        draftStore.loadDraft(response);
-      } catch (_e) {
-        playErrorSound(this.currentSeat.player);
-      }
-
-      this.submittingPick = false;
-    },
-
-    async onUndoPickClicked() {
-      const response = await fetchEndpoint(ROUTE_UNDO_PICK, {
-        draftId: draftStore.draftId,
-        xsrfToken: draftStore.pickXsrf,
-        as: authStore.user?.id,
-      });
-      draftStore.loadDraft(response);
-    },
-
-    postScanMessage() {
-      postMessage("scan");
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (window as any).webkit?.messageHandlers?.scanner?.postMessage("scan");
-    },
-
     getCardCssClass(cardId: number) {
       const isPicked = cardId == this.pickedCardId;
       return {
@@ -179,15 +119,6 @@ export default defineComponent({
         "not-picked-fade": this.submittingPick && !isPicked,
       };
     },
-  },
-
-  mounted() {
-    document.body.addEventListener("rfidScan", this.scanListener);
-    this.postScanMessage();
-  },
-
-  beforeUnmount() {
-    document.body.removeEventListener("rfidScan", this.scanListener);
   },
 });
 </script>

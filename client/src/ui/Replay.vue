@@ -2,12 +2,8 @@
 <template>
   <div class="_replay" @mousedown.capture="onCaptureMouseDown" @mousedown="onBubbleMouseDown">
     <template v-if="status == 'loaded'">
-      <ReplayMobile
-        v-if="formatStore.layout == 'mobile'"
-        :showDraftPicker="showDraftPicker"
-        :inPersonDraft="inPersonDraft"
-      />
-      <ReplayDesktop v-else :showDraftPicker="showDraftPicker" :inPersonDraft="inPersonDraft" />
+      <ReplayMobile v-if="formatStore.layout == 'mobile'" :showDraftPicker="showDraftPicker" />
+      <ReplayDesktop v-else :showDraftPicker="showDraftPicker" />
     </template>
   </div>
 </template>
@@ -82,10 +78,6 @@ export default defineComponent({
         replayStore.eventPos == replayStore.events.length &&
         isAuthedUserSelected(authStore, draftStore, replayStore)
       );
-    },
-
-    inPersonDraft(): boolean {
-      return draftStore.isInPersonDraft;
     },
   },
 

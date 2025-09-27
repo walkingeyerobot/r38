@@ -10,12 +10,7 @@ An interface for mobile use
       {{ draftStore.draftName }}
     </div>
 
-    <DraftPicker
-      v-if="showDraftPicker"
-      class="main-content picker"
-      :showDeckBuilder="false"
-      :inPersonDraft="inPersonDraft"
-    />
+    <DraftPicker v-if="showDraftPicker" class="main-content picker" :showDeckBuilder="false" />
     <CardGrid v-else class="main-content grid" />
 
     <div class="footer">
@@ -71,10 +66,6 @@ export default defineComponent({
 
   props: {
     showDraftPicker: {
-      type: Boolean,
-      required: true,
-    },
-    inPersonDraft: {
       type: Boolean,
       required: true,
     },
