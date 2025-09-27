@@ -1246,7 +1246,6 @@ func doPick(ob *objectbox.ObjectBox, userId int64, draftId int64, cardId int64, 
 			// but by explicitly storing it, we allow ourselves the possibility of expanding support to
 			// weirder formats.
 			seat.Round = len(seat.PickedCards)/cardsPerPack + 1
-			round = int64(seat.Round)
 
 			// If the rounds do NOT match from earlier, we have a situation where players are in different
 			// rounds. Look for a blocking player.
