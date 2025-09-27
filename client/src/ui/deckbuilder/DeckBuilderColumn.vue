@@ -18,6 +18,8 @@
       @click.left="select(index)"
       @click.middle="zoom(index)"
       @dblclick="switchSection(index)"
+      @mouseenter="hover(card)"
+      @mouseleave="unhover()"
       class="card"
       :class="{
         cardDropAbove: dropTargetIndex !== null && index === 0 && dropTargetIndex === 0,
@@ -34,7 +36,7 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import type { MtgCard } from "@/draft/DraftState";
+import type { DraftCard, MtgCard } from "@/draft/DraftState";
 import {
   type CardColumn,
   type CardLocation,
@@ -43,6 +45,7 @@ import {
 } from "@/state/DeckBuilderModule";
 import { type Rectangle, intersects } from "@/util/rectangle";
 import DeckBuilderSection from "./DeckBuilderSection.vue";
+import { replayFocusedCard } from "@/ui/replay/replayFocusedCard";
 
 export default defineComponent({
   name: "DeckBuilderColumn",
@@ -213,6 +216,14 @@ export default defineComponent({
         cardIndex,
         maindeck: this.maindeck,
       });
+    },
+
+    hover(card: DraftCard) {
+      replayFocusedCard.value = card;
+    },
+
+    unhover() {
+      replayFocusedCard.value = null;
     },
 
     switchSection(cardIndex: number) {

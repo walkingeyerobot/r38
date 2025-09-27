@@ -11,6 +11,9 @@ Root component for desktop layout
       <PlayerSelector class="table" />
       <DraftPicker v-if="showDraftPicker" class="picker" :showDeckBuilder="true" />
       <DraftView v-else class="grid" />
+      <div class="card-detail-cnt" v-if="focusedCard">
+        <SimpleCardImage :card="focusedCard" class="card-detail" />
+      </div>
     </div>
   </div>
 </template>
@@ -21,6 +24,10 @@ import ControlsRow from "./ControlsRow.vue";
 import PlayerSelector from "./player_selector/PlayerSelector.vue";
 import DraftPicker from "./DraftPicker.vue";
 import DraftView from "./DraftView.vue";
+import SimpleCardImage from "@/ui/picker/SimpleCardImage.vue";
+
+import type { DraftCard } from "@/draft/DraftState";
+import { replayFocusedCard } from "@/ui/replay/replayFocusedCard";
 
 export default defineComponent({
   components: {
@@ -28,12 +35,19 @@ export default defineComponent({
     DraftView,
     ControlsRow,
     PlayerSelector,
+    SimpleCardImage,
   },
 
   props: {
     showDraftPicker: {
       type: Boolean,
       required: true,
+    },
+  },
+
+  computed: {
+    focusedCard(): DraftCard | null {
+      return replayFocusedCard.value;
     },
   },
 });
@@ -51,6 +65,7 @@ export default defineComponent({
   flex: 1;
   flex-direction: row;
   overflow: hidden;
+  position: relative;
 }
 
 .table {
@@ -61,5 +76,25 @@ export default defineComponent({
 .grid,
 .picker {
   flex: 1;
+}
+
+.card-detail-cnt {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+
+  pointer-events: none;
+}
+
+.card-detail {
+  height: 400px;
+  margin-top: 50px;
+  margin-right: 50px;
 }
 </style>
