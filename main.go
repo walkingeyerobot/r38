@@ -8,9 +8,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/objectbox/objectbox-go/objectbox"
-	"github.com/walkingeyerobot/r38/draftconfig"
-	"github.com/walkingeyerobot/r38/schema"
 	"io"
 	"log"
 	mathrand "math/rand/v2"
@@ -23,6 +20,10 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/objectbox/objectbox-go/objectbox"
+	"github.com/walkingeyerobot/r38/draftconfig"
+	"github.com/walkingeyerobot/r38/schema"
 
 	"github.com/walkingeyerobot/r38/makedraft"
 
@@ -1549,6 +1550,7 @@ func GetJSONObject(ob *objectbox.ObjectBox, draftId int64) (DraftJSON, error) {
 	}
 	draftJson.DraftName = draft.Name
 	draftJson.InPerson = draft.InPerson
+	draftJson.PickTwo = draft.PickTwo
 
 	for _, seat := range draft.Seats {
 		if seat.User != nil {

@@ -29,6 +29,7 @@ export const draftStore = vuexModule(
     events: [],
     isComplete: false,
     inPerson: false,
+    pickTwo: false,
     parseError: null,
   } as State,
   {
@@ -76,6 +77,7 @@ export const draftStore = vuexModule(
         state.events = events;
         state.isComplete = timelineGenerator.isDraftComplete();
         state.inPerson = parsed.state.inPerson;
+        state.pickTwo = parsed.state.pickTwo;
       },
 
       pushEvent(state: State, srcEvent: SourceEvent) {
@@ -127,6 +129,7 @@ interface State {
   events: TimelineEvent[];
   isComplete: boolean;
   inPerson: boolean;
+  pickTwo: boolean;
 
   /** Non-null if there was an error while parsing the event stream */
   parseError: Error | null;
