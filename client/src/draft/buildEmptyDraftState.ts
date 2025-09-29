@@ -28,5 +28,6 @@ export function buildEmptyDraftState(): DraftState {
     packs: new Map(),
     locations: new Map(),
     inPerson: false,
+    pickTwo: false,
   };
 }
