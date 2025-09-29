@@ -3,7 +3,7 @@
   <div class="_draft-picker">
     <div v-if="availablePack" class="main-content picks">
       <CardView
-        v-for="(cardId, i) in availablePack.cards"
+        v-for="cardId in availablePack.cards"
         :key="cardId"
         :card="draftStore.getCard(cardId)"
         :selection-style="pickedCards.includes(cardId) ? 'will-pick' : undefined"
