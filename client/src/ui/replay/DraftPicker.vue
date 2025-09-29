@@ -131,6 +131,7 @@ export default defineComponent({
       draftStore.loadDraft(response);
 
       this.submittingPick = false;
+      this.pickedCards.length = 0;
     },
 
     getCardCssClass(cardId: number) {
