@@ -7,15 +7,10 @@ Displays a single card
 <template>
   <div class="_card">
     <div class="under-layer" :class="underlayerClass">
-      <div class="shadow" v-if="selectionStyle != `will-pick`"></div>
+      <div class="shadow"></div>
       <div class="selection-outline" :class="outlineClass"></div>
     </div>
-    <img
-      class="card-img"
-      :alt="renderInfo.displayName"
-      :src="renderInfo.imageUrl"
-      :class="selectionStyle == `will-pick` ? `will-pick` : undefined"
-    />
+    <img class="card-img" :alt="renderInfo.displayName" :src="renderInfo.imageUrl" />
   </div>
 </template>
 
@@ -32,7 +27,7 @@ export default defineComponent({
     },
 
     selectionStyle: {
-      type: String as () => "none" | "picked" | "returned" | "will-pick",
+      type: String as () => "none" | "picked" | "returned",
     },
   },
 
@@ -92,7 +87,6 @@ function getImageSrc(card: DraftCard): string {
   cursor: pointer;
   display: flex;
   position: relative;
-  z-index: 0;
 }
 
 .under-layer {
@@ -163,10 +157,5 @@ function getImageSrc(card: DraftCard): string {
   background: #aaa;
   border-radius: 10px;
   overflow: hidden;
-}
-
-.card-img.will-pick {
-  outline: 2px solid #fff9ec;
-  box-shadow: 0 0 12px 5px #ffbc14;
 }
 </style>

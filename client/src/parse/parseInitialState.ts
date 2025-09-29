@@ -69,7 +69,6 @@ class StateParser {
         packs: this._packs,
         locations: this._locations,
         inPerson: srcData.inPerson,
-        pickTwo: srcData.pickTwo,
       },
       cards: this._cards,
     };

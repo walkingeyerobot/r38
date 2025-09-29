@@ -8,7 +8,6 @@ export interface DraftState {
   packs: Map<number, CardContainer>;
   locations: Map<number, PackContainer>;
   inPerson: boolean;
-  pickTwo: boolean;
 }
 
 export interface DraftSeat {
