@@ -17,23 +17,11 @@ An interface for mobile use
       <img class="icon" :src="selectedUserIcon" />
 
       <div class="footer-center">
-        <button
-          v-long-press="400"
-          ref="prevButton"
-          @click="onPrevClick"
-          @contextmenu.prevent
-          class="left-button"
-        >
+        <button ref="prevButton" @click="onPrevClick" @contextmenu.prevent class="left-button">
           Prev
         </button>
         <TimelineButton class="timeline-button" popover-alignment="center above" />
-        <button
-          v-long-press="400"
-          ref="nextButton"
-          @click="onNextClick"
-          @contextmenu.prevent
-          class="right-button"
-        >
+        <button ref="nextButton" @click="onNextClick" @contextmenu.prevent class="right-button">
           Next
         </button>
       </div>
@@ -44,7 +32,7 @@ An interface for mobile use
 </template>
 
 <script lang="ts">
-import { defineComponent, ref } from "vue";
+import { defineComponent, useTemplateRef } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { onLongPress } from "@vueuse/core";
 
@@ -72,8 +60,8 @@ export default defineComponent({
   },
 
   setup() {
-    const prevButton = ref<HTMLElement | null>(null);
-    const nextButton = ref<HTMLElement | null>(null);
+    const prevButton = useTemplateRef<HTMLElement>("prevButton");
+    const nextButton = useTemplateRef<HTMLElement>("nextButton");
 
     const route = useRoute();
     const router = useRouter();
@@ -83,9 +71,9 @@ export default defineComponent({
       $router: router,
     };
 
-    onLongPress(prevButton, onPrevLongPress, { modifiers: { prevent: true } });
+    onLongPress(prevButton, onPrevLongPress, { modifiers: { prevent: true }, delay: 400 });
 
-    onLongPress(nextButton, onNextLongPress, { modifiers: { prevent: true } });
+    onLongPress(nextButton, onNextLongPress, { modifiers: { prevent: true }, delay: 400 });
 
     function onPrevLongPress() {
       pushDraftUrlRelative(routeProvider, {
