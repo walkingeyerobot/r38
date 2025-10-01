@@ -1,4 +1,3 @@
-<!-- eslint-disable vue/no-deprecated-v-on-native-modifier -->
 <template>
   <div class="_draft-picker">
     <div v-if="availablePack" class="main-content picks">
@@ -9,12 +8,16 @@
         :selection-style="pickedCards.includes(cardId) ? 'will-pick' : undefined"
         class="card"
         :class="getCardCssClass(cardId)"
-        @click.native="onPackCardClicked(cardId)"
+        @click="onPackCardClicked(cardId)"
       />
     </div>
     <div v-else class="main-content no-picks">You don't have any picks (yet)</div>
     <div class="pick-cnt">
-      <button v-if="pickedCards.length > 0" class="pick-btn" @click="onPickConfirmed">
+      <button
+        v-if="pickedCards.length > 0 && !submittingPick"
+        class="pick-btn"
+        @click="onPickConfirmed"
+      >
         {{ pickButtonLabel }}
       </button>
     </div>
@@ -22,127 +25,100 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent } from "vue";
+<script setup lang="ts">
 import CardView from "./CardView.vue";
 import DeckBuilderMain from "../deckbuilder/DeckBuilderMain.vue";
 
 import { authStore } from "@/state/AuthStore";
-import { draftStore, type DraftStore } from "@/state/DraftStore";
+import { draftStore } from "@/state/DraftStore";
 import { replayStore } from "@/state/ReplayStore";
-import type { CardPack, DraftSeat } from "@/draft/DraftState";
 import { fetchEndpoint } from "@/fetch/fetchEndpoint";
 import { ROUTE_PICK } from "@/rest/api/pick/pick";
 import { delay } from "@/util/delay";
+import { computed, reactive, ref } from "vue";
 
-export default defineComponent({
-  components: {
-    CardView,
-    DeckBuilderMain,
-  },
+defineProps<{
+  showDeckBuilder: boolean;
+}>();
 
-  props: {
-    showDeckBuilder: {
-      type: Boolean,
-      required: true,
-    },
-  },
+const submittingPick = ref(false);
+const pickedCards = reactive<number[]>([]);
 
-  data() {
-    return {
-      submittingPick: false,
-      pickedCards: [] as number[],
-    };
-  },
-
-  computed: {
-    draftStore(): DraftStore {
-      return draftStore;
-    },
-
-    availablePack(): CardPack | null {
-      const pack = this.currentSeat.queuedPacks.packs[0];
-      if (pack != null && pack.round == this.currentSeat.round) {
-        return pack;
-      } else {
-        return null;
-      }
-    },
-
-    currentSeat(): DraftSeat {
-      if (authStore.user == null) {
-        throw new Error(`Must have a logged-in user`);
-      }
-      for (const seat of replayStore.draft.seats) {
-        if (seat.player?.id == authStore.user.id) {
-          return seat;
-        }
-      }
-      throw new Error(`No active user found with ID ${authStore.user.id}`);
-    },
-
-    currentPool(): number[] {
-      return this.currentSeat.picks.cards;
-    },
-
-    cardsPerPick(): number {
-      return this.draftStore.pickTwo ? 2 : 1;
-    },
-
-    pickButtonLabel(): string {
-      if (this.pickedCards.length >= this.cardsPerPick) {
-        return this.pickedCards.length == 1 ? "Pick card" : "Pick cards";
-      } else {
-        return `Pick ${this.cardsPerPick - this.pickedCards.length} more card`;
-      }
-    },
-  },
-
-  methods: {
-    onPackCardClicked(cardId: number) {
-      const idx = this.pickedCards.indexOf(cardId);
-      if (idx == -1) {
-        if (this.pickedCards.length >= this.cardsPerPick) {
-          this.pickedCards.shift();
-        }
-        this.pickedCards.push(cardId);
-      } else {
-        this.pickedCards.splice(idx, 1);
-      }
-    },
-
-    async onPickConfirmed() {
-      if (this.submittingPick) {
-        return;
-      }
-      this.submittingPick = true;
-
-      const start = Date.now();
-      // TODO: Error handling
-      const response = await fetchEndpoint(ROUTE_PICK, {
-        draftId: draftStore.draftId,
-        cards: [...this.pickedCards],
-        xsrfToken: draftStore.pickXsrf,
-        as: authStore.user?.id,
-      });
-      const elapsed = Date.now() - start;
-      await delay(500 - elapsed);
-
-      draftStore.loadDraft(response);
-
-      this.submittingPick = false;
-      this.pickedCards.length = 0;
-    },
-
-    getCardCssClass(cardId: number) {
-      if (!this.submittingPick) {
-        return undefined;
-      }
-      const isPicked = this.pickedCards.includes(cardId);
-      return isPicked ? "picked-fade" : "not-picked-fade";
-    },
-  },
+const currentSeat = computed(() => {
+  if (authStore.user == null) {
+    throw new Error(`Must have a logged-in user`);
+  }
+  for (const seat of replayStore.draft.seats) {
+    if (seat.player?.id == authStore.user.id) {
+      return seat;
+    }
+  }
+  throw new Error(`No active user found with ID ${authStore.user.id}`);
 });
+
+const availablePack = computed(() => {
+  const pack = currentSeat.value.queuedPacks.packs[0];
+  if (pack != null && pack.round == currentSeat.value.round) {
+    return pack;
+  } else {
+    return null;
+  }
+});
+
+const cardsPerPick = computed(() => {
+  return draftStore.pickTwo ? 2 : 1;
+});
+
+const pickButtonLabel = computed(() => {
+  if (pickedCards.length >= cardsPerPick.value) {
+    return pickedCards.length == 1 ? "Pick card" : "Pick cards";
+  } else {
+    return `Pick ${cardsPerPick.value - pickedCards.length} more card`;
+  }
+});
+
+function onPackCardClicked(cardId: number) {
+  const idx = pickedCards.indexOf(cardId);
+  if (idx == -1) {
+    if (pickedCards.length >= cardsPerPick.value) {
+      pickedCards.shift();
+    }
+    pickedCards.push(cardId);
+  } else {
+    pickedCards.splice(idx, 1);
+  }
+}
+
+async function onPickConfirmed() {
+  if (submittingPick.value) {
+    return;
+  }
+  submittingPick.value = true;
+
+  const start = Date.now();
+  // TODO: Error handling
+  const response = await fetchEndpoint(ROUTE_PICK, {
+    draftId: draftStore.draftId,
+    cards: [...pickedCards],
+    xsrfToken: draftStore.pickXsrf,
+    as: authStore.user?.id,
+  });
+  const elapsed = Date.now() - start;
+  await delay(500 - elapsed);
+
+  draftStore.loadDraft(response);
+
+  submittingPick.value = false;
+  pickedCards.length = 0;
+}
+
+function getCardCssClass(cardId: number) {
+  if (!submittingPick.value) {
+    return undefined;
+  }
+  const isPicked = pickedCards.includes(cardId);
+  return isPicked ? "picked-fade" : "not-picked-fade";
+}
 </script>
 
 <style scoped>
