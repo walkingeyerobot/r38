@@ -1,5 +1,5 @@
 <template>
-  <div class="_draft-picker">
+  <div class="_draft-picker" ref="scroller">
     <div v-if="availablePack" class="main-content picks">
       <CardView
         v-for="cardId in availablePack.cards"
@@ -35,7 +35,7 @@ import { replayStore } from "@/state/ReplayStore";
 import { fetchEndpoint } from "@/fetch/fetchEndpoint";
 import { ROUTE_PICK } from "@/rest/api/pick/pick";
 import { delay } from "@/util/delay";
-import { computed, reactive, ref } from "vue";
+import { computed, reactive, ref, useTemplateRef } from "vue";
 
 defineProps<{
   showDeckBuilder: boolean;
@@ -43,6 +43,8 @@ defineProps<{
 
 const submittingPick = ref(false);
 const pickedCards = reactive<number[]>([]);
+
+const scrollerElem = useTemplateRef("scroller");
 
 const currentSeat = computed(() => {
   if (authStore.user == null) {
@@ -110,6 +112,9 @@ async function onPickConfirmed() {
 
   submittingPick.value = false;
   pickedCards.length = 0;
+  if (scrollerElem.value) {
+    scrollerElem.value.scrollTop = 0;
+  }
 }
 
 function getCardCssClass(cardId: number) {
