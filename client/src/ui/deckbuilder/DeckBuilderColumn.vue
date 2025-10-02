@@ -29,7 +29,12 @@
         inSelection: inSelection(index),
       }"
     >
-      <img class="card-img" :src="getImageSrc(card.definition)" :alt="card.definition.name" />
+      <img
+        class="card-img"
+        :src="getImageSrc(card.definition)"
+        :alt="card.definition.name"
+        crossorigin="anonymous"
+      />
     </div>
   </div>
 </template>

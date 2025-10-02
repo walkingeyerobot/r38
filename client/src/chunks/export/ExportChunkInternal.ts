@@ -58,7 +58,18 @@ const EXPORT_CHUNK_INTERNAL: ExportChunk = {
     let linesOnPage = 0;
     const cards = deck.maindeck.flat().concat(deck.sideboard.flat());
     Promise.all(
-      cards.map((card) => fetch(card.definition.image_uris[0]).then((resp) => resp.arrayBuffer())),
+      cards.map(async (card) => {
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        const img = document.querySelector(
+          `img[src="${card.definition.image_uris[0]}"]`,
+        )! as HTMLImageElement;
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        ctx!.drawImage(img, 0, 0);
+        const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+        return await (blob as Blob).arrayBuffer();
+      }),
     ).then((images) => {
       cards.forEach((_card, i) => {
         pdf.addImage(
