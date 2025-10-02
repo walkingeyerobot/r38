@@ -112,7 +112,7 @@ export default defineComponent({
 
   methods: {
     getImageSrc(card: MtgCard): string {
-      return card.image_uris[0];
+      return `${card.image_uris[0]}?_`; // cache buster added due to crossorigin attr change
     },
 
     dragStart(e: DragEvent, index: number) {
