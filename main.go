@@ -1411,7 +1411,7 @@ func PostFirstRoundPairings(ob *objectbox.ObjectBox, draft *schema.Draft) error 
 	drafterIds := [8]string{}
 	for _, seat := range draft.Seats {
 		if len(seat.User.DiscordId) > 0 {
-			drafterIds[seat.Position] = seat.User.DiscordId
+			drafterIds[seat.Position] = fmt.Sprintf("<@%s>", seat.User.DiscordId)
 		} else {
 			drafterIds[seat.Position] = seat.User.DiscordName
 		}
