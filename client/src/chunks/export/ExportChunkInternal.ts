@@ -62,7 +62,7 @@ const EXPORT_CHUNK_INTERNAL: ExportChunk = {
         const canvas = document.createElement("canvas");
         const ctx = canvas.getContext("2d");
         const img = document.querySelector(
-          `img[src="${card.definition.image_uris[0]}"]`,
+          `img[src="${card.definition.image_uris[0]}?_"]`,
         )! as HTMLImageElement;
         canvas.width = img.naturalWidth;
         canvas.height = img.naturalHeight;
