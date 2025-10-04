@@ -2,6 +2,7 @@ import type { Deck } from "@/state/DeckBuilderModule";
 import { ChunkLoader } from "../ChunkLoader";
 
 export interface ExportChunk {
+  deckToTxt(deck: Deck): string;
   deckToXml(deck: Deck): string;
   deckToBinderXml(deck: Deck): string;
   decksToBinderZip(decks: Deck[], names: string[], mtgoNames: string[]): Promise<string>;
