@@ -9,7 +9,7 @@
       >
         Export all
       </a>
-      <a :href="exportedDeck" download="r38export.dek" class="exportButton"> Export deck </a>
+      <a :href="exportedDeck" download="r38export.txt" class="exportButton"> Export deck </a>
       <a :href="exportedBinder" download="r38export.dek" class="exportButton"> Export binder </a>
       <a @click="exportToPdf" download="r38export.pdf" class="exportButton"> Print deck </a>
     </template>
@@ -50,7 +50,7 @@ export default defineComponent({
     },
 
     exportedDeck(): string {
-      return this.deck ? exportLoader.chunk.deckToXml(this.deck) : "";
+      return this.deck ? exportLoader.chunk.deckToTxt(this.deck) : "";
     },
 
     exportedBinder(): string {

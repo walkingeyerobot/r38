@@ -6,6 +6,18 @@ import type { MtgCard } from "@/draft/DraftState";
 import type { ExportChunk } from "./ExportChunk";
 
 const EXPORT_CHUNK_INTERNAL: ExportChunk = {
+  deckToTxt(deck: Deck) {
+    let exportStr = "";
+    const entries = new Map<number, DeckEntry>();
+    for (const card of [...deck.maindeck.flat(), ...deck.sideboard.flat()]) {
+      incrementQuantity(entries, card.definition, card.id);
+    }
+    for (const [_, card] of entries) {
+      exportStr += `${card.quantity} ${card.name} (${card.set.toUpperCase()}) ${card.collectorNumber}\n`;
+    }
+    return `data:text/plain;charset=utf-8,${encodeURIComponent(exportStr)}`;
+  },
+
   deckToXml(deck: Deck) {
     let exportStr = XML_HEADER;
     const mainMap = new Map<number, DeckEntry>();
@@ -14,13 +26,13 @@ const EXPORT_CHUNK_INTERNAL: ExportChunk = {
       if (!card.definition.mtgo) {
         continue;
       }
-      incrementQuantity(mainMap, card.definition);
+      incrementQuantity(mainMap, card.definition, card.definition.mtgo);
     }
     for (const card of deck.sideboard.flat()) {
       if (!card.definition.mtgo) {
         continue;
       }
-      incrementQuantity(sideMap, card.definition);
+      incrementQuantity(sideMap, card.definition, card.definition.mtgo);
     }
     for (const [mtgo, card] of mainMap) {
       exportStr +=
@@ -105,13 +117,13 @@ function deckToBinderXmlContents(deck: Deck) {
     if (!card.definition.mtgo || BASICS.includes(card.definition.mtgo)) {
       continue;
     }
-    incrementQuantity(map, card.definition);
+    incrementQuantity(map, card.definition, card.definition.mtgo);
   }
   for (const card of deck.sideboard.flat()) {
     if (!card.definition.mtgo) {
       continue;
     }
-    incrementQuantity(map, card.definition);
+    incrementQuantity(map, card.definition, card.definition.mtgo);
   }
   for (const [mtgo, card] of map) {
     exportStr +=
@@ -122,17 +134,19 @@ function deckToBinderXmlContents(deck: Deck) {
   return exportStr;
 }
 
-function incrementQuantity(map: Map<number, DeckEntry>, card: MtgCard) {
-  let entry = map.get(card.mtgo);
+function incrementQuantity(map: Map<number, DeckEntry>, card: MtgCard, id: number) {
+  let entry = map.get(id);
   if (entry == undefined) {
-    entry = { name: card.name, quantity: 0 };
-    map.set(card.mtgo, entry);
+    entry = { name: card.name, set: card.set, collectorNumber: card.collector_number, quantity: 0 };
+    map.set(id, entry);
   }
   entry.quantity++;
 }
 
 interface DeckEntry {
   name: string;
+  set: string;
+  collectorNumber: string;
   quantity: number;
 }
 
