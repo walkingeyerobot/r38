@@ -108,7 +108,7 @@ const PLAINS = buildBasic(
   "m21",
   "262",
   81203,
-  "https://cards.scryfall.io/cards/normal/front/8/a/8a299a1e-1ce9-4668-a5f5-c587081acf6b.jpg?1592761983",
+  "https://cards.scryfall.io/normal/front/8/a/8a299a1e-1ce9-4668-a5f5-c587081acf6b.jpg?1592761983",
 );
 
 const ISLAND = buildBasic(
@@ -116,7 +116,7 @@ const ISLAND = buildBasic(
   "m21",
   "263",
   81205,
-  "https://cards.scryfall.io/cards/normal/front/f/c/fc9a66a1-367c-4035-a22e-00fab55be5a0.jpg?1592761988",
+  "https://cards.scryfall.io/normal/front/f/c/fc9a66a1-367c-4035-a22e-00fab55be5a0.jpg?1592761988",
 );
 
 const SWAMP = buildBasic(
@@ -132,7 +132,7 @@ const MOUNTAIN = buildBasic(
   "m21",
   "271",
   81221,
-  "https://cards.scryfall.io/cards/normal/front/e/d/ed6fd37e-a5b3-48c6-b881-cedadfd94833.jpg?1592762029",
+  "https://cards.scryfall.io/normal/front/e/d/ed6fd37e-a5b3-48c6-b881-cedadfd94833.jpg?1592762029",
 );
 
 const FOREST = buildBasic(
@@ -140,7 +140,7 @@ const FOREST = buildBasic(
   "m21",
   "274",
   81227,
-  "https://cards.scryfall.io/cards/normal/front/d/4/d4558304-7c17-4aa0-bd50-cdd95547f1a7.jpg?1592762045",
+  "https://cards.scryfall.io/normal/front/d/4/d4558304-7c17-4aa0-bd50-cdd95547f1a7.jpg?1592762045",
 );
 
 function buildBasic(
