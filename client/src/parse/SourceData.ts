@@ -54,6 +54,8 @@ export interface KnownCard {
       mana_cost: string;
       type_line: string;
     }>;
+    power?: string;
+    toughness?: string;
   };
 }
 

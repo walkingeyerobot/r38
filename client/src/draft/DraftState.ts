@@ -111,6 +111,9 @@ export interface MtgCard {
     type_line: string;
   }>;
 
+  power?: string;
+  toughness?: string;
+
   // custom stuff
 
   // MTGO CatID
