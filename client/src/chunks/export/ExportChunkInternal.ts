@@ -70,22 +70,43 @@ const EXPORT_CHUNK_INTERNAL: ExportChunk = {
     let linesOnPage = 0;
     const cards = deck.maindeck.flat().concat(deck.sideboard.flat());
     Promise.all(
-      cards.map(async (card) => {
+      cards.flatMap((card) => {
         const canvas = document.createElement("canvas");
         const ctx = canvas.getContext("2d");
+        const buffers = [];
+
         const img = document.querySelector(
           `img[src="${card.definition.image_uris[0]}?_"]`,
         )! as HTMLImageElement;
         canvas.width = img.naturalWidth;
         canvas.height = img.naturalHeight;
         ctx!.drawImage(img, 0, 0);
-        const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
-        return await (blob as Blob).arrayBuffer();
+        buffers.push(
+          new Promise((resolve) => canvas.toBlob(resolve, "image/png")).then((blob) =>
+            (blob as Blob).arrayBuffer(),
+          ),
+        );
+
+        if (card.definition.image_uris[1]) {
+          const flipImg = document.querySelector(
+            `img[src="${card.definition.image_uris[1]}?_"]`,
+          )! as HTMLImageElement;
+          canvas.width = flipImg.naturalWidth;
+          canvas.height = flipImg.naturalHeight;
+          ctx!.drawImage(flipImg, 0, 0);
+          buffers.push(
+            new Promise((resolve) => canvas.toBlob(resolve, "image/png")).then((blob) =>
+              (blob as Blob).arrayBuffer(),
+            ),
+          );
+        }
+
+        return buffers;
       }),
     ).then((images) => {
-      cards.forEach((_card, i) => {
+      images.forEach((image, i) => {
         pdf.addImage(
-          new Uint8Array(images[i]),
+          new Uint8Array(image),
           "JPEG",
           0.25 + cardsOnLine * 2.4,
           0.25 + linesOnPage * 3.35,
@@ -98,7 +119,7 @@ const EXPORT_CHUNK_INTERNAL: ExportChunk = {
           linesOnPage++;
           if (linesOnPage == 3) {
             linesOnPage = 0;
-            if (i < cards.length - 1) {
+            if (i < images.length - 1) {
               pdf.addPage();
             }
           }
