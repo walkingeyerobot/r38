@@ -35,6 +35,7 @@
         :alt="card.definition.name"
         crossorigin="anonymous"
       />
+      <img class="card-flip-img" :src="getFlipImageSrc(card.definition)" crossorigin="anonymous" />
     </div>
   </div>
 </template>
@@ -113,6 +114,10 @@ export default defineComponent({
   methods: {
     getImageSrc(card: MtgCard): string {
       return `${card.image_uris[0]}?_`; // cache buster added due to crossorigin attr change
+    },
+
+    getFlipImageSrc(card: MtgCard): string {
+      return `${card.image_uris[1]}?_`; // cache buster added due to crossorigin attr change
     },
 
     dragStart(e: DragEvent, index: number) {
@@ -306,6 +311,10 @@ export default defineComponent({
   width: 100px;
   height: 139px;
   border-radius: 6px;
+}
+
+.card-flip-img {
+  display: none;
 }
 
 .noSelectionRectangle > .card-img:hover,

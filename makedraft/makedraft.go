@@ -5,10 +5,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/bwmarrin/discordgo"
-	"github.com/objectbox/objectbox-go/objectbox"
-	"github.com/walkingeyerobot/r38/draftconfig"
-	"github.com/walkingeyerobot/r38/schema"
 	"io"
 	"log"
 	"math"
@@ -20,6 +16,11 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/bwmarrin/discordgo"
+	"github.com/objectbox/objectbox-go/objectbox"
+	"github.com/walkingeyerobot/r38/draftconfig"
+	"github.com/walkingeyerobot/r38/schema"
 )
 
 const GuildId = "685333271793500161"
@@ -54,6 +55,7 @@ type Settings struct {
 	AbortMissingCommonColorIdentity           *bool
 	AbortDuplicateThreeColorIdentityUncommons *bool
 	PickTwo                                   *bool
+	UpdateExisting                            *uint64
 }
 
 func ParseSettings(args []string) (Settings, error) {
@@ -90,6 +92,9 @@ func ParseSettings(args []string) (Settings, error) {
 	settings.Name = flagSet.String(
 		"name", "untitled draft",
 		"The name of the draft.")
+	settings.UpdateExisting = flagSet.Uint64(
+		"updateExisting", 0,
+		"If nonzero, updates cards in an existing draft rather than creating a new one.")
 
 	err := flagSet.Parse(args[1:])
 
@@ -113,6 +118,10 @@ func MakeDraft(settings Settings, ob *objectbox.ObjectBox) error {
 	}
 
 	random := getRNG(settings)
+
+	if settings.UpdateExisting != nil && *settings.UpdateExisting > 0 {
+		return UpdateDraft(settings, *settings.UpdateExisting, ob)
+	}
 
 	log.Printf("generating draft %s.", *settings.Name)
 
@@ -854,6 +863,72 @@ func AssignSeats(ob *objectbox.ObjectBox, draftId int64, numUsers int) ([]int, e
 	}
 
 	return userIds, nil
+}
+
+func UpdateDraft(settings Settings, draftID uint64, ob *objectbox.ObjectBox) error {
+	return ob.RunInWriteTx(func() error {
+		cfg, err := getDraftConfig(settings)
+
+		draft, err := schema.BoxForDraft(ob).Get(draftID)
+		if err != nil {
+			return err
+		}
+
+		cardBox := schema.BoxForCard(ob)
+
+		cards, err := draftconfig.GetCards(cfg)
+		if err != nil {
+			return err
+		}
+
+		cardsMap := make(map[string]draftconfig.Card)
+		for _, card := range cards {
+			log.Printf("building card map: %s %s", card.ID, card.Data)
+			cardsMap[card.ID] = card
+		}
+
+		for _, seat := range draft.Seats {
+			for _, card := range seat.PickedCards {
+				err = updateCard(cardsMap, card, cardBox)
+				if err != nil {
+					return err
+				}
+			}
+			for _, pack := range seat.Packs {
+				for _, card := range pack.Cards {
+					err = updateCard(cardsMap, card, cardBox)
+					if err != nil {
+						return err
+					}
+				}
+			}
+		}
+		for _, pack := range draft.UnassignedPacks {
+			for _, card := range pack.Cards {
+				err = updateCard(cardsMap, card, cardBox)
+				if err != nil {
+					return err
+				}
+			}
+		}
+
+		return nil
+	})
+}
+
+func updateCard(cardsMap map[string]draftconfig.Card, card *schema.Card, cardBox *schema.CardBox) error {
+	newCard := cardsMap[card.CardId]
+	if len(newCard.Data) > 0 {
+		log.Printf("updating card %s: %s", card.CardId, newCard.Data)
+		card.Data = newCard.Data
+		_, err := cardBox.Put(card)
+		if err != nil {
+			return err
+		}
+	} else {
+		log.Printf("didn't find card %s", card.CardId)
+	}
+	return nil
 }
 
 func stdev(list []float64) float64 {
