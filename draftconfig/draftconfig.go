@@ -61,6 +61,7 @@ type CubeCobraCardDetails struct {
 	ColorIdentity   []string `json:"color_identity"`
 	Rarity          string   `json:"rarity"`
 	ImageNormal     string   `json:"image_normal"`
+	ImageFlip       string   `json:"image_flip"`
 	Layout          string   `json:"layout"`
 	MtgoId          int      `json:"mtgo_id"`
 	Name            string   `json:"name"`
@@ -97,6 +98,10 @@ func GetCards(cfg DraftConfig) ([]Card, error) {
 			return nil, err
 		}
 		for _, cubeCobraCard := range cubeCobraList.Cards.Mainboard {
+			images := []string{cubeCobraCard.Details.ImageNormal}
+			if len(cubeCobraCard.Details.ImageFlip) > 0 {
+				images = append(images, cubeCobraCard.Details.ImageFlip)
+			}
 			cardData := CardData{
 				Foil: cubeCobraCard.Finish == "Foil",
 				Scryfall: CardScryfallData{
@@ -111,7 +116,7 @@ func GetCards(cfg DraftConfig) ([]Card, error) {
 					Colors:          cubeCobraCard.Details.Colors,
 					ManaCost:        ParsedCostToCost(cubeCobraCard.Details.ParsedCost),
 				},
-				ImageUris: []string{cubeCobraCard.Details.ImageNormal},
+				ImageUris: images,
 				MtgoId:    cubeCobraCard.Details.MtgoId,
 			}
 			cardDataByes, err := json.Marshal(cardData)
