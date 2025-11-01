@@ -46,6 +46,8 @@ type CardScryfallData struct {
 	Rarity          string   `json:"rarity"`
 	Set             string   `json:"set"`
 	TypeLine        string   `json:"type_line"`
+	Power           *string  `json:"power,omitempty"`
+	Toughness       *string  `json:"toughness,omitempty"`
 }
 
 type CubeCobraCard struct {
@@ -68,6 +70,8 @@ type CubeCobraCardDetails struct {
 	ParsedCost      []string `json:"parsed_cost"`
 	Set             string   `json:"set"`
 	Type            string   `json:"type"`
+	Power           *string  `json:"power,omitempty"`
+	Toughness       *string  `json:"toughness,omitempty"`
 }
 
 type CubeCobraList struct {
@@ -115,6 +119,8 @@ func GetCards(cfg DraftConfig) ([]Card, error) {
 					Set:             cubeCobraCard.Details.Set,
 					Colors:          cubeCobraCard.Details.Colors,
 					ManaCost:        ParsedCostToCost(cubeCobraCard.Details.ParsedCost),
+					Power:           cubeCobraCard.Details.Power,
+					Toughness:       cubeCobraCard.Details.Toughness,
 				},
 				ImageUris: images,
 				MtgoId:    cubeCobraCard.Details.MtgoId,

@@ -203,6 +203,8 @@ function parseCardDefinition(src: SourceCard): MtgCard {
       rarity: src.scryfall.rarity,
       set: src.scryfall.set,
       type_line: src.scryfall.type_line,
+      power: src.scryfall.power,
+      toughness: src.scryfall.toughness,
 
       searchName: src.scryfall.name.toLocaleLowerCase().normalize(),
     };
