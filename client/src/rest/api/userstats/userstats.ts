@@ -12,4 +12,5 @@ export const ROUTE_USER_STATS = endpoint({
 export interface SourceUserStats {
   activeDrafts: number;
   completedDrafts: number;
+  draftedColors: number[];
 }

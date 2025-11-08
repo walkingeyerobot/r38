@@ -542,6 +542,8 @@ func ServeAPIUserStats(w http.ResponseWriter, r *http.Request, userID int64, ob 
 
 	log.Printf("%+v", drafts)
 
+	draftedColors := []int{0, 0, 0, 0, 0, 0}
+
 	for _, draft := range drafts {
 		entry := draftToDraftListEntry(draft, user)
 		if entry.Finished {
@@ -549,7 +551,41 @@ func ServeAPIUserStats(w http.ResponseWriter, r *http.Request, userID int64, ob 
 		} else {
 			userStats.ActiveDrafts++
 		}
+
+		seatIndex := slices.IndexFunc(draft.Seats, func(seat *schema.Seat) bool {
+			return seat.User.Id == uint64(userID)
+		})
+		if seatIndex != -1 {
+			seat := draft.Seats[seatIndex]
+			for _, card := range seat.PickedCards {
+				var cardData R38CardData
+				err = json.Unmarshal([]byte(card.Data), &cardData)
+				if err != nil {
+					continue
+				}
+				colors := cardData.Scryfall.Colors
+				for _, color := range colors {
+					switch {
+					case color == "W":
+						draftedColors[0]++
+					case color == "U":
+						draftedColors[1]++
+					case color == "B":
+						draftedColors[2]++
+					case color == "R":
+						draftedColors[3]++
+					case color == "G":
+						draftedColors[4]++
+					}
+				}
+				if len(colors) == 0 {
+					draftedColors[5]++
+				}
+			}
+		}
 	}
+
+	userStats.DraftedColors = draftedColors
 
 	return json.NewEncoder(w).Encode(userStats)
 }

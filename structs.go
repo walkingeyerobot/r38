@@ -96,8 +96,9 @@ type UserFormatPref struct {
 
 // UserStats contains stats for the current user.
 type UserStats struct {
-	CompletedDrafts int `json:"completedDrafts"`
-	ActiveDrafts    int `json:"activeDrafts"`
+	CompletedDrafts int   `json:"completedDrafts"`
+	ActiveDrafts    int   `json:"activeDrafts"`
+	DraftedColors   []int `json:"draftedColors"`
 }
 
 // These structs are for receiving data from the client.
@@ -189,7 +190,8 @@ type R38CardData struct {
 // ScryfallCardData is more JSON passed to the client for card data.
 // Note that this does not describe everything that is in the data, just what we need
 type ScryfallCardData struct {
-	Name string `json:"name"`
+	Name   string   `json:"name"`
+	Colors []string `json:"colors"`
 }
 
 // SetCardData is the JSON data needed to write tags for each card in a set.
