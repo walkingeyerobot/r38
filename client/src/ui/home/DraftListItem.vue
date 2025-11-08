@@ -93,7 +93,7 @@ export default defineComponent({
     },
 
     isShufflable(): boolean {
-      return this.descriptor.inPerson && !this.descriptor.finished && authStore.user?.id === 1;
+      return this.descriptor.inPerson && !this.descriptor.finished && authStore.userId === 1;
     },
 
     isViewable(): boolean {
@@ -105,7 +105,7 @@ export default defineComponent({
     },
 
     admin(): boolean {
-      return authStore.user?.id === 1;
+      return authStore.userId === 1;
     },
   },
 

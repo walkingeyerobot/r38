@@ -91,7 +91,7 @@ export const draftStore = vuexModule(
         return (
           !draftStore.isComplete &&
           authStore.user != null &&
-          userIsSeated(authStore.user.id, draftStore.currentState)
+          userIsSeated(authStore.userId, draftStore.currentState)
         );
       },
 

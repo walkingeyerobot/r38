@@ -42,7 +42,7 @@ export default defineComponent({
 
   computed: {
     admin(): boolean {
-      return authStore.user?.id === 1;
+      return authStore.userId === 1;
     },
 
     deck(): Deck | undefined {

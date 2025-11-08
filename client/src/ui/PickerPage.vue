@@ -32,7 +32,7 @@ The primary page for making picks during an active draft
                 :src="seat.player.iconUrl"
                 :alt="seat.player.name"
                 :title="seat.player.name"
-                :class="{ active: seat.player.id == authStore.user?.id }"
+                :class="{ active: seat.player.id == authStore.userId }"
               />
             </component>
           </div>
@@ -202,10 +202,10 @@ onUnmounted(() => {
 });
 
 const playerSeat = computed(() => {
-  if (authStore.user?.id == null) {
+  if (authStore.userId === 0) {
     return null;
   }
-  return findPlayerSeat(authStore.user.id, draftStore.currentState);
+  return findPlayerSeat(authStore.userId, draftStore.currentState);
 });
 
 const activePack = computed(() => {
@@ -243,9 +243,9 @@ const previousPicks = computed(() => {
 });
 
 const nextPick = computed<PickPosition>(() => {
-  const userId = authStore.user?.id;
+  const userId = authStore.userId;
 
-  if (userId == null) {
+  if (userId === 0) {
     return pickPositionError("User must be authed");
   }
 
@@ -333,7 +333,7 @@ async function handleCardScanned(cardRfid: string) {
     draftId: draftStore.draftId,
     cardRfids: [cardRfid],
     xsrfToken: draftStore.pickXsrf,
-    as: authStore.user?.id,
+    as: authStore.userId,
   });
 
   if (response) {
@@ -378,7 +378,7 @@ async function onPickCard(card: DraftCard) {
     draftId,
     cards: [card.id],
     xsrfToken: draftStore.pickXsrf,
-    as: authStore.user?.id,
+    as: authStore.userId,
   });
 
   if (response) {
@@ -407,7 +407,7 @@ async function onUndoPick(card: DraftCard) {
   const [response, e] = await fetchEndpointEv(ROUTE_UNDO_PICK, {
     draftId: draftStore.draftId,
     xsrfToken: draftStore.pickXsrf,
-    as: authStore.user?.id,
+    as: authStore.userId,
   });
 
   if (response) {
@@ -416,7 +416,7 @@ async function onUndoPick(card: DraftCard) {
   } else {
     activeDialog.value = {
       kind: "error-dialog",
-      message: `An error occurred while undoing user ${authStore.user?.id}'s pick`,
+      message: `An error occurred while undoing user ${authStore.userId}'s pick`,
       escapedMessage: getErrorMessage(e),
     };
     errorSound.play();
@@ -430,7 +430,7 @@ async function fetchDraft() {
   fetchingDraft = true;
   const [payload, e] = await fetchEndpointEv(ROUTE_DRAFT, {
     id: draftId.toString(),
-    as: authStore.user?.id,
+    as: authStore.userId,
   });
   fetchingDraft = false;
 

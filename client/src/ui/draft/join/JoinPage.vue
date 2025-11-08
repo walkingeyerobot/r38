@@ -68,7 +68,7 @@ onUnmounted(() => {
 
 const ownSeatPosition = computed(() => {
   for (const seat of draftStore.currentState.seats) {
-    if (seat.player.id == authStore.user?.id) {
+    if (seat.player.id == authStore.userId) {
       return seat.position;
     }
   }
@@ -111,7 +111,7 @@ async function fetchDraft(force: boolean = false) {
   fetchGuard.runExclusive(async () => {
     const response = await fetchEndpoint(ROUTE_DRAFT, {
       id: draftId.toString(),
-      as: authStore.user?.id,
+      as: authStore.userId,
     });
 
     draftStore.loadDraft(response);
@@ -130,7 +130,7 @@ async function onJoinClick() {
     await fetchEndpoint(ROUTE_JOIN_DRAFT, {
       id: draftStore.draftId,
       position: undefined,
-      as: authStore.user?.id,
+      as: authStore.userId,
     });
     await fetchDraft(true);
   });

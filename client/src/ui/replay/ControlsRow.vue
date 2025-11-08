@@ -20,7 +20,7 @@
     </div>
     <div class="end">
       <SearchBox />
-      <img v-if="authStore.user" class="user-img" :src="authStore.user.picture" />
+      <img v-if="authStore.user" class="user-img" :src="authStore.userPicture" />
     </div>
   </div>
 </template>
@@ -57,7 +57,7 @@ export default defineComponent({
     },
 
     numPicks(): number {
-      const seat = getPlayerSeat(authStore.user?.id, draftStore.currentState);
+      const seat = getPlayerSeat(authStore.userId, draftStore.currentState);
 
       let count = 0;
       if (seat != null) {
@@ -74,7 +74,7 @@ export default defineComponent({
 
   methods: {
     onPicksClick() {
-      const seat = checkNotNil(getPlayerSeat(authStore.user?.id, draftStore.currentState));
+      const seat = checkNotNil(getPlayerSeat(authStore.userId, draftStore.currentState));
 
       pushDraftUrlRelative(this, {
         eventIndex: replayStore.events.length,

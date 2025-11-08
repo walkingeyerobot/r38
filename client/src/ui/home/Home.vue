@@ -82,19 +82,19 @@ export default defineComponent({
     },
 
     loggedIn(): boolean {
-      return authStore.user?.id != 0;
+      return authStore.userId !== 0;
     },
 
     admin(): boolean {
-      return authStore.user?.id === 1;
+      return authStore.userId === 1;
     },
 
     userPic(): string | undefined {
-      return authStore.user?.picture;
+      return authStore.userPicture;
     },
 
     userName(): string | undefined {
-      return authStore.user?.name;
+      return authStore.userName;
     },
   },
 
@@ -103,7 +103,7 @@ export default defineComponent({
       this.listFetchStatus = "fetching";
       try {
         const response = await fetchEndpoint(ROUTE_DRAFT_LIST, {
-          as: authStore.user?.id,
+          as: authStore.userId,
         });
         this.drafts = response?.drafts ?? [];
         this.listFetchStatus = this.drafts.length ? "loaded" : "missing";
