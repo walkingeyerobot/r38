@@ -7,7 +7,7 @@
       <div class="header-right">
         <a v-if="!loggedIn" class="login-btn" href="/auth/discord/login"> Log in </a>
         <RouterLink v-if="loggedIn" :to="wrapUrl('/prefs')">
-          <img class="user-img" :src="userPic" :alt="userName"/>
+          <img class="user-img" :src="userPic" :alt="userName" />
         </RouterLink>
       </div>
     </div>
@@ -59,13 +59,14 @@ const listFetchStatus = ref<FetchStatus>("missing");
 const error = ref<string>("");
 
 const joinableDrafts = computed(() =>
-  drafts.value.filter(
-    (value) => value.status == "joinable" || value.status == "reserved",
-  ));
+  drafts.value.filter((value) => value.status == "joinable" || value.status == "reserved"),
+);
 
-const otherDrafts = computed(() => drafts.value
-  .filter((value) => value.status != "joinable" && value.status != "reserved")
-  .sort((a, b) => b.id - a.id));
+const otherDrafts = computed(() =>
+  drafts.value
+    .filter((value) => value.status != "joinable" && value.status != "reserved")
+    .sort((a, b) => b.id - a.id),
+);
 
 const loggedIn = computed(() => authStore.userId != 0);
 
