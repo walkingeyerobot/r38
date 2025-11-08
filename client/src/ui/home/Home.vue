@@ -6,9 +6,9 @@
       <div class="header-center"></div>
       <div class="header-right">
         <a v-if="!loggedIn" class="login-btn" href="/auth/discord/login"> Log in </a>
-        <a v-if="loggedIn" href="/prefs">
-          <img class="user-img" :src="userPic" :alt="userName" />
-        </a>
+        <RouterLink v-if="loggedIn" :to="wrapUrl('/prefs')">
+          <img class="user-img" :src="userPic" :alt="userName"/>
+        </RouterLink>
       </div>
     </div>
 
@@ -40,8 +40,8 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent } from "vue";
+<script setup lang="ts">
+import { computed, onMounted, ref } from "vue";
 import DraftListItem2 from "./DraftListItem2.vue";
 
 import { authStore } from "@/state/AuthStore";
@@ -50,73 +50,57 @@ import { type HomeDraftDescriptor, ROUTE_DRAFT_LIST } from "@/rest/api/draftlist
 import { fetchEndpoint } from "@/fetch/fetchEndpoint";
 import type { FetchStatus } from "../infra/FetchStatus";
 import { AxiosError } from "axios";
+import { useRoute } from "vue-router";
 
-export default defineComponent({
-  components: {
-    DraftListItem2,
-  },
+const route = useRoute();
 
-  data() {
-    return {
-      drafts: [] as HomeDraftDescriptor[],
-      listFetchStatus: "missing" as FetchStatus,
-      error: "",
-    };
-  },
+const drafts = ref<HomeDraftDescriptor[]>([]);
+const listFetchStatus = ref<FetchStatus>("missing");
+const error = ref<string>("");
 
-  async created() {
-    await this.refreshDraftList();
-  },
+const joinableDrafts = computed(() =>
+  drafts.value.filter(
+    (value) => value.status == "joinable" || value.status == "reserved",
+  ));
 
-  computed: {
-    joinableDrafts(): HomeDraftDescriptor[] {
-      return this.drafts.filter(
-        (value) => value.status == "joinable" || value.status == "reserved",
-      );
-    },
+const otherDrafts = computed(() => drafts.value
+  .filter((value) => value.status != "joinable" && value.status != "reserved")
+  .sort((a, b) => b.id - a.id));
 
-    otherDrafts(): HomeDraftDescriptor[] {
-      return this.drafts
-        .filter((value) => value.status != "joinable" && value.status != "reserved")
-        .sort((a, b) => b.id - a.id);
-    },
+const loggedIn = computed(() => authStore.userId != 0);
 
-    loggedIn(): boolean {
-      return authStore.userId !== 0;
-    },
+const admin = computed(() => authStore.userId === 1);
 
-    admin(): boolean {
-      return authStore.userId === 1;
-    },
+const userPic = computed(() => authStore.userPicture);
 
-    userPic(): string | undefined {
-      return authStore.userPicture;
-    },
+const userName = computed(() => authStore.userName);
 
-    userName(): string | undefined {
-      return authStore.userName;
-    },
-  },
+onMounted(async () => await refreshDraftList());
 
-  methods: {
-    async refreshDraftList() {
-      this.listFetchStatus = "fetching";
-      try {
-        const response = await fetchEndpoint(ROUTE_DRAFT_LIST, {
-          as: authStore.userId,
-        });
-        this.drafts = response?.drafts ?? [];
-        this.listFetchStatus = this.drafts.length ? "loaded" : "missing";
-      } catch (e) {
-        this.drafts = [];
-        this.listFetchStatus = "error";
-        if (e instanceof AxiosError) {
-          this.error = e.response?.data.error ?? "";
-        }
-      }
-    },
-  },
-});
+async function refreshDraftList() {
+  listFetchStatus.value = "fetching";
+  try {
+    const response = await fetchEndpoint(ROUTE_DRAFT_LIST, {
+      as: authStore.userId,
+    });
+    drafts.value = response?.drafts ?? [];
+    listFetchStatus.value = drafts.value.length ? "loaded" : "missing";
+  } catch (e) {
+    drafts.value = [];
+    listFetchStatus.value = "error";
+    if (e instanceof AxiosError) {
+      error.value = e.response?.data.error ?? "";
+    }
+  }
+}
+
+function wrapUrl(url: string) {
+  if (route.query["as"] != undefined) {
+    return url + `?as=${route.query["as"]}`;
+  } else {
+    return url;
+  }
+}
 </script>
 
 <style scoped>
