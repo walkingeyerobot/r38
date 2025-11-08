@@ -1,4 +1,5 @@
-import { createRouter, createWebHistory } from "vue-router";
+import { createRouter, createWebHistory, type RouteRecordNameGeneric } from "vue-router";
+import { authStore } from "@/state/AuthStore.ts";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -78,6 +79,15 @@ const router = createRouter({
       props: true,
     },
   ],
+});
+
+const requiresAuth: RouteRecordNameGeneric[] = ["prefs", "join", "picker", "replay", "deckbuilder"];
+
+router.beforeEach((to, _from) => {
+  if (authStore.user === null && requiresAuth.includes(to.name)) {
+    return { name: "login" };
+  }
+  return true;
 });
 
 export default router;
