@@ -19,6 +19,7 @@
       <span class="confirm" :hidden="!confirmed"> ✓ </span>
     </div>
     <PrefsItem v-for="pref in prefs" class="list-item" :key="pref.name" :pref="pref" />
+    <UserStats />
   </div>
 </template>
 
@@ -29,10 +30,12 @@ import PrefsItem from "./PrefsItem.vue";
 import { type UserPrefDescriptor, ROUTE_PREFS, routeSetPref } from "@/rest/api/prefs/prefs";
 import { fetchEndpoint } from "@/fetch/fetchEndpoint";
 import { authStore, type AuthenticatedUser, type AuthStore } from "@/state/AuthStore";
+import UserStats from "@/ui/prefs/UserStats.vue";
 
 export default defineComponent({
   components: {
     PrefsItem,
+    UserStats,
   },
 
   data() {
