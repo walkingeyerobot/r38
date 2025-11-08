@@ -15,9 +15,38 @@ export const authStore = vuexModule(
       setUser(state: AuthenticatedUserState, user: AuthenticatedUser) {
         state.user = user;
       },
+
+      setUserError(state: AuthenticatedUserState) {
+        state.user = "error";
+      },
     },
 
-    getters: {},
+    getters: {
+      userId(state: AuthenticatedUserState) {
+        if (!state.user || state.user === "error") {
+          return 0;
+        }
+        return state.user.id;
+      },
+      userName(state: AuthenticatedUserState) {
+        if (!state.user || state.user === "error") {
+          return undefined;
+        }
+        return state.user.name;
+      },
+      userPicture(state: AuthenticatedUserState) {
+        if (!state.user || state.user === "error") {
+          return undefined;
+        }
+        return state.user.picture;
+      },
+      userMtgoName(state: AuthenticatedUserState) {
+        if (!state.user || state.user === "error") {
+          return undefined;
+        }
+        return state.user.mtgoName;
+      },
+    },
 
     actions: {},
   },
@@ -26,7 +55,7 @@ export const authStore = vuexModule(
 export type AuthStore = typeof authStore;
 
 interface AuthenticatedUserState {
-  user: AuthenticatedUser | null;
+  user: AuthenticatedUser | null | "error";
 }
 
 export interface AuthenticatedUser {

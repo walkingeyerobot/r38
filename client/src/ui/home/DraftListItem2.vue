@@ -31,7 +31,7 @@ const { descriptor } = defineProps<{
 }>();
 
 const isAdminUser = computed(() => {
-  return authStore.user?.id === 1;
+  return authStore.userId === 1;
 });
 
 const isShufflable = computed(() => {

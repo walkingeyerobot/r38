@@ -7,7 +7,7 @@
         :key="seat.position"
         class="seated-player"
         :class="{
-          selected: seat.player.id == authStore.user?.id,
+          selected: seat.player.id == authStore.userId,
         }"
         :style="{
           left: `${TABLE_POSITIONS[seat.position].x * 100}%`,
@@ -16,7 +16,7 @@
         :href="`${route.path}?as=${seat.player.id}`"
       >
         <img
-          v-if="seat.player.id != null && seat.player.id == authStore.user?.id"
+          v-if="seat.player.id != null && seat.player.id == authStore.userId"
           class="selection-halo"
           src="./selection_halo.svg"
         />

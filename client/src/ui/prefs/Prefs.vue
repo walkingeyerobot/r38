@@ -48,21 +48,23 @@ export default defineComponent({
     },
 
     user(): AuthenticatedUser {
-      return (
-        authStore.user ?? {
+      const user = authStore.user;
+      if (!user || user === "error") {
+        return {
           id: -1,
           mtgoName: "Unknown user",
           name: "Unknown user",
           picture: "__unknown_image",
           isImpersonated: false,
-        }
-      );
+        };
+      }
+      return user;
     },
   },
 
   async created() {
     const response = await fetchEndpoint(ROUTE_PREFS, {
-      as: authStore.user?.id,
+      as: authStore.userId,
     });
     // TODO: catch and show error
     this.prefs = response.prefs;
@@ -71,7 +73,7 @@ export default defineComponent({
   methods: {
     async onMtgoNameChanged() {
       if (authStore.user) {
-        await fetchEndpoint(routeSetPref, { pref: undefined, mtgoName: authStore.user.mtgoName });
+        await fetchEndpoint(routeSetPref, { pref: undefined, mtgoName: authStore.userMtgoName });
         this.confirmed = true;
       }
     },

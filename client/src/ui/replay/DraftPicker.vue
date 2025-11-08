@@ -51,11 +51,11 @@ const currentSeat = computed(() => {
     throw new Error(`Must have a logged-in user`);
   }
   for (const seat of replayStore.draft.seats) {
-    if (seat.player?.id == authStore.user.id) {
+    if (seat.player?.id == authStore.userId) {
       return seat;
     }
   }
-  throw new Error(`No active user found with ID ${authStore.user.id}`);
+  throw new Error(`No active user found with ID ${authStore.userId}`);
 });
 
 const availablePack = computed(() => {
@@ -103,7 +103,7 @@ async function onPickConfirmed() {
     draftId: draftStore.draftId,
     cards: [...pickedCards],
     xsrfToken: draftStore.pickXsrf,
-    as: authStore.user?.id,
+    as: authStore.userId,
   });
   const elapsed = Date.now() - start;
   await delay(500 - elapsed);

@@ -98,7 +98,7 @@ export default defineComponent({
       // TODO: Handle errors
       const payload = await fetchEndpoint(ROUTE_DRAFT, {
         id: draftId.toString(),
-        as: authStore.user?.id,
+        as: authStore.userId,
       });
 
       if (payload.draftId != this.targetDraftId) {
@@ -144,7 +144,7 @@ export default defineComponent({
     },
 
     getDefaultSeatSelection(): number {
-      const seat = getPlayerSeat(authStore.user?.id, draftStore.currentState);
+      const seat = getPlayerSeat(authStore.userId, draftStore.currentState);
       return seat?.position || 0;
     },
   },

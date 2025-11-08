@@ -8,7 +8,7 @@ export function isAuthedUserSelected(
   draftStore: DraftStore,
   replayStore: ReplayStore,
 ) {
-  const authedSeat = getPlayerSeat(authStore.user?.id, draftStore.currentState);
+  const authedSeat = getPlayerSeat(authStore.userId, draftStore.currentState);
 
   return (
     authedSeat != null &&

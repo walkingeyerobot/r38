@@ -7,52 +7,31 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import DefaultAvatar from "./ui/shared/avatars/default_avatar.png";
 
 import { authStore } from "./state/AuthStore";
 import { formatStore, type LayoutFormFactor } from "./state/FormatStore";
-import { fetchEndpoint } from "./fetch/fetchEndpoint";
-import { ROUTE_USER_INFO, type SourceUserInfo } from "./rest/api/userinfo/userinfo";
 
 export default defineComponent({
   created() {},
 
   mounted() {
-    this.loadAuthInfo();
     this.initFormat();
   },
 
-  data() {
-    return {
-      status: "init" as "init" | "ready" | "error",
-    };
+  computed: {
+    status(): "init" | "ready" | "error" {
+      const user = authStore.user;
+      if (!user) {
+        return "init";
+      }
+      if (user === "error") {
+        return "error";
+      }
+      return "ready";
+    },
   },
 
   methods: {
-    async loadAuthInfo() {
-      let result: SourceUserInfo;
-
-      const asPlayer = parseInt(unwrapQuery(this.$route.query.as) ?? "NaN");
-      const asPlayerId = isNaN(asPlayer) ? undefined : asPlayer;
-
-      try {
-        result = await fetchEndpoint(ROUTE_USER_INFO, { as: asPlayerId });
-        this.status = "ready";
-      } catch (e) {
-        console.error("Error fetching user info:", e);
-        this.status = "error";
-        return;
-      }
-
-      authStore.setUser({
-        id: result.userId,
-        name: result.name,
-        picture: result.picture || DefaultAvatar,
-        mtgoName: result.mtgoName,
-        isImpersonated: asPlayerId != undefined,
-      });
-    },
-
     initFormat() {
       this.updateFormFactor();
 
@@ -72,14 +51,6 @@ export default defineComponent({
 
 function getLayoutFormFactor(): LayoutFormFactor {
   return window.innerWidth >= 768 ? "desktop" : "mobile";
-}
-
-function unwrapQuery<T>(value: T | T[]): T {
-  if (value instanceof Array) {
-    return value[0];
-  } else {
-    return value;
-  }
 }
 </script>
 

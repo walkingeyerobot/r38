@@ -47,7 +47,7 @@ export default defineComponent({
     async fetchDraft(draftId: number) {
       const payload = await fetchEndpoint(ROUTE_DRAFT, {
         id: draftId.toString(),
-        as: authStore.user?.id,
+        as: authStore.userId,
       });
       this.status = "loaded";
 

@@ -1,5 +1,13 @@
-import { createRouter, createWebHistory, type RouteRecordNameGeneric } from "vue-router";
+import {
+  createRouter,
+  createWebHistory,
+  type LocationQueryValue,
+  type RouteRecordNameGeneric,
+} from "vue-router";
 import { authStore } from "@/state/AuthStore.ts";
+import { ROUTE_USER_INFO, type SourceUserInfo } from "@/rest/api/userinfo/userinfo.ts";
+import { fetchEndpoint } from "@/fetch/fetchEndpoint.ts";
+import DefaultAvatar from "@/ui/shared/avatars/default_avatar.png";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -83,11 +91,49 @@ const router = createRouter({
 
 const requiresAuth: RouteRecordNameGeneric[] = ["prefs", "join", "picker", "replay", "deckbuilder"];
 
-router.beforeEach((to, _from) => {
-  if (authStore.user === null && requiresAuth.includes(to.name)) {
+router.beforeEach(async (to, _from) => {
+  const user = await loadAuthInfo(to.query["as"]);
+  if (requiresAuth.includes(to.name) && user !== "error" && user?.id === 0) {
     return { name: "login" };
   }
   return true;
 });
+
+async function loadAuthInfo(as: LocationQueryValue | LocationQueryValue[]) {
+  if (authStore.user) {
+    return authStore.user;
+  }
+
+  let result: SourceUserInfo;
+
+  const asPlayer = parseInt(unwrapQuery(as) ?? "NaN");
+  const asPlayerId = isNaN(asPlayer) ? undefined : asPlayer;
+
+  try {
+    result = await fetchEndpoint(ROUTE_USER_INFO, { as: asPlayerId });
+  } catch (e) {
+    console.error("Error fetching user info:", e);
+    authStore.setUserError();
+    return "error";
+  }
+
+  const user = {
+    id: result.userId,
+    name: result.name,
+    picture: result.picture || DefaultAvatar,
+    mtgoName: result.mtgoName,
+    isImpersonated: asPlayerId != undefined,
+  };
+  authStore.setUser(user);
+  return user;
+}
+
+function unwrapQuery<T>(value: T | T[]): T {
+  if (value instanceof Array) {
+    return value[0];
+  } else {
+    return value;
+  }
+}
 
 export default router;
