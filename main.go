@@ -308,6 +308,7 @@ func NewHandler(ob *objectbox.ObjectBox, useAuth bool) http.Handler {
 	addHandler("/api/setpref/", ServeAPISetPref, false)
 	addHandler("/api/undopick/", ServeAPIUndoPick, false)
 	addHandler("/api/userinfo/", ServeAPIUserInfo, true)
+	addHandler("/api/userstats/", ServeAPIUserStats, true)
 	addHandler("/api/getcardpack/", ServeAPIGetCardPack, true)
 	addHandler("/api/samplepack/", ServeAPISamplePack, true)
 	addHandler("/api/set/", ServeAPISet, true)
@@ -519,6 +520,38 @@ func ServeAPISetPref(w http.ResponseWriter, r *http.Request, userId int64, ob *o
 	}
 
 	return ServeAPIPrefs(w, r, userId, ob)
+}
+
+func ServeAPIUserStats(w http.ResponseWriter, r *http.Request, userID int64, ob *objectbox.ObjectBox) error {
+	userStats := UserStats{}
+
+	user, err := schema.BoxForUser(ob).Get(uint64(userID))
+	if err != nil || user == nil {
+		return err
+	}
+
+	drafts, err := schema.BoxForDraft(ob).Query(
+		objectbox.Any(schema.Draft_.Archived.Equals(false),
+			schema.Draft_.Archived.IsNil(),
+		),
+		schema.Draft_.Seats.Link(schema.Seat_.User.Equals(uint64(userID))),
+	).Find()
+	if err != nil {
+		return err
+	}
+
+	log.Printf("%+v", drafts)
+
+	for _, draft := range drafts {
+		entry := draftToDraftListEntry(draft, user)
+		if entry.Finished {
+			userStats.CompletedDrafts++
+		} else {
+			userStats.ActiveDrafts++
+		}
+	}
+
+	return json.NewEncoder(w).Encode(userStats)
 }
 
 // ServeAPIPick serves the /api/pick endpoint.
@@ -1740,8 +1773,10 @@ func GetDraftList(userId int64, ob *objectbox.ObjectBox) (DraftList, error) {
 	draftList := DraftList{
 		Drafts: []DraftListEntry{},
 	}
-	drafts, err := schema.BoxForDraft(ob).Query(objectbox.Any(schema.Draft_.Archived.Equals(false),
-		schema.Draft_.Archived.IsNil())).Find()
+	drafts, err := schema.BoxForDraft(ob).Query(
+		objectbox.Any(schema.Draft_.Archived.Equals(false),
+			schema.Draft_.Archived.IsNil(),
+		)).Find()
 	if err != nil {
 		return draftList, err
 	}

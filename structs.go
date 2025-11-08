@@ -94,6 +94,12 @@ type UserFormatPref struct {
 	Elig   bool   `json:"elig"`
 }
 
+// UserStats contains stats for the current user.
+type UserStats struct {
+	CompletedDrafts int `json:"completedDrafts"`
+	ActiveDrafts    int `json:"activeDrafts"`
+}
+
 // These structs are for receiving data from the client.
 
 // PostedPick is JSON accepted from the client when a user makes a pick.
