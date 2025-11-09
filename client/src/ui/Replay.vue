@@ -2,20 +2,20 @@
 <template>
   <div class="_replay" @mousedown.capture="onCaptureMouseDown" @mousedown="onBubbleMouseDown">
     <template v-if="status == 'loaded'">
-      <ReplayMobile v-if="formatStore.layout == 'mobile'" :showDraftPicker="showDraftPicker" />
+      <ReplayMobile v-if="layout == 'mobile'" :showDraftPicker="showDraftPicker" />
       <ReplayDesktop v-else :showDraftPicker="showDraftPicker" />
     </template>
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent } from "vue";
+<script setup lang="ts">
+import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import ReplayDesktop from "./replay/ReplayDesktop.vue";
 import ReplayMobile from "./replay/ReplayMobile.vue";
 
 import { rootStore } from "@/state/store";
 import { authStore } from "@/state/AuthStore";
-import { formatStore, type FormatStore } from "@/state/FormatStore";
+import { formatStore } from "@/state/FormatStore";
 import { replayStore } from "@/state/ReplayStore";
 import { draftStore } from "@/state/DraftStore";
 import {
@@ -30,125 +30,114 @@ import { fetchEndpoint } from "@/fetch/fetchEndpoint";
 import { ROUTE_DRAFT } from "@/rest/api/draft/draft";
 import type { FetchStatus } from "./infra/FetchStatus";
 import { isAuthedUserSelected } from "./replay/isAuthedUserSelected";
+import { useRoute, useRouter } from "vue-router";
 
-export default defineComponent({
-  components: {
-    ReplayMobile,
-    ReplayDesktop,
-  },
+const targetDraftId = ref<number>(-1);
+const status = ref<FetchStatus>("missing");
+const isFreshBundle = ref<boolean>(false);
+const unwatchDraftStore = ref<(() => void) | null>(null);
 
-  data() {
-    return {
-      targetDraftId: -1,
-      status: "missing" as FetchStatus,
-      isFreshBundle: false,
-      unwatchDraftStore: null as null | (() => void),
-    };
-  },
+const route = useRoute();
+const router = useRouter();
 
-  created() {
-    this.unwatchDraftStore = rootStore.watch(
-      (_state) => tuple(draftStore.initialState, draftStore.events),
-      (_newProps, _oldProps) => this.onDraftStoreChanged(),
-    );
-
-    this.applyCurrentRoute();
-  },
-
-  unmounted() {
-    if (this.unwatchDraftStore) {
-      this.unwatchDraftStore();
-    }
-  },
-
-  watch: {
-    $route(_to, _from) {
-      this.applyCurrentRoute();
-    },
-  },
-
-  computed: {
-    formatStore(): FormatStore {
-      return formatStore;
-    },
-
-    showDraftPicker(): boolean {
-      return (
-        draftStore.isFilteredDraft &&
-        replayStore.eventPos == replayStore.events.length &&
-        isAuthedUserSelected(authStore, draftStore, replayStore)
-      );
-    },
-  },
-
-  methods: {
-    applyCurrentRoute() {
-      const parsedUrl = parseDraftUrl(this.$route);
-      if (parsedUrl.draftId != this.targetDraftId) {
-        this.fetchDraft(parsedUrl.draftId);
-      } else {
-        applyReplayUrlState(replayStore, this.$route);
-      }
-    },
-
-    async fetchDraft(draftId: number) {
-      this.status = "fetching";
-      this.targetDraftId = draftId;
-
-      // TODO: Handle errors
-      const payload = await fetchEndpoint(ROUTE_DRAFT, {
-        id: draftId.toString(),
-        as: authStore.userId,
-      });
-
-      if (payload.draftId != this.targetDraftId) {
-        return;
-      }
-
-      draftStore.loadDraft(payload);
-
-      document.title = `${draftStore.draftName}`;
-
-      this.isFreshBundle = true;
-      this.status = "loaded";
-
-      // onDraftStoreChanged will fire afterwards
-    },
-
-    onDraftStoreChanged() {
-      console.log("Draft state changed, resyncing replay");
-      replayStore.sync();
-
-      if (this.isFreshBundle) {
-        console.log("Syncing state to URL...");
-        if (replayStore.selection == null) {
-          replayStore.setSelection({
-            type: "seat",
-            id: this.getDefaultSeatSelection(),
-          });
-        }
-        applyReplayUrlState(replayStore, this.$route);
-      } else {
-        console.log("Syncing URL to state...");
-        pushDraftUrlFromState(this, draftStore, replayStore);
-      }
-      this.isFreshBundle = false;
-    },
-
-    onCaptureMouseDown() {
-      globalClickTracker.onCaptureGlobalMouseDown();
-    },
-
-    onBubbleMouseDown(e: MouseEvent) {
-      globalClickTracker.onBubbleGlobalMouseDown(e);
-    },
-
-    getDefaultSeatSelection(): number {
-      const seat = getPlayerSeat(authStore.userId, draftStore.currentState);
-      return seat?.position || 0;
-    },
-  },
+onMounted(() => {
+  unwatchDraftStore.value = rootStore.watch(
+    (_state) => tuple(draftStore.initialState, draftStore.events),
+    (_newProps, _oldProps) => onDraftStoreChanged(),
+  );
+  applyCurrentRoute();
 });
+
+onUnmounted(() => {
+  if (unwatchDraftStore.value) {
+    unwatchDraftStore.value();
+  }
+});
+
+watch(route, (_to, _from) => applyCurrentRoute());
+
+const layout = computed(() => formatStore.layout);
+
+const showDraftPicker = computed(
+  () =>
+    draftStore.isFilteredDraft &&
+    replayStore.eventPos == replayStore.events.length &&
+    isAuthedUserSelected(authStore, draftStore, replayStore),
+);
+
+function applyCurrentRoute() {
+  const parsedUrl = parseDraftUrl(route);
+  if (parsedUrl.draftId != targetDraftId.value) {
+    fetchDraft(parsedUrl.draftId);
+  } else {
+    applyReplayUrlState(replayStore, route);
+  }
+}
+
+async function fetchDraft(draftId: number) {
+  status.value = "fetching";
+  targetDraftId.value = draftId;
+
+  // TODO: Handle errors
+  const payload = await fetchEndpoint(ROUTE_DRAFT, {
+    id: draftId.toString(),
+    as: authStore.userId,
+  });
+
+  if (payload.draftId != targetDraftId.value) {
+    return;
+  }
+
+  draftStore.loadDraft(payload);
+
+  if (!draftStore.isComplete && authStore.userId === 0) {
+    if (unwatchDraftStore.value) {
+      unwatchDraftStore.value();
+    }
+    await router.replace({ name: "login" });
+    return;
+  }
+
+  document.title = `${draftStore.draftName}`;
+
+  isFreshBundle.value = true;
+  status.value = "loaded";
+
+  // onDraftStoreChanged will fire afterwards
+}
+
+function onDraftStoreChanged() {
+  console.log("Draft state changed, resyncing replay");
+  replayStore.sync();
+
+  if (isFreshBundle.value) {
+    console.log("Syncing state to URL...");
+    if (replayStore.selection == null) {
+      replayStore.setSelection({
+        type: "seat",
+        id: getDefaultSeatSelection(),
+      });
+    }
+    applyReplayUrlState(replayStore, route);
+  } else {
+    console.log("Syncing URL to state...");
+    pushDraftUrlFromState({ $route: route, $router: router }, draftStore, replayStore);
+  }
+  isFreshBundle.value = false;
+}
+
+function onCaptureMouseDown() {
+  globalClickTracker.onCaptureGlobalMouseDown();
+}
+
+function onBubbleMouseDown(e: MouseEvent) {
+  globalClickTracker.onBubbleGlobalMouseDown(e);
+}
+
+function getDefaultSeatSelection(): number {
+  const seat = getPlayerSeat(authStore.userId, draftStore.currentState);
+  return seat?.position || 0;
+}
 </script>
 
 <style scoped>

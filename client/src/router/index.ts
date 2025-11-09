@@ -89,7 +89,7 @@ const router = createRouter({
   ],
 });
 
-const requiresAuth: RouteRecordNameGeneric[] = ["prefs", "join", "picker", "replay", "deckbuilder"];
+const requiresAuth: RouteRecordNameGeneric[] = ["prefs", "join", "picker", "deckbuilder"];
 
 router.beforeEach(async (to, _from) => {
   const user = await loadAuthInfo(to.query["as"]);
