@@ -315,6 +315,7 @@ func NewHandler(ob *objectbox.ObjectBox, useAuth bool) http.Handler {
 	addHandler("/api/makedraft/", ServeAPIMakeDraft, false)
 
 	addHandler("/api/dev/forceEnd/", ServeAPIForceEnd, false)
+	addHandler("/api/dev/toggleInPerson/", ServeAPIToggleInPerson, false)
 
 	mux.Handle("/", http.HandlerFunc(HandleIndex))
 
@@ -1047,6 +1048,40 @@ func ServeAPIForceEnd(_ http.ResponseWriter, r *http.Request, userID int64, ob *
 
 		draftID := toJoin.ID
 		return NotifyEndOfDraft(ob, draftID)
+	} else {
+		return http.ErrBodyNotAllowed
+	}
+}
+
+// ServeAPIToggleInPerson serves the /api/dev/toggleInPerson testing endpoint.
+func ServeAPIToggleInPerson(_ http.ResponseWriter, r *http.Request, userID int64, ob *objectbox.ObjectBox) error {
+	if userID == 1 {
+		re := regexp.MustCompile(`/api/dev/toggleInPerson/(\d+)`)
+		parseResult := re.FindStringSubmatch(r.URL.Path)
+		if parseResult == nil {
+			return fmt.Errorf("bad api url")
+		}
+		draftID, err := strconv.ParseInt(parseResult[1], 10, 64)
+		if err != nil {
+			return fmt.Errorf("bad api url: %w", err)
+		}
+
+		draftBox := schema.BoxForDraft(ob)
+		draft, err := draftBox.Get(uint64(draftID))
+		if err != nil {
+			return fmt.Errorf("error loading draft %d: %w", draftID, err)
+		}
+		if draft == nil {
+			return fmt.Errorf("couldn't find draft %d", draftID)
+		}
+
+		draft.InPerson = !draft.InPerson
+		_, err = draftBox.Put(draft)
+		if err != nil {
+			return fmt.Errorf("error toggling in-person for draft %d: %w", draftID, err)
+		}
+
+		return nil
 	} else {
 		return http.ErrBodyNotAllowed
 	}
