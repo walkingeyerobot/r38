@@ -942,7 +942,7 @@ func doJoinSeat(ob *objectbox.ObjectBox, userId int64, draft *schema.Draft, seat
 		})
 	}
 
-	return err
+	return nil
 }
 
 // ServeAPISkip serves the /api/skip endpoint.
@@ -2303,12 +2303,14 @@ func ArchiveSpectatorChannels(ob *objectbox.ObjectBox) error {
 					schema.Result_.Timestamp.LessOrEqual(threeDaysAgo)).Count()
 				if resultsCount == 24 {
 					channelId := draft.SpectatorChannelId
-					draft.SpectatorChannelId = ""
-					log.Printf("locking channel %s", channelId)
-					err = dg.ChannelPermissionSet(channelId, EveryoneRole, 0, 0, discordgo.PermissionViewChannel)
-					if err != nil {
-						log.Printf("error archiving spectator channels: %s", err.Error())
-						return err
+					if len(channelId) > 0 {
+						draft.SpectatorChannelId = ""
+						log.Printf("locking channel %s", channelId)
+						err = dg.ChannelPermissionSet(channelId, EveryoneRole, 0, 0, discordgo.PermissionViewChannel)
+						if err != nil {
+							log.Printf("error archiving spectator channels: %s", err.Error())
+							return err
+						}
 					}
 				}
 			}

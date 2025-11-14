@@ -240,7 +240,7 @@ func MakeDraft(settings Settings, ob *objectbox.ObjectBox) error {
 
 	var dg *discordgo.Session
 	botToken := os.Getenv("DISCORD_BOT_TOKEN")
-	if !*settings.Simulate && len(botToken) > 0 {
+	if !*settings.Simulate && !*settings.InPerson && len(botToken) > 0 {
 		dg, err = discordgo.New("Bot " + botToken)
 		if err != nil {
 			return fmt.Errorf("error creating spectator channel: %v", err)
