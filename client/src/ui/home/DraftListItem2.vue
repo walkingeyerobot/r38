@@ -13,6 +13,20 @@
     <a v-if="isAdminUser" class="shuffle-section" href="#" @click.stop="onArchiveClicked()"
       >Archive</a
     >
+    <a
+      v-if="isAdminUser && !descriptor.inPerson"
+      class="shuffle-section"
+      href="#"
+      @click.stop="onToggleInPersonClicked()"
+      >Make in-person</a
+    >
+    <a
+      v-if="isAdminUser && descriptor.inPerson"
+      class="shuffle-section"
+      href="#"
+      @click.stop="onToggleInPersonClicked()"
+      >Make online</a
+    >
   </div>
 </template>
 
@@ -23,6 +37,7 @@ import { computed } from "vue";
 import { useRoute } from "vue-router";
 import { fetchEndpoint } from "@/fetch/fetchEndpoint.ts";
 import { ROUTE_ARCHIVE_DRAFT } from "@/rest/api/archive/archive.ts";
+import { ROUTE_TOGGLE_IN_PERSON } from "@/rest/api/toggleinperson/toggleinperson.ts";
 
 const route = useRoute();
 
@@ -86,6 +101,13 @@ const draftSubtitle = computed(() => {
 
 async function onArchiveClicked() {
   const _response = await fetchEndpoint(ROUTE_ARCHIVE_DRAFT, {
+    id: String(descriptor.id),
+  });
+  location.reload();
+}
+
+async function onToggleInPersonClicked() {
+  const _response = await fetchEndpoint(ROUTE_TOGGLE_IN_PERSON, {
     id: String(descriptor.id),
   });
   location.reload();
