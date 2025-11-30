@@ -199,6 +199,7 @@ func NewHandler(ob *objectbox.ObjectBox, useAuth bool) http.Handler {
 		isAuthRoute := strings.HasPrefix(route, "/auth/")
 		isApiRoute := strings.HasPrefix(route, "/api/")
 		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			log.Printf("serving %s", route)
 			var userID int64
 			if isApiRoute {
 				w.Header().Set("Content-Type", "application/json")
@@ -541,8 +542,6 @@ func ServeAPIUserStats(w http.ResponseWriter, r *http.Request, userID int64, ob 
 		return err
 	}
 
-	log.Printf("%+v", drafts)
-
 	draftedColors := []int{0, 0, 0, 0, 0, 0}
 
 	for _, draft := range drafts {
@@ -644,10 +643,13 @@ func ServeAPIPickRfid(w http.ResponseWriter, r *http.Request, userId int64, ob *
 	seat := draft.Seats[seatIndex]
 cards:
 	for _, cardRfid := range rfidPick.CardRfids {
+		log.Printf("finding card %s for seat %d (position %d)", cardRfid, seat.Id, seatIndex)
+
 		for _, pack := range seat.Packs {
 			for _, card := range pack.Cards {
 				if card.CardId == cardRfid {
 					cardIds = append(cardIds, int64(card.Id))
+					log.Printf("found card %s in seat's pack %d", cardRfid, pack.Id)
 					continue cards
 				}
 			}
@@ -655,12 +657,13 @@ cards:
 		for _, pack := range draft.UnassignedPacks {
 			for _, card := range pack.Cards {
 				if card.CardId == cardRfid {
+					log.Printf("found card %s in unassigned pack %d; assigning to seat", cardRfid, pack.Id)
 					cardIds = append(cardIds, int64(card.Id))
 					draft.UnassignedPacks = slices.DeleteFunc(draft.UnassignedPacks, func(p *schema.Pack) bool {
 						return p == pack
 					})
 					seat.Packs = append(seat.Packs, pack)
-					seat.OriginalPacks = append(seat.Packs, pack)
+					seat.OriginalPacks = append(seat.OriginalPacks, pack)
 					pack.Round = seat.Round
 					_, err = schema.BoxForDraft(ob).Put(draft)
 					if err != nil {
