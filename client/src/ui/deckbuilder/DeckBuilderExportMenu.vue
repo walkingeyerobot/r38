@@ -12,6 +12,10 @@
       <a :href="exportedDeck" download="r38export.txt" class="exportButton"> Export deck </a>
       <a :href="exportedBinder" download="r38export.dek" class="exportButton"> Export binder </a>
       <a @click="exportToPdf" download="r38export.pdf" class="exportButton"> Print deck </a>
+      <div class="exportButton">
+        <label for="scale">Scale:</label>
+        <input class="scaleInput" name="scale" v-model="scale" type="number" step=".01" />
+      </div>
     </template>
     <div v-else class="loading-message">Loading...</div>
   </div>
@@ -37,6 +41,7 @@ export default defineComponent({
     return {
       libLoaded: false,
       exportedDecksZip: null as string | null,
+      scale: 0.96,
     };
   },
 
@@ -87,7 +92,7 @@ export default defineComponent({
 
     exportToPdf() {
       if (this.deck) {
-        exportLoader.chunk.deckToPdf(this.deck);
+        exportLoader.chunk.deckToPdf(this.deck, this.scale);
       }
     },
   },
@@ -114,6 +119,10 @@ export default defineComponent({
 
 .exportButton:hover {
   background: #ddd;
+}
+
+.scaleInput {
+  margin-left: 4px;
 }
 
 .loading-message {

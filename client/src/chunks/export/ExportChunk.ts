@@ -6,7 +6,7 @@ export interface ExportChunk {
   deckToXml(deck: Deck): string;
   deckToBinderXml(deck: Deck): string;
   decksToBinderZip(decks: Deck[], names: string[], mtgoNames: string[]): Promise<string>;
-  deckToPdf(deck: Deck): void;
+  deckToPdf(deck: Deck, scale: number): void;
 }
 
 export const exportLoader = new ChunkLoader(() =>
