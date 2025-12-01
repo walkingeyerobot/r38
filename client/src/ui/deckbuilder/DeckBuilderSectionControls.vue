@@ -124,7 +124,7 @@ const SWAMP = buildBasic(
   "m21",
   "266",
   81211,
-  "https://cards.scryfall.io/cards/normal/front/3/0/30b3d647-3546-4ade-b395-f2370750a7a6.jpg?1592762002",
+  "https://cards.scryfall.io/normal/front/3/0/30b3d647-3546-4ade-b395-f2370750a7a6.jpg?1594737824",
 );
 
 const MOUNTAIN = buildBasic(
