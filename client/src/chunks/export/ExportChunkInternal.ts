@@ -64,7 +64,7 @@ const EXPORT_CHUNK_INTERNAL: ExportChunk = {
       .then((base64) => `data:application/zip;base64,${base64}`);
   },
 
-  deckToPdf(deck: Deck) {
+  deckToPdf(deck: Deck, scale = 0.96) {
     const pdf = new jsPDF("p", "in", "letter");
     let cardsOnLine = 0;
     let linesOnPage = 0;
@@ -105,13 +105,15 @@ const EXPORT_CHUNK_INTERNAL: ExportChunk = {
       }),
     ).then((images) => {
       images.forEach((image, i) => {
+        const width = 2.5 * scale;
+        const height = 3.5 * scale;
         pdf.addImage(
           new Uint8Array(image),
           "JPEG",
-          0.25 + cardsOnLine * 2.4,
-          0.25 + linesOnPage * 3.35,
-          2.4,
-          3.348,
+          0.25 + cardsOnLine * width,
+          0.25 + linesOnPage * height,
+          width,
+          height - 0.002,
         );
         cardsOnLine++;
         if (cardsOnLine === 3) {
