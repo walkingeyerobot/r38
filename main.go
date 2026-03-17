@@ -606,7 +606,7 @@ func ServeAPIPick(w http.ResponseWriter, r *http.Request, userID int64, ob *obje
 		return fmt.Errorf("error parsing post body: %w", err)
 	}
 
-	err = doHandlePostedPick(w, pick, userID, false, ob)
+	err = doHandlePostedPick(w, pick, userID, ob)
 	if err != nil {
 		return err
 	}
@@ -696,17 +696,17 @@ cards:
 		XsrfToken: rfidPick.XsrfToken,
 	}
 
-	err = doHandlePostedPick(w, pick, userId, true, ob)
+	err = doHandlePostedPick(w, pick, userId, ob)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func doHandlePostedPick(w http.ResponseWriter, pick PostedPick, userId int64, zoneDrafting bool, ob *objectbox.ObjectBox) error {
+func doHandlePostedPick(w http.ResponseWriter, pick PostedPick, userId int64, ob *objectbox.ObjectBox) error {
 	var err error
 	for _, cardId := range pick.CardIds {
-		err = doSinglePick(ob, userId, pick.DraftId, cardId, zoneDrafting)
+		err = doSinglePick(ob, userId, pick.DraftId, cardId)
 		if err == nil && !xsrftoken.Valid(pick.XsrfToken, xsrfKey, strconv.FormatInt(userId, 16), fmt.Sprintf("pick%d", pick.DraftId)) {
 			err = fmt.Errorf("invalid XSRF token")
 		}
@@ -1253,8 +1253,8 @@ func getUserJSON(userId int64, ob *objectbox.ObjectBox) ([]byte, error) {
 }
 
 // doSinglePick performs a normal pick based on a user id and a card id.
-func doSinglePick(ob *objectbox.ObjectBox, userId int64, draftId int64, cardId int64, zoneDrafting bool) error {
-	packID, announcements, round, seat, err := doPick(ob, userId, draftId, cardId, zoneDrafting)
+func doSinglePick(ob *objectbox.ObjectBox, userId int64, draftId int64, cardId int64) error {
+	packID, announcements, round, seat, err := doPick(ob, userId, draftId, cardId)
 	if err != nil {
 		return err
 	}
@@ -1266,7 +1266,7 @@ func doSinglePick(ob *objectbox.ObjectBox, userId int64, draftId int64, cardId i
 // It returns the packID, announcements, round, and an error.
 // Of those return values, packID and announcements are only really relevant for Cogwork Librarian,
 // which is not currently fully implemented, but we leave them here anyway for when we want to do that.
-func doPick(ob *objectbox.ObjectBox, userId int64, draftId int64, cardId int64, zoneDrafting bool) (int64, []string, int64, *schema.Seat, error) {
+func doPick(ob *objectbox.ObjectBox, userId int64, draftId int64, cardId int64) (int64, []string, int64, *schema.Seat, error) {
 	var announcements []string
 
 	var myPackID int64
@@ -1340,7 +1340,7 @@ func doPick(ob *objectbox.ObjectBox, userId int64, draftId int64, cardId int64, 
 		nextSeat := draft.Seats[nextSeatIndex]
 
 		if len(pack.Cards) > 0 {
-			if len(pack.Cards) > 1 && zoneDrafting {
+			if len(pack.Cards) > 1 && draft.InPerson {
 				// Enforce zone drafting: can't pass yet if there are two packs
 				// belonging to the new position.
 				packsCount := len(nextSeat.Packs)
