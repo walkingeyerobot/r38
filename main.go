@@ -1486,9 +1486,11 @@ func NotifyEndOfDraft(ob *objectbox.ObjectBox, draftID int64) error {
 		return err
 	}
 
-	err = PostFirstRoundPairings(ob, draft)
-	if err != nil {
-		return err
+	if !draft.InPerson {
+		err = PostFirstRoundPairings(ob, draft)
+		if err != nil {
+			return err
+		}
 	}
 
 	admin, err := schema.BoxForUser(ob).Get(1)
