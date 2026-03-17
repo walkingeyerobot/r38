@@ -2,11 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/davecgh/go-spew/spew"
-	"github.com/objectbox/objectbox-go/objectbox"
-	"github.com/walkingeyerobot/r38/makedraft"
-	"github.com/walkingeyerobot/r38/schema"
-	"golang.org/x/net/xsrftoken"
 	"io"
 	"math/rand"
 	"net/http"
@@ -17,6 +12,12 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/davecgh/go-spew/spew"
+	"github.com/objectbox/objectbox-go/objectbox"
+	"github.com/walkingeyerobot/r38/makedraft"
+	"github.com/walkingeyerobot/r38/schema"
+	"golang.org/x/net/xsrftoken"
 )
 
 var SEED = 677483
@@ -127,6 +128,34 @@ func findCardToPick(t *testing.T, ob *objectbox.ObjectBox, seat int, round int, 
 	return nil
 }
 
+func findTwoCardsToPick(t *testing.T, ob *objectbox.ObjectBox, seat int, round int, card int) (*schema.Card, *schema.Card) {
+	draft, err := schema.BoxForDraft(ob).Get(1)
+	if err != nil {
+		t.Errorf("error reading draft %s", err.Error())
+		t.FailNow()
+	}
+	seatIndex := slices.IndexFunc(draft.Seats, func(s *schema.Seat) bool {
+		return s.Position == seat
+	})
+	packs := draft.Seats[seatIndex].Packs
+	for _, pack := range packs {
+		if pack.Round == round+1 && len(pack.Cards) == 14-card {
+			if len(pack.Cards) < 2 {
+				t.Errorf("not enough cards in pack for seat %d, pack %d, pick %d", seat, round+1, card+1)
+			}
+			first := rand.Intn(len(pack.Cards))
+			second := rand.Intn(len(pack.Cards))
+			for first == second {
+				second = rand.Intn(len(pack.Cards))
+			}
+			return pack.Cards[first], pack.Cards[second]
+		}
+	}
+	t.Errorf("no pack found for seat %d, pack %d, pick %d", seat, round+1, card+1)
+	spew.Dump(packs)
+	return nil, nil
+}
+
 func TestOnlineDraft(t *testing.T) {
 	ob, err := doSetup(t, SEED)
 	if err != nil {
@@ -155,6 +184,46 @@ func TestOnlineDraft(t *testing.T) {
 				handlers.ServeHTTP(w,
 					httptest.NewRequest("POST", fmt.Sprintf("/api/pick/?as=%d", player),
 						strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cards": [%d], "xsrfToken": "%s"}`, cardId, token))))
+				res := w.Result()
+				if res.StatusCode != http.StatusOK {
+					body, _ := io.ReadAll(res.Body)
+					t.Errorf("pick failed: %s", body)
+					spew.Dump(schema.BoxForDraft(ob).Get(1))
+					t.FailNow()
+				}
+			}
+		}
+	}
+}
+
+func TestOnlinePickTwoDraft(t *testing.T) {
+	ob, err := doSetup(t, SEED)
+	if err != nil {
+		t.Errorf("error in setup: %s", err.Error())
+		t.FailNow()
+	}
+	defer ob.Close()
+
+	handlers := NewHandler(ob, false)
+
+	makeDraft(t, handlers, SEED, false, true)
+
+	players, seats := populateDraft(t, handlers, 4)
+
+	for round := range 3 {
+		for card := range 7 {
+			for _, seat := range rand.Perm(4) {
+				player := players[seat] + 1
+
+				card1, card2 := findTwoCardsToPick(t, ob, seats[seat], round, card*2)
+
+				token := xsrftoken.Generate(xsrfKey, strconv.FormatInt(int64(player), 16), "pick1")
+
+				t.Logf("pack %d pick %d: player %d (position %d) picking cards %d, %d", round+1, card+1, player, seats[seat]+1, card1.Id, card2.Id)
+				w := httptest.NewRecorder()
+				handlers.ServeHTTP(w,
+					httptest.NewRequest("POST", fmt.Sprintf("/api/pick/?as=%d", player),
+						strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cards": [%d, %d], "xsrfToken": "%s"}`, card1.Id, card2.Id, token))))
 				res := w.Result()
 				if res.StatusCode != http.StatusOK {
 					body, _ := io.ReadAll(res.Body)
