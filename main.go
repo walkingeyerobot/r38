@@ -705,8 +705,8 @@ cards:
 
 func doHandlePostedPick(w http.ResponseWriter, pick PostedPick, userId int64, zoneDrafting bool, ob *objectbox.ObjectBox) error {
 	var err error
-	if len(pick.CardIds) == 1 {
-		err = doSinglePick(ob, userId, pick.DraftId, pick.CardIds[0], zoneDrafting)
+	for _, cardId := range pick.CardIds {
+		err = doSinglePick(ob, userId, pick.DraftId, cardId, zoneDrafting)
 		if err == nil && !xsrftoken.Valid(pick.XsrfToken, xsrfKey, strconv.FormatInt(userId, 16), fmt.Sprintf("pick%d", pick.DraftId)) {
 			err = fmt.Errorf("invalid XSRF token")
 		}
@@ -720,10 +720,6 @@ func doHandlePostedPick(w http.ResponseWriter, pick PostedPick, userId int64, zo
 				return fmt.Errorf("error making pick")
 			}
 		}
-	} else if len(pick.CardIds) == 2 {
-		return fmt.Errorf("cogwork librarian power not implemented yet")
-	} else {
-		return fmt.Errorf("invalid number of picked cards: %d", len(pick.CardIds))
 	}
 
 	var draftJSON string
