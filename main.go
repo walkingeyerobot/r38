@@ -1421,7 +1421,7 @@ func doPick(ob *objectbox.ObjectBox, userId int64, draftId int64, cardId int64) 
 					if err != nil {
 						log.Printf("error notifying end of draft: %s", err.Error())
 					}
-				} else if nextRoundPlayers > 1 {
+				} else if nextRoundPlayers > 1 && !draft.InPerson {
 					// Now we know that we are not the only player in this round.
 					blockingDiscordId := ""
 					for _, s := range draft.Seats {
