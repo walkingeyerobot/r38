@@ -199,13 +199,13 @@ function doParse(client, objstr) {
       var nextPos = event.position;
       if (event.round % 2 === 1) {
         nextPos++;
-        if (nextPos === obj.draft.pickTwo ? 4 : 8) {
+        if (nextPos === (obj.draft.pickTwo ? 4 : 8)) {
           nextPos = 0;
         }
       } else {
         nextPos--;
         if (nextPos === -1) {
-          nextPos = obj.draft.pickTwo ? 3 : 7;
+          nextPos = (obj.draft.pickTwo ? 3 : 7);
         }
       }
 
@@ -224,28 +224,28 @@ function doParse(client, objstr) {
         // throw Error('problem with pack location');
       }
 
+      var startSeat = pi.pack.startSeat;
+      if (event.position === myPosition) {
+        // if the player we're watching just picked a card, they have seen the pack
+        packSeen[startSeat][event.round - 1] = true;
+      } else if (!packSeen[startSeat][event.round - 1]) {
+        // if another player has picked a card from this pack, and the player
+        // we're watching has never seen this pack, mark the card as forever hidden
+        var oldPack = obj.draft.seats[startSeat].packs[event.round - 1];
+        var oldCard = oldPack[pi.index];
+        oldPack[pi.index] = {
+          id: oldCard.id,
+          hidden: true,
+          scryfall: {
+            name: 'Forever Unknown Card',
+          }
+        };
+      }
+
       if (!obj.draft.pickTwo || pi.pack.filter(c => c != null).length % 2 === 0) {
         // do the actual passing
         var passedPack = state[event.position].packs[event.round - 1].shift();
         state[nextPos].packs[event.round - 1].push(passedPack);
-
-        var startSeat = pi.pack.startSeat;
-        if (event.position === myPosition) {
-          // if the player we're watching just picked a card, they have seen the pack
-          packSeen[startSeat][event.round - 1] = true;
-        } else if (!packSeen[startSeat][event.round - 1]) {
-          // if another player has picked a card from this pack, and the player
-          // we're watching has never seen this pack, mark the card as forever hidden
-          var oldPack = obj.draft.seats[startSeat].packs[event.round - 1];
-          var oldCard = oldPack[pi.index];
-          oldPack[pi.index] = {
-            id: oldCard.id,
-            hidden: true,
-            scryfall: {
-              name: 'Forever Unknown Card',
-            }
-          };
-        }
 
         // if the whole pack is empty, increment the round for that player
         if (passedPack.every((x) => !x)) {
