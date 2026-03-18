@@ -19,7 +19,7 @@ type Perspective struct {
 type DraftJSON struct {
 	DraftID   int64        `json:"draftId"`
 	DraftName string       `json:"draftName"`
-	Seats     [8]Seat      `json:"seats"`
+	Seats     []Seat       `json:"seats"`
 	Events    []DraftEvent `json:"events"`
 	PickXsrf  string       `json:"pickXsrf"`
 	InPerson  bool         `json:"inPerson"`
@@ -28,13 +28,13 @@ type DraftJSON struct {
 
 // Seat is part of DraftJSON.
 type Seat struct {
-	Packs       [3][15]interface{} `json:"packs"`
-	PlayerName  string             `json:"playerName"`
-	MtgoName    string             `json:"mtgoName"`
-	PlayerID    int64              `json:"playerId"`
-	PlayerImage string             `json:"playerImage"`
-	ScanSound   int64              `json:"scanSound"`
-	ErrorSound  int64              `json:"errorSound"`
+	Packs       [3][]interface{} `json:"packs"`
+	PlayerName  string           `json:"playerName"`
+	MtgoName    string           `json:"mtgoName"`
+	PlayerID    int64            `json:"playerId"`
+	PlayerImage string           `json:"playerImage"`
+	ScanSound   int64            `json:"scanSound"`
+	ErrorSound  int64            `json:"errorSound"`
 }
 
 // DraftEvent is part of DraftJSON.
