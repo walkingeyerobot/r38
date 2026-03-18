@@ -227,9 +227,13 @@ export class TimelineGenerator {
   }
 
   private maybeAdvancePlayerToNextRound(seat: DraftSeat, playerData: PlayerTracker) {
-    // TODO: This can be fooled by drafts that introduce more packs or that
-    // have packs that aren't 15 cards
-    if (![15, 30].includes(seat.picks.count)) {
+    const roundPicks = [];
+    let picksPerRound = 0;
+    for (let i = 0; i < seat.originalPacks.length - 1; i++) {
+      picksPerRound += this._state.pickTwo ? 14 : 15;
+      roundPicks.push(picksPerRound);
+    }
+    if (!roundPicks.includes(seat.picks.count)) {
       return;
     }
 
