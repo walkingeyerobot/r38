@@ -117,11 +117,15 @@ function doParse(client, objstr) {
       [false, false, false],
       [false, false, false],
       [false, false, false],
-      [false, false, false],
-      [false, false, false],
-      [false, false, false],
-      [false, false, false],
     ];
+    if (!obj.draft.pickTwo) {
+      packSeen.push(
+          [false, false, false],
+          [false, false, false],
+          [false, false, false],
+          [false, false, false],
+      );
+    }
     // the player is always allowed to see their pack 1
     if (myPosition >= 0) {
       packSeen[myPosition][0] = true;
@@ -195,13 +199,13 @@ function doParse(client, objstr) {
       var nextPos = event.position;
       if (event.round % 2 === 1) {
         nextPos++;
-        if (nextPos === 8) {
+        if (nextPos === obj.draft.pickTwo ? 4 : 8) {
           nextPos = 0;
         }
       } else {
         nextPos--;
         if (nextPos === -1) {
-          nextPos = 7;
+          nextPos = obj.draft.pickTwo ? 3 : 7;
         }
       }
 
