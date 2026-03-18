@@ -138,7 +138,9 @@ export class TimelineGenerator {
     playerData.nextPick++;
 
     // Pass the pack to the next player
-    event.actions.push(this.buildPassAction(seat, playerData, activePack, netPickCount));
+    if (!this._state.pickTwo || seat.picks.count % 2 === 1) {
+      event.actions.push(this.buildPassAction(seat, playerData, activePack, netPickCount));
+    }
 
     this.commitEvent(event);
 
