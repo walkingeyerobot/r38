@@ -95,6 +95,10 @@ function doParse(client, objstr) {
       }*/
       for (var j = 0; j < packs.length; j++) {
         var pack = packs[j];
+        if (!pack) {
+          state[i].packs[j] = obj.draft.seats[i].packs[j] = [];
+          continue;
+        }
         pack.startSeat = i;
         for (var k = 0; k < pack.length; k++) {
           if (pack[k]) {
