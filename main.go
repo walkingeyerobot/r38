@@ -350,6 +350,9 @@ func ServeAPIArchive(_ http.ResponseWriter, r *http.Request, userID int64, ob *o
 		if err != nil {
 			return fmt.Errorf("couldn't find draft to archive: %w", err)
 		}
+		if draft == nil {
+			return fmt.Errorf("couldn't find draft to archive: %d", draftID)
+		}
 		draft.Archived = true
 		_, err = box.Put(draft)
 	}
@@ -444,6 +447,9 @@ func ServeAPIDraftPacks(w http.ResponseWriter, r *http.Request, userId int64, ob
 	if err != nil {
 		return fmt.Errorf("error getting draft: %w", err)
 	}
+	if draft == nil {
+		return fmt.Errorf("couldn't find draft: %d", draftID)
+	}
 
 	var clientPacks [][]R38CardData
 	for _, seat := range draft.Seats {
@@ -513,6 +519,9 @@ func ServeAPISetPref(w http.ResponseWriter, r *http.Request, userId int64, ob *o
 			if err != nil {
 				return fmt.Errorf("error updating user MTGO name: %w", err)
 			}
+			if user == nil {
+				return fmt.Errorf("user not found: %d", userId)
+			}
 			user.MtgoName = pref.MtgoName
 			_, err = userBox.Put(user)
 			if err != nil {
@@ -524,7 +533,7 @@ func ServeAPISetPref(w http.ResponseWriter, r *http.Request, userId int64, ob *o
 	return ServeAPIPrefs(w, r, userId, ob)
 }
 
-func ServeAPIUserStats(w http.ResponseWriter, r *http.Request, userID int64, ob *objectbox.ObjectBox) error {
+func ServeAPIUserStats(w http.ResponseWriter, _ *http.Request, userID int64, ob *objectbox.ObjectBox) error {
 	userStats := UserStats{}
 
 	user, err := schema.BoxForUser(ob).Get(uint64(userID))
@@ -633,6 +642,9 @@ func ServeAPIPickRfid(w http.ResponseWriter, r *http.Request, userId int64, ob *
 	draft, err := schema.BoxForDraft(ob).Get(uint64(rfidPick.DraftId))
 	if err != nil {
 		return fmt.Errorf("error finding card in active draft: %w", err)
+	}
+	if draft == nil {
+		return fmt.Errorf("draft not found: %d", rfidPick.DraftId)
 	}
 	var seatIndex = slices.IndexFunc(draft.Seats, func(seat *schema.Seat) bool {
 		return seat.User != nil && seat.User.Id == uint64(userId)
@@ -757,6 +769,9 @@ func ServeAPIUndoPick(_ http.ResponseWriter, r *http.Request, userID int64, ob *
 	if err != nil {
 		return err
 	}
+	if draft == nil {
+		return fmt.Errorf("draft not found: %d", undo.DraftId)
+	}
 	seatIndex := slices.IndexFunc(draft.Seats, func(seat *schema.Seat) bool {
 		return seat.User != nil && seat.User.Id == uint64(userID)
 	})
@@ -787,6 +802,9 @@ func ServeAPIUndoPick(_ http.ResponseWriter, r *http.Request, userID int64, ob *
 	pack, err := packBox.Get(lastEvent.Pack.Id)
 	if err != nil {
 		return err
+	}
+	if pack == nil {
+		return fmt.Errorf("pack not found: %d", lastEvent.Pack.Id)
 	}
 	pack.Cards = append(pack.Cards, card)
 	_, err = packBox.Put(pack)
@@ -864,6 +882,9 @@ func doJoin(ob *objectbox.ObjectBox, userId int64, draftId int64) error {
 	if err != nil {
 		return err
 	}
+	if draft == nil {
+		return fmt.Errorf("draft not found: %d", draftId)
+	}
 
 	var reservedSeat *schema.Seat
 	var openSeats []*schema.Seat
@@ -894,6 +915,9 @@ func doJoinSeatPosition(ob *objectbox.ObjectBox, userId int64, draftId int64, po
 	draft, err := schema.BoxForDraft(ob).Get(uint64(draftId))
 	if err != nil {
 		return err
+	}
+	if draft == nil {
+		return fmt.Errorf("draft not found: %d", draftId)
 	}
 
 	if slices.ContainsFunc(draft.Seats, func(seat *schema.Seat) bool {
@@ -927,6 +951,9 @@ func doJoinSeat(ob *objectbox.ObjectBox, userId int64, draft *schema.Draft, seat
 	_, err = schema.BoxForSeat(ob).Put(seat)
 	if err != nil {
 		return err
+	}
+	if user == nil {
+		return fmt.Errorf("user not found: %d", userId)
 	}
 
 	if dg != nil && draft.SpectatorChannelId != "" && user.DiscordId != "" {
@@ -983,6 +1010,9 @@ func doSkip(ob *objectbox.ObjectBox, userId int64, draftId int64) error {
 	if err != nil {
 		return err
 	}
+	if draft == nil {
+		return fmt.Errorf("draft not found: %d", draftId)
+	}
 
 	if slices.IndexFunc(draft.Seats, func(seat *schema.Seat) bool {
 		return seat.User.Id == uint64(userId)
@@ -1002,6 +1032,9 @@ func doSkip(ob *objectbox.ObjectBox, userId int64, draftId int64) error {
 	user, err := userBox.Get(uint64(userId))
 	if err != nil {
 		return err
+	}
+	if user == nil {
+		return fmt.Errorf("user not found: %d", userId)
 	}
 	user.Skips = append(user.Skips, &schema.Skip{
 		DraftId: uint64(draftId),
@@ -1114,6 +1147,9 @@ func ServeAPIGetCardPack(w http.ResponseWriter, r *http.Request, _ int64, ob *ob
 	draft, err := schema.BoxForDraft(ob).Get(uint64(getCardPack.DraftID))
 	if err != nil {
 		return err
+	}
+	if draft == nil {
+		return fmt.Errorf("draft not found: %d", getCardPack.DraftID)
 	}
 
 	packIndex := slices.IndexFunc(draft.UnassignedPacks, func(pack *schema.Pack) bool {
@@ -1239,6 +1275,9 @@ func getUserJSON(userId int64, ob *objectbox.ObjectBox) ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
+		if user == nil {
+			return nil, fmt.Errorf("user not found: %d", userId)
+		}
 		userInfo.ID = int64(user.Id)
 		userInfo.Name = user.DiscordName
 		userInfo.Picture = user.Picture
@@ -1275,6 +1314,9 @@ func doPick(ob *objectbox.ObjectBox, userId int64, draftId int64, cardId int64) 
 	draft, err := schema.BoxForDraft(ob).Get(uint64(draftId))
 	if err != nil {
 		return myPackID, announcements, round, nil, err
+	}
+	if draft == nil {
+		return myPackID, announcements, round, nil, fmt.Errorf("draft not found: %d", draftId)
 	}
 
 	numSeats, cardsPerPack := getNumSeatsAndCardsPerPack(draft)
@@ -1485,6 +1527,9 @@ func NotifyEndOfDraft(ob *objectbox.ObjectBox, draftID int64) error {
 	if err != nil {
 		return err
 	}
+	if draft == nil {
+		return fmt.Errorf("draft not found: %d", draftID)
+	}
 
 	if !draft.InPerson {
 		err = PostFirstRoundPairings(ob, draft)
@@ -1496,6 +1541,9 @@ func NotifyEndOfDraft(ob *objectbox.ObjectBox, draftID int64) error {
 	admin, err := schema.BoxForUser(ob).Get(1)
 	if err != nil {
 		return err
+	}
+	if admin == nil {
+		return fmt.Errorf("admin user not found")
 	}
 	err = NotifyAdminOfDraftCompletion(admin.DiscordId, int64(draft.Id))
 	if err != nil {
@@ -1591,6 +1639,9 @@ func GetAdminDiscordId(ob *objectbox.ObjectBox) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	if user == nil {
+		return "", fmt.Errorf("admin user not found")
+	}
 	return user.DiscordId, nil
 }
 
@@ -1652,6 +1703,9 @@ func GetJSONObject(ob *objectbox.ObjectBox, draftId int64) (DraftJSON, error) {
 	draft, err := schema.BoxForDraft(ob).Get(uint64(draftId))
 	if err != nil {
 		return draftJson, err
+	}
+	if draft == nil {
+		return draftJson, fmt.Errorf("draft not found: %d", draftId)
 	}
 	draftJson.DraftName = draft.Name
 	draftJson.InPerson = draft.InPerson
@@ -1730,6 +1784,9 @@ func GetFilteredJSON(ob *objectbox.ObjectBox, draftId int64, userId int64) (stri
 		if err != nil {
 			return "", fmt.Errorf("error detecting end of draft %d for user %d: %w", draftId, userId, err)
 		}
+		if draft == nil {
+			return "", fmt.Errorf("draft not found: %d", draftId)
+		}
 		for _, seat := range draft.Seats {
 			if seat.User != nil && seat.User.Id == uint64(userId) {
 				returnFullReplay = seat.Round >= 4
@@ -1797,6 +1854,9 @@ func doEvent(ob *objectbox.ObjectBox, draftId int64, announcements []string, car
 	draft, err := draftBox.Get(uint64(draftId))
 	if err != nil {
 		return err
+	}
+	if draft == nil {
+		return fmt.Errorf("draft not found: %d", draftId)
 	}
 	card1, err := schema.BoxForCard(ob).Get(uint64(cardId1))
 	if err != nil {
@@ -1970,14 +2030,15 @@ func MakeDraftFromMessage(ob *objectbox.ObjectBox, msg string, authorID string) 
 	}
 	if strings.HasPrefix(msg, "makedraft") {
 		settings, err := makedraft.ParseSettings(args)
-		if authorID == Henchman {
-			*settings.Simulate = true
-		}
 
 		var resp string
 		if err != nil {
 			resp = fmt.Sprintf("%s", err.Error())
 		} else {
+			if authorID == Henchman {
+				*settings.Simulate = true
+			}
+
 			err = ob.RunInWriteTx(func() error {
 				return makedraft.MakeDraft(settings, ob)
 			})
