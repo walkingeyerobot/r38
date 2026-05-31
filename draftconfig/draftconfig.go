@@ -1,8 +1,10 @@
 package draftconfig
 
 import (
+	"cmp"
 	"encoding/json"
 	"net/http"
+	"slices"
 	"strings"
 )
 
@@ -101,6 +103,9 @@ func GetCards(cfg DraftConfig) ([]Card, error) {
 		if err != nil {
 			return nil, err
 		}
+		slices.SortFunc(cubeCobraList.Cards.Mainboard, func(a, b CubeCobraCard) int {
+			return cmp.Compare(a.Details.Name, b.Details.Name)
+		})
 		for _, cubeCobraCard := range cubeCobraList.Cards.Mainboard {
 			images := []string{cubeCobraCard.Details.ImageNormal}
 			if len(cubeCobraCard.Details.ImageFlip) > 0 {
