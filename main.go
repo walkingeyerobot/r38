@@ -2087,12 +2087,12 @@ func GetFilteredJSON(ob *objectbox.ObjectBox, draftId int64, userId int64) (stri
 }
 
 type TempScryfall struct {
-	name string
+	name string `json:"name"`
 }
 type TempCard struct {
-	id       int64
-	hidden   bool
-	scryfall TempScryfall
+	id       int64        `json:"id"`
+	hidden   bool         `json:"hidden"`
+	scryfall TempScryfall `json:"scryfall"`
 }
 
 func makeHiddenCard(id int64) interface{} {
