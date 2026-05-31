@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"crypto/rand"
 	"encoding/json"
@@ -1808,44 +1807,303 @@ func GetFilteredJSON(ob *objectbox.ObjectBox, draftId int64, userId int64) (stri
 	}
 
 	response := ""
-	var buff bytes.Buffer
-	if filterSocket != "" {
-		conn, err := net.Dial("unix", filterSocket)
-		if err != nil {
-			return "", fmt.Errorf("error connecting to filter service: %w", err)
-		}
-		defer func() {
-			_ = conn.Close()
-		}()
+	//if filterSocket != "" {
+	//conn, err := net.Dial("unix", filterSocket)
+	//if err != nil {
+	//	return "", fmt.Errorf("error connecting to filter service: %w", err)
+	//}
+	//defer func() {
+	//	_ = conn.Close()
+	//}()
 
-		ret, err := json.Marshal(Perspective{User: userId, Draft: draft})
-		if err != nil {
-			return "", fmt.Errorf("error marshalling filter service request: %w", err)
+	var state []ReplaySeat
+	myPosition := int64(slices.IndexFunc(draft.Seats, func(seat Seat) bool {
+		return seat.PlayerID == userId
+	}))
+	var newEvents []DraftEvent
+	draft.PlayerID = userId
+
+	type ReplayPackPointer struct {
+		Seat  int
+		Round int
+		Index int
+	}
+
+	cardToReplayPack := make(map[int64]ReplayPackPointer)
+	cardToIndexInPack := make(map[int64]int)
+	var replayPacks []ReplayPack
+
+	for i, seat := range draft.Seats {
+		replaySeat := ReplaySeat{
+			PlayerID: seat.PlayerID,
+			Packs:    [3][]ReplayPack{},
+			Round:    1,
 		}
 
-		stop := "\r\n\r\n"
-
-		_, err = conn.Write(ret)
-		if err != nil {
-			return "", err
+		for roundNum, originalPack := range seat.Packs {
+			replayPack := ReplayPack{
+				Cards:     []interface{}{},
+				StartSeat: i,
+			}
+			for j, card := range originalPack {
+				replayPack.Cards = append(replayPack.Cards, card)
+				id := int64(card.(map[string]interface{})["id"].(uint64))
+				cardToReplayPack[id] = ReplayPackPointer{
+					Seat:  i,
+					Round: roundNum,
+					Index: len(replayPacks),
+				}
+				cardToIndexInPack[id] = j
+			}
+			replaySeat.Packs[roundNum] = append(replaySeat.Packs[roundNum], replayPack)
+			replayPacks = append(replayPacks, replayPack)
 		}
-		_, err = conn.Write([]byte(stop))
-		if err != nil {
-			return "", err
+
+		state = append(state, replaySeat)
+	}
+
+	packSeen := [8][3]bool{}
+	// the player is always allowed to see their pack 1
+	if myPosition >= 0 {
+		packSeen[myPosition][0] = true
+	}
+
+	// a map from a pack's starting seat + round to what cards have been picked
+	// since the watched player last saw that pack
+	shadowCards := make(map[string][]int64)
+	// a map from a pack's starting seat + round to the timestamp of the event
+	// that last added a card to this list. this is important because we want
+	// shadow pick events to have stable draftModified values.
+	shadowModified := make(map[string]int64)
+
+	for _, event := range draft.Events {
+		replayPackPtr := cardToReplayPack[event.Cards[0]]
+		shadowKey := fmt.Sprintf("%d|%d", replayPackPtr.Seat, event.Round)
+		if event.Position == myPosition {
+			if shadowCards[shadowKey] != nil {
+				newEvents = append(newEvents, DraftEvent{
+					Position:       -1,
+					Announcements:  make([]string, 0),
+					Cards:          shadowCards[shadowKey],
+					PlayerModified: 0,
+					DraftModified:  shadowModified[shadowKey], // + 0.5???
+					Round:          event.Round,
+					Librarian:      false,
+					Type:           "ShadowPick",
+				})
+				delete(shadowCards, shadowKey)
+				delete(shadowModified, shadowKey)
+			}
+			newEvents = append(newEvents, event)
+		} else {
+			newEvents = append(newEvents, DraftEvent{
+				Position:       event.Position,
+				Announcements:  make([]string, 0),
+				Cards:          make([]int64, 0),
+				PlayerModified: event.PlayerModified,
+				DraftModified:  event.DraftModified,
+				Round:          event.Round,
+				Librarian:      event.Librarian,
+				Type:           "SecretPick",
+			})
+			shadowCards[shadowKey] = append(shadowCards[shadowKey], event.Cards[0])
+			slices.Sort(shadowCards[shadowKey])
+			shadowModified[shadowKey] = event.DraftModified
 		}
 
-		_, err = io.Copy(&buff, conn)
-		if err != nil {
-			return "", err
+		// now do the event. the purpose of the rest of this for loop body is to mark packs as seen by the player.
+		replayPack := replayPacks[replayPackPtr.Index]
+		indexInPack := cardToIndexInPack[event.Cards[0]]
+		replayPack.Cards[indexInPack] = nil
+
+		// figure out where the pack is going
+		nextPos := event.Position
+		if event.Round%2 == 1 {
+			nextPos++
+			if (draft.PickTwo && nextPos == 4) || (!draft.PickTwo && nextPos == 8) {
+				nextPos = 0
+			}
+		} else {
+			nextPos--
+			if nextPos == -1 {
+				if draft.PickTwo {
+					nextPos = 3
+				} else {
+					nextPos = 7
+				}
+			}
 		}
 
-		response = buff.String()
-		if !strings.HasPrefix(response, "{") {
-			return "", fmt.Errorf("error from filter.js: %s", response)
+		startSeat := replayPack.StartSeat
+		if event.Position == myPosition {
+			// if the player we're watching just picked a card, they have seen the pack
+			packSeen[startSeat][event.Round-1] = true
+		} else if !packSeen[startSeat][event.Round-1] {
+			// if another player has picked a card from this pack, and the player
+			// we're watching has never seen this pack, mark the card as forever hidden
+			oldPack := draft.Seats[startSeat].Packs[event.Round-1]
+			oldCard := oldPack[indexInPack]
+			oldPack[indexInPack] = makeHiddenCard(int64(oldCard.(map[string]interface{})["id"].(uint64)))
+		}
+
+		remainingCards := len(replayPack.Cards)
+		for _, card := range replayPack.Cards {
+			if card == nil {
+				remainingCards--
+			}
+		}
+		if !draft.PickTwo || remainingCards%2 == 0 {
+			// do the actual passing
+			passedPack := state[event.Position].Packs[event.Round-1][0]
+			state[event.Position].Packs[event.Round-1] = append(state[event.Position].Packs[event.Round-1][1:])
+			state[nextPos].Packs[event.Round-1] = append(state[nextPos].Packs[event.Round-1], passedPack)
+
+			// if the whole pack is empty, increment the round for that player
+			if !slices.ContainsFunc(passedPack.Cards, func(i interface{}) bool {
+				return i != nil
+			}) {
+				state[event.Position].Round++
+
+				// because the whole pack is empty, we need to add the cards that have
+				// been picked from that pack to a shadow pick event only if the focused
+				// player is not the one that took the last card.
+				if myPosition >= 0 && event.Position != myPosition && shadowCards[shadowKey] != nil {
+					newEvents = append(newEvents, DraftEvent{
+						Position:       -1,
+						Announcements:  make([]string, 0),
+						Cards:          shadowCards[shadowKey],
+						PlayerModified: 0,
+						DraftModified:  shadowModified[shadowKey], // + 0.5???
+						Round:          event.Round,
+						Librarian:      false,
+						Type:           "ShadowPick",
+					})
+					delete(shadowCards, shadowKey)
+					delete(shadowModified, shadowKey)
+				}
+			}
 		}
 	}
 
+	// now that we've translated all the events and hidden all the forever unknown cards,
+	// we need to see if there is a pack the watched player is able to pick from.
+	// if there is, mark that pack as seen and add that pack's most recent shadow pick
+	// to the event list
+	if myPosition >= 0 {
+		myRound := state[myPosition].Round
+		myPacks := state[myPosition].Packs[myRound-1]
+		if len(myPacks) > 0 {
+			availablePack := myPacks[0]
+			startSeat := availablePack.StartSeat
+			shadowKey := fmt.Sprintf("%d|%d", startSeat, myRound)
+			if shadowCards[shadowKey] != nil {
+				newEvents = append(newEvents, DraftEvent{
+					Position:       -1,
+					Announcements:  make([]string, 0),
+					Cards:          shadowCards[shadowKey],
+					PlayerModified: 0,
+					DraftModified:  shadowModified[shadowKey], // + 0.5???
+					Round:          int64(myRound),            // was event.round in JS
+					Librarian:      false,
+					Type:           "ShadowPick",
+				})
+				delete(shadowCards, shadowKey)
+				delete(shadowModified, shadowKey)
+			}
+		}
+	}
+
+	// mark all cards not yet seen as unknown cards
+	numPacks := 8
+	if draft.PickTwo {
+		numPacks = 4
+	}
+	for i := range numPacks {
+		for j := range packSeen[i] {
+			if !packSeen[i][j] {
+				for n, card := range draft.Seats[i].Packs[j] {
+					tempCard, ok := card.(TempCard)
+					hidden := false
+					if ok {
+						hidden = tempCard.hidden
+					}
+					if card != nil && !hidden {
+						draft.Seats[i].Packs[j][n] = makeHiddenCard(int64(card.(map[string]interface{})["id"].(uint64)))
+					}
+				}
+			}
+		}
+	}
+
+	slices.SortFunc(newEvents, func(a, b DraftEvent) int {
+		if a.DraftModified < b.DraftModified {
+			return -1
+		}
+		if a.DraftModified > b.DraftModified {
+			return 1
+		}
+		if a.Type == "ShadowPick" {
+			return 1
+		}
+		return -1
+	})
+
+	draft.Events = newEvents
+
+	//ret, err := json.Marshal(Perspective{User: userId, Draft: draft})
+	//if err != nil {
+	//	return "", fmt.Errorf("error marshalling filter service request: %w", err)
+	//}
+	//
+	//stop := "\r\n\r\n"
+	//
+	//_, err = conn.Write(ret)
+	//if err != nil {
+	//	return "", err
+	//}
+	//_, err = conn.Write([]byte(stop))
+	//if err != nil {
+	//	return "", err
+	//}
+	//
+	//_, err = io.Copy(&buff, conn)
+	//if err != nil {
+	//	return "", err
+	//}
+	//
+	//response = buff.String()
+	//if !strings.HasPrefix(response, "{") {
+	//	return "", fmt.Errorf("error from filter.js: %s", response)
+	//}
+
+	responseBytes, err := json.Marshal(draft)
+	if err != nil {
+		return response, fmt.Errorf("error filtering draft, %w", err)
+	}
+	response = string(responseBytes)
+	//}
+
 	return response, nil
+}
+
+type TempScryfall struct {
+	name string
+}
+type TempCard struct {
+	id       int64
+	hidden   bool
+	scryfall TempScryfall
+}
+
+func makeHiddenCard(id int64) interface{} {
+	hiddenCard := (interface{})(TempCard{
+		id:     id,
+		hidden: true,
+		scryfall: TempScryfall{
+			name: "Forever Unknown Card",
+		},
+	})
+	return hiddenCard
 }
 
 // doEvent records an event (pick) into the database.

@@ -24,6 +24,7 @@ type DraftJSON struct {
 	PickXsrf  string       `json:"pickXsrf"`
 	InPerson  bool         `json:"inPerson"`
 	PickTwo   bool         `json:"pickTwo"`
+	PlayerID  int64        `json:"playerId"`
 }
 
 // Seat is part of DraftJSON.
@@ -35,6 +36,19 @@ type Seat struct {
 	PlayerImage string           `json:"playerImage"`
 	ScanSound   int64            `json:"scanSound"`
 	ErrorSound  int64            `json:"errorSound"`
+}
+
+// Seat is part of DraftJSON.
+type ReplaySeat struct {
+	Packs    [3][]ReplayPack
+	PlayerID int64
+	Round    int
+}
+
+// Seat is part of DraftJSON.
+type ReplayPack struct {
+	Cards     []interface{}
+	StartSeat int
 }
 
 // DraftEvent is part of DraftJSON.
