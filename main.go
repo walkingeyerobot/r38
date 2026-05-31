@@ -1995,6 +1995,7 @@ func GetFilteredJSON(ob *objectbox.ObjectBox, draftId int64, userId int64) (stri
 		if len(myPacks) > 0 {
 			availablePack := myPacks[0]
 			startSeat := availablePack.StartSeat
+			packSeen[startSeat][myRound-1] = true
 			shadowKey := fmt.Sprintf("%d|%d", startSeat, myRound)
 			if shadowCards[shadowKey] != nil {
 				newEvents = append(newEvents, DraftEvent{
