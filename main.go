@@ -2025,7 +2025,7 @@ func GetFilteredJSON(ob *objectbox.ObjectBox, draftId int64, userId int64) (stri
 					tempCard, ok := card.(TempCard)
 					hidden := false
 					if ok {
-						hidden = tempCard.hidden
+						hidden = tempCard.Hidden
 					}
 					if card != nil && !hidden {
 						draft.Seats[i].Packs[j][n] = makeHiddenCard(int64(card.(map[string]interface{})["id"].(uint64)))
@@ -2087,20 +2087,20 @@ func GetFilteredJSON(ob *objectbox.ObjectBox, draftId int64, userId int64) (stri
 }
 
 type TempScryfall struct {
-	name string `json:"name"`
+	Name string `json:"name"`
 }
 type TempCard struct {
-	id       int64        `json:"id"`
-	hidden   bool         `json:"hidden"`
-	scryfall TempScryfall `json:"scryfall"`
+	Id       int64        `json:"id"`
+	Hidden   bool         `json:"hidden"`
+	Scryfall TempScryfall `json:"scryfall"`
 }
 
 func makeHiddenCard(id int64) interface{} {
 	hiddenCard := (interface{})(TempCard{
-		id:     id,
-		hidden: true,
-		scryfall: TempScryfall{
-			name: "Forever Unknown Card",
+		Id:     id,
+		Hidden: true,
+		Scryfall: TempScryfall{
+			Name: "Forever Unknown Card",
 		},
 	})
 	return hiddenCard
