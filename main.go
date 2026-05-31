@@ -1820,7 +1820,7 @@ func GetFilteredJSON(ob *objectbox.ObjectBox, draftId int64, userId int64) (stri
 	myPosition := int64(slices.IndexFunc(draft.Seats, func(seat Seat) bool {
 		return seat.PlayerID == userId
 	}))
-	var newEvents []DraftEvent
+	newEvents := []DraftEvent{}
 	draft.PlayerID = userId
 
 	type ReplayPackPointer struct {
