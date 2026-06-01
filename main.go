@@ -2051,6 +2051,14 @@ func GetFilteredJSON(ob *objectbox.ObjectBox, draftId int64, userId int64) (stri
 
 	draft.Events = newEvents
 
+	for j := range draft.Seats {
+		for i := range draft.Seats[j].Packs {
+			if draft.Seats[j].Packs[i] == nil {
+				draft.Seats[j].Packs[i] = make([]interface{}, 0)
+			}
+		}
+	}
+
 	//ret, err := json.Marshal(Perspective{User: userId, Draft: draft})
 	//if err != nil {
 	//	return "", fmt.Errorf("error marshalling filter service request: %w", err)
