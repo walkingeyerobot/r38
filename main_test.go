@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"log"
 	"math/rand"
 	"net/http"
 	"net/http/httptest"
@@ -544,6 +545,113 @@ func TestInPersonDraftUndoSubsequentPick(t *testing.T) {
 				t.Errorf("didn't put card back in pack or pack back in seat")
 			}
 		}
+	}
+}
+
+func TestInPersonDraftUndoAfterPackAlreadyPassedAgain(t *testing.T) {
+	ob, _ := doSetup(t, SEED)
+	defer ob.Close()
+
+	handlers := NewHandler(ob, false)
+
+	makeDraft(t, handlers, SEED, true, false)
+
+	players, seats := populateDraft(t, handlers, 8)
+
+	for card := range 5 {
+		for _, seat := range rand.Perm(8) {
+			player := players[seat] + 1
+
+			card := findCardToPick(t, ob, seats[seat], 0, card, true)
+
+			token := xsrftoken.Generate(xsrfKey, strconv.FormatInt(int64(player), 16), "pick1")
+
+			handlers.ServeHTTP(httptest.NewRecorder(),
+				httptest.NewRequest("POST", fmt.Sprintf("/api/pickrfid/?as=%d", player),
+					strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cardRfids": ["%s"], "xsrfToken": "%s"}`, card.CardId, token))))
+		}
+	}
+
+	seat := seats[0]
+	player := players[0] + 1
+	token := xsrftoken.Generate(xsrfKey, strconv.FormatInt(int64(player), 16), "pick1")
+
+	nextSeat := seat + 1
+	if nextSeat > 7 {
+		nextSeat -= 8
+	}
+	nextSeatIndex := slices.Index(seats, nextSeat)
+	nextPlayer := players[nextSeatIndex] + 1
+	nextToken := xsrftoken.Generate(xsrfKey, strconv.FormatInt(int64(nextPlayer), 16), "pick1")
+
+	nextNextSeat := nextSeat + 1
+	if nextNextSeat > 7 {
+		nextNextSeat -= 8
+	}
+	nextNextSeatIndex := slices.Index(seats, nextNextSeat)
+	nextNextPlayer := players[nextNextSeatIndex] + 1
+	nextNextToken := xsrftoken.Generate(xsrfKey, strconv.FormatInt(int64(nextNextPlayer), 16), "pick1")
+
+	{
+		card := findCardToPick(t, ob, seats[nextSeatIndex], 0, 5, true)
+		w := httptest.NewRecorder()
+		handlers.ServeHTTP(w,
+			httptest.NewRequest("POST", fmt.Sprintf("/api/pickrfid/?as=%d", nextPlayer),
+				strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cardRfids": ["%s"], "xsrfToken": "%s"}`, card.CardId, nextToken))))
+		res := w.Result()
+		if res.StatusCode != http.StatusOK {
+			body, _ := io.ReadAll(res.Body)
+			t.Errorf("next player pick failed: %s", body)
+		}
+	}
+
+	{
+		card := findCardToPick(t, ob, seats[nextNextSeatIndex], 0, 5, true)
+		w := httptest.NewRecorder()
+		handlers.ServeHTTP(w,
+			httptest.NewRequest("POST", fmt.Sprintf("/api/pickrfid/?as=%d", nextNextPlayer),
+				strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cardRfids": ["%s"], "xsrfToken": "%s"}`, card.CardId, nextNextToken))))
+		res := w.Result()
+		if res.StatusCode != http.StatusOK {
+			body, _ := io.ReadAll(res.Body)
+			t.Errorf("next next player pick failed: %s", body)
+		}
+	}
+
+	{
+		card := findCardToPick(t, ob, seats[0], 0, 5, true)
+		w := httptest.NewRecorder()
+		handlers.ServeHTTP(w,
+			httptest.NewRequest("POST", fmt.Sprintf("/api/pickrfid/?as=%d", player),
+				strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cardRfids": ["%s"], "xsrfToken": "%s"}`, card.CardId, token))))
+		res := w.Result()
+		if res.StatusCode != http.StatusOK {
+			body, _ := io.ReadAll(res.Body)
+			t.Errorf("curr player pick failed: %s", body)
+		}
+	}
+
+	{
+		card := findCardToPick(t, ob, seats[nextSeatIndex], 0, 6, true)
+		w := httptest.NewRecorder()
+		handlers.ServeHTTP(w,
+			httptest.NewRequest("POST", fmt.Sprintf("/api/pickrfid/?as=%d", nextPlayer),
+				strings.NewReader(fmt.Sprintf(`{"draftId": 1, "cardRfids": ["%s"], "xsrfToken": "%s"}`, card.CardId, nextToken))))
+		res := w.Result()
+		if res.StatusCode != http.StatusOK {
+			body, _ := io.ReadAll(res.Body)
+			t.Errorf("next player next pick failed: %s", body)
+		}
+	}
+
+	log.Print("curr player undo")
+	w := httptest.NewRecorder()
+	handlers.ServeHTTP(w,
+		httptest.NewRequest("POST", fmt.Sprintf("/api/undopick/?as=%d", player),
+			strings.NewReader(fmt.Sprintf(`{"draftId": 1, "xsrfToken": "%s"}`, token))))
+	res := w.Result()
+	if res.StatusCode == http.StatusOK {
+		t.Errorf("undo succeeded")
 	}
 }
 
