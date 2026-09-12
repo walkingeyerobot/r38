@@ -788,13 +788,13 @@ func ServeAPIUndoPick(_ http.ResponseWriter, r *http.Request, userID int64, ob *
 		}
 	}
 
+	if lastEvent == nil {
+		return fmt.Errorf("couldn't undo pick; no event found for seat %d in round %d of draft %d", seat.Position, seat.Round, draft.Id)
+	}
+
 	draft.Events = slices.DeleteFunc(draft.Events, func(e *schema.Event) bool {
 		return e == lastEvent
 	})
-	_, err = draftBox.Put(draft)
-	if err != nil {
-		return err
-	}
 
 	card := lastEvent.Card1
 	packBox := schema.BoxForPack(ob)
@@ -806,10 +806,6 @@ func ServeAPIUndoPick(_ http.ResponseWriter, r *http.Request, userID int64, ob *
 		return fmt.Errorf("pack not found: %d", lastEvent.Pack.Id)
 	}
 	pack.Cards = append(pack.Cards, card)
-	_, err = packBox.Put(pack)
-	if err != nil {
-		return err
-	}
 
 	seatBox := schema.BoxForSeat(ob)
 	newSeatIndex := slices.IndexFunc(draft.Seats, func(seat *schema.Seat) bool {
@@ -818,6 +814,13 @@ func ServeAPIUndoPick(_ http.ResponseWriter, r *http.Request, userID int64, ob *
 		}) != -1
 	})
 	newSeat := draft.Seats[newSeatIndex]
+
+	newPosition := getNextPosition(seat.Position, int64(seat.Round), len(draft.Seats))
+	if newPosition != newSeat.Position {
+		return fmt.Errorf("couldn't undo pick by user %d (seat %d) in draft %d: pack has already been passed to seat %d",
+			userID, seat.Position, draft.Id, newSeat.Position)
+	}
+
 	newSeat.Packs = slices.DeleteFunc(newSeat.Packs, func(pack *schema.Pack) bool {
 		return pack.Id == lastEvent.Pack.Id
 	})
@@ -830,6 +833,17 @@ func ServeAPIUndoPick(_ http.ResponseWriter, r *http.Request, userID int64, ob *
 		return c.Id == card.Id
 	})
 	seat.Packs = append(seat.Packs, pack)
+
+	_, err = draftBox.Put(draft)
+	if err != nil {
+		return err
+	}
+
+	_, err = packBox.Put(pack)
+	if err != nil {
+		return err
+	}
+
 	_, err = seatBox.Put(seat)
 	return err
 }
@@ -1362,18 +1376,7 @@ func doPick(ob *objectbox.ObjectBox, userId int64, draftId int64, cardId int64) 
 		})
 
 		// Get the Position that the pack will be passed to.
-		var newPosition int
-		if round%2 == 0 {
-			newPosition = seat.Position - 1
-			if newPosition == -1 {
-				newPosition = numSeats - 1
-			}
-		} else {
-			newPosition = seat.Position + 1
-			if newPosition == numSeats {
-				newPosition = 0
-			}
-		}
+		newPosition := getNextPosition(seat.Position, round, numSeats)
 
 		nextSeatIndex := slices.IndexFunc(draft.Seats, func(seat *schema.Seat) bool {
 			return seat.Position == newPosition
@@ -1500,6 +1503,22 @@ func doPick(ob *objectbox.ObjectBox, userId int64, draftId int64, cardId int64) 
 		userId, draftId, seat.Position, cardId, myPackID)
 
 	return myPackID, announcements, round, seat, nil
+}
+
+func getNextPosition(position int, round int64, numSeats int) int {
+	var newPosition int
+	if round%2 == 0 {
+		newPosition = position - 1
+		if newPosition == -1 {
+			newPosition = numSeats - 1
+		}
+	} else {
+		newPosition = position + 1
+		if newPosition == numSeats {
+			newPosition = 0
+		}
+	}
+	return newPosition
 }
 
 func getNumSeatsAndCardsPerPack(draft *schema.Draft) (int, int) {
