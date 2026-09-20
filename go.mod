@@ -11,7 +11,7 @@ require (
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/gorilla/sessions v1.4.0
 	github.com/objectbox/objectbox-go v1.9.0
-	golang.org/x/net v0.35.0
+	golang.org/x/net v0.38.0
 	golang.org/x/oauth2 v0.26.0
 )
 
@@ -22,6 +22,6 @@ require (
 	github.com/objectbox/objectbox-generator/v4 v4.0.0 // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
-	golang.org/x/crypto v0.33.0 // indirect
-	golang.org/x/sys v0.30.0 // indirect
+	golang.org/x/crypto v0.36.0 // indirect
+	golang.org/x/sys v0.31.0 // indirect
 )
